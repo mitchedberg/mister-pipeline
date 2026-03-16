@@ -15,6 +15,7 @@ VEC3       := $(VEC_DIR)/step3_vectors.jsonl
 VEC4       := $(VEC_DIR)/step4_vectors.jsonl
 VEC5       := $(VEC_DIR)/step5_vectors.jsonl
 VEC6       := $(VEC_DIR)/step6_vectors.jsonl
+VEC7       := $(VEC_DIR)/step7_vectors.jsonl
 SIM_BIN    := $(OBJ_DIR)/Vtc0630fdp
 
 .PHONY: all vectors build run clean test
@@ -22,7 +23,7 @@ all: vectors build run
 
 test: all
 
-vectors: $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6)
+vectors: $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7)
 
 $(VEC1): $(VEC_DIR)/generate_vectors.py $(VEC_DIR)/fdp_model.py
 	cd $(VEC_DIR) && $(PYTHON) generate_vectors.py
@@ -42,15 +43,18 @@ $(VEC5): $(VEC_DIR)/generate_step5_vectors.py $(VEC_DIR)/fdp_model.py
 $(VEC6): $(VEC_DIR)/generate_step6_vectors.py $(VEC_DIR)/fdp_model.py
 	cd $(VEC_DIR) && $(PYTHON) generate_step6_vectors.py
 
+$(VEC7): $(VEC_DIR)/generate_step7_vectors.py $(VEC_DIR)/fdp_model.py
+	cd $(VEC_DIR) && $(PYTHON) generate_step7_vectors.py
+
 build: $(SIM_BIN)
 $(SIM_BIN): $(TB) $(RTL)
 	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR) -Wall --top-module tc0630fdp \
 	    $(RTL) \
 	    $(TB) --build -CFLAGS "-O2 -std=c++17" 2>&1
 
-run: $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6)
-	cd $(VEC_DIR) && $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6)
+run: $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7)
+	cd $(VEC_DIR) && $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7)
 
 clean:
 	rm -rf $(OBJ_DIR)
-	rm -f $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6)
+	rm -f $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7)

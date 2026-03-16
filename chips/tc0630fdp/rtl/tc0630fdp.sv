@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Taito F3 Display Processor (Step 6: +Per-Scanline Zoom)
+// TC0630FDP — Taito F3 Display Processor (Step 7: +Colscroll +Palette Addition)
 // =============================================================================
 // Integrates all video functions for Taito F3 arcade hardware (1992–1997):
 //   · 4 scrolling tilemap layers (PF1–PF4), 16×16 tiles, 4bpp  ← STEP 3 ✓
@@ -494,6 +494,8 @@ logic [15:0] ls_rowscroll   [0:3];
 logic        ls_alt_tilemap [0:3];
 logic [ 7:0] ls_zoom_x      [0:3];   // Step 6: X zoom per PF
 logic [ 7:0] ls_zoom_y      [0:3];   // Step 6: Y zoom per PF
+logic [ 8:0] ls_colscroll   [0:3];   // Step 7: column scroll offset per PF
+logic [15:0] ls_pal_add     [0:3];   // Step 7: palette addition raw value per PF
 
 tc0630fdp_lineram u_lineram (
     .clk           (clk),
@@ -509,7 +511,9 @@ tc0630fdp_lineram u_lineram (
     .ls_rowscroll  (ls_rowscroll),
     .ls_alt_tilemap(ls_alt_tilemap),
     .ls_zoom_x     (ls_zoom_x),
-    .ls_zoom_y     (ls_zoom_y)
+    .ls_zoom_y     (ls_zoom_y),
+    .ls_colscroll  (ls_colscroll),
+    .ls_pal_add    (ls_pal_add)
 );
 
 // =============================================================================
@@ -546,6 +550,8 @@ generate
             .ls_alt_tilemap (ls_alt_tilemap[gi]),
             .ls_zoom_x      (ls_zoom_x[gi]),
             .ls_zoom_y      (ls_zoom_y[gi]),
+            .ls_colscroll   (ls_colscroll[gi]),
+            .ls_pal_add     (ls_pal_add[gi]),
             .pf_rd_addr     (pf_rd_addr_w[gi]),
             .pf_q           (pf_q_w[gi]),
             .gfx_addr       (bg_gfx_addr[gi]),

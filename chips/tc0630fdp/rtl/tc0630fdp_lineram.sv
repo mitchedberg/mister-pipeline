@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Line RAM Parser  (Step 6: rowscroll + zoom + enable bits)
+// TC0630FDP — Line RAM Parser  (Step 7: +colscroll +pal_add)
 // =============================================================================
 // The Line RAM is 64 KB (32768 × 16-bit words) that provides per-scanline
 // override of virtually every display parameter.  This module:
@@ -14,6 +14,8 @@
 // Step 5 implementation: rowscroll + rowscroll-enable + alt-tilemap enable.
 // Step 6 addition: per-scanline zoom (X and Y) for PF1–PF4 (section1 §9.9).
 //   PF2/PF4 Y-zoom are physically swapped in hardware — corrected here.
+// Step 7 addition: per-scanline colscroll (§9.2 bits[8:0]) and palette
+//   addition (§9.10) for PF1–PF4.
 //
 // Address layout — chip-relative 16-bit WORD addresses within Line RAM BRAM
 // (convert from section1 byte addresses by dividing by 2):
@@ -22,6 +24,7 @@
 //     Rowscroll enable base  : byte 0x0C00 → word 0x0600  (256 scanlines)
 //     Colscroll/alt-tmap en  : byte 0x0000 → word 0x0000  (256 scanlines)
 //     Zoom enable base       : byte 0x0800 → word 0x0400  (256 scanlines)
+//     Pal-add enable base    : byte 0x0A00 → word 0x0500  (256 scanlines)
 //
 //   Per-scanline data (upper half, word addrs 0x2000–0x7FFF):
 //     Colscroll PF1–PF4 base : byte 0x4000 → word 0x2000  (stride 0x100 per PF)
@@ -30,21 +33,28 @@
 //     Zoom PF3               : byte 0x8200 → word 0x4100  (256 scanlines)
 //     Zoom PF2               : byte 0x8400 → word 0x4200  (256 scanlines, PF4 Y-zoom here)
 //     Zoom PF4               : byte 0x8600 → word 0x4300  (256 scanlines, PF2 Y-zoom here)
+//     Pal-add PF1–PF4 base   : byte 0x9000 → word 0x4800  (stride 0x100 per PF)
 //
 // section1 §9.1 rowscroll enable:
 //   word_addr = 0x0600 + scan,  bits[3:0] = enable per PF (PF1=bit0..PF4=bit3)
 //
 // section1 §9.1 colscroll/alt-tilemap enable:
 //   word_addr = 0x0000 + scan,  bits[7:4] = alt-tmap enable per PF
+//   bits[3:0] of same word also used for colscroll enable (§9.1 §9.2 interaction)
+//   Note: colscroll enable shares the same enable word as alt-tilemap (bits[3:0])
 //
 // section1 §9.1 zoom enable:
 //   word_addr = 0x0400 + scan,  bits[3:0] = enable per PF (PF1=bit0..PF4=bit3)
 //
+// section1 §9.1 pal-add enable:
+//   word_addr = 0x0500 + scan,  bits[3:0] = enable per PF (PF1=bit0..PF4=bit3)
+//
 // section1 §9.11 rowscroll data:
 //   PFn (n=0..3): word_addr = 0x5000 + n*0x100 + scan
 //
-// section1 §9.2 colscroll data (bit[9] = alt-tilemap flag):
+// section1 §9.2 colscroll data (bits[8:0] = colscroll offset; bit[9] = alt-tilemap flag):
 //   PFn (n=0..3): word_addr = 0x2000 + n*0x100 + scan
+//   colscroll enable: en_col_word[n] (bit[n] of 0x0000+scan)
 //
 // section1 §9.9 zoom data (format: bits[15:8]=Y_scale, bits[7:0]=X_scale):
 //   PF1: word_addr = 0x4000 + scan
@@ -54,6 +64,11 @@
 //   PF2/PF4 Y-zoom swap: when outputting ls_zoom_y[1] (PF2), read from 0x4300+scan.
 //                        when outputting ls_zoom_y[3] (PF4), read from 0x4200+scan.
 //   X-zoom is NOT swapped: ls_zoom_x[1] from 0x4200+scan, ls_zoom_x[3] from 0x4300+scan.
+//
+// section1 §9.10 palette addition data:
+//   PFn (n=0..3): word_addr = 0x4800 + n*0x100 + scan
+//   Format: raw 16-bit value; the palette-line offset = value / 16 (i.e., divide by 16).
+//   Output ls_pal_add[n] passes the raw 16-bit word; BG engine divides by 16.
 // =============================================================================
 
 module tc0630fdp_lineram (
@@ -83,7 +98,13 @@ module tc0630fdp_lineram (
     output logic [ 7:0] ls_zoom_x      [0:3],
     // zoom_y[n]: Y zoom factor for PF(n+1).  0x80 = no zoom (1:1).
     // 0x80 (no zoom) when zoom is disabled for that PF.
-    output logic [ 7:0] ls_zoom_y      [0:3]
+    output logic [ 7:0] ls_zoom_y      [0:3],
+    // colscroll[n]: 9-bit column scroll offset for PF(n+1) (§9.2 bits[8:0]).
+    // Zero when colscroll is disabled for that PF.
+    output logic [ 8:0] ls_colscroll   [0:3],
+    // pal_add[n]: raw 16-bit palette addition word for PF(n+1) (§9.10).
+    // Zero when pal_add is disabled.  BG engine divides by 16 to get palette-line offset.
+    output logic [15:0] ls_pal_add     [0:3]
 );
 
 // =============================================================================
@@ -129,16 +150,19 @@ logic [15:0] en_row_word;    // rowscroll enable word
 logic [15:0] en_col_word;    // colscroll/alt-tilemap enable word
 /* verilator lint_off UNUSEDSIGNAL */
 logic [15:0] en_zoom_word;   // zoom enable word (Step 6) — only bits[3:0] used
+logic [15:0] en_pal_word;    // pal-add enable word (Step 7) — only bits[3:0] used
 /* verilator lint_on UNUSEDSIGNAL */
 logic [15:0] rs_word  [0:3]; // rowscroll data per PF
-logic [15:0] cs_word  [0:3]; // colscroll data per PF (for alt-tilemap bit[9])
+logic [15:0] cs_word  [0:3]; // colscroll data per PF (bits[8:0]=colscroll, bit[9]=alt-tilemap)
 logic [15:0] zm_word  [0:3]; // zoom data per PF (bits[15:8]=Y, bits[7:0]=X)
+logic [15:0] pa_word  [0:3]; // palette addition data per PF (§9.10)
 
 // Combinational reads from line_ram (one address per wire).
 // Address arithmetic: 15-bit = base + {7'b0, next_scan}
 assign en_row_word   = line_ram[15'h0600 + {7'b0, next_scan}];
 assign en_col_word   = line_ram[15'h0000 + {7'b0, next_scan}];
 assign en_zoom_word  = line_ram[15'h0400 + {7'b0, next_scan}];  // §9.1 zoom enable
+assign en_pal_word   = line_ram[15'h0500 + {7'b0, next_scan}];  // §9.1 pal-add enable
 assign rs_word[0]    = line_ram[15'h5000 + {7'b0, next_scan}];
 assign rs_word[1]    = line_ram[15'h5100 + {7'b0, next_scan}];
 assign rs_word[2]    = line_ram[15'h5200 + {7'b0, next_scan}];
@@ -152,6 +176,11 @@ assign zm_word[0]    = line_ram[15'h4000 + {7'b0, next_scan}];  // PF1
 assign zm_word[1]    = line_ram[15'h4200 + {7'b0, next_scan}];  // PF2 (X here; Y physically at PF4 addr)
 assign zm_word[2]    = line_ram[15'h4100 + {7'b0, next_scan}];  // PF3
 assign zm_word[3]    = line_ram[15'h4300 + {7'b0, next_scan}];  // PF4 (X here; Y physically at PF2 addr)
+// Palette addition data: §9.10  PF1=0x4800, PF2=0x4900, PF3=0x4A00, PF4=0x4B00
+assign pa_word[0]    = line_ram[15'h4800 + {7'b0, next_scan}];  // PF1
+assign pa_word[1]    = line_ram[15'h4900 + {7'b0, next_scan}];  // PF2
+assign pa_word[2]    = line_ram[15'h4A00 + {7'b0, next_scan}];  // PF3
+assign pa_word[3]    = line_ram[15'h4B00 + {7'b0, next_scan}];  // PF4
 
 // PF2/PF4 Y-zoom cross-read wires (hardware swap, §9.9):
 // PF2 Y-zoom is stored at PF4's RAM address (0x4300+scan).
@@ -172,6 +201,8 @@ always_ff @(posedge clk) begin
             ls_alt_tilemap[i] <= 1'b0;
             ls_zoom_x[i]      <= 8'h00;
             ls_zoom_y[i]      <= 8'h80;
+            ls_colscroll[i]   <= 9'b0;
+            ls_pal_add[i]     <= 16'b0;
         end
     end else if (hblank_fall) begin
         for (int n = 0; n < 4; n++) begin
@@ -179,6 +210,10 @@ always_ff @(posedge clk) begin
             ls_rowscroll[n]   <= en_row_word[n] ? rs_word[n] : 16'b0;
             // Alt-tilemap: enable bit n of en_col_word[7:4], data bit[9] of cs_word
             ls_alt_tilemap[n] <= en_col_word[4+n] ? cs_word[n][9] : 1'b0;
+            // Colscroll: enable bit n of en_col_word[3:0], data bits[8:0] of cs_word
+            ls_colscroll[n]   <= en_col_word[n] ? cs_word[n][8:0] : 9'b0;
+            // Palette addition: enable bit n of en_pal_word[3:0], full 16-bit raw value
+            ls_pal_add[n]     <= en_pal_word[n] ? pa_word[n] : 16'b0;
         end
         // Zoom X and Y: enable bit n of en_zoom_word[3:0]
         // X-zoom: not swapped — read from each PF's own address

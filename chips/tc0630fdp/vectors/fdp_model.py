@@ -1,5 +1,5 @@
 """
-TC0630FDP behavioral model — Python reference implementation (Steps 1–3).
+TC0630FDP behavioral model — Python reference implementation (Steps 1–7).
 
 Step 1 scope:
   - Display control register bank (16 × 16-bit registers)
@@ -17,6 +17,12 @@ Step 3 scope (added):
   - GFX ROM (32-bit word array): nibble-packed 4bpp tile graphics
   - render_bg_scanline(vpos, plane, xscroll, yscroll, extend_mode):
       returns 320-entry list of {palette[8:0], pen[3:0]} packed as 13-bit int
+
+Step 7 scope (added):
+  - _line_colscroll(plane, scan): returns 9-bit column scroll offset (§9.2 bits[8:0])
+  - _line_pal_add(plane, scan): returns palette-line addition offset (§9.10)
+  - render_bg_scanline now includes colscroll (pixel offset to effective_x) and
+    palette addition (added to tile palette index before output)
 
   BG tile word format (section1 §4):
     Word 0 (attr): bits[8:0]=palette, bit[9]=blend, bits[11:10]=extra_planes,
@@ -307,7 +313,41 @@ class TaitoF3Model:
             zoom_y = (wy >> 8) & 0xFF
         return (zoom_x, zoom_y)
 
-    # ── BG layer render (Step 3+5+6) ─────────────────────────────────────────
+    def _line_colscroll(self, plane: int, scan: int) -> int:
+        """Return effective colscroll pixel offset for PF(plane+1) on scanline scan (Step 7).
+
+        Returns 0 if colscroll is disabled for this PF/scanline.
+
+        section1 §9.2 + §9.1:
+          enable word: line_ram[0x0000 + (scan & 0xFF)], bit[plane] = enable
+          data   word: line_ram[0x2000 + plane*0x100 + (scan & 0xFF)], bits[8:0] = colscroll
+        """
+        scan8 = scan & 0xFF
+        en_word = self.line_ram[0x0000 + scan8]
+        if not (en_word >> plane) & 1:
+            return 0
+        cs_word = self.line_ram[0x2000 + plane * 0x100 + scan8]
+        return cs_word & 0x1FF   # 9-bit column scroll (pixel offset)
+
+    def _line_pal_add(self, plane: int, scan: int) -> int:
+        """Return effective palette-line addition for PF(plane+1) on scanline scan (Step 7).
+
+        Returns 0 if pal_add is disabled for this PF/scanline.
+
+        section1 §9.10 + §9.1:
+          enable word: line_ram[0x0500 + (scan & 0xFF)], bit[plane] = enable
+          data   word: line_ram[0x4800 + plane*0x100 + (scan & 0xFF)]
+          Format: raw 16-bit value = palette_offset * 16.
+          Returns palette_offset = raw >> 4  (9-bit, wraps with 9-bit palette).
+        """
+        scan8 = scan & 0xFF
+        en_word = self.line_ram[0x0500 + scan8]
+        if not (en_word >> plane) & 1:
+            return 0
+        raw = self.line_ram[0x4800 + plane * 0x100 + scan8]
+        return (raw >> 4) & 0x1FF   # palette-line offset (9-bit)
+
+    # ── BG layer render (Step 3+5+6+7) ─────────────────────────────────────────
 
     def render_bg_scanline(self, vpos: int, plane: int,
                            xscroll: int, yscroll: int,
@@ -364,9 +404,15 @@ class TaitoF3Model:
         # Step 5: apply Line RAM rowscroll and alt-tilemap for vpos (next_scan = vpos+1)
         rs_raw    = self._line_rowscroll(plane, vpos + 1)
         rs_int    = (rs_raw >> 6) & 0x3FF        # 10-bit integer rowscroll
-        eff_x_int = (xscroll_int + rs_int) & 0x3FF   # effective X integer (10-bit)
         alt_tmap  = self._line_alt_tilemap(plane, vpos + 1)
         pf_base_offset = 0x1000 if alt_tmap else 0   # alt-tilemap: +0x1000 words (=+0x2000 bytes)
+
+        # Step 7: apply colscroll (9-bit pixel offset) and get palette addition
+        colscroll   = self._line_colscroll(plane, vpos + 1)    # 9-bit pixel offset
+        pal_add_off = self._line_pal_add(plane, vpos + 1)      # 9-bit palette-line offset
+
+        # Effective X = global_xscroll + rowscroll + colscroll (all in pixel units, 10-bit wrap)
+        eff_x_int = (xscroll_int + rs_int + colscroll) & 0x3FF  # effective X integer (10-bit)
 
         # Step 6: zoom (§9.9)
         zoom_x, zoom_y = self._line_zoom(plane, vpos + 1)
@@ -434,7 +480,9 @@ class TaitoF3Model:
                 shift = 28 - (ni * 4)     # ni=0→bits[31:28], ni=7→bits[3:0]
                 pen   = (src_word >> shift) & 0xF
 
-                linebuf[scol] = (palette << 4) | pen
+                # Palette addition (Step 7): add pal_add_off to palette index (9-bit wrap)
+                eff_palette = (palette + pal_add_off) & 0x1FF
+                linebuf[scol] = (eff_palette << 4) | pen
 
             # Advance accumulator and compute next tile
             acc = (acc + 16 * zoom_step) & 0x7FFFF   # keep 19 bits

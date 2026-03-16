@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — BG Tilemap Layer Engine  (Step 6: +zoom)
+// TC0630FDP — BG Tilemap Layer Engine  (Step 7: +colscroll +pal_add)
 // =============================================================================
 // One instance per playfield (PF1–PF4). PLANE parameter = 0..3.
 //
@@ -37,6 +37,17 @@
 //   Y zoom (ls_zoom_y): 0x80 = 1:1 (no zoom).
 //     Effective Y row = (canvas_y_raw * ls_zoom_y) >> 7  (scaled by yscale/128).
 //     canvas_y_raw = (vpos + 1 + yscroll_int) & 0x1FF.
+//
+// Colscroll (Step 7; section1 §9.2 bits[8:0]):
+//   ls_colscroll is a 9-bit offset added to the tile's map_tx (tile column index)
+//   AFTER the zoom accumulator has determined map_tx.  This shifts the tile
+//   address within the row by a per-scanline constant column offset.
+//   map_tx_final = (map_tx + colscroll) & wrap_mask
+//
+// Palette addition (Step 7; section1 §9.10):
+//   ls_pal_add is the raw 16-bit value from Line RAM.  The BG engine adds
+//   (ls_pal_add / 16) to the tile's palette index (9-bit wrap).
+//   This shifts all tiles on the scanline to a different palette band.
 //
 // FSM: 5 states × 21 tiles + 1 IDLE = 106 cycles < 112-cycle HBLANK budget.
 //   BG_IDLE → (hblank_rise) → [per-tile:] BG_ATTR → BG_CODE → BG_GFX0 →
@@ -85,6 +96,15 @@ module tc0630fdp_bg #(
     input  logic [ 7:0] ls_zoom_x,
     // ls_zoom_y: Y zoom factor. 0x80 = 1:1 (no zoom).
     input  logic [ 7:0] ls_zoom_y,
+
+    // ── Per-scanline colscroll + palette addition (Step 7) ───────────────────
+    // ls_colscroll: 9-bit column scroll offset added to map_tx after zoom.
+    // 0 = no colscroll.
+    input  logic [ 8:0] ls_colscroll,
+    // ls_pal_add: raw 16-bit palette addition word (§9.10).
+    // Palette-line offset = ls_pal_add / 16 (divides raw value by 16).
+    // 0 = no palette addition.
+    input  logic [15:0] ls_pal_add,
 
     // ── PF RAM async read port (0x1800 words per PF) ─────────────────────
     output logic [12:0] pf_rd_addr,
@@ -140,7 +160,8 @@ logic       fetch_extend;       // extend_mode passthrough
 // Suppress unused sub-field warnings for scroll registers and zoom
 /* verilator lint_off UNUSED */
 logic _unused_scroll;
-assign _unused_scroll = ^{pf_xscroll[5:0], pf_yscroll[6:0], ls_rowscroll[5:0]};
+assign _unused_scroll = ^{pf_xscroll[5:0], pf_yscroll[6:0], ls_rowscroll[5:0],
+                          ls_pal_add[3:0], ls_pal_add[15:13]};  // fractional bits and overflow bits
 /* verilator lint_on UNUSED */
 
 // Y-zoom product intermediate (outside always_comb to control lint suppression).
@@ -193,6 +214,8 @@ logic [8:0] run_zoom_step;       // zoom step per output pixel (0x100 = 1.0, no 
 // Initialized to run_eff_x << 8 at FSM start.
 // Advanced by 16 * run_zoom_step after each 16-pixel tile slot.
 logic [18:0] run_zoom_acc_fp;
+// Palette addition latched at FSM start (Step 7)
+logic [8:0] run_pal_add_lines;   // palette-line offset = ls_pal_add / 16 (9-bit)
 
 // =============================================================================
 // Tile attribute and code registers
@@ -312,26 +335,27 @@ assign bg_pixel = linebuf[scol_c];
 // =============================================================================
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        state            <= BG_IDLE;
-        tile_col         <= 5'b0;
-        map_tx           <= 6'b0;
-        map_ty           <= 5'b0;
-        run_py           <= 4'b0;
-        run_xoff         <= 4'b0;
-        run_extend       <= 1'b0;
-        run_alt          <= 1'b0;
-        run_zoom_step    <= 9'd256;
-        run_zoom_acc_fp  <= 19'b0;
-        tile_palette_r   <= 9'b0;
-        tile_blend_r     <= 1'b0;
-        tile_xplanes_r   <= 2'b0;
-        tile_flipx_r     <= 1'b0;
-        tile_flipy_r     <= 1'b0;
-        tile_code_r      <= 16'b0;
-        gfx_left_r       <= 22'b0;
-        gfx_right_r      <= 22'b0;
-        gfx_left_data_r  <= 32'b0;
-        gfx_right_data_r <= 32'b0;
+        state              <= BG_IDLE;
+        tile_col           <= 5'b0;
+        map_tx             <= 6'b0;
+        map_ty             <= 5'b0;
+        run_py             <= 4'b0;
+        run_xoff           <= 4'b0;
+        run_extend         <= 1'b0;
+        run_alt            <= 1'b0;
+        run_zoom_step      <= 9'd256;
+        run_zoom_acc_fp    <= 19'b0;
+        run_pal_add_lines  <= 9'b0;
+        tile_palette_r     <= 9'b0;
+        tile_blend_r       <= 1'b0;
+        tile_xplanes_r     <= 2'b0;
+        tile_flipx_r       <= 1'b0;
+        tile_flipy_r       <= 1'b0;
+        tile_code_r        <= 16'b0;
+        gfx_left_r         <= 22'b0;
+        gfx_right_r        <= 22'b0;
+        gfx_left_data_r    <= 32'b0;
+        gfx_right_data_r   <= 32'b0;
     end else begin
         unique case (state)
 
@@ -341,10 +365,17 @@ always_ff @(posedge clk) begin
                 if (hblank_rise) begin
                     begin
                         // Compute effective_x = pf_xscroll[15:6] + ls_rowscroll[15:6]
+                        //   + ls_colscroll (9-bit pixel offset, section1 §9.2, Step 7)
+                        // Colscroll is a 9-bit pixel value added to canvas X.
+                        // It is added in pixel units (not fixed-point), so no shift needed.
+                        logic [9:0]  eff_x_base;  // scroll + rowscroll (10-bit)
                         logic [9:0]  eff_x;
                         logic [8:0]  zstep;
                         logic [18:0] zacc;
-                        eff_x = pf_xscroll[15:6] + ls_rowscroll[15:6];
+                        eff_x_base = pf_xscroll[15:6] + ls_rowscroll[15:6];
+                        // Add 9-bit colscroll (pixel offset) to 10-bit eff_x, wrap to 10-bit canvas.
+                        // The 11-bit sum truncated to 10 bits gives mod-1024 wrap naturally.
+                        eff_x = eff_x_base + {1'b0, ls_colscroll};
                         run_xoff  <= eff_x[3:0];
                         // Zoom step: 0x100 + zoom_x. 0x100 = 1.0 (no zoom).
                         zstep = 9'd256 + {1'b0, ls_zoom_x};
@@ -356,12 +387,15 @@ always_ff @(posedge clk) begin
                         // canvas_x = zacc >> 8 = eff_x. Tile = eff_x >> 4.
                         map_tx <= eff_x[9:4] & (fetch_extend ? 6'h3F : 6'h1F);
                     end
-                    tile_col      <= 5'b0;
-                    map_ty        <= fetch_ty;
-                    run_py        <= fetch_py;
-                    run_extend    <= fetch_extend;
-                    run_alt       <= ls_alt_tilemap;
-                    state         <= BG_ATTR;
+                    tile_col           <= 5'b0;
+                    map_ty             <= fetch_ty;
+                    run_py             <= fetch_py;
+                    run_extend         <= fetch_extend;
+                    run_alt            <= ls_alt_tilemap;
+                    // Latch palette addition: section1 §9.10 raw value = palette_offset * 16,
+                    // so palette_offset = raw >> 4. Take low 9 bits for 9-bit palette wrap.
+                    run_pal_add_lines <= ls_pal_add[12:4];  // bits[12:4] = (raw/16) & 0x1FF
+                    state              <= BG_ATTR;
                 end
             end
 
@@ -470,7 +504,9 @@ always_ff @(posedge clk) begin
                         pen = 4'(src >> sh);
 
                         if (scol >= 0 && scol < 320) begin
-                            linebuf[scol[8:0]] <= {tile_palette_r, pen};
+                            // Palette addition (Step 7): add run_pal_add_lines to tile_palette_r.
+                            // Both are 9-bit; wrap mod 512 naturally.
+                            linebuf[scol[8:0]] <= {tile_palette_r + run_pal_add_lines, pen};
                         end
                     end
                 end
