@@ -14,18 +14,24 @@
 //
 // Display timing (8 MHz pixel clock):
 //   Total width: 512 clocks/line, active: 384px (cols 64-447)
-//   Total height: 262 lines, active: 224 (lines 0-239; vblank starts at 240)
+//   Total height: 262 lines, active: 240 (lines 0-239; vblank starts at 240)
 //   Sprite rendering target: vrender = vcount + 1 (one line ahead)
+//   Hblank: 128 cycles (hcount 448..511 + 0..63)
 //
 // Fixes applied in this revision:
 //   Bug 1: Find-end table scan moved from per-hblank to per-VBLANK (FES machine).
 //   Bug 2: Per-sprite row-jump optimization: jump directly to visible tile row
 //          instead of iterating through all rows to find visible ones.
-//          Also adds hblank_end overflow guard.
 //   Bug 3: vrender >= 240 guard prevents line buffer writes during vblank.
+//   Bug 5: VBLANK per-scanline sprite index build (SIB machine) pre-computes
+//          per-scanline, per-slot rendering data (eff_x, vsub, tile_code, etc.)
+//          stored in dual M10K memories. Hblank FSM reads pre-computed data,
+//          eliminating all shadow RAM accesses from the hblank critical path.
+//          Reduces per-sprite hblank cost to 5 cycles (pipelined), supporting
+//          16 sprites/scanline within the 128-cycle hblank budget.
 //
 // Reset: section5 synchronizer (async assert, synchronous deassert)
-// Memory: section4b ifdef VERILATOR stub pattern
+// Memory: section4b ifdef VERILATOR stub pattern; scanline list uses M10K inference
 // Anti-patterns: AP-1 through AP-10 enforced
 // =============================================================================
 
@@ -68,6 +74,12 @@ localparam int SPR_ENTRIES = (MAX_SPRITES > 256) ? 256 : MAX_SPRITES;
 // vrender must be < VRENDER_MAX to write pixels to the line buffer.
 // vrender >= 240 is in vblank/overscan territory.
 localparam logic [8:0] VRENDER_MAX = 9'd240;
+
+// Per-scanline sprite list parameters
+// Active rendering targets: vrender = 0..239 (vrender < VRENDER_MAX=240).
+// SL_MAX must cover all valid vrender values.
+localparam int SL_MAX     = 240;  // rendering scanlines (0..239)
+localparam int SPR_PER_SL = 16;  // max sprites per scanline
 
 // =============================================================================
 // Reset synchronizer: async assert, synchronous deassert (section5 pattern).
@@ -207,7 +219,6 @@ always_ff @(posedge clk) begin
 
             FES_DONE: begin
                 // Hold frame_last_sprite and frame_empty_table until next frame's scan.
-                // They are updated in FES_SCAN and persist until the next VBLANK.
                 if (vblank_n) begin
                     fes_state <= FES_IDLE;
                 end
@@ -218,17 +229,388 @@ always_ff @(posedge clk) begin
     end
 end
 
+// FES done pulse: one cycle after fes_state transitions to FES_DONE
+logic fes_done_prev;
+always_ff @(posedge clk) begin
+    if (!rst_n) fes_done_prev <= 1'b0;
+    else        fes_done_prev <= (fes_state == FES_DONE);
+end
+logic fes_done_pulse;
+assign fes_done_pulse = ~fes_done_prev & (fes_state == FES_DONE);
+
+// =============================================================================
+// Per-scanline sprite index list (SIB: Scanline Index Build)
+//
+// BUG 5 FIX: Eliminate per-hblank O(N) full table scan AND per-sprite shadow
+// RAM reads from hblank critical path.
+//
+// During VBLANK (after FES completes), SIB iterates every sprite from
+// entry 0 UP TO frame_last_sprite. For each sprite, it reads X, Y, CODE, ATTR
+// (4 shadow RAM words), computes the effective rendering data for each
+// covered scanline (eff_x, vsub, tile_code, color, flipx, nx), and stores
+// that data into two M10K memories indexed by {scanline, slot}.
+//
+// Processing from 0 UP means lower-indexed sprites (higher priority) appear
+// in LOWER slot numbers. The render FSM renders from slot (count-1) DOWN to
+// slot 0, so slot 0 (entry 0, highest priority) is written LAST and wins
+// on overlap. The SPR_PER_SL cap drops high-index (low-priority) entries,
+// which is correct: when a scanline is full, we keep the already-stored
+// high-priority sprites and discard the new low-priority one.
+//
+// Per-slot storage (two parallel memories, same {sl[7:0], slot[3:0]} address):
+//   sl_data_mem[0:3839] — 32-bit:
+//     [31:23] eff_x[8:0]       X position (flip_screen applied)
+//     [22:19] vsub[3:0]        tile row within 16px tile (flip_y applied)
+//     [18:15] spr_nx[3:0]      columns-1 in sprite block
+//     [14]    spr_flipx        horizontal flip flag
+//     [13:9]  spr_color[4:0]   palette entry
+//     [8:5]   base_nibble[3:0] code[3:0] + eff_col_at_col0 (for column advance)
+//     [4:0]   UNUSED
+//   sl_code_mem[0:3839] — 16-bit: tile_code for col=0, vis_row
+//
+// Hblank FSM reads both memories in one registered read cycle (same address),
+// recovering all needed render parameters without touching shadow RAM.
+//
+// Per-sprite hblank cost (single-column, pipelined):
+//   SL_RD_WAIT(1) + PRE_RENDER(1) + ROM_REQ(1) + ROM_WAIT0(1) + ROM_WR0(1) +
+//   ROM_WAIT1(1) + ROM_WR1(1) = 7 cycles subsequent (first: +IDLE=8 total).
+// 16 sprites: 8 + 15×7 = 113 cycles << 128-cycle hblank budget.
+// =============================================================================
+
+// Scanline count registers (240 x 5-bit; 5 bits to represent 0..16 without wrap)
+logic [4:0] scanline_count [0:SL_MAX-1];
+
+// Flat M10K arrays: address = {sl[7:0], slot[3:0]} = 12-bit (3840 entries used)
+// sl_data_mem: 32-bit wide per slot
+// sl_code_mem: 16-bit wide per slot
+logic [31:0] sl_data_mem [0:3839];
+logic [15:0] sl_code_mem [0:3839];
+
+// SIB write port signals
+logic        sib_wr_en;
+logic [11:0] sib_wr_addr;   // {sl[7:0], slot[3:0]}
+logic [31:0] sib_wr_data;   // data word
+logic [15:0] sib_wr_code;   // tile code
+
+// SIB/render read port (registered: address → data valid 2 cycles later)
+logic [11:0] sib_rd_addr;
+// Bits [4:0] of sl_data_mem are unused padding (5'd0 stored by SIB_FILL).
+/* verilator lint_off UNUSEDSIGNAL */
+logic [31:0] sib_rd_data;
+/* verilator lint_on UNUSEDSIGNAL */
+logic [15:0] sib_rd_code;
+
+// M10K-style: write on clk if sib_wr_en; read registered output.
+// Both memories share the same address/enable (simultaneous R/W).
+always_ff @(posedge clk) begin
+    if (sib_wr_en) begin
+        sl_data_mem[sib_wr_addr] <= sib_wr_data;
+        sl_code_mem[sib_wr_addr] <= sib_wr_code;
+    end
+    sib_rd_data <= sl_data_mem[sib_rd_addr];
+    sib_rd_code <= sl_code_mem[sib_rd_addr];
+end
+
+// ---------------------------------------------------------------------------
+// SIB state machine
+// ---------------------------------------------------------------------------
+typedef enum logic [2:0] {
+    SIB_IDLE    = 3'd0,
+    SIB_CLR     = 3'd1,   // clear scanline_count[] before build
+    SIB_LOAD_W0 = 3'd2,   // latch X from shadow RAM (addr set in SIB_CLR or prev FILL)
+    SIB_LOAD_W1 = 3'd3,   // latch Y, set CODE addr
+    SIB_LOAD_W2 = 3'd4,   // latch CODE, set ATTR addr
+    SIB_LOAD_W3 = 3'd5,   // latch ATTR, compute render data
+    SIB_FILL    = 3'd6,   // for each scanline in Y-range, write pre-computed data
+    SIB_DONE    = 3'd7
+} sib_state_t;
+
+sib_state_t  sib_state;
+logic [7:0]  sib_idx;           // current sprite entry being processed
+logic [7:0]  sib_clr_sl;        // clear counter
+
+// SIB shadow RAM read (combinational)
+logic [9:0]  sib_sram_addr;
+logic [15:0] sib_sram_rdata;
+always_comb begin
+    sib_sram_rdata = obj_ram_shadow[sib_sram_addr];
+end
+
+// SIB decoded fields (latched during LOAD phases)
+logic [8:0]  sib_raw_x;         // raw X from word-0
+logic [8:0]  sib_raw_y;         // raw Y from word-1
+logic [15:0] sib_code;          // sprite CODE from word-2
+
+// Pre-computed render data (latched in SIB_LOAD_W3, used in SIB_FILL)
+// These represent the per-sprite fixed values (same for all scanlines)
+logic [8:0]  sib_eff_x;         // effective X (flip_screen applied)
+logic [8:0]  sib_eff_y;         // effective Y (flip_screen applied)
+logic [3:0]  sib_ny;            // rows-1
+logic [3:0]  sib_nx;            // cols-1
+logic        sib_flipy;
+logic        sib_flipx;
+logic [4:0]  sib_color;
+logic [11:0] sib_code_upper;    // sib_code[15:4] (upper 12 bits, row/col added below)
+logic [3:0]  sib_base_nibble;   // sib_code[3:0] (col nibble base)
+
+// SIB fill loop
+logic [8:0]  sib_fill_sl;       // current scanline being processed
+/* verilator lint_off UNUSEDSIGNAL */
+logic        sib_capped;        // set when a scanline list is full (diagnostic only)
+/* verilator lint_on UNUSEDSIGNAL */
+
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        sib_state      <= SIB_IDLE;
+        sib_idx        <= 8'd0;
+        sib_clr_sl     <= 8'd0;
+        sib_sram_addr  <= 10'd0;
+        sib_raw_x      <= 9'd0;
+        sib_raw_y      <= 9'd0;
+        sib_code       <= 16'd0;
+        sib_eff_x      <= 9'd0;
+        sib_eff_y      <= 9'd0;
+        sib_ny         <= 4'd0;
+        sib_nx         <= 4'd0;
+        sib_flipy      <= 1'b0;
+        sib_flipx      <= 1'b0;
+        sib_color      <= 5'd0;
+        sib_code_upper <= 12'd0;
+        sib_base_nibble<= 4'd0;
+        sib_fill_sl    <= 9'd0;
+        sib_capped     <= 1'b0;
+        sib_wr_en      <= 1'b0;
+        sib_wr_addr    <= 12'd0;
+        sib_wr_data    <= 32'd0;
+        sib_wr_code    <= 16'd0;
+        for (int s = 0; s < SL_MAX; s++)
+            scanline_count[s] <= 5'd0;
+    end else begin
+        sib_wr_en <= 1'b0;  // default: no write
+
+        case (sib_state)
+
+            // Wait for FES to finish
+            SIB_IDLE: begin
+                if (fes_done_pulse) begin
+                    // Start by clearing all scanline counts
+                    sib_clr_sl <= 8'd0;
+                    sib_state  <= SIB_CLR;
+                end
+            end
+
+            // Clear scanline_count[0..SL_MAX-1]
+            SIB_CLR: begin
+                scanline_count[sib_clr_sl] <= 5'd0;
+                if (sib_clr_sl == 8'(SL_MAX - 1)) begin
+                    if (frame_empty_table) begin
+                        sib_state <= SIB_DONE;
+                    end else begin
+                        // Start from entry 0 and process upward to frame_last_sprite.
+                        // Lower-index sprites (higher priority) fill lower slots.
+                        // Render reads from slot (count-1) down to 0, so slot 0
+                        // (entry 0, highest priority) is rendered last and wins.
+                        sib_idx       <= 8'd0;
+                        // Present X addr (word 0) for entry 0
+                        sib_sram_addr <= {8'd0, 2'b00};
+                        sib_state     <= SIB_LOAD_W0;
+                    end
+                end else begin
+                    sib_clr_sl <= sib_clr_sl + 8'd1;
+                end
+            end
+
+            // Latch X (word-0), present Y addr (word-1)
+            SIB_LOAD_W0: begin
+                sib_raw_x     <= sib_sram_rdata[8:0];
+                sib_sram_addr <= {sib_idx, 2'b01};  // Y is word 1
+                sib_state     <= SIB_LOAD_W1;
+            end
+
+            // Latch Y (word-1), present CODE addr (word-2)
+            SIB_LOAD_W1: begin
+                sib_raw_y     <= sib_sram_rdata[8:0];
+                sib_sram_addr <= {sib_idx, 2'b10};  // CODE is word 2
+                sib_state     <= SIB_LOAD_W2;
+            end
+
+            // Latch CODE (word-2), present ATTR addr (word-3)
+            SIB_LOAD_W2: begin
+                sib_code      <= sib_sram_rdata;
+                sib_sram_addr <= {sib_idx, 2'b11};  // ATTR is word 3
+                sib_state     <= SIB_LOAD_W3;
+            end
+
+            // Latch ATTR (word-3), apply flip_screen, compute eff_x/eff_y, start fill
+            SIB_LOAD_W3: begin
+                begin
+                    logic [8:0] ex, ey;
+                    logic [3:0] attr_ny, attr_nx;
+                    logic       attr_fy, attr_fx;
+                    logic [4:0] attr_col;
+
+                    attr_ny  = sib_sram_rdata[15:12];
+                    attr_nx  = sib_sram_rdata[11:8];
+                    attr_fy  = flip_screen ? ~sib_sram_rdata[6] : sib_sram_rdata[6];
+                    attr_fx  = flip_screen ? ~sib_sram_rdata[5] : sib_sram_rdata[5];
+                    attr_col = sib_sram_rdata[4:0];
+
+                    if (flip_screen) begin
+                        ex = 9'(10'd496 - {1'b0, sib_raw_x});
+                        ey = 9'(10'd240 - {1'b0, sib_raw_y});
+                    end else begin
+                        ex = sib_raw_x;
+                        ey = sib_raw_y;
+                    end
+
+                    sib_eff_x       <= ex;
+                    sib_eff_y       <= ey;
+                    sib_ny          <= attr_ny;
+                    sib_nx          <= attr_nx;
+                    sib_flipy       <= attr_fy;
+                    sib_flipx       <= attr_fx;
+                    sib_color       <= attr_col;
+                    sib_code_upper  <= sib_code[15:4];
+                    sib_base_nibble <= sib_code[3:0];
+                    sib_fill_sl     <= ey;  // start at eff_y
+                end
+                sib_state <= SIB_FILL;
+            end
+
+            // For each scanline in sprite's Y-range, write pre-computed render data
+            SIB_FILL: begin
+                begin
+                    logic [8:0]  delta;
+                    logic [7:0]  vsub_count;
+                    logic [7:0]  block_vy;  // max (ny+1)*16-1 = 255; bit 8 never used
+                    logic [3:0]  vis_row;
+                    logic [3:0]  vsub;
+                    logic [3:0]  eff_row;
+                    logic [3:0]  eff_col_0;   // effective col for tile_col=0
+                    logic [3:0]  col_nibble;
+                    logic [15:0] tile_code_0; // tile code for col=0
+                    logic [31:0] pack_data;
+
+                    // delta = (sib_fill_sl - sib_eff_y) & 9'h1FF
+                    delta      = (sib_fill_sl - sib_eff_y) & 9'h1FF;
+                    vsub_count = ({4'd0, sib_ny} + 8'd1) << 4;
+
+                    if (delta >= {1'b0, vsub_count}) begin
+                        // Finished this sprite's Y-range
+                        if (sib_idx == frame_last_sprite) begin
+                            sib_state <= SIB_DONE;
+                        end else begin
+                            // Advance to next sprite (ascending index)
+                            logic [7:0] next_idx;
+                            next_idx      = sib_idx + 8'd1;
+                            sib_idx       <= next_idx;
+                            sib_sram_addr <= {next_idx, 2'b00};  // X addr for next sprite
+                            sib_state     <= SIB_LOAD_W0;
+                        end
+                    end else begin
+                        // This scanline is in range
+                        // block_vy is the pixel row within the sprite block
+                        // delta is at most (ny+1)*16-1 = 255, so bit 8 is always 0
+                        block_vy = delta[7:0];
+                        vis_row  = block_vy[7:4];  // which tile row (0..ny)
+
+                        // vsub: pixel row within 16px tile, flip-Y applied
+                        vsub = sib_flipy ? (block_vy[3:0] ^ 4'hF) : block_vy[3:0];
+
+                        // Effective row and col=0 under flipx/flipy
+                        eff_row   = sib_flipy ? (sib_ny - vis_row) : vis_row;
+                        eff_col_0 = sib_flipx ? sib_nx : 4'd0;
+
+                        // Tile code for col=0
+                        col_nibble   = (sib_base_nibble + eff_col_0) & 4'hF;
+                        tile_code_0  = {sib_code_upper, 4'd0}
+                                     + {8'd0, eff_row, 4'd0}
+                                     + {12'd0, col_nibble};
+
+                        // Pack data word:
+                        // [31:23] eff_x[8:0]
+                        // [22:19] vsub[3:0]
+                        // [18:15] spr_nx[3:0]
+                        // [14]    spr_flipx
+                        // [13:9]  spr_color[4:0]
+                        // [8:5]   base_nibble[3:0]  (for column advance)
+                        // [4:1]   UNUSED
+                        // [0]     UNUSED
+                        pack_data = {sib_eff_x, vsub, sib_nx, sib_flipx,
+                                     sib_color, sib_base_nibble, 5'd0};
+
+                        if (sib_fill_sl < 9'(SL_MAX)) begin
+                            logic [4:0] cnt;
+                            cnt = scanline_count[sib_fill_sl[7:0]];
+                            if (cnt < 5'(SPR_PER_SL)) begin
+                                sib_wr_en   <= 1'b1;
+                                sib_wr_addr <= {sib_fill_sl[7:0], cnt[3:0]};
+                                sib_wr_data <= pack_data;
+                                sib_wr_code <= tile_code_0;
+                                scanline_count[sib_fill_sl[7:0]] <= cnt + 5'd1;
+                            end else begin
+                                sib_capped <= 1'b1;
+                            end
+                        end
+
+                        // Advance to next scanline (wrapping mod 512)
+                        sib_fill_sl <= (sib_fill_sl + 9'd1) & 9'h1FF;
+                    end
+                end
+            end
+
+            SIB_DONE: begin
+                // Hold until VBLANK ends
+                if (vblank_n) begin
+                    sib_state <= SIB_IDLE;
+                end
+            end
+
+            default: sib_state <= SIB_IDLE;
+
+        endcase
+    end
+end
+
+// sib_index_valid: sticky flag — set when SIB finishes, cleared when next build starts.
+logic sib_index_valid;
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        sib_index_valid <= 1'b0;
+    end else begin
+        if (sib_state == SIB_DONE) begin
+            sib_index_valid <= 1'b1;
+        end else if (sib_state == SIB_CLR) begin
+            sib_index_valid <= 1'b0;
+        end
+    end
+end
+logic sib_done;
+assign sib_done = sib_index_valid;
+
 // =============================================================================
 // Ping-pong line buffers (two banks, each 512 x 9 bits)
 // Transparent sentinel: 9'h1FF
-// Back  bank: ~vcount[0]  -> written during hblank for line (vcount+1)
-// Front bank:  vcount[0]  -> read during active display of line vcount
+// Back  bank: registered at hblank_start from ~vcount[0].
+//   MUST be registered because the 128-cycle hblank spans a vcount boundary:
+//   hblank starts at hpix=448 (vcount=N-1) and ends at hpix=64 (vcount=N).
+//   A combinational ~vcount[0] would flip mid-hblank, causing sprite pixels
+//   to land in the wrong bank for sprites rendered after hpix=512.
+// Front bank: vcount[0] (combinational — only read during active display,
+//   well after the hblank, so no mid-hblank hazard).
 // =============================================================================
 logic [8:0] linebuf [0:1][0:511];
 logic back_bank;
 logic front_bank;
-assign back_bank  = ~vcount[0];
-assign front_bank =  vcount[0];
+assign front_bank = vcount[0];
+
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        back_bank <= 1'b0;
+    end else if (hblank_start) begin
+        back_bank <= ~vcount[0];
+    end
+end
 
 // Startup clear: initialize both banks to transparent on reset
 logic       lbinit_active;
@@ -247,94 +629,82 @@ always_ff @(posedge clk) begin
 end
 
 // =============================================================================
-// Sprite scan state machine
+// Sprite render state machine (HBLANK phase)
 //
-// BUG 1 FIX: Uses frame_last_sprite (pre-computed at VBLANK) directly.
+// BUG 5 FIX: All sprite data pre-computed by SIB; hblank FSM only reads
+// pre-computed data from M10K memories and issues ROM fetches.
 //
-// BUG 2 FIX (Row-jump optimization):
-//   Instead of iterating through ALL tile rows to find the visible one, the
-//   FSM now computes which tile row covers vrender at sprite-load time (LOAD_W3)
-//   and jumps directly to it. This reduces the hblank cycle budget for a full
-//   8x8 block from ~166 cycles to ~54 cycles, fitting within the 64-cycle window.
-//   Combined with an hblank_end overflow guard as a safety net.
+// vrender is registered at hblank_start for stability across the 128-cycle
+// hblank window (which spans a vcount boundary when hpix wraps 511→0).
 //
-// BUG 3 FIX: vrender >= VRENDER_MAX check in IDLE prevents writes during vblank.
+// Per-sprite pipeline (single-column):
+//
+//   The simulator evaluates always_ff blocks in dependency order: the FSM block
+//   (which updates sib_rd_addr) runs before the M10K block (which reads
+//   sib_rd_addr and updates sib_rd_data). Thus sib_rd_data is valid ONE
+//   cycle after sib_rd_addr is set — only ONE SL_RD_WAIT cycle is needed.
+//
+// Per-sprite hblank cost (single column, nx=0):
+//   First sprite:  IDLE(1) + SL_RD_WAIT(1) + PRE_RENDER(1) +
+//                  ROM_REQ(1) + ROM_WAIT0(1) + ROM_WR0(1) + ROM_WAIT1(1) + ROM_WR1(1) = 8 cycles
+//   Subsequent:    [ROM_WR1 sets addr] SL_RD_WAIT(1) + PRE_RENDER(1) +
+//                  ROM_REQ(1) + ROM_WAIT0(1) + ROM_WR0(1) + ROM_WAIT1(1) + ROM_WR1(1) = 7 cycles
+//   16 sprites: 8 + 15×7 = 8 + 105 = 113 cycles << 128-cycle hblank budget. ✓
 //
 // States:
-//   IDLE       -> wait for hblank start
-//   SCAN_LOAD0 -> present word-0 address of current scan entry
-//   LOAD_W0    -> read word 0 (X)
-//   LOAD_W1    -> read word 1 (Y)
-//   LOAD_W2    -> read word 2 (CODE)
-//   LOAD_W3    -> read word 3 (ATTR); compute visible tile row; begin tile loop
-//   TILE_VIS   -> set tile parameters (tile_row_b already points to visible row)
-//   ROM_REQ    -> assert rom_cs or skip invisible column
-//   ROM_WAIT0  -> wait for rom_ok (half 0)
-//   ROM_WR0    -> write half-0 pixels; issue half-1
-//   ROM_WAIT1  -> wait for rom_ok (half 1)
-//   ROM_WR1    -> write half-1 pixels; advance column or next entry
-//   DONE       -> wait for hblank end
+//   IDLE        -> wait for hblank start; issue first SL read; →SL_RD_WAIT
+//   SL_RD_WAIT  -> M10K latency (1 cycle); sib_rd_data valid next cycle; →PRE_RENDER
+//   PRE_RENDER  -> sib_rd_data/code valid; latch render params; →ROM_REQ
+//   ROM_REQ     -> assert rom_cs half=0; →ROM_WAIT0
+//   ROM_WAIT0   -> wait rom_ok (half 0); →ROM_WR0
+//   ROM_WR0     -> write half-0 pixels; issue half-1 fetch; →ROM_WAIT1
+//   ROM_WAIT1   -> wait rom_ok (half 1); →ROM_WR1
+//   ROM_WR1     -> write half-1 pixels; advance col or issue next SL read; →SL_RD_WAIT or DONE
+//   DONE        -> wait for hblank end; →IDLE
 // =============================================================================
 
 typedef enum logic [3:0] {
-    IDLE       = 4'd0,
-    SCAN_LOAD0 = 4'd3,
-    LOAD_W0    = 4'd4,
-    LOAD_W1    = 4'd5,
-    LOAD_W2    = 4'd6,
-    LOAD_W3    = 4'd7,
-    TILE_VIS   = 4'd8,
-    ROM_REQ    = 4'd9,
-    ROM_WAIT0  = 4'd10,
-    ROM_WR0    = 4'd11,
-    ROM_WAIT1  = 4'd12,
-    ROM_WR1    = 4'd13,
-    DONE       = 4'd14
+    IDLE        = 4'd0,
+    SL_RD_WAIT  = 4'd1,  // M10K latency cycle (addr presented last cycle; data ready next)
+    PRE_RENDER  = 4'd2,  // latch sib_rd_data/code into render registers
+    ROM_REQ     = 4'd3,
+    ROM_WAIT0   = 4'd4,
+    ROM_WR0     = 4'd5,
+    ROM_WAIT1   = 4'd6,
+    ROM_WR1     = 4'd7,
+    DONE        = 4'd8
 } scan_state_t;
 
 scan_state_t scan_state;
 
-// -- Sprite entry decoded fields ----------------------------------------------
-logic [8:0]  spr_x;
-logic [8:0]  spr_y;
-logic [15:0] spr_code;
-logic [3:0]  spr_ny;
-logic [3:0]  spr_nx;
-logic        spr_flipy;
-logic        spr_flipx;
-logic [4:0]  spr_color;
+// -- Registered vrender: captured at hblank_start, stable for full 128-cycle hblank ---
+// (vrender computed combinationally from vcount would change when vcount increments
+//  at hcount=0, which is mid-hblank when hblank spans hcount 448..511 + 0..63)
+// Bit 8 is set for vcount=261 (vrender=0 special case handled in IDLE), but
+// only bits [7:0] are used for SIB memory addressing (scanlines 0..239).
+/* verilator lint_off UNUSEDSIGNAL */
+logic [8:0]  vrender_r;
+/* verilator lint_on UNUSEDSIGNAL */
 
-// -- Scan state ---------------------------------------------------------------
-logic [7:0]  scan_idx;
+// -- Active slot tracking ------------------------------------------------------
+// Render descends from slot (count-1) to slot 0.
+// Slot 0 = entry 0 (highest priority): rendered last, writes win over lower-priority sprites.
+logic [3:0]  scan_slot;     // current slot being rendered (descending from count-1 to 0)
 
-// -- Tile loop state ----------------------------------------------------------
-// tile_row_b is pre-set to the visible tile row (row-jump optimization).
-// tile_col iterates 0..spr_nx for that row only.
-logic [3:0]  tile_col;
-logic [3:0]  tile_row_b;
-logic        tile_visible;
-logic [3:0]  tile_vsub;
-logic [15:0] tile_code_r;
-logic [8:0]  tile_px;
+// -- Current sprite render parameters (from PRE_RENDER) -----------------------
+logic [3:0]  r_vsub;        // tile vsub (pixel row in tile)
+logic [3:0]  r_spr_nx;      // columns-1
+logic        r_spr_flipx;   // X flip
+logic [4:0]  r_spr_color;   // palette
+logic [3:0]  r_base_nibble; // code[3:0] for column advance
+logic [15:0] r_tile_code;   // tile code for current column
+
+// -- Tile column tracking (for multi-column sprites) --------------------------
+logic [3:0]  r_tile_col;    // current tile column (0..r_spr_nx)
+logic [8:0]  r_tile_px;     // pixel X for current column
 
 // -- ROM pipeline -------------------------------------------------------------
 logic [31:0] rom_latch;
-
-// -- Vrender: target scanline for this hblank ---------------------------------
-logic [8:0]  vrender;
-always_comb begin
-    if (vcount == 9'd261)
-        vrender = 9'd0;
-    else
-        vrender = vcount + 9'd1;
-end
-
-// -- Shadow RAM combinational read --------------------------------------------
-logic [9:0]  sram_addr;
-logic [15:0] sram_rdata;
-always_comb begin
-    sram_rdata = obj_ram_shadow[sram_addr];
-end
 
 // -- hblank edge detector -----------------------------------------------------
 logic hblank_n_prev;
@@ -345,93 +715,45 @@ end
 logic hblank_start;
 assign hblank_start = hblank_n_prev & ~hblank_n;
 
-// hblank_end: safety guard — if asserted while rendering, stop immediately.
+// hblank_end: safety guard
 logic hblank_end;
 assign hblank_end = hblank_n;
 
-// -- Tile coordinate helpers (combinational) ----------------------------------
-
-logic [3:0] eff_col;
+// -- Helper: is there a next slot? ------------------------------------------
+// Render descends from slot (count-1) to slot 0: slot 0 = entry 0 = highest priority.
+// "next slot" means slot-1 (the next-higher-priority entry).
+logic have_next_slot;
 always_comb begin
-    if (spr_flipx) eff_col = spr_nx - tile_col;
-    else           eff_col = tile_col;
+    have_next_slot = (scan_slot != 4'd0);
 end
 
-logic [3:0] eff_row;
+// -- Last column check -------------------------------------------------------
+logic r_last_col;
 always_comb begin
-    if (spr_flipy) eff_row = spr_ny - tile_row_b;
-    else           eff_row = tile_row_b;
-end
-
-logic [8:0] cur_tile_x;
-always_comb begin
-    cur_tile_x = (spr_x + {1'b0, tile_col, 4'b0}) & 9'h1FF;
-end
-
-logic [8:0] cur_tile_y;
-always_comb begin
-    cur_tile_y = (spr_y + {1'b0, tile_row_b, 4'b0}) & 9'h1FF;
-end
-
-logic [8:0] vy_delta;
-always_comb begin
-    vy_delta = (vrender - cur_tile_y) & 9'h1FF;
-end
-
-logic cur_tile_vis;
-always_comb begin
-    cur_tile_vis = (vy_delta < 9'd16);
-end
-
-logic [3:0] cur_vsub;
-always_comb begin
-    if (spr_flipy) cur_vsub = vy_delta[3:0] ^ 4'hF;
-    else           cur_vsub = vy_delta[3:0];
-end
-
-logic [15:0] cur_tile_code;
-always_comb begin
-    logic [3:0] base_nibble;
-    logic [3:0] col_nibble;
-    base_nibble   = spr_code[3:0];
-    col_nibble    = base_nibble + eff_col;
-    cur_tile_code = (spr_code & 16'hFFF0)
-                  + {8'd0, eff_row, 4'd0}
-                  + {12'd0, col_nibble};
-end
-
-// Last-column-in-row flag (used after row-jump: we only render one row)
-logic last_col;
-always_comb begin
-    last_col = (tile_col == spr_nx);
+    r_last_col = (r_tile_col == r_spr_nx);
 end
 
 // =============================================================================
-// Main sprite scan state machine
+// Main sprite render state machine (HBLANK phase)
 // =============================================================================
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        scan_state   <= IDLE;
-        sram_addr    <= 10'd0;
-        scan_idx     <= 8'd0;
-        spr_x        <= 9'd0;
-        spr_y        <= 9'd0;
-        spr_code     <= 16'd0;
-        spr_ny       <= 4'd0;
-        spr_nx       <= 4'd0;
-        spr_flipy    <= 1'b0;
-        spr_flipx    <= 1'b0;
-        spr_color    <= 5'd0;
-        tile_col     <= 4'd0;
-        tile_row_b   <= 4'd0;
-        tile_visible <= 1'b0;
-        tile_vsub    <= 4'd0;
-        tile_code_r  <= 16'd0;
-        tile_px      <= 9'd0;
-        rom_cs       <= 1'b0;
-        rom_addr     <= 20'd0;
-        rom_half     <= 1'b0;
-        rom_latch    <= 32'd0;
+        scan_state    <= IDLE;
+        vrender_r     <= 9'd0;
+        scan_slot     <= 4'd0;
+        r_vsub        <= 4'd0;
+        r_spr_nx            <= 4'd0;
+        r_spr_flipx         <= 1'b0;
+        r_spr_color         <= 5'd0;
+        r_base_nibble       <= 4'd0;
+        r_tile_code         <= 16'd0;
+        r_tile_col          <= 4'd0;
+        r_tile_px           <= 9'd0;
+        rom_cs              <= 1'b0;
+        rom_addr            <= 20'd0;
+        rom_half            <= 1'b0;
+        rom_latch           <= 32'd0;
+        sib_rd_addr         <= 12'd0;
     end else begin
         rom_cs <= 1'b0;
 
@@ -439,175 +761,104 @@ always_ff @(posedge clk) begin
 
             // ----------------------------------------------------------------
             // IDLE: Wait for hblank to begin.
-            // BUG 3 FIX: Skip rendering when vrender >= VRENDER_MAX.
-            // BUG 1 FIX: Use pre-computed frame_last_sprite from VBLANK FES.
+            // Register vrender for stability across 128-cycle hblank.
+            // Issue SL read for slot 0.
             // ----------------------------------------------------------------
             IDLE: begin
                 if (hblank_start) begin
-                    if (vrender >= VRENDER_MAX) begin
-                        // Vrender in vblank/overscan (240-261): skip rendering.
-                        // Writing here would corrupt the wrong bank and leak
-                        // pixels onto scanline 0.
-                        scan_state <= DONE;
-                    end else if (frame_empty_table) begin
-                        // No valid sprites in table (entry 0 is terminator).
-                        scan_state <= DONE;
-                    end else begin
-                        scan_idx   <= frame_last_sprite;
-                        sram_addr  <= {frame_last_sprite, 2'b00};
-                        scan_state <= SCAN_LOAD0;
-                    end
-                end
-            end
+                    // Compute vrender: vcount+1, wrapping at 262
+                    if (vcount == 9'd261)
+                        vrender_r <= 9'd0;
+                    else
+                        vrender_r <= vcount + 9'd1;
 
-            // Present word-0 address, pipeline through word reads
-            SCAN_LOAD0: begin
-                sram_addr  <= {scan_idx, 2'b00};
-                scan_state <= LOAD_W0;
-            end
+                    // Compute vrender for the check (same combinational value)
+                    begin
+                        logic [8:0] vr;
+                        vr = (vcount == 9'd261) ? 9'd0 : (vcount + 9'd1);
 
-            // Latch X (word 0)
-            LOAD_W0: begin
-                spr_x      <= sram_rdata[8:0];
-                sram_addr  <= {scan_idx, 2'b01};
-                scan_state <= LOAD_W1;
-            end
-
-            // Latch Y (word 1)
-            LOAD_W1: begin
-                spr_y      <= sram_rdata[8:0];
-                sram_addr  <= {scan_idx, 2'b10};
-                scan_state <= LOAD_W2;
-            end
-
-            // Latch CODE (word 2)
-            LOAD_W2: begin
-                spr_code   <= sram_rdata;
-                sram_addr  <= {scan_idx, 2'b11};
-                scan_state <= LOAD_W3;
-            end
-
-            // ----------------------------------------------------------------
-            // Latch ATTR (word 3), apply flip_screen, decode block dimensions.
-            // BUG 2 FIX (Row-jump optimization):
-            //   Compute block_vy_delta = (vrender - eff_y) mod 512.
-            //   If >= (ny+1)*16: no tile row covers vrender -> skip sprite.
-            //   Otherwise: vis_row = block_vy_delta >> 4. Set tile_row_b to
-            //   vis_row, bypassing iteration through invisible rows.
-            // ----------------------------------------------------------------
-            LOAD_W3: begin
-                begin
-                    logic [8:0]  ex, ey;
-                    logic [8:0]  block_vy;
-                    logic [7:0]  block_height;  // (ny+1)*16, max 256
-                    logic [3:0]  vis_row;
-                    logic        spr_has_vis;
-                    logic [3:0]  attr_ny;
-                    logic [3:0]  attr_nx;
-                    logic        attr_fy, attr_fx;
-                    logic [4:0]  attr_col;
-
-                    // Decode ATTR fields
-                    attr_ny  = sram_rdata[15:12];
-                    attr_nx  = sram_rdata[11:8];
-                    attr_fy  = flip_screen ? ~sram_rdata[6] : sram_rdata[6];
-                    attr_fx  = flip_screen ? ~sram_rdata[5] : sram_rdata[5];
-                    attr_col = sram_rdata[4:0];
-
-                    // Apply flip_screen coordinate transform
-                    if (flip_screen) begin
-                        ex = 9'(10'd496 - {1'b0, spr_x});
-                        ey = 9'(10'd240 - {1'b0, spr_y});
-                    end else begin
-                        ex = spr_x;
-                        ey = spr_y;
-                    end
-
-                    // Row-jump: compute which tile row covers vrender
-                    block_vy     = (vrender - ey) & 9'h1FF;
-                    block_height = {4'd0, attr_ny} + 8'd1;  // (ny+1) in tiles
-                    // block_height in pixels = block_height * 16, max 256
-                    // block_vy < block_height*16 iff tile_row visible
-                    // block_height*16 fits in 8 bits (max 256), block_vy is 9 bits.
-                    // Compare block_vy[8:4] (tile count) against block_height:
-                    //   if block_vy >= 256 or block_vy[7:4] >= block_height -> invisible
-                    spr_has_vis  = ({3'b0, block_vy} < {block_height, 4'b0000});
-                    vis_row      = block_vy[7:4];   // tile row index (0..15)
-
-                    // Store decoded fields
-                    spr_x        <= ex;
-                    spr_y        <= ey;
-                    spr_ny       <= attr_ny;
-                    spr_nx       <= attr_nx;
-                    spr_flipy    <= attr_fy;
-                    spr_flipx    <= attr_fx;
-                    spr_color    <= attr_col;
-                    tile_col     <= 4'd0;
-                    tile_row_b   <= vis_row;    // jump directly to visible row
-
-                    if (spr_has_vis) begin
-                        scan_state <= TILE_VIS;
-                    end else begin
-                        // No visible tile row for this sprite; skip to next entry
-                        if (scan_idx == 8'd0) begin
+                        if (vr >= VRENDER_MAX) begin
+                            scan_state <= DONE;
+                        end else if (!sib_done) begin
+                            scan_state <= DONE;
+                        end else if (scanline_count[vr[7:0]] == 5'd0) begin
                             scan_state <= DONE;
                         end else begin
-                            scan_idx   <= scan_idx - 8'd1;
-                            sram_addr  <= {(scan_idx - 8'd1), 2'b00};
-                            scan_state <= SCAN_LOAD0;
+                            // Render from slot (count-1) DOWN to slot 0.
+                            // Slot 0 = entry 0 = highest priority; rendered last, wins.
+                            begin
+                                logic [3:0] last_slot;
+                                last_slot   = scanline_count[vr[7:0]][3:0] - 4'd1;
+                                scan_slot   <= last_slot;
+                                // Issue SL read for last slot (lowest priority rendered first)
+                                sib_rd_addr <= {vr[7:0], last_slot};
+                            end
+                            scan_state <= SL_RD_WAIT;
                         end
                     end
                 end
             end
 
             // ----------------------------------------------------------------
-            // TILE_VIS: Compute tile parameters.
-            // tile_row_b already points to the visible row.
-            // BUG 2 FIX: hblank_end guard.
+            // SL_RD_WAIT: M10K read latency (one cycle).
+            // sib_rd_addr was set in the previous cycle (IDLE or ROM_WR1).
+            // The M10K always_ff block reads the updated sib_rd_addr (set by the
+            // FSM at the same posedge, dependency-ordered) and latches the data.
+            // sib_rd_data/code are valid in PRE_RENDER (next cycle).
             // ----------------------------------------------------------------
-            TILE_VIS: begin
+            SL_RD_WAIT: begin
                 if (hblank_end) begin
                     scan_state <= DONE;
                 end else begin
-                    tile_visible <= cur_tile_vis;
-                    tile_vsub    <= cur_vsub;
-                    tile_code_r  <= cur_tile_code;
-                    tile_px      <= cur_tile_x;
-                    scan_state   <= ROM_REQ;
+                    scan_state <= PRE_RENDER;
                 end
             end
 
-            // ROM_REQ: Issue ROM fetch or skip invisible tile
+            // ----------------------------------------------------------------
+            // PRE_RENDER: sib_rd_data/sib_rd_code now hold the current slot's
+            // pre-computed render parameters. Latch them and set up ROM fetch.
+            // ----------------------------------------------------------------
+            PRE_RENDER: begin
+                if (hblank_end) begin
+                    scan_state <= DONE;
+                end else begin
+                    // Latch render parameters from SIB memory
+                    // [31:23] eff_x[8:0]
+                    // [22:19] vsub[3:0]
+                    // [18:15] spr_nx[3:0]
+                    // [14]    spr_flipx
+                    // [13:9]  spr_color[4:0]
+                    // [8:5]   base_nibble[3:0]
+                    r_vsub        <= sib_rd_data[22:19];
+                    r_spr_nx      <= sib_rd_data[18:15];
+                    r_spr_flipx   <= sib_rd_data[14];
+                    r_spr_color   <= sib_rd_data[13:9];
+                    r_base_nibble <= sib_rd_data[8:5];
+                    r_tile_code   <= sib_rd_code;   // col=0 tile code
+                    r_tile_col    <= 4'd0;
+                    r_tile_px     <= sib_rd_data[31:23]; // eff_x at col=0
+
+                    scan_state <= ROM_REQ;
+                end
+            end
+
+            // ----------------------------------------------------------------
+            // ROM_REQ: Assert rom_cs for current half.
+            // ----------------------------------------------------------------
             ROM_REQ: begin
                 if (hblank_end) begin
                     scan_state <= DONE;
-                end else if (!tile_visible) begin
-                    // This column is not visible (can happen at block edges).
-                    // Advance to next column.
-                    if (last_col) begin
-                        // Done with this sprite's visible row
-                        if (scan_idx == 8'd0) begin
-                            scan_state <= DONE;
-                        end else begin
-                            scan_idx   <= scan_idx - 8'd1;
-                            sram_addr  <= {(scan_idx - 8'd1), 2'b00};
-                            scan_state <= SCAN_LOAD0;
-                        end
-                        tile_col <= 4'd0;
-                    end else begin
-                        tile_col   <= tile_col + 4'd1;
-                        scan_state <= TILE_VIS;
-                    end
                 end else begin
-                    // Issue half-0 fetch
-                    rom_addr   <= {tile_code_r, tile_vsub};
-                    rom_half   <= spr_flipx ? 1'b1 : 1'b0;
+                    rom_addr   <= {r_tile_code, r_vsub};
+                    rom_half   <= r_spr_flipx ? 1'b1 : 1'b0;
                     rom_cs     <= 1'b1;
                     scan_state <= ROM_WAIT0;
                 end
             end
 
-            // Wait for half-0 rom_ok
+            // ----------------------------------------------------------------
+            // ROM_WAIT0: Wait for rom_ok (half 0).
+            // ----------------------------------------------------------------
             ROM_WAIT0: begin
                 rom_cs <= 1'b1;
                 if (rom_ok) begin
@@ -616,28 +867,33 @@ always_ff @(posedge clk) begin
                 end
             end
 
-            // Write half-0 pixels; issue half-1 fetch
+            // ----------------------------------------------------------------
+            // ROM_WR0: Write half-0 pixels; issue half-1 fetch.
+            // ----------------------------------------------------------------
             ROM_WR0: begin
                 begin
                     logic [8:0] px;
                     logic [3:0] pd;
                     for (int i = 0; i < 8; i++) begin
                         pd = rom_latch[i*4 +: 4];
-                        if (spr_flipx)
-                            px = (tile_px + 9'd7 - 9'(i)) & 9'h1FF;
+                        if (r_spr_flipx)
+                            px = (r_tile_px + 9'd7 - 9'(i)) & 9'h1FF;
                         else
-                            px = (tile_px + 9'(i)) & 9'h1FF;
+                            px = (r_tile_px + 9'(i)) & 9'h1FF;
                         if (pd != 4'hF)
-                            linebuf[back_bank][px] <= {spr_color, pd};
+                            linebuf[back_bank][px] <= {r_spr_color, pd};
                     end
                 end
-                rom_addr   <= {tile_code_r, tile_vsub};
-                rom_half   <= spr_flipx ? 1'b0 : 1'b1;
+                // Issue half-1 fetch
+                rom_addr   <= {r_tile_code, r_vsub};
+                rom_half   <= r_spr_flipx ? 1'b0 : 1'b1;
                 rom_cs     <= 1'b1;
                 scan_state <= ROM_WAIT1;
             end
 
-            // Wait for half-1 rom_ok
+            // ----------------------------------------------------------------
+            // ROM_WAIT1: Wait for rom_ok (half 1).
+            // ----------------------------------------------------------------
             ROM_WAIT1: begin
                 rom_cs <= 1'b1;
                 if (rom_ok) begin
@@ -647,10 +903,8 @@ always_ff @(posedge clk) begin
             end
 
             // ----------------------------------------------------------------
-            // Write half-1 pixels; advance to next column or next entry.
-            // BUG 2 FIX: hblank_end overflow guard.
-            // Row-jump: after last_col, always go to next entry (not next row)
-            // because there is only one visible row per sprite per hblank.
+            // ROM_WR1: Write half-1 pixels; advance column or go to next sprite.
+            // For next sprite: issue SL read now (2-cycle latency) → SL_RD_WAIT.
             // ----------------------------------------------------------------
             ROM_WR1: begin
                 begin
@@ -658,30 +912,55 @@ always_ff @(posedge clk) begin
                     logic [3:0] pd;
                     for (int i = 0; i < 8; i++) begin
                         pd = rom_latch[i*4 +: 4];
-                        if (spr_flipx)
-                            px = (tile_px + 9'd15 - 9'(i)) & 9'h1FF;
+                        if (r_spr_flipx)
+                            px = (r_tile_px + 9'd15 - 9'(i)) & 9'h1FF;
                         else
-                            px = (tile_px + 9'd8 + 9'(i)) & 9'h1FF;
+                            px = (r_tile_px + 9'd8 + 9'(i)) & 9'h1FF;
                         if (pd != 4'hF)
-                            linebuf[back_bank][px] <= {spr_color, pd};
+                            linebuf[back_bank][px] <= {r_spr_color, pd};
                     end
                 end
 
                 if (hblank_end) begin
                     scan_state <= DONE;
-                end else if (last_col) begin
-                    // Finished all columns of the visible tile row; next entry.
-                    tile_col <= 4'd0;
-                    if (scan_idx == 8'd0) begin
+                end else if (r_last_col) begin
+                    // Done with all columns of this sprite. Advance to next slot.
+                    r_tile_col <= 4'd0;
+                    if (!have_next_slot) begin
                         scan_state <= DONE;
                     end else begin
-                        scan_idx   <= scan_idx - 8'd1;
-                        sram_addr  <= {(scan_idx - 8'd1), 2'b00};
-                        scan_state <= SCAN_LOAD0;
+                        // Descend to the next-higher-priority slot (slot-1)
+                        logic [3:0] ns;
+                        ns          = scan_slot - 4'd1;
+                        scan_slot   <= ns;
+                        // Issue SL read for next slot; wait 1 cycle for data
+                        sib_rd_addr <= {vrender_r[7:0], ns};
+                        scan_state  <= SL_RD_WAIT;
                     end
                 end else begin
-                    tile_col   <= tile_col + 4'd1;
-                    scan_state <= TILE_VIS;
+                    // Multi-column: advance to next column
+                    begin
+                        logic [3:0] nc;
+                        logic [3:0] eff_col_nc;
+                        logic [3:0] col_nibble_nc;
+                        logic [8:0] next_px;
+
+                        nc = r_tile_col + 4'd1;
+                        r_tile_col <= nc;
+
+                        // eff_col for new column (flipx transforms column index)
+                        eff_col_nc    = r_spr_flipx ? (r_spr_nx - nc) : nc;
+                        col_nibble_nc = (r_base_nibble + eff_col_nc) & 4'hF;
+
+                        // Update tile_code: replace low nibble for new column.
+                        // Upper 12 bits carry (code_upper + eff_row) and are unchanged.
+                        r_tile_code <= (r_tile_code & 16'hFFF0) | {12'd0, col_nibble_nc};
+
+                        // Advance pixel X by 16
+                        next_px    = (r_tile_px + 9'd16) & 9'h1FF;
+                        r_tile_px <= next_px;
+                    end
+                    scan_state <= ROM_REQ;
                 end
             end
 

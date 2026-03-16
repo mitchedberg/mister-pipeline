@@ -182,7 +182,10 @@ for i in range(256):
     sprites_256.append({
         'x': 64 + col * 20,
         'y': row * 14,
-        'code': i & 0xFFFF,
+        # Use 0x0100|i to avoid code=0x00AA (reserved for transparent_tile test).
+        # The 0x00AA testbench ROM override makes that code all-transparent,
+        # which conflicts with the non-transparent pixels expected here.
+        'code': (0x0100 | i) & 0xFFFF,
         'nx': 0, 'ny': 0,
         'flipx': False, 'flipy': False,
         'color': (i % 31) + 1,

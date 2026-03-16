@@ -196,128 +196,47 @@ static void write_obj_ram(const uint16_t* ram) {
     tick();
 }
 
-// Simulate VBLANK period: hold vblank_n=0 for enough cycles for DMA (1024 words)
-// plus state machine overhead. Use 1500 pixel clocks.
-static void do_vblank() {
-    dut->vblank_n = 0;
-    dut->vcount   = 240;
-    for (int i = 0; i < 1500; i++) {
-        dut->hcount   = (uint16_t)(i % 512);
-        dut->hblank_n = ((i % 512) < 448) ? 1 : 0;
-        service_rom();
-        tick();
-    }
-    dut->vblank_n = 1;
-}
+// do_vblank() is no longer used: simulate_frame_v3 integrates VBLANK correctly.
 
-// Simulate one full frame. Returns captured pixels:
-// map from (sl*512 + x) → pixel_out (9-bit)
-// Only captures hcount 64..447 during active scanlines (vblank_n=1).
-static std::map<uint32_t,int> simulate_frame(bool flip_screen_val) {
-    std::map<uint32_t,int> captured;
-    dut->flip_screen = flip_screen_val ? 1 : 0;
-
-    // Track previous hcount to recover the x position for registered pixel_out
-    int prev_sl = -1, prev_hc = -1;
-    bool prev_valid = false;
-
-    for (int vline = 0; vline < 262; vline++) {
-        dut->vcount   = (uint16_t)vline;
-        dut->vblank_n = (vline < 240) ? 1 : 0;
-
-        for (int hpix = 0; hpix < 512; hpix++) {
-            dut->hcount   = (uint16_t)hpix;
-            dut->hblank_n = (hpix < 448) ? 1 : 0;
-            service_rom();
-            tick();
-
-            // pixel_out is registered: the value at the rising edge of clk
-            // corresponds to the pixel latched in the previous cycle.
-            // pixel_valid tells us the output is valid.
-            if (dut->pixel_valid && prev_valid) {
-                // prev_hc was the hcount when we triggered the read
-                if (prev_sl >= 0 && prev_sl < 240 &&
-                    prev_hc >= 64 && prev_hc <= 447) {
-                    uint32_t key = (uint32_t)prev_sl * 512u + (uint32_t)prev_hc;
-                    captured[key] = (int)dut->pixel_out;
-                }
-            }
-
-            // Update prev tracking
-            // pixel_valid after this tick corresponds to the pixel latched for hpix
-            // Actually: the DUT registers pixel_out when active_display is true.
-            // active_display uses hblank_n (combinational from hcount).
-            // After tick(), pixel_valid reflects whether hpix was in active window.
-            prev_sl    = vline;
-            prev_hc    = hpix;
-            prev_valid = (bool)dut->pixel_valid;
-
-            // Also capture at this cycle if pixel_valid just asserted
-            // (for the first pixel of a line)
-            if (dut->pixel_valid) {
-                // pixel_out is the pixel for hpix (current), since active_display
-                // depends on current hcount, and pixel_out = linebuf[hcount]
-                // registered one cycle. So pixel_out at posedge after hpix
-                // is the pixel read when hcount==hpix.
-                // But it's one cycle late due to register stage.
-                // We correct by using hpix-1 as the display column.
-                // Handle this below.
-            }
-        }
-    }
-
-    return captured;
-}
-
-// Simulate one full frame, capturing pixel output.
+// Simulate one complete video frame, capturing pixel output.
 // Returns map from (scanline*512 + x) → pixel_out (9-bit).
 //
-// Timing: vrender = vcount+1 (mod 262). The DUT renders scanline N
-// during the hblank of vcount=N-1. To capture scanline 0 correctly, we must
-// simulate the hblank of vcount=261 FIRST. We do this by simulating the
-// frame as:
-//   vcount = 261: full scanline (hblank fills back buffer for vrender=0)
-//   vcount = 0:   active display reads the front buffer (shows sl=0)
-//   vcount = 1:   etc.
-// The frame loop thus runs: 261, 0, 1, ..., 260 — one full period.
+// Timing: vrender = vcount+1 (mod 262). DUT renders scanline N during the
+// hblank of vcount=N-1. Scanline 0 is rendered during hblank of vcount=261.
 //
-// pixel_out and pixel_valid are both registered. At posedge for hcount=H
-// (with active_display asserted): pixel_out ← linebuf[H], pixel_valid ← 1.
-// These values are readable right after tick(). We capture pixel_out at each
-// hpix where pixel_valid is asserted.
-static std::map<uint32_t,int> simulate_frame_v2(bool flip_screen_val) {
+// This function simulates a FULL 262-scanline frame starting from vcount=240
+// (VBLANK start) so the DMA+FES+SIB have the full 22-scanline VBLANK window
+// (11264 cycles) to complete before the hblank of vcount=261 fires.
+// Order: 240, 241, ..., 261 (VBLANK), 0, 1, ..., 239 (active).
+//
+// The separate do_vblank() is eliminated; VBLANK is integrated here.
+// At entry: OBJ RAM already loaded, vblank_n=1 (from reset_dut+write_obj_ram).
+// The vcount=240 scanline causes vblank_n to go 0→1 transition at step=0,
+// triggering the DMA edge detector and starting the pipeline.
+static std::map<uint32_t,int> simulate_frame_v3(bool flip_screen_val) {
     std::map<uint32_t,int> captured;
     dut->flip_screen = flip_screen_val ? 1 : 0;
 
-    // Simulate 262 scanlines starting from vcount=261 so that
-    // scanline 0 gets its sprite data prepared.
-    // Order: 261, 0, 1, ..., 260
+    // 262 steps: first 22 are VBLANK (vcount 240..261), next 240 are active (vcount 0..239).
     for (int step = 0; step < 262; step++) {
-        int vline     = (step == 0) ? 261 : (step - 1);
-        // Display output is for the NEXT vline (vline+1 mod 262)
-        int display_sl = (vline + 1) % 262;
+        int vline = (step < 22) ? (240 + step) : (step - 22);
 
         dut->vcount   = (uint16_t)vline;
+        // vblank_n: 0 during VBLANK (vcount 240..261), 1 during active (vcount 0..239)
         dut->vblank_n = (vline < 240) ? 1 : 0;
 
         for (int hpix = 0; hpix < 512; hpix++) {
             dut->hcount   = (uint16_t)hpix;
-            dut->hblank_n = (hpix < 448) ? 1 : 0;
+            // hblank_n=0 during hpix 0..63 and 448..511 (128-cycle hblank window).
+            // hblank_n=1 during hpix 64..447 (active display + hblank_end guard).
+            dut->hblank_n = ((hpix >= 64) && (hpix < 448)) ? 1 : 0;
             service_rom();
             tick();
 
-            // pixel_valid and pixel_out are registered.
-            // After tick() at hpix=H, they reflect what was latched at posedge clk
-            // for hcount=H: if active_display(H, vline) then pixel_out=linebuf[H].
-            //
-            // The front bank is vcount[0], so it reads the buffer filled for vcount.
-            // The display scanline is vcount itself (reading front bank for vline).
-            // Actually re-reading the RTL:
-            //   back_bank  = ~vcount[0] → filled during hblank for vrender=vcount+1
-            //   front_bank =  vcount[0] → read during active display of vcount
-            // So for vline=V: front bank = V[0], which contains pixels rendered
-            // during hblank of vline V-1 (when back_bank was V[0], vrender=V).
-            // The display shows sprites rendered for scanline V. Correct.
+            // pixel_out and pixel_valid are registered.
+            // After tick() at hpix=H for vline=V: pixel_out holds linebuf[H] if
+            // active_display was true (hblank_n=1, vblank_n=1, 64<=H<=447).
+            // Capture only during active display (vline 0..239, hpix 64..447).
             if (dut->pixel_valid && vline < 240 && hpix >= 64 && hpix <= 447) {
                 uint32_t key = (uint32_t)vline * 512u + (uint32_t)hpix;
                 captured[key] = (int)dut->pixel_out;
@@ -423,13 +342,14 @@ int main(int argc, char** argv) {
 
         per_test[tname] = {0, 0, 0};
 
-        // Reset + load OBJ RAM + VBLANK
+        // Reset + load OBJ RAM + full frame (VBLANK integrated).
+        // simulate_frame_v3 starts at vcount=240 for a proper 22-scanline VBLANK
+        // so DMA+FES+SIB complete before the hblank of vcount=261 fires.
         reset_dut();
         write_obj_ram(rit->second.data());
-        do_vblank();
 
-        // Simulate frame
-        auto captured = simulate_frame_v2(do_flip);
+        // Simulate frame (includes VBLANK at start: vcount 240..261, then active 0..239)
+        auto captured = simulate_frame_v3(do_flip);
 
         // Build set of expected pixel positions for "extra pixel" check
         std::set<uint32_t> expected_keys;
