@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Taito F3 Display Processor (Step 3: BG tilemap layers PF1–PF4)
+// TC0630FDP — Taito F3 Display Processor (Step 5: Line RAM + Rowscroll)
 // =============================================================================
 // Integrates all video functions for Taito F3 arcade hardware (1992–1997):
 //   · 4 scrolling tilemap layers (PF1–PF4), 16×16 tiles, 4bpp  ← STEP 3 ✓
@@ -14,6 +14,7 @@
 // Games: RayForce, Darius Gaiden, Elevator Action Returns, Bubble Symphony, etc.
 //
 // CPU address map (chip-relative 18-bit word addresses, i.e. cpu_addr[18:1]):
+//   0x10000–0x17FFF: Line RAM (32768 × 16-bit words = 64KB)  ← STEP 5
 //   0x04000–0x05FFF: PF1 RAM  (0x1800 words = 12KB)  ← STEP 3
 //   0x06000–0x07FFF: PF2 RAM  (0x1800 words)         ← STEP 3
 //   0x08000–0x09FFF: PF3 RAM  (0x1800 words)         ← STEP 3
@@ -42,6 +43,12 @@
 //   · tc0630fdp_bg × 4 instantiated (PF1–PF4) with global X/Y scroll
 //   · Fake GFX ROM: 32-bit wide BRAM, CPU-writable via dedicated port
 //   · bg_pixel_out[0..3] ports expose BG layer pixels for testbench validation
+//
+// Step 5 additions:
+//   · tc0630fdp_lineram instantiated (64KB Line RAM, CPU r/w)
+//   · hblank_fall pulse generated from hblank rising edge
+//   · ls_rowscroll[0..3] and ls_alt_tilemap[0..3] wired into BG engines
+//   · Line RAM CPU decode: 0x10000–0x1FFFF (chip word addr)
 // =============================================================================
 
 module tc0630fdp (
@@ -194,7 +201,8 @@ end
 // CPU Address Decode
 // =============================================================================
 // cpu_addr[18:1] is the word address within the TC0630FDP chip window.
-// Decode uses cpu_addr[18:13] (6 bits = RTL bits 18..13 = C++ value >> 12):
+// Decode priority (highest first):
+//   Line RAM: 0x10000–0x17FFF  → cpu_addr[18:16] == 3'b010   (32K words, 64KB)
 //   PF1 RAM : 0x04000–0x057FF  → cpu_addr[18:13] in {6'h04, 6'h05}
 //   PF2 RAM : 0x06000–0x077FF  → cpu_addr[18:13] in {6'h06, 6'h07}
 //   PF3 RAM : 0x08000–0x097FF  → cpu_addr[18:13] in {6'h08, 6'h09}
@@ -202,28 +210,41 @@ end
 //   Text RAM: 0x0E000–0x0EFFF  → cpu_addr[18:13] == 6'h0E
 //   Char RAM: 0x0F000–0x0FFFF  → cpu_addr[18:13] == 6'h0F
 //   Ctrl reg: 0x00000–0x0000F  → catch-all default
+//
+// Line RAM chip word addresses 0x10000–0x17FFF (32768 words = 64KB):
+//   cpu_addr[n] = (W >> (n-1)) & 1, where W is the 18-bit word address.
+//   cpu_addr[18:16] = {(W>>17)&1, (W>>16)&1, (W>>15)&1} = 3'b010 for W in [0x10000, 0x18000).
 
 logic cs_ctrl;
 logic cs_text;
 logic cs_char;
-logic cs_pf [0:3];   // PF1=0, PF2=1, PF3=2, PF4=3
+logic cs_pf   [0:3];   // PF1=0, PF2=1, PF3=2, PF4=3
+logic cs_line;          // Line RAM (Step 5)
 
 always_comb begin
     cs_ctrl  = 1'b0;
     cs_text  = 1'b0;
     cs_char  = 1'b0;
+    cs_line  = 1'b0;
     for (int p = 0; p < 4; p++) cs_pf[p] = 1'b0;
     if (cpu_cs) begin
-        // cpu_addr[18:13] = C++ value >> 12 (6 bits select 8KB block)
-        unique case (cpu_addr[18:13])
-            6'h04, 6'h05: cs_pf[0] = 1'b1;   // PF1: 0x04000–0x057FF
-            6'h06, 6'h07: cs_pf[1] = 1'b1;   // PF2: 0x06000–0x077FF
-            6'h08, 6'h09: cs_pf[2] = 1'b1;   // PF3: 0x08000–0x097FF
-            6'h0A, 6'h0B: cs_pf[3] = 1'b1;   // PF4: 0x0A000–0x0B7FF
-            6'h0F:         cs_char = 1'b1;    // Char RAM: 0x0F000–0x0FFFF
-            6'h0E:         cs_text = 1'b1;    // Text RAM: 0x0E000–0x0EFFF
-            default:       cs_ctrl = 1'b1;    // ctrl regs and all other
-        endcase
+        // Line RAM has highest priority (large address range checked first)
+        // cpu_addr[18:16] = {(W>>17)&1, (W>>16)&1, (W>>15)&1}
+        // 3'b010 → W in [0x10000, 0x18000) = 0x10000–0x17FFF (32K words = 64KB)
+        if (cpu_addr[18:16] == 3'b010) begin
+            cs_line = 1'b1;   // Line RAM: 0x10000–0x17FFF
+        end else begin
+            // cpu_addr[18:13] = C++ value >> 12 (6 bits select 8KB block)
+            unique case (cpu_addr[18:13])
+                6'h04, 6'h05: cs_pf[0] = 1'b1;   // PF1: 0x04000–0x057FF
+                6'h06, 6'h07: cs_pf[1] = 1'b1;   // PF2: 0x06000–0x077FF
+                6'h08, 6'h09: cs_pf[2] = 1'b1;   // PF3: 0x08000–0x097FF
+                6'h0A, 6'h0B: cs_pf[3] = 1'b1;   // PF4: 0x0A000–0x0B7FF
+                6'h0F:         cs_char = 1'b1;    // Char RAM: 0x0F000–0x0FFFF
+                6'h0E:         cs_text = 1'b1;    // Text RAM: 0x0E000–0x0EFFF
+                default:       cs_ctrl = 1'b1;    // ctrl regs and all other
+            endcase
+        end
     end
 end
 
@@ -436,8 +457,11 @@ endgenerate
 // =============================================================================
 // CPU read data mux
 // =============================================================================
+logic [15:0] line_cpu_dout;   // from tc0630fdp_lineram
+
 always_comb begin
     unique case (1'b1)
+        cs_line:   cpu_dout = line_cpu_dout;
         cs_ctrl:   cpu_dout = ctrl_rdata;
         cs_text:   cpu_dout = text_cpu_rdata;
         cs_char:   cpu_dout = char_cpu_rdata;
@@ -448,6 +472,41 @@ always_comb begin
         default:   cpu_dout = 16'b0;
     endcase
 end
+
+// =============================================================================
+// HBLANK falling-edge detect (fires at end of active scan, i.e. hblank rising edge)
+// Used to trigger the Line RAM parser to load next-scanline data.
+// =============================================================================
+logic hblank_fall;
+logic hblank_r2;
+always_ff @(posedge clk) begin
+    if (!rst_n) hblank_r2 <= 1'b0;
+    else        hblank_r2 <= hblank;
+end
+// hblank_fall fires one cycle after hblank goes high (active scan ended)
+assign hblank_fall = hblank & ~hblank_r2;
+
+// =============================================================================
+// tc0630fdp_lineram — Line RAM + Parser (Step 5)
+// =============================================================================
+// Per-scanline outputs from Line RAM parser
+logic [15:0] ls_rowscroll   [0:3];
+logic        ls_alt_tilemap [0:3];
+
+tc0630fdp_lineram u_lineram (
+    .clk          (clk),
+    .rst_n        (rst_n),
+    .cpu_cs       (cs_line),
+    .cpu_rw       (cpu_rw),
+    .cpu_addr     (cpu_addr[15:1]),
+    .cpu_din      (cpu_din),
+    .cpu_be       (cpu_be),
+    .cpu_dout     (line_cpu_dout),
+    .vpos         (vpos),
+    .hblank_fall  (hblank_fall),
+    .ls_rowscroll (ls_rowscroll),
+    .ls_alt_tilemap(ls_alt_tilemap)
+);
 
 // =============================================================================
 // tc0630fdp_text — Text layer engine (Step 2)
@@ -466,25 +525,27 @@ tc0630fdp_text u_text (
 );
 
 // =============================================================================
-// tc0630fdp_bg × 4 — BG tilemap engines (Step 3)
+// tc0630fdp_bg × 4 — BG tilemap engines (Step 5: +rowscroll +alt-tilemap)
 // =============================================================================
 generate
     for (gi = 0; gi < 4; gi++) begin : gen_bg
         tc0630fdp_bg #(.PLANE(gi)) u_bg (
-            .clk          (clk),
-            .rst_n        (rst_n),
-            .hblank       (hblank),
-            .vpos         (vpos),
-            .hpos         (hpos),
-            .pf_xscroll   (pf_xscroll[gi]),
-            .pf_yscroll   (pf_yscroll[gi]),
-            .extend_mode  (extend_mode),
-            .pf_rd_addr   (pf_rd_addr_w[gi]),
-            .pf_q         (pf_q_w[gi]),
-            .gfx_addr     (bg_gfx_addr[gi]),
-            .gfx_data     (bg_gfx_data[gi]),
-            .gfx_rd       (bg_gfx_rd[gi]),
-            .bg_pixel     (bg_pixel_out[gi])
+            .clk            (clk),
+            .rst_n          (rst_n),
+            .hblank         (hblank),
+            .vpos           (vpos),
+            .hpos           (hpos),
+            .pf_xscroll     (pf_xscroll[gi]),
+            .pf_yscroll     (pf_yscroll[gi]),
+            .extend_mode    (extend_mode),
+            .ls_rowscroll   (ls_rowscroll[gi]),
+            .ls_alt_tilemap (ls_alt_tilemap[gi]),
+            .pf_rd_addr     (pf_rd_addr_w[gi]),
+            .pf_q           (pf_q_w[gi]),
+            .gfx_addr       (bg_gfx_addr[gi]),
+            .gfx_data       (bg_gfx_data[gi]),
+            .gfx_rd         (bg_gfx_rd[gi]),
+            .bg_pixel       (bg_pixel_out[gi])
         );
     end
 endgenerate

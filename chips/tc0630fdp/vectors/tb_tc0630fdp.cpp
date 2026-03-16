@@ -1,5 +1,5 @@
 // =============================================================================
-// Gate 4 (Steps 1–4): Verilator testbench for tc0630fdp.sv
+// Gate 5 (Steps 1–5): Verilator testbench for tc0630fdp.sv
 //
 // Reads one or more vector files (jsonl). Each line is a JSON object with "op":
 //
@@ -28,6 +28,15 @@
 //     Similar to check_text_pixel: advance to HBLANK at vpos, wait for BG FSM
 //     (115 cycles), advance to active display of vpos+1 at screen_col, sample
 //     bg_pixel_out[plane]. Compare to exp_pixel (13-bit: {palette[8:0],pen[3:0]}).
+//
+// Step 5 ops (Plan Step 5: Line RAM Parser + Rowscroll):
+//   op="write_line":  CPU write to Line RAM at chip word addr 0x10000+offset.
+//     "addr" is the cpu_addr word address within the chip window (must be in
+//     range 0x10000–0x17FFF).
+//   op="read_line":   CPU read from Line RAM; compare exp_dout.
+//   All pixel check ops (check_bg_pixel, check_text_pixel, etc.) are reused.
+//   Rowscroll and alt-tilemap are exercised by writing Line RAM, then
+//   checking bg_pixel_out[plane] with check_bg_pixel.
 //
 // Step 4 ops (Plan Step 4: Text Layer + Character RAM — completion tests):
 //   op="check_text_over_bg":
@@ -486,6 +495,16 @@ int main(int argc, char** argv) {
                                jint(line, "plane"),
                                jint(line, "exp_pixel"),
                                note);
+
+            // ── Step 5 ops ──────────────────────────────────────────────────
+            // write_line: CPU write to Line RAM.
+            // "addr" is the chip-window word address (0x10000–0x17FFF).
+            } else if (op == "write_line") {
+                cpu_write(jint(line, "addr"), jint(line, "data"), jint(line, "be", 3));
+
+            } else if (op == "read_line") {
+                int got = cpu_read(jint(line, "addr"));
+                check(got == jint(line, "exp_dout"), note, got, jint(line, "exp_dout"));
 
             // ── Step 4 ops ──────────────────────────────────────────────────
             } else if (op == "check_text_over_bg") {

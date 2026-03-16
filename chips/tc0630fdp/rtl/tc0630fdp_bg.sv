@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — BG Tilemap Layer Engine  (Step 3: global scroll only)
+// TC0630FDP — BG Tilemap Layer Engine  (Step 5: global scroll + rowscroll)
 // =============================================================================
 // One instance per playfield (PF1–PF4). PLANE parameter = 0..3.
 //
@@ -20,9 +20,13 @@
 //   Within word: bits[31:28]=px0, [27:24]=px1, ..., [3:0]=px7.
 //   flipX: reverse nibble order. flipY: row = 15 - fetch_py.
 //
-// Scroll (global only, Step 3; section1 §3.1):
-//   X: pf_xscroll[15:6] = integer pixel offset. canvas_x_at_screen0 = xscroll.
+// Scroll (global + per-scanline rowscroll, Step 5; section1 §3.1 + §9.11):
+//   X: effective_x = pf_xscroll[15:6] + ls_rowscroll_int  (both in pixel units)
+//      ls_rowscroll_int = ls_rowscroll[15:6]  (same fixed-point format as global)
 //   Y: pf_yscroll[15:7] = integer pixel offset. canvas_y = (vpos+1+yscroll)&0x1FF.
+//
+// Alt-tilemap (Step 5; section1 §9.2 bit[9]):
+//   When ls_alt_tilemap=1, tile addresses in PF RAM are offset by +0x1800 words.
 //
 // FSM: 5 states × 21 tiles + 1 IDLE = 106 cycles < 112-cycle HBLANK budget.
 //   BG_IDLE → (hblank_rise) → [per-tile:] BG_ATTR → BG_CODE → BG_GFX0 →
@@ -59,6 +63,13 @@ module tc0630fdp_bg #(
     // ── Extend mode ───────────────────────────────────────────────────────
     input  logic        extend_mode,
 
+    // ── Per-scanline Line RAM outputs (Step 5) ───────────────────────────────────
+    // ls_rowscroll: per-scanline X-scroll addition (same 10.6 fp as pf_xscroll).
+    // 0 when rowscroll is disabled for this PF on this scanline.
+    input  logic [15:0] ls_rowscroll,
+    // ls_alt_tilemap: when 1, PF RAM tile address += 0x1800 words.
+    input  logic        ls_alt_tilemap,
+
     // ── PF RAM async read port (0x1800 words per PF) ─────────────────────
     output logic [12:0] pf_rd_addr,
     input  logic [15:0] pf_q,
@@ -78,15 +89,28 @@ module tc0630fdp_bg #(
 localparam int H_START = 46;
 
 // =============================================================================
-// HBLANK rising-edge detect
+// HBLANK rising-edge detect (delayed by 1 cycle)
+// Fire FSM one cycle AFTER hblank first goes high, ensuring that the
+// tc0630fdp_lineram has already registered the new per-scanline values
+// (ls_rowscroll, ls_alt_tilemap) into their output registers.
+// Without this 1-cycle delay, the BG FSM would latch the PREVIOUS scanline's
+// rowscroll because both the lineram and BG FSM act on the same posedge.
 // =============================================================================
 logic hblank_r;
+logic hblank_r2;
 always_ff @(posedge clk) begin
-    if (!rst_n) hblank_r <= 1'b0;
-    else        hblank_r <= hblank;
+    if (!rst_n) begin
+        hblank_r  <= 1'b0;
+        hblank_r2 <= 1'b0;
+    end else begin
+        hblank_r  <= hblank;
+        hblank_r2 <= hblank_r;
+    end
 end
+// hblank_rise fires one cycle after hblank first asserts:
+// At this cycle, lineram has already registered new ls_rowscroll / ls_alt_tilemap.
 logic hblank_rise;
-assign hblank_rise = hblank & ~hblank_r;
+assign hblank_rise = hblank_r & ~hblank_r2;
 
 // =============================================================================
 // Fetch geometry (combinational — computed from live inputs each cycle)
@@ -99,10 +123,10 @@ logic [5:0] fetch_first_tx;     // first visible map tile column
 logic [3:0] fetch_xoff;         // pixel offset within first tile (0..15)
 logic       fetch_extend;       // extend_mode passthrough
 
-// Suppress unused sub-field warnings for pf_xscroll/pf_yscroll
+// Suppress unused sub-field warnings for scroll registers
 /* verilator lint_off UNUSED */
 logic _unused_scroll;
-assign _unused_scroll = ^{pf_xscroll[5:0], pf_yscroll[6:0]};
+assign _unused_scroll = ^{pf_xscroll[5:0], pf_yscroll[6:0], ls_rowscroll[5:0]};
 /* verilator lint_on UNUSED */
 
 always_comb begin
@@ -113,8 +137,10 @@ always_comb begin
     canvas_y        = (vpos[8:0] + 9'd1) + pf_yscroll[15:7];
     fetch_py        = canvas_y[3:0];
     fetch_ty        = canvas_y[8:4];
-    // X: canvas x at screen col 0 = xscroll_int = pf_xscroll[15:6]
-    cx0             = pf_xscroll[15:6];
+    // X: effective_x = pf_xscroll[15:6] + ls_rowscroll[15:6]
+    //    Both values are 10.6 fixed-point; integer part = [15:6] (10-bit).
+    //    Adding the integer parts gives the effective canvas X at screen col 0.
+    cx0             = pf_xscroll[15:6] + ls_rowscroll[15:6];
     fetch_first_tx  = cx0[9:4] & 6'h3F;   // tile col (mod 64)
     fetch_xoff      = cx0[3:0];            // pixel offset within tile
     fetch_extend    = extend_mode;
@@ -143,6 +169,7 @@ logic [4:0] map_ty;      // current map tile row (= fetch_ty, fixed per scanline
 logic [3:0] run_py;       // snapshot of fetch_py at FSM start
 logic [3:0] run_xoff;     // snapshot of fetch_xoff at FSM start
 logic       run_extend;   // snapshot of fetch_extend at FSM start
+logic       run_alt;      // snapshot of ls_alt_tilemap at FSM start
 
 // =============================================================================
 // Tile attribute and code registers
@@ -176,14 +203,17 @@ logic [12:0] pf_code_addr_c;
 
 always_comb begin
     logic [11:0] tileword_base;   // tile_index * 2 (12-bit)
+    logic [12:0] base_addr;       // tile pair base (with optional alt-tilemap offset)
     if (run_extend)
         // tile_idx = {map_ty, map_tx} = 11 bits; ×2 → 12 bits
         tileword_base = {map_ty, map_tx, 1'b0};
     else
         // tile_idx = {map_ty, map_tx[4:0]} = 10 bits; ×2 → 11 bits; zero-extend
         tileword_base = {1'b0, map_ty, map_tx[4:0], 1'b0};
-    pf_attr_addr_c = {1'b0, tileword_base};          // attr word (offset 0)
-    pf_code_addr_c = {1'b0, tileword_base} + 13'd1;  // code word (offset 1)
+    // Alt-tilemap: add 0x1000 words (=+0x2000 bytes) to PF RAM base (section2 §2.5 + §9.2 bit[9])
+    base_addr = {1'b0, tileword_base} + (run_alt ? 13'h1000 : 13'h0000);
+    pf_attr_addr_c = base_addr;         // attr word (offset 0)
+    pf_code_addr_c = base_addr + 13'd1; // code word (offset 1)
 end
 
 always_comb begin
@@ -250,6 +280,7 @@ always_ff @(posedge clk) begin
         run_py           <= 4'b0;
         run_xoff         <= 4'b0;
         run_extend       <= 1'b0;
+        run_alt          <= 1'b0;
         tile_palette_r   <= 9'b0;
         tile_blend_r     <= 1'b0;
         tile_xplanes_r   <= 2'b0;
@@ -273,6 +304,7 @@ always_ff @(posedge clk) begin
                     run_py     <= fetch_py;
                     run_xoff   <= fetch_xoff;
                     run_extend <= fetch_extend;
+                    run_alt    <= ls_alt_tilemap;
                     state      <= BG_ATTR;
                 end
             end

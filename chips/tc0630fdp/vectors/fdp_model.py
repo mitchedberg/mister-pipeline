@@ -92,13 +92,14 @@ _UNUSED_REGS = {8, 9, 10, 11, 14}
 
 
 class TaitoF3Model:
-    """Steps 1–3 behavioral model: control registers, video timing, text layer, BG layers."""
+    """Steps 1–5 behavioral model: control registers, video timing, text layer, BG layers, Line RAM."""
 
     # Memory sizes
     TEXT_RAM_WORDS  = 4096    # 64×64 tile map × 1 word each
     CHAR_RAM_BYTES  = 8192    # 256 tiles × 32 bytes = 8KB
     PF_RAM_WORDS    = 6144    # 0x1800 words per playfield
     GFX_ROM_WORDS   = 4096    # simulation GFX ROM (32-bit words) — matches RTL BRAM
+    LINE_RAM_WORDS  = 32768   # 32K × 16-bit words = 64KB Line RAM (step 5)
 
     def __init__(self):
         self.ctrl     = [0] * 16          # 16 × 16-bit display control registers
@@ -106,6 +107,7 @@ class TaitoF3Model:
         self.char_ram = [0] * self.CHAR_RAM_BYTES   # step 2 (bytes)
         self.pf_ram   = [[0] * self.PF_RAM_WORDS for _ in range(4)]  # step 3
         self.gfx_rom  = [0] * self.GFX_ROM_WORDS   # step 3 (32-bit words)
+        self.line_ram = [0] * self.LINE_RAM_WORDS   # step 5 (16-bit words)
         self._rst()
 
     def _rst(self):
@@ -115,6 +117,7 @@ class TaitoF3Model:
         self.char_ram = [0] * self.CHAR_RAM_BYTES
         self.pf_ram   = [[0] * self.PF_RAM_WORDS for _ in range(4)]
         self.gfx_rom  = [0] * self.GFX_ROM_WORDS
+        self.line_ram = [0] * self.LINE_RAM_WORDS
 
     # ── Address decode ──────────────────────────────────────────────────────
 
@@ -208,7 +211,58 @@ class TaitoF3Model:
         if word_addr < self.GFX_ROM_WORDS:
             self.gfx_rom[word_addr] = data & 0xFFFFFFFF
 
-    # ── BG layer render (Step 3) ────────────────────────────────────────────
+    # ── Line RAM read/write (Step 5) ─────────────────────────────────────────
+
+    def write_line_ram(self, word_addr: int, data: int, be: int = 0x3) -> None:
+        """Write 16-bit word to Line RAM at 15-bit word address (0x0000–0x7FFF).
+
+        Matches RTL lineram module: line_ram[cpu_addr[15:1]].
+        The CPU uses chip-relative word address 0x10000+word_addr, but internally
+        the BRAM is indexed by the lower 15 bits (0–32767).
+        """
+        word_addr &= 0x7FFF
+        data &= 0xFFFF
+        cur = self.line_ram[word_addr]
+        if be & 0x2: cur = (cur & 0x00FF) | (data & 0xFF00)
+        if be & 0x1: cur = (cur & 0xFF00) | (data & 0x00FF)
+        self.line_ram[word_addr] = cur
+
+    def read_line_ram(self, word_addr: int) -> int:
+        """Read 16-bit word from Line RAM at 15-bit word address."""
+        return self.line_ram[word_addr & 0x7FFF]
+
+    # ── Line RAM decoder helpers (Step 5) ────────────────────────────────────
+
+    def _line_rowscroll(self, plane: int, scan: int) -> int:
+        """Return effective rowscroll for PF(plane+1) on scanline scan.
+
+        Returns 0 if rowscroll is disabled for this PF/scanline.
+
+        section1 §9.11 + §9.1:
+          enable word: line_ram[0x0600 + (scan & 0xFF)], bit[plane] = enable
+          data   word: line_ram[0x5000 + plane*0x100 + (scan & 0xFF)]
+        """
+        scan8 = scan & 0xFF
+        en_word = self.line_ram[0x0600 + scan8]
+        if not (en_word >> plane) & 1:
+            return 0
+        return self.line_ram[0x5000 + plane * 0x100 + scan8]
+
+    def _line_alt_tilemap(self, plane: int, scan: int) -> bool:
+        """Return alt-tilemap flag for PF(plane+1) on scanline scan.
+
+        section1 §9.2 + §9.1:
+          enable word: line_ram[0x0000 + (scan & 0xFF)], bit[4+plane] = enable
+          data   word: line_ram[0x2000 + plane*0x100 + (scan & 0xFF)], bit[9] = flag
+        """
+        scan8 = scan & 0xFF
+        en_word = self.line_ram[0x0000 + scan8]
+        if not (en_word >> (4 + plane)) & 1:
+            return False
+        cs_word = self.line_ram[0x2000 + plane * 0x100 + scan8]
+        return bool((cs_word >> 9) & 1)
+
+    # ── BG layer render (Step 3+5) ────────────────────────────────────────────
 
     def render_bg_scanline(self, vpos: int, plane: int,
                            xscroll: int, yscroll: int,
@@ -265,8 +319,15 @@ class TaitoF3Model:
         wrap_mask_px = (map_width * 16) - 1   # 1023 or 511
 
         # Scroll decode
-        xscroll_int = (xscroll >> 6) & 0x3FF    # 10-bit
+        xscroll_int = (xscroll >> 6) & 0x3FF    # 10-bit integer part
         yscroll_int = (yscroll >> 7) & 0x1FF    # 9-bit
+
+        # Step 5: apply Line RAM rowscroll and alt-tilemap for vpos (next_scan = vpos+1)
+        rs_raw    = self._line_rowscroll(plane, vpos + 1)
+        rs_int    = (rs_raw >> 6) & 0x3FF        # 10-bit integer rowscroll
+        eff_x_int = (xscroll_int + rs_int) & 0x3FF   # effective X integer (10-bit)
+        alt_tmap  = self._line_alt_tilemap(plane, vpos + 1)
+        pf_base_offset = 0x1000 if alt_tmap else 0   # alt-tilemap: +0x1000 words (=+0x2000 bytes)
 
         # Next scanline geometry
         canvas_y = ((vpos + 1) + yscroll_int) & 0x1FF
@@ -275,13 +336,13 @@ class TaitoF3Model:
 
         linebuf = [0] * 320
         for scol in range(320):
-            canvas_x = (scol + xscroll_int) & wrap_mask_px
+            canvas_x = (scol + eff_x_int) & wrap_mask_px
             tile_x   = (canvas_x >> 4) & (map_width - 1)
             tile_idx = fetch_ty * map_width + tile_x
-            word_base = tile_idx * 2
+            word_base = tile_idx * 2 + pf_base_offset
 
-            attr_word = self.pf_ram[plane][word_base]
-            code_word = self.pf_ram[plane][word_base + 1]
+            attr_word = self.pf_ram[plane][word_base]     if word_base < self.PF_RAM_WORDS else 0
+            code_word = self.pf_ram[plane][word_base + 1] if word_base + 1 < self.PF_RAM_WORDS else 0
 
             palette     = attr_word & 0x1FF           # bits[8:0]
             flipx       = bool(attr_word & (1 << 14))
