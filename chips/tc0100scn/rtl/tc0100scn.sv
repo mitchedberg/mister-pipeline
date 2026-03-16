@@ -352,10 +352,11 @@ end
 typedef enum logic [2:0] {
     FS_IDLE   = 3'd0,
     FS_AATTR  = 3'd1,   // address presented for attr word
-    FS_LATTR  = 3'd2,   // latch attr, address code word
-    FS_LCODE  = 3'd3,   // latch code, assert ROM request
-    FS_ROM    = 3'd4,   // wait for rom_ok
-    FS_LOADED = 3'd5    // shift register loaded, return to idle
+    FS_LATTR  = 3'd2,   // latch attr, address code/char word
+    FS_WCODE  = 3'd3,   // wait one cycle for code/char data to arrive
+    FS_LCODE  = 3'd4,   // latch code, assert ROM request (BG) / shift_load (FG)
+    FS_ROM    = 3'd5,   // wait for rom_ok (BG) / second wait (FG)
+    FS_LOADED = 3'd6    // shift register loaded, return to idle
 } fetch_st_t;
 
 // ── BG0 ───────────────────────────────────────────────────────────────────────
@@ -434,7 +435,12 @@ always_ff @(posedge clk) begin
                 // Latch attr word; present code word address (+1)
                 bg0_flip       <= vram_rdata_bg0[15:14];
                 vram_raddr_bg0 <= 17'(vram_raddr_bg0 + 17'd1);
-                bg0_fst        <= FS_LCODE;
+                bg0_fst        <= FS_WCODE;
+            end
+
+            FS_WCODE: begin
+                // Wait one cycle: code data is now arriving in vram_rdata_bg0
+                bg0_fst <= FS_LCODE;
             end
 
             FS_LCODE: begin
@@ -461,21 +467,19 @@ always_ff @(posedge clk) begin
             default: bg0_fst <= FS_IDLE;
         endcase
 
-        // Shift register: shift left 4 bits each clk_pix_en during active scan
-        if (clk_pix_en & active) begin
-            if (bg0_shift_load) begin
-                // Load row from ROM; apply X-flip if needed
-                if (bg0_flip[0]) begin
-                    bg0_shift <= {rom_data[3:0],   rom_data[7:4],
-                                  rom_data[11:8],  rom_data[15:12],
-                                  rom_data[19:16], rom_data[23:20],
-                                  rom_data[27:24], rom_data[31:28]};
-                end else begin
-                    bg0_shift <= rom_data;
-                end
+        // Shift register: load on any clock when bg0_shift_load=1;
+        // shift left 4 bits each clk_pix_en during active scan.
+        if (bg0_shift_load) begin
+            if (bg0_flip[0]) begin
+                bg0_shift <= {rom_data[3:0],   rom_data[7:4],
+                              rom_data[11:8],  rom_data[15:12],
+                              rom_data[19:16], rom_data[23:20],
+                              rom_data[27:24], rom_data[31:28]};
             end else begin
-                bg0_shift <= {bg0_shift[27:0], 4'h0};
+                bg0_shift <= rom_data;
             end
+        end else if (clk_pix_en & active) begin
+            bg0_shift <= {bg0_shift[27:0], 4'h0};
         end
     end
 end
@@ -603,7 +607,12 @@ always_ff @(posedge clk) begin
             FS_LATTR: begin
                 bg1_flip       <= vram_rdata_bg1[15:14];
                 vram_raddr_bg1 <= 17'(vram_raddr_bg1 + 17'd1);
-                bg1_fst        <= FS_LCODE;
+                bg1_fst        <= FS_WCODE;
+            end
+
+            FS_WCODE: begin
+                // Wait one cycle: code data is now arriving in vram_rdata_bg1
+                bg1_fst <= FS_LCODE;
             end
 
             FS_LCODE: begin
@@ -629,19 +638,19 @@ always_ff @(posedge clk) begin
             default: bg1_fst <= FS_IDLE;
         endcase
 
-        if (clk_pix_en & active) begin
-            if (bg1_shift_load) begin
-                if (bg1_flip[0]) begin
-                    bg1_shift <= {rom_data[3:0],   rom_data[7:4],
-                                  rom_data[11:8],  rom_data[15:12],
-                                  rom_data[19:16], rom_data[23:20],
-                                  rom_data[27:24], rom_data[31:28]};
-                end else begin
-                    bg1_shift <= rom_data;
-                end
+        // Shift register: load on any clock when bg1_shift_load=1;
+        // shift left 4 bits each clk_pix_en during active scan.
+        if (bg1_shift_load) begin
+            if (bg1_flip[0]) begin
+                bg1_shift <= {rom_data[3:0],   rom_data[7:4],
+                              rom_data[11:8],  rom_data[15:12],
+                              rom_data[19:16], rom_data[23:20],
+                              rom_data[27:24], rom_data[31:28]};
             end else begin
-                bg1_shift <= {bg1_shift[27:0], 4'h0};
+                bg1_shift <= rom_data;
             end
+        end else if (clk_pix_en & active) begin
+            bg1_shift <= {bg1_shift[27:0], 4'h0};
         end
     end
 end
@@ -788,13 +797,23 @@ always_ff @(posedge clk) begin
                 // Latch tilemap entry (single word for FG)
                 fg0_charcode <= vram_rdata_fg0[7:0];
                 fg0_flip     <= vram_rdata_fg0[15:14];
-                // Present char data address
+                // Do NOT present char_addr here: fg0_charcode NB not yet visible
+                fg0_fst      <= FS_WCODE;
+            end
+
+            FS_WCODE: begin
+                // fg0_charcode now updated; fg0_char_addr is correct
                 vram_raddr_fg0 <= fg0_char_addr;
-                fg0_fst        <= FS_LCODE;
+                fg0_fst        <= FS_ROM;  // re-use FS_ROM as second wait for FG0
+            end
+
+            FS_ROM: begin
+                // Wait: char data arriving in vram_rdata_fg0
+                fg0_fst <= FS_LCODE;
             end
 
             FS_LCODE: begin
-                // Latch char pixel row data
+                // Char pixel row data now valid in vram_rdata_fg0
                 fg0_shift_load <= 1'b1;
                 fg0_fst        <= FS_LOADED;
             end
@@ -806,21 +825,19 @@ always_ff @(posedge clk) begin
             default: fg0_fst <= FS_IDLE;
         endcase
 
-        // FG0 shift register: 8×2bpp, left-shift 2 bits per clk_pix_en
-        if (clk_pix_en & active) begin
-            if (fg0_shift_load) begin
-                if (fg0_flip[0]) begin
-                    // X-flip: reverse 8 pairs of 2bpp pixels from vram_rdata_fg0
-                    fg0_shift <= {vram_rdata_fg0[1:0],  vram_rdata_fg0[3:2],
-                                  vram_rdata_fg0[5:4],  vram_rdata_fg0[7:6],
-                                  vram_rdata_fg0[9:8],  vram_rdata_fg0[11:10],
-                                  vram_rdata_fg0[13:12],vram_rdata_fg0[15:14]};
-                end else begin
-                    fg0_shift <= vram_rdata_fg0;
-                end
+        // FG0 shift register: load on any clock when fg0_shift_load=1;
+        // left-shift 2 bits per clk_pix_en during active scan.
+        if (fg0_shift_load) begin
+            if (fg0_flip[0]) begin
+                fg0_shift <= {vram_rdata_fg0[1:0],  vram_rdata_fg0[3:2],
+                              vram_rdata_fg0[5:4],  vram_rdata_fg0[7:6],
+                              vram_rdata_fg0[9:8],  vram_rdata_fg0[11:10],
+                              vram_rdata_fg0[13:12],vram_rdata_fg0[15:14]};
             end else begin
-                fg0_shift <= {fg0_shift[13:0], 2'b0};
+                fg0_shift <= vram_rdata_fg0;
             end
+        end else if (clk_pix_en & active) begin
+            fg0_shift <= {fg0_shift[13:0], 2'b0};
         end
     end
 end
