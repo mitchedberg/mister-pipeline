@@ -336,3 +336,93 @@ class TC0180VCU:
         return dict(code=code, color=color, flipx=flipx, flipy=flipy,
                     x=x, y=y, zoomx=zoomx, zoomy=zoomy,
                     x_num=x_num, y_num=y_num, is_big=(big != 0))
+
+    # ── Sprite framebuffer rendering (step 5) ───────────────────────────────
+
+    def render_sprites(self, gfx_rom: bytes) -> None:
+        """Render all unzoomed, non-big sprites into the active framebuffer page.
+
+        Mirrors tc0180vcu_sprite.sv FSM exactly:
+          - If VIDEO_CTRL[0]=0: erase active page to 0 first.
+          - Walk sprite RAM from index 407 down to 0 (reverse order → sprite 0
+            is drawn last and has highest priority).
+          - Skip sprites with zoom != 0 or big != 0 (step 5 only).
+          - For each qualifying sprite, render 16×16 pixels:
+              fb_pixel = color<<2 | (pixel_idx & 3)   (lower 2 bits of 4-bit idx)
+              pixel_idx==0 → transparent (skip write).
+          - After rendering, flip fb_page (like the hardware page-flip at VBLANK).
+
+        Framebuffer layout: self.fb[page][y*512 + x] (flat 512×256 array).
+        gfx_rom: bytes-like, at least 8MB (0x800000 bytes).
+        """
+        no_erase = bool(self.video_ctrl & 0x01)
+
+        # Erase active page if requested
+        if not no_erase:
+            self.fb[self.fb_page] = [0] * (512 * 256)
+
+        # Walk sprites in reverse RAM order (407 → 0); sprite 0 drawn last = highest priority
+        for raw_idx in range(407, -1, -1):
+            spr = self.sprite(raw_idx)
+            # Skip zoomed or big sprites (step 5)
+            if spr['zoomx'] != 0 or spr['zoomy'] != 0 or spr['is_big']:
+                continue
+
+            tile_code = spr['code']
+            color     = spr['color']
+            flipx     = spr['flipx']
+            flipy     = spr['flipy']
+            sx        = spr['x']  # signed, already sign-extended by sprite()
+            sy        = spr['y']
+
+            tile_base = tile_code * 128  # byte offset in GFX ROM
+
+            for row in range(16):
+                py_eff   = (15 - row) if flipy else row
+                char_row = py_eff & 0x7
+                tile_row = (py_eff >> 3) & 0x1
+
+                for half in range(2):
+                    # Select char block with optional flipX swap
+                    cb_left  = tile_row * 2 + 0
+                    cb_right = tile_row * 2 + 1
+                    if flipx:
+                        cb = cb_right if half == 0 else cb_left
+                    else:
+                        cb = cb_left  if half == 0 else cb_right
+
+                    char_base = tile_base + cb * 32 + char_row * 2
+                    b0 = gfx_rom[char_base + 0]
+                    b1 = gfx_rom[char_base + 1]
+                    b2 = gfx_rom[char_base + 16]
+                    b3 = gfx_rom[char_base + 17]
+
+                    for lx in range(8):
+                        bit = lx if flipx else (7 - lx)
+                        pidx = (((b3 >> bit) & 1) << 3 |
+                                ((b2 >> bit) & 1) << 2 |
+                                ((b1 >> bit) & 1) << 1 |
+                                ((b0 >> bit) & 1))
+                        if pidx == 0:
+                            continue  # transparent
+
+                        fb_pixel = (color << 2) | (pidx & 3)
+
+                        # Screen coordinates (wrap within FB dimensions)
+                        screen_x = (sx + half * 8 + lx) & 0x1FF   # 9-bit, mod 512
+                        screen_y = (sy + row)            & 0xFF    # 8-bit, mod 256
+
+                        self.fb[self.fb_page][screen_y * 512 + screen_x] = fb_pixel
+
+        # Page flip (mirrors RTL vblank_fall page toggle)
+        self.fb_page ^= 1
+
+    def get_fb_pixel(self, x: int, y: int) -> int:
+        """Return the framebuffer pixel at screen (x, y) from the DISPLAY page.
+
+        The display page is the non-active (previous-frame) page:
+            display_page = 1 - self.fb_page
+        This mirrors the RTL display_page = ~fb_page_reg read.
+        """
+        display_page = 1 - self.fb_page
+        return self.fb[display_page][(y & 0xFF) * 512 + (x & 0x1FF)]

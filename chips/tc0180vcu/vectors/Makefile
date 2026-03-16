@@ -1,6 +1,6 @@
 CHIP_DIR   := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))/..
 
-RTL        := $(CHIP_DIR)/rtl/tc0180vcu.sv $(CHIP_DIR)/rtl/tc0180vcu_tx.sv $(CHIP_DIR)/rtl/tc0180vcu_bg.sv
+RTL        := $(CHIP_DIR)/rtl/tc0180vcu.sv $(CHIP_DIR)/rtl/tc0180vcu_tx.sv $(CHIP_DIR)/rtl/tc0180vcu_bg.sv $(CHIP_DIR)/rtl/tc0180vcu_sprite.sv
 TB         := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))tb_tc0180vcu.cpp)
 VEC_DIR    := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 OBJ_DIR    := $(VEC_DIR)/obj_dir
@@ -20,6 +20,7 @@ build: $(SIM_BIN)
 $(SIM_BIN): $(TB) $(RTL)
 	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR) -Wall --top-module tc0180vcu \
 	    $(CHIP_DIR)/rtl/tc0180vcu_tx.sv $(CHIP_DIR)/rtl/tc0180vcu_bg.sv \
+	    $(CHIP_DIR)/rtl/tc0180vcu_sprite.sv \
 	    $(CHIP_DIR)/rtl/tc0180vcu.sv \
 	    $(TB) --build -CFLAGS "-O2 -std=c++17" 2>&1
 

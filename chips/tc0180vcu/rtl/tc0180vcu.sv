@@ -223,6 +223,11 @@ always_ff @(posedge clk) begin
 end
 // Direct array read in cpu_dout block (1-cycle latency, no intermediate register)
 
+// Sprite engine async read port
+logic [11:0] spr_eng_rd_addr;
+logic [15:0] spr_eng_q;
+assign spr_eng_q = sprite_ram[spr_eng_rd_addr];
+
 `else
 
 logic [15:0] sprite_dout;
@@ -242,6 +247,11 @@ altsyncram #(
     .byteena_a (cpu_be),
     .q_a       (sprite_dout)
 );
+
+// Sprite engine read port stub (Quartus — true dual-port M10K needed for synthesis)
+logic [11:0] spr_eng_rd_addr;
+logic [15:0] spr_eng_q;
+assign spr_eng_q = 16'b0;  // stub
 
 `endif
 
@@ -354,9 +364,7 @@ assign display_page = ~fb_page_reg;
 // 512×256×2 pages = 262144 bytes, but Cyclone V 5CSEMA5 has ~4Mb on-chip.
 // For Gate 1-3 testing this is acceptable. Gate 3b (Quartus) will flag overflow.
 // In a real MiSTer core, framebuffer lives in SDRAM.
-/* verilator lint_off UNDRIVEN */
 logic [7:0] framebuffer [0:1][0:255][0:511];  // [page][y][x]
-/* verilator lint_on UNDRIVEN */
 
 // CPU framebuffer access
 // Address: cpu_addr[18]=1, so within chip 0x40000-0x7FFFF
@@ -372,12 +380,55 @@ assign fb_cpu_page = fb_waddr[16];
 assign fb_sy       = fb_waddr[15:8];
 assign fb_sx_pair  = fb_waddr[7:0];
 
+// Sprite engine framebuffer write signals
+logic        spr_fb_wr;
+logic [ 8:0] spr_fb_wx;
+logic [ 7:0] spr_fb_wy;
+logic [ 7:0] spr_fb_wdata;
+logic        spr_fb_erase;   // pulse: clear active write page
+
+// Framebuffer erase FSM: counter-based clear of active page
+// Clears all 512×256 = 131072 pixels sequentially (one per cycle).
+// Triggered by spr_fb_erase pulse.
+logic        erase_active;
+// Flat 17-bit counter: counts 0..131071 (512×256 pixels).
+// erase_y_c = cnt[16:9] (divides by 512), erase_x_c = cnt[8:0] (mod 512).
+logic [16:0] erase_cnt;
+logic [ 7:0] erase_y_c;
+logic [ 8:0] erase_x_c;
+assign erase_y_c = erase_cnt[16:9];   // erase_cnt / 512
+assign erase_x_c = erase_cnt[ 8:0];   // erase_cnt % 512
+
 always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        erase_active <= 1'b0;
+        erase_cnt    <= 17'b0;
+    end else if (spr_fb_erase && !erase_active) begin
+        erase_active <= 1'b1;
+        erase_cnt    <= 17'b0;
+    end else if (erase_active) begin
+        if (erase_cnt == 17'd131071) begin
+            erase_active <= 1'b0;
+        end else begin
+            erase_cnt <= erase_cnt + 17'd1;
+        end
+    end
+end
+
+always_ff @(posedge clk) begin
+    // CPU writes (highest priority for correctness)
     if (sel_fb && cpu_we) begin
         if (cpu_be[1]) framebuffer[fb_cpu_page][fb_sy][{fb_sx_pair, 1'b0}] <= cpu_din[15:8];
         if (cpu_be[0]) framebuffer[fb_cpu_page][fb_sy][{fb_sx_pair, 1'b1}] <= cpu_din[ 7:0];
+    end else if (erase_active) begin
+        // Erase the active write page
+        framebuffer[fb_page_reg][erase_y_c][erase_x_c] <= 8'b0;
+    end else if (spr_fb_wr) begin
+        // Sprite pixel write to active write page
+        framebuffer[fb_page_reg][spr_fb_wy][spr_fb_wx] <= spr_fb_wdata;
     end
 end
+
 logic [15:0] fb_dout;
 always_ff @(posedge clk) begin
     fb_dout[15:8] <= framebuffer[fb_cpu_page][fb_sy][{fb_sx_pair, 1'b0}];
@@ -387,6 +438,11 @@ end
 `else
 
 // Quartus: framebuffer in external SDRAM (stub — driven externally in top-level)
+logic        spr_fb_wr;
+logic [ 8:0] spr_fb_wx;
+logic [ 7:0] spr_fb_wy;
+logic [ 7:0] spr_fb_wdata;
+logic        spr_fb_erase;
 logic [15:0] fb_dout;
 assign fb_dout = 16'b0;
 
@@ -569,10 +625,34 @@ tc0180vcu_bg #(.PLANE(0)) u_fg (
 );
 
 // =============================================================================
+// Sprite Engine
+// =============================================================================
+logic [22:0] spr_gfx_addr;
+logic        spr_gfx_rd;
+
+tc0180vcu_sprite u_sprite (
+    .clk        (clk),
+    .rst_n      (rst_n),
+    .vblank_n   (vblank_n),
+    .spr_rd_addr(spr_eng_rd_addr),
+    .spr_q      (spr_eng_q),
+    .gfx_addr   (spr_gfx_addr),
+    .gfx_data   (gfx_data),
+    .gfx_rd     (spr_gfx_rd),
+    .fb_wr      (spr_fb_wr),
+    .fb_wx      (spr_fb_wx),
+    .fb_wy      (spr_fb_wy),
+    .fb_wdata   (spr_fb_wdata),
+    .fb_erase   (spr_fb_erase),
+    .no_erase   (fb_no_erase),
+    .video_ctrl (video_ctrl)
+);
+
+// =============================================================================
 // GFX ROM Arbitration
-// TX has priority (runs first), then BG, then FG.
-// Since they are time-sequenced, only one will have gfx_rd=1 at a time.
-// Priority mux: TX > BG > FG.
+// TX/BG/FG run during HBLANK; sprite engine runs during VBLANK.
+// They are time-disjoint, but use a priority mux to be safe:
+//   TX > BG > FG > Sprite
 // =============================================================================
 always_comb begin
     if (tx_gfx_rd) begin
@@ -584,6 +664,9 @@ always_comb begin
     end else if (fg_gfx_rd) begin
         gfx_addr = fg_gfx_addr;
         gfx_rd   = 1'b1;
+    end else if (spr_gfx_rd) begin
+        gfx_addr = spr_gfx_addr;
+        gfx_rd   = 1'b1;
     end else begin
         gfx_addr = 23'b0;
         gfx_rd   = 1'b0;
@@ -592,38 +675,72 @@ end
 
 // =============================================================================
 // Pixel Output — Layer Compositor
-// Priority (both modes, no sprites yet):
-//   TX > FG > BG (highest to lowest; 0 = transparent)
+// Priority mode 1 (sprite_priority=1): BG → FG → SP → TX
+// Priority mode 0 (sprite_priority=0): BG → OBJ0 (sp[4]=0) → FG → OBJ1 (sp[4]≠0) → TX
+//
+// SP pixel comes from the DISPLAY page (opposite of write page) of the framebuffer.
+// sp_pix[7:0] = {color[5:0], pix_idx[1:0]}; sp_pix==0 → transparent.
+//
 // pixel_out[12:0]:
 //   TX:    {5'b0, color[3:0], pixel_idx[3:0]}  (8-bit from tx_pixel_w)
 //   FG/BG: {3'b0, color[5:0], pixel_idx[3:0]}  (10-bit from fg/bg_pixel_w)
+//   SP:    {5'b0, sp_pix[7:0]}                  (8-bit from framebuffer)
+//
+// Mode 0 is noted for step 8; step 5 implements mode 1 only.
 // =============================================================================
 logic [3:0]  tx_pix_idx;
 logic [3:0]  fg_pix_idx;
 logic [3:0]  bg_pix_idx;
+logic [7:0]  sp_pix;
 assign tx_pix_idx = tx_pixel_w[3:0];
 assign fg_pix_idx = fg_pixel_w[3:0];
 assign bg_pix_idx = bg_pixel_w[3:0];
 
+`ifndef QUARTUS
+assign sp_pix = framebuffer[display_page][vpos][hpos[8:0]];
+`else
+assign sp_pix = 8'b0;  // Quartus stub
+`endif
+
 always_comb begin
     if (tx_pix_idx != 4'b0) begin
+        // TX always top
         pixel_out = {5'b0, tx_pixel_w};
-    end else if (fg_pix_idx != 4'b0) begin
-        pixel_out = {3'b0, fg_pixel_w};
-    end else if (bg_pix_idx != 4'b0) begin
-        pixel_out = {3'b0, bg_pixel_w};
+    end else if (sprite_priority) begin
+        // Mode 1: SP above FG
+        if (sp_pix != 8'b0) begin
+            pixel_out = {5'b0, sp_pix};
+        end else if (fg_pix_idx != 4'b0) begin
+            pixel_out = {3'b0, fg_pixel_w};
+        end else if (bg_pix_idx != 4'b0) begin
+            pixel_out = {3'b0, bg_pixel_w};
+        end else begin
+            pixel_out = 13'b0;
+        end
     end else begin
-        pixel_out = 13'b0;
+        // Mode 0: OBJ0 below FG, OBJ1 above FG (step 8 full impl; for now same as mode 1)
+        if (sp_pix != 8'b0 && sp_pix[4]) begin
+            // OBJ1 (color bit 2 = sp_pix[4]) above FG
+            pixel_out = {5'b0, sp_pix};
+        end else if (fg_pix_idx != 4'b0) begin
+            pixel_out = {3'b0, fg_pixel_w};
+        end else if (sp_pix != 8'b0 && !sp_pix[4]) begin
+            // OBJ0 below FG
+            pixel_out = {5'b0, sp_pix};
+        end else if (bg_pix_idx != 4'b0) begin
+            pixel_out = {3'b0, bg_pixel_w};
+        end else begin
+            pixel_out = 13'b0;
+        end
     end
 end
 
 assign pixel_valid = hblank_n & vblank_n;
 
-// Suppress unused warnings for signals pending later compositor
+// Suppress unused warnings for signals pending later steps
 /* verilator lint_off UNUSED */
 logic _unused;
-assign _unused = ^{screen_flip, sprite_priority, fb_no_erase,
-                   display_page, fb_page_reg,
+assign _unused = ^{screen_flip,
                    vblank_rise,
                    video_ctrl[5], video_ctrl[2:1]};
 /* verilator lint_on UNUSED */

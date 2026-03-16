@@ -916,6 +916,242 @@ int main(int argc, char** argv) {
         if (psl_errors == 0) printf("  FG per-scanline (lpb=1) test: 32/32 pixels OK\n");
     }
 
+    // ── Sprite Render Test (step 5) ──────────────────────────────────────────
+    // Tests unzoomed, non-big-sprite rendering into the framebuffer during VBLANK,
+    // then compositing of the framebuffer into pixel_out during active display.
+    //
+    // Setup:
+    //   - BG/FG banks point to VRAM[0x7000+] (all-zero → transparent)
+    //   - TX rampage=7 → VRAM[0x3800+] (all-zero → transparent)
+    //   - sprite_priority=1 (VIDEO_CTRL[3]=1): SP above FG, below TX
+    //   - VIDEO_CTRL[0]=0: erase FB on VBLANK
+    //   - One sprite at sprite RAM[0] (highest priority):
+    //       tile_code=0x0042, color=0x07, x=64, y=48, zoom=0, big=0, flipX=0, flipY=0
+    //   - Drive VBLANK low for 300,000 cycles (enough for sprite engine to complete)
+    //   - Verify pixel_out at hpos=64+px, vpos=48+py matches expected sprite pixel
+    //
+    // Expected pixel: {0x07, gfx_expected_low2bits} or 0 (transparent)
+    {
+        reset();
+        const int CTRL_BASE = 0x0C000;
+
+        // ctrl[0]: FG bank0=7, bank1=7 → transparent
+        cpu_write(CTRL_BASE + 0, (7 << 12) | (7 << 8), 0x3);
+        // ctrl[1]: BG bank0=7, bank1=7 → transparent
+        cpu_write(CTRL_BASE + 1, (7 << 12) | (7 << 8), 0x3);
+        // ctrl[6]: TX rampage=7 → transparent
+        cpu_write(CTRL_BASE + 6, 0x0700, 0x2);
+        // ctrl[7]: sprite_priority=1 (bit3), no_erase=0 (bit0)
+        // VIDEO_CTRL = 0x08 → ctrl[7][15:8] = 0x08
+        cpu_write(CTRL_BASE + 7, 0x0800, 0x2);
+
+        // Zero scroll RAM to avoid stale FG/BG scroll offsets
+        const int SCROLL_CPU = 0x09C00;
+        cpu_write(SCROLL_CPU + 0x000, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x001, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x200, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x201, 0, 0x3);
+
+        // Write sprite 0 (highest priority) to sprite RAM.
+        // Sprite RAM chip address: 0x10000 → word address 0x8000.
+        // Sprite 0 base word: 0x8000 + 0*8 = 0x8000.
+        const int SPR_BASE_CPU = 0x8000;  // sprite 0, word 0 (19-bit word addr)
+        const int SPR_TILE   = 0x0042;
+        const int SPR_ATTR   = 0x001C;  // color=0x1C (0b011100), flipX=0, flipY=0
+        //   color = attr[5:0] = 0x1C = 28 decimal
+        const int SPR_COLOR  = 0x1C;
+        const int SPR_X      = 64;
+        const int SPR_Y      = 48;
+
+        cpu_write(SPR_BASE_CPU + 0, SPR_TILE,  0x3);  // word+0: tile_code
+        cpu_write(SPR_BASE_CPU + 1, SPR_ATTR,  0x3);  // word+1: attr (color, flip)
+        cpu_write(SPR_BASE_CPU + 2, SPR_X,     0x3);  // word+2: x
+        cpu_write(SPR_BASE_CPU + 3, SPR_Y,     0x3);  // word+3: y
+        cpu_write(SPR_BASE_CPU + 4, 0x0000,    0x3);  // word+4: zoom=0 (unzoomed)
+        cpu_write(SPR_BASE_CPU + 5, 0x0000,    0x3);  // word+5: big=0 (single tile)
+
+        tick(); tick();
+
+        // Drive TWO VBLANKs, each long enough for the sprite engine to complete.
+        //
+        // Page flip mechanics (auto-flip, no_erase=0):
+        //   Before:      fb_page_reg=0, display_page=1
+        //   VBLANK 1 ↓:  fb_page_reg→1, erase page1, render sprites to page1
+        //   VBLANK 2 ↓:  fb_page_reg→0, erase page0, render sprites to page0
+        //                display_page=1 → shows page1 (rendered in VBLANK 1) ✓
+        //
+        // Sprite engine: erase (131072 cycles) + 407 sprites × ~8 cycles (skip check)
+        //   + 1 sprite × 16 rows × ~12 cycles (8 GFX + 2×8 write) ≈ ~135000 cycles.
+        // Drive each VBLANK for 200,000 cycles to be safe.
+        for (int vb = 0; vb < 2; vb++) {
+            dut->vblank_n = 0;
+            dut->hblank_n = 1;
+            dut->vpos     = 0;
+            dut->hpos     = 0;
+            for (int i = 0; i < 200000; i++) tick();
+            dut->vblank_n = 1;
+            tick(); tick();
+        }
+        // After 2nd VBLANK: display_page=1, which shows sprites rendered in VBLANK 1.
+
+        // Now check pixels at (vpos=48+py, hpos=64+px) for all 16 rows and 16 columns.
+        // Expected: framebuffer pixel = {SPR_COLOR[5:0], pix_idx[1:0]} or 0 (transparent).
+        int spr_errors = 0;
+        int spr_total  = 0;
+        for (int py = 0; py < 16; py++) {
+            for (int px = 0; px < 16; px++) {
+                int screen_x = SPR_X + px;
+                int screen_y = SPR_Y + py;
+
+                // Compute expected GFX pixel (same formula as bg_expected_pixel
+                // but the FB only stores lower 2 bits of pixel index).
+                int py_eff  = py;  // flipY=0
+                int tile_row = (py_eff >> 3) & 1;
+                int char_row = py_eff & 7;
+                int half     = (px >> 3) & 1;
+                int lx       = px & 7;
+
+                // char block selection (no flip)
+                int char_block = tile_row * 2 + half;
+
+                int char_base = SPR_TILE * 128 + char_block * 32 + char_row * 2;
+                uint8_t p0 = gfx_rom[char_base + 0];
+                uint8_t p1 = gfx_rom[char_base + 1];
+                uint8_t p2 = gfx_rom[char_base + 16];
+                uint8_t p3 = gfx_rom[char_base + 17];
+                int bit = 7 - lx;  // flipX=0
+                int pix_idx = (((p3 >> bit) & 1) << 3) |
+                              (((p2 >> bit) & 1) << 2) |
+                              (((p1 >> bit) & 1) << 1) |
+                              (((p0 >> bit) & 1));
+
+                // FB encoding: {color[5:0], pix_idx[1:0]}, transparent if pix_idx==0
+                uint8_t exp_fb = (pix_idx == 0) ? 0 :
+                                 (uint8_t)((SPR_COLOR << 2) | (pix_idx & 3));
+
+                // pixel_out from compositor:
+                // sprite_priority=1, so if sp_pix!=0: pixel_out = {5'b0, sp_pix}
+                uint16_t exp_out = (uint16_t)exp_fb;  // transparent → 0
+
+                dut->vpos = (uint8_t)screen_y;
+                dut->hpos = (uint16_t)screen_x;
+                dut->clk = 0; dut->eval();
+                uint16_t got = dut->pixel_out & 0xFF;
+
+                ++spr_total;
+                if (got == exp_out) {
+                    ++pass;
+                } else {
+                    ++fail; ++spr_errors;
+                    printf("FAIL [spr px=%d py=%d hpos=%d vpos=%d] got=0x%02X exp=0x%02X "
+                           "(pix_idx=%d color=0x%02X)\n",
+                           px, py, screen_x, screen_y, got, exp_out, pix_idx, SPR_COLOR);
+                }
+            }
+        }
+        if (spr_errors == 0)
+            printf("  Sprite render test (no-flip): %d/%d pixels OK\n", spr_total, spr_total);
+    }
+
+    // ── Sprite flipX Test ────────────────────────────────────────────────────
+    // Same setup but flipX=1: pixel order within each 8-px half is reversed.
+    {
+        reset();
+        const int CTRL_BASE = 0x0C000;
+
+        cpu_write(CTRL_BASE + 0, (7 << 12) | (7 << 8), 0x3);
+        cpu_write(CTRL_BASE + 1, (7 << 12) | (7 << 8), 0x3);
+        cpu_write(CTRL_BASE + 6, 0x0700, 0x2);
+        cpu_write(CTRL_BASE + 7, 0x0800, 0x2);  // sprite_priority=1
+
+        const int SCROLL_CPU = 0x09C00;
+        cpu_write(SCROLL_CPU + 0x000, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x001, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x200, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x201, 0, 0x3);
+
+        // Sprite 0: tile=0x0055, color=0x0A, x=100, y=80, flipX=1, flipY=0
+        const int SPR_BASE_CPU = 0x8000;
+        const int SPR_TILE2  = 0x0055;
+        const int SPR_COLOR2 = 0x0A;
+        const int SPR_ATTR2  = (1 << 14) | SPR_COLOR2;  // flipX=bit14, color=bit[5:0]
+        const int SPR_X2     = 100;
+        const int SPR_Y2     = 80;
+
+        cpu_write(SPR_BASE_CPU + 0, SPR_TILE2,  0x3);
+        cpu_write(SPR_BASE_CPU + 1, SPR_ATTR2,  0x3);
+        cpu_write(SPR_BASE_CPU + 2, SPR_X2,     0x3);
+        cpu_write(SPR_BASE_CPU + 3, SPR_Y2,     0x3);
+        cpu_write(SPR_BASE_CPU + 4, 0x0000,     0x3);
+        cpu_write(SPR_BASE_CPU + 5, 0x0000,     0x3);
+
+        tick(); tick();
+
+        // Two VBLANKs so display_page ends up showing the rendered sprites.
+        for (int vb = 0; vb < 2; vb++) {
+            dut->vblank_n = 0;
+            dut->hblank_n = 1;
+            dut->vpos     = 0;
+            dut->hpos     = 0;
+            for (int i = 0; i < 200000; i++) tick();
+            dut->vblank_n = 1;
+            tick(); tick();
+        }
+
+        int spr2_errors = 0;
+        int spr2_total  = 0;
+        for (int py = 0; py < 16; py++) {
+            for (int px = 0; px < 16; px++) {
+                int screen_x = SPR_X2 + px;
+                int screen_y = SPR_Y2 + py;
+
+                // flipX=1: char-blocks L/R swapped; bit order reversed within half
+                int py_eff   = py;  // flipY=0
+                int tile_row = (py_eff >> 3) & 1;
+                int char_row = py_eff & 7;
+                int half     = (px >> 3) & 1;
+                int lx       = px & 7;
+
+                // flipX: swap L and R char-blocks
+                int cb_left  = tile_row * 2 + 0;
+                int cb_right = tile_row * 2 + 1;
+                int char_block = (half == 0) ? cb_right : cb_left;  // swapped
+
+                int char_base = SPR_TILE2 * 128 + char_block * 32 + char_row * 2;
+                uint8_t p0 = gfx_rom[char_base + 0];
+                uint8_t p1 = gfx_rom[char_base + 1];
+                uint8_t p2 = gfx_rom[char_base + 16];
+                uint8_t p3 = gfx_rom[char_base + 17];
+                int bit = lx;  // flipX=1: reversed bit order
+                int pix_idx = (((p3 >> bit) & 1) << 3) |
+                              (((p2 >> bit) & 1) << 2) |
+                              (((p1 >> bit) & 1) << 1) |
+                              (((p0 >> bit) & 1));
+
+                uint8_t exp_fb = (pix_idx == 0) ? 0 :
+                                 (uint8_t)((SPR_COLOR2 << 2) | (pix_idx & 3));
+                uint16_t exp_out = (uint16_t)exp_fb;
+
+                dut->vpos = (uint8_t)screen_y;
+                dut->hpos = (uint16_t)screen_x;
+                dut->clk = 0; dut->eval();
+                uint16_t got = dut->pixel_out & 0xFF;
+
+                ++spr2_total;
+                if (got == exp_out) {
+                    ++pass;
+                } else {
+                    ++fail; ++spr2_errors;
+                    printf("FAIL [spr_flipX px=%d py=%d hpos=%d vpos=%d] got=0x%02X exp=0x%02X "
+                           "(pix_idx=%d color=0x%02X)\n",
+                           px, py, screen_x, screen_y, got, exp_out, pix_idx, SPR_COLOR2);
+                }
+            }
+        }
+        if (spr2_errors == 0)
+            printf("  Sprite render test (flipX=1): %d/%d pixels OK\n", spr2_total, spr2_total);
+    }
+
     printf("\n%s: %d/%d tests passed\n", (fail==0)?"PASS":"FAIL", pass, pass+fail);
     delete dut;
     return (fail==0) ? 0 : 1;
