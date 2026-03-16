@@ -1152,6 +1152,211 @@ int main(int argc, char** argv) {
             printf("  Sprite render test (flipX=1): %d/%d pixels OK\n", spr2_total, spr2_total);
     }
 
+    // ── Zoom Test 1: 50% zoom (zoomx=0x80, zoomy=0x80 → zx=zy=8) ───────────
+    // zx = (0x100 - 0x80) / 16 = 0x80/16 = 8
+    // For output pixel (sx, sy) in 0..7:
+    //   src_x = sx * 16 / 8 = sx * 2   (maps 0..7 → 0,2,4,6,8,10,12,14)
+    //   src_y = sy * 16 / 8 = sy * 2
+    {
+        reset();
+        const int CTRL_BASE = 0x0C000;
+        cpu_write(CTRL_BASE + 0, (7 << 12) | (7 << 8), 0x3);  // FG transparent
+        cpu_write(CTRL_BASE + 1, (7 << 12) | (7 << 8), 0x3);  // BG transparent
+        cpu_write(CTRL_BASE + 6, 0x0700, 0x2);                 // TX transparent
+        cpu_write(CTRL_BASE + 7, 0x0800, 0x2);                 // sprite_priority=1
+
+        const int SCROLL_CPU = 0x09C00;
+        cpu_write(SCROLL_CPU + 0x000, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x001, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x200, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x201, 0, 0x3);
+
+        // Sprite 0: tile=0x0055, color=0x0A, x=32, y=32, zoom=0x8080, big=0, no flip
+        const int ZM1_BASE  = 0x8000;
+        const int ZM1_TILE  = 0x0055;
+        const int ZM1_COLOR = 0x0A;
+        const int ZM1_ATTR  = ZM1_COLOR;  // no flip
+        const int ZM1_X     = 32;
+        const int ZM1_Y     = 32;
+        const int ZM1_ZOOM  = 0x8080;     // zoomx=0x80, zoomy=0x80 → zx=zy=8
+
+        cpu_write(ZM1_BASE + 0, ZM1_TILE,  0x3);
+        cpu_write(ZM1_BASE + 1, ZM1_ATTR,  0x3);
+        cpu_write(ZM1_BASE + 2, ZM1_X,     0x3);
+        cpu_write(ZM1_BASE + 3, ZM1_Y,     0x3);
+        cpu_write(ZM1_BASE + 4, ZM1_ZOOM,  0x3);
+        cpu_write(ZM1_BASE + 5, 0x0000,    0x3);  // big=0
+
+        tick(); tick();
+
+        // Two VBLANKs (same pattern as step-5 tests)
+        for (int vb = 0; vb < 2; vb++) {
+            dut->vblank_n = 0;
+            dut->hblank_n = 1;
+            dut->vpos     = 0;
+            dut->hpos     = 0;
+            for (int i = 0; i < 300000; i++) tick();
+            dut->vblank_n = 1;
+            tick(); tick();
+        }
+
+        int zm1_errors = 0;
+        int zm1_total  = 0;
+        const int ZX1 = 8;  // (0x100 - 0x80) / 16
+        const int ZY1 = 8;
+
+        for (int out_sy = 0; out_sy < ZY1; out_sy++) {
+            for (int out_sx = 0; out_sx < ZX1; out_sx++) {
+                int screen_x = ZM1_X + out_sx;
+                int screen_y = ZM1_Y + out_sy;
+
+                // src = nearest-neighbor map: sx*16/zx = sx*2, sy*16/zy = sy*2
+                int src_x = out_sx * 16 / ZX1;
+                int src_y = out_sy * 16 / ZY1;
+
+                int tile_row = (src_y >> 3) & 1;
+                int char_row = src_y & 7;
+                int half     = (src_x >> 3) & 1;
+                int lx       = src_x & 7;
+                int char_block = tile_row * 2 + half;  // no flip
+
+                int char_base = ZM1_TILE * 128 + char_block * 32 + char_row * 2;
+                uint8_t p0 = gfx_rom[char_base + 0];
+                uint8_t p1 = gfx_rom[char_base + 1];
+                uint8_t p2 = gfx_rom[char_base + 16];
+                uint8_t p3 = gfx_rom[char_base + 17];
+                int bit = 7 - lx;  // flipX=0
+                int pix_idx = (((p3 >> bit) & 1) << 3) |
+                              (((p2 >> bit) & 1) << 2) |
+                              (((p1 >> bit) & 1) << 1) |
+                              (((p0 >> bit) & 1));
+
+                uint8_t  exp_fb  = (pix_idx == 0) ? 0 :
+                                   (uint8_t)((ZM1_COLOR << 2) | (pix_idx & 3));
+                uint16_t exp_out = (uint16_t)exp_fb;
+
+                dut->vpos = (uint8_t)screen_y;
+                dut->hpos = (uint16_t)screen_x;
+                dut->clk  = 0; dut->eval();
+                uint16_t got = dut->pixel_out & 0xFF;
+
+                ++zm1_total;
+                if (got == exp_out) {
+                    ++pass;
+                } else {
+                    ++fail; ++zm1_errors;
+                    printf("FAIL [zoom50%% sx=%d sy=%d] got=0x%02X exp=0x%02X "
+                           "(src_x=%d src_y=%d pix_idx=%d)\n",
+                           out_sx, out_sy, got, exp_out, src_x, src_y, pix_idx);
+                }
+            }
+        }
+        if (zm1_errors == 0)
+            printf("  Sprite zoom 50%% test: %d/%d pixels OK\n", zm1_total, zm1_total);
+    }
+
+    // ── Zoom Test 2: 25% zoom (zoomx=0xC0, zoomy=0xC0 → zx=zy=4) ───────────
+    // zx = (0x100 - 0xC0) / 16 = 0x40/16 = 4
+    // For output pixel (sx, sy) in 0..3:
+    //   src_x = sx * 16 / 4 = sx * 4   (maps 0..3 → 0,4,8,12)
+    //   src_y = sy * 16 / 4 = sy * 4
+    {
+        reset();
+        const int CTRL_BASE = 0x0C000;
+        cpu_write(CTRL_BASE + 0, (7 << 12) | (7 << 8), 0x3);
+        cpu_write(CTRL_BASE + 1, (7 << 12) | (7 << 8), 0x3);
+        cpu_write(CTRL_BASE + 6, 0x0700, 0x2);
+        cpu_write(CTRL_BASE + 7, 0x0800, 0x2);
+
+        const int SCROLL_CPU = 0x09C00;
+        cpu_write(SCROLL_CPU + 0x000, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x001, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x200, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x201, 0, 0x3);
+
+        // Sprite 0: tile=0x0033, color=0x15, x=100, y=80, zoom=0xC0C0, big=0, no flip
+        const int ZM2_BASE  = 0x8000;
+        const int ZM2_TILE  = 0x0033;
+        const int ZM2_COLOR = 0x15;
+        const int ZM2_ATTR  = ZM2_COLOR;
+        const int ZM2_X     = 100;
+        const int ZM2_Y     = 80;
+        const int ZM2_ZOOM  = 0xC0C0;  // zoomx=0xC0, zoomy=0xC0 → zx=zy=4
+
+        cpu_write(ZM2_BASE + 0, ZM2_TILE,  0x3);
+        cpu_write(ZM2_BASE + 1, ZM2_ATTR,  0x3);
+        cpu_write(ZM2_BASE + 2, ZM2_X,     0x3);
+        cpu_write(ZM2_BASE + 3, ZM2_Y,     0x3);
+        cpu_write(ZM2_BASE + 4, ZM2_ZOOM,  0x3);
+        cpu_write(ZM2_BASE + 5, 0x0000,    0x3);
+
+        tick(); tick();
+
+        for (int vb = 0; vb < 2; vb++) {
+            dut->vblank_n = 0;
+            dut->hblank_n = 1;
+            dut->vpos     = 0;
+            dut->hpos     = 0;
+            for (int i = 0; i < 300000; i++) tick();
+            dut->vblank_n = 1;
+            tick(); tick();
+        }
+
+        int zm2_errors = 0;
+        int zm2_total  = 0;
+        const int ZX2 = 4;  // (0x100 - 0xC0) / 16
+        const int ZY2 = 4;
+
+        for (int out_sy = 0; out_sy < ZY2; out_sy++) {
+            for (int out_sx = 0; out_sx < ZX2; out_sx++) {
+                int screen_x = ZM2_X + out_sx;
+                int screen_y = ZM2_Y + out_sy;
+
+                // src = nearest-neighbor map: sx*16/zx = sx*4, sy*16/zy = sy*4
+                int src_x = out_sx * 16 / ZX2;
+                int src_y = out_sy * 16 / ZY2;
+
+                int tile_row = (src_y >> 3) & 1;
+                int char_row = src_y & 7;
+                int half     = (src_x >> 3) & 1;
+                int lx       = src_x & 7;
+                int char_block = tile_row * 2 + half;
+
+                int char_base = ZM2_TILE * 128 + char_block * 32 + char_row * 2;
+                uint8_t p0 = gfx_rom[char_base + 0];
+                uint8_t p1 = gfx_rom[char_base + 1];
+                uint8_t p2 = gfx_rom[char_base + 16];
+                uint8_t p3 = gfx_rom[char_base + 17];
+                int bit = 7 - lx;  // flipX=0
+                int pix_idx = (((p3 >> bit) & 1) << 3) |
+                              (((p2 >> bit) & 1) << 2) |
+                              (((p1 >> bit) & 1) << 1) |
+                              (((p0 >> bit) & 1));
+
+                uint8_t  exp_fb  = (pix_idx == 0) ? 0 :
+                                   (uint8_t)((ZM2_COLOR << 2) | (pix_idx & 3));
+                uint16_t exp_out = (uint16_t)exp_fb;
+
+                dut->vpos = (uint8_t)screen_y;
+                dut->hpos = (uint16_t)screen_x;
+                dut->clk  = 0; dut->eval();
+                uint16_t got = dut->pixel_out & 0xFF;
+
+                ++zm2_total;
+                if (got == exp_out) {
+                    ++pass;
+                } else {
+                    ++fail; ++zm2_errors;
+                    printf("FAIL [zoom25%% sx=%d sy=%d] got=0x%02X exp=0x%02X "
+                           "(src_x=%d src_y=%d pix_idx=%d)\n",
+                           out_sx, out_sy, got, exp_out, src_x, src_y, pix_idx);
+                }
+            }
+        }
+        if (zm2_errors == 0)
+            printf("  Sprite zoom 25%% test: %d/%d pixels OK\n", zm2_total, zm2_total);
+    }
+
     printf("\n%s: %d/%d tests passed\n", (fail==0)?"PASS":"FAIL", pass, pass+fail);
     delete dut;
     return (fail==0) ? 0 : 1;

@@ -337,17 +337,28 @@ class TC0180VCU:
                     x=x, y=y, zoomx=zoomx, zoomy=zoomy,
                     x_num=x_num, y_num=y_num, is_big=(big != 0))
 
-    # ── Sprite framebuffer rendering (step 5) ───────────────────────────────
+    # ── Sprite framebuffer rendering (step 6) ───────────────────────────────
 
     def render_sprites(self, gfx_rom: bytes) -> None:
-        """Render all unzoomed, non-big sprites into the active framebuffer page.
+        """Render all non-big sprites into the active framebuffer page using the
+        unified zoom path (handles both zoomed and unzoomed sprites).
+
+        Zoom encoding:
+          zx = (0x100 - zoomx) // 16   (tile render width,  0..16 pixels)
+          zy = (0x100 - zoomy) // 16   (tile render height, 0..16 pixels)
+          When zx==0 or zy==0: sprite invisible (skip).
+
+        Nearest-neighbor zoom: for output pixel (sx, sy):
+          src_x = sx * 16 // zx
+          src_y = sy * 16 // zy
 
         Mirrors tc0180vcu_sprite.sv FSM exactly:
           - If VIDEO_CTRL[0]=0: erase active page to 0 first.
           - Walk sprite RAM from index 407 down to 0 (reverse order → sprite 0
             is drawn last and has highest priority).
-          - Skip sprites with zoom != 0 or big != 0 (step 5 only).
-          - For each qualifying sprite, render 16×16 pixels:
+          - Skip big sprites (big != 0).
+          - Skip invisible sprites (zx==0 or zy==0).
+          - For each qualifying sprite, render zx×zy pixels using nearest-neighbor.
               fb_pixel = color<<2 | (pixel_idx & 3)   (lower 2 bits of 4-bit idx)
               pixel_idx==0 → transparent (skip write).
           - After rendering, flip fb_page (like the hardware page-flip at VBLANK).
@@ -364,26 +375,38 @@ class TC0180VCU:
         # Walk sprites in reverse RAM order (407 → 0); sprite 0 drawn last = highest priority
         for raw_idx in range(407, -1, -1):
             spr = self.sprite(raw_idx)
-            # Skip zoomed or big sprites (step 5)
-            if spr['zoomx'] != 0 or spr['zoomy'] != 0 or spr['is_big']:
+            # Skip big sprites (step 7)
+            if spr['is_big']:
+                continue
+
+            zoomx = spr['zoomx']
+            zoomy = spr['zoomy']
+            zx = (0x100 - zoomx) // 16
+            zy = (0x100 - zoomy) // 16
+
+            # Skip invisible sprites
+            if zx == 0 or zy == 0:
                 continue
 
             tile_code = spr['code']
             color     = spr['color']
             flipx     = spr['flipx']
             flipy     = spr['flipy']
-            sx        = spr['x']  # signed, already sign-extended by sprite()
-            sy        = spr['y']
+            spr_x     = spr['x']  # signed, already sign-extended by sprite()
+            spr_y     = spr['y']
 
             tile_base = tile_code * 128  # byte offset in GFX ROM
 
-            for row in range(16):
-                py_eff   = (15 - row) if flipy else row
+            for out_sy in range(zy):
+                # Map output row → source row (nearest-neighbor)
+                src_y    = out_sy * 16 // zy
+                py_eff   = (15 - src_y) if flipy else src_y
                 char_row = py_eff & 0x7
                 tile_row = (py_eff >> 3) & 0x1
 
+                # Pre-fetch all 8 GFX bytes for this source row (both halves)
+                row_bytes = []
                 for half in range(2):
-                    # Select char block with optional flipX swap
                     cb_left  = tile_row * 2 + 0
                     cb_right = tile_row * 2 + 1
                     if flipx:
@@ -396,23 +419,29 @@ class TC0180VCU:
                     b1 = gfx_rom[char_base + 1]
                     b2 = gfx_rom[char_base + 16]
                     b3 = gfx_rom[char_base + 17]
+                    row_bytes.append((b0, b1, b2, b3))
 
-                    for lx in range(8):
-                        bit = lx if flipx else (7 - lx)
-                        pidx = (((b3 >> bit) & 1) << 3 |
-                                ((b2 >> bit) & 1) << 2 |
-                                ((b1 >> bit) & 1) << 1 |
-                                ((b0 >> bit) & 1))
-                        if pidx == 0:
-                            continue  # transparent
+                screen_y = (spr_y + out_sy) & 0xFF  # 8-bit, mod 256
 
-                        fb_pixel = (color << 2) | (pidx & 3)
+                for out_sx in range(zx):
+                    # Map output col → source col (nearest-neighbor)
+                    src_x   = out_sx * 16 // zx
+                    half    = (src_x >> 3) & 1
+                    local_x = src_x & 7
+                    bit = local_x if flipx else (7 - local_x)
 
-                        # Screen coordinates (wrap within FB dimensions)
-                        screen_x = (sx + half * 8 + lx) & 0x1FF   # 9-bit, mod 512
-                        screen_y = (sy + row)            & 0xFF    # 8-bit, mod 256
+                    b0, b1, b2, b3 = row_bytes[half]
+                    pidx = (((b3 >> bit) & 1) << 3 |
+                            ((b2 >> bit) & 1) << 2 |
+                            ((b1 >> bit) & 1) << 1 |
+                            ((b0 >> bit) & 1))
+                    if pidx == 0:
+                        continue  # transparent
 
-                        self.fb[self.fb_page][screen_y * 512 + screen_x] = fb_pixel
+                    fb_pixel = (color << 2) | (pidx & 3)
+
+                    screen_x = (spr_x + out_sx) & 0x1FF  # 9-bit, mod 512
+                    self.fb[self.fb_page][screen_y * 512 + screen_x] = fb_pixel
 
         # Page flip (mirrors RTL vblank_fall page toggle)
         self.fb_page ^= 1
