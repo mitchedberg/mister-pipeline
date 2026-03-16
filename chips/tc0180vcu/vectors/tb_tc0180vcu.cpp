@@ -1482,6 +1482,19 @@ int main(int argc, char** argv) {
             tick(); tick();
         }
 
+        // Debug: probe a few FB pixels by driving hpos/vpos
+        {
+            dut->vpos = (uint8_t)60;
+            dut->hpos = (uint16_t)80;
+            dut->clk = 0; dut->eval();
+            printf("  [debug] FB(80,60)=0x%02X  FB(0,0)=0x%02X\n",
+                   (unsigned)(dut->pixel_out & 0xFF),
+                   0);
+            dut->vpos = (uint8_t)0; dut->hpos = (uint16_t)0;
+            dut->clk = 0; dut->eval();
+            printf("  [debug] FB(0,0)=0x%02X\n", (unsigned)(dut->pixel_out & 0xFF));
+        }
+
         // Helper: compute expected FB pixel for a 16×16 unzoomed tile (full size)
         // at output pixel (px, py) with no flip.
         auto bs_expected = [&](int tile_code, int px, int py) -> uint8_t {
@@ -1546,6 +1559,235 @@ int main(int argc, char** argv) {
         }
         if (bs_errors == 0)
             printf("  Big sprite 2x2 test: 16/16 corner pixels OK\n");
+    }
+
+    // ── Step 8: Double-Buffer Isolation Test ─────────────────────────────────
+    // Verifies that write-bank pixels are invisible to the compositor until
+    // a page flip occurs.
+    //
+    // Mechanism: CPU writes directly to FB page 0 (via cpu_addr[16]=0).
+    // Before flip: fb_page_reg=0 (write bank=0, display bank=1).
+    //   Reading page 0 via CPU returns the written data.
+    //   Reading page 1 via CPU returns zeros.
+    // After flip (one VBLANK cycle, no_erase=1): fb_page_reg=1.
+    //   Reading page 0 via CPU still returns the data (page 0 untouched).
+    //   Reading page 1 via CPU still returns zeros.
+    //   The display bank (now page 0) now contains the previously written pixels.
+    //
+    // CPU FB address: cpu_addr[18]=1, cpu_addr[16]=page,
+    //                 cpu_addr[15:8]=y, cpu_addr[7:0]=x_pair
+    // 19-bit word address = 0x20000 | (page<<16) | (y<<8) | x_pair
+    // For page 0: cpu_addr = 0x20000 + (50<<8) + 5 = 0x23205
+    // For page 1: cpu_addr = 0x30000 + (50<<8) + 5 = 0x33205
+    {
+        reset();
+        const int CTRL_BASE = 0x0C000;
+        // no_erase=1 (VIDEO_CTRL[0]=1): skip bulk erase so write-bank data survives VBLANK
+        cpu_write(CTRL_BASE + 7, 0x0100, 0x2);  // VIDEO_CTRL high byte = 0x01 → no_erase=1
+
+        const int FB_Y       = 50;
+        const int FB_XPAIR   = 5;   // pixel pair: pixels at x=10 and x=11
+        const int FB_DATA    = 0x1234;
+        // FB word address: cpu_addr[18]=1, cpu_addr[16]=page, [15:8]=y, [7:0]=x_pair
+        // Page 0 base: 0x40000 (bit18=1, bit16=0)
+        // Page 1 base: 0x50000 (bit18=1, bit16=1)
+        const int FB_PAGE0   = 0x40000 | (0 << 16) | (FB_Y << 8) | FB_XPAIR;
+        const int FB_PAGE1   = 0x40000 | (1 << 16) | (FB_Y << 8) | FB_XPAIR;
+
+        // Write to FB page 0 (current write bank)
+        cpu_write(FB_PAGE0, FB_DATA, 0x3);
+        tick(); tick();
+
+        int db_errors = 0;
+
+        // CPU read back from page 0 → must return what we wrote.
+        // FB read has 2-cycle latency: tick1 → fb_dout updates, tick2 → cpu_dout updates.
+        // Hold cpu_cs=1 for both ticks, sample cpu_dout after tick2.
+        {
+            dut->cpu_cs   = 1;
+            dut->cpu_we   = 0;
+            dut->cpu_addr = (uint32_t)FB_PAGE0;
+            dut->cpu_be   = 0x3;
+            tick();  // fb_dout ← framebuffer[page0][y][x]
+            tick();  // cpu_dout ← fb_dout
+            dut->cpu_cs   = 0;
+            uint16_t got = dut->cpu_dout;
+            uint16_t exp = (uint16_t)FB_DATA;
+            if (got == exp) ++pass;
+            else { ++fail; ++db_errors;
+                   printf("FAIL [db_page0_readback] got=0x%04X exp=0x%04X\n", got, exp); }
+        }
+
+        // CPU read from page 1 → must be zero (write didn't touch display bank)
+        {
+            dut->cpu_cs   = 1;
+            dut->cpu_we   = 0;
+            dut->cpu_addr = (uint32_t)FB_PAGE1;
+            dut->cpu_be   = 0x3;
+            tick();  // fb_dout ← framebuffer[page1][y][x]
+            tick();  // cpu_dout ← fb_dout
+            dut->cpu_cs   = 0;
+            uint16_t got = dut->cpu_dout;
+            if (got == 0) ++pass;
+            else { ++fail; ++db_errors;
+                   printf("FAIL [db_page1_before_flip] got=0x%04X exp=0x0000\n", got); }
+        }
+
+        // Flip banks: drive VBLANK for 2 cycles (just enough for vblank_fall to register).
+        // no_erase=1 so the sprite engine skips the erase FSM.
+        // Sprite engine processes all 408 sprites (all transparent tile_code=0) ~quickly,
+        // but we only need the page flip which happens at vblank_fall (first cycle).
+        // Drive 5 cycles to ensure the flip register captures it.
+        dut->vblank_n = 0;
+        dut->hblank_n = 1;
+        for (int i = 0; i < 5; i++) tick();
+        dut->vblank_n = 1;
+        tick(); tick();
+        // Now fb_page_reg=1: display_page=0, write bank=1.
+
+        // Page 0 still holds our data (display bank now, not erased because no_erase=1
+        // and erase runs on the WRITE bank = page 1)
+        {
+            dut->cpu_cs   = 1;
+            dut->cpu_we   = 0;
+            dut->cpu_addr = (uint32_t)FB_PAGE0;
+            dut->cpu_be   = 0x3;
+            tick();  // fb_dout ← framebuffer[page0][y][x]
+            tick();  // cpu_dout ← fb_dout
+            dut->cpu_cs   = 0;
+            uint16_t got = dut->cpu_dout;
+            uint16_t exp = (uint16_t)FB_DATA;
+            if (got == exp) ++pass;
+            else { ++fail; ++db_errors;
+                   printf("FAIL [db_page0_after_flip] got=0x%04X exp=0x%04X\n", got, exp); }
+        }
+
+        // Page 1 (new write bank) is still zero
+        {
+            dut->cpu_cs   = 1;
+            dut->cpu_we   = 0;
+            dut->cpu_addr = (uint32_t)FB_PAGE1;
+            dut->cpu_be   = 0x3;
+            tick();  // fb_dout ← framebuffer[page1][y][x]
+            tick();  // cpu_dout ← fb_dout
+            dut->cpu_cs   = 0;
+            uint16_t got = dut->cpu_dout;
+            if (got == 0) ++pass;
+            else { ++fail; ++db_errors;
+                   printf("FAIL [db_page1_after_flip] got=0x%04X exp=0x0000\n", got); }
+        }
+
+        if (db_errors == 0)
+            printf("  Double-buffer isolation test: 4/4 checks OK\n");
+    }
+
+    // ── Step 8: Line Erase Test ───────────────────────────────────────────────
+    // Verifies that HBLANK-triggered per-line erase clears only the targeted row
+    // of the WRITE bank, leaving adjacent rows and the display bank intact.
+    //
+    // Setup (after reset, fb_page_reg=0, write bank=0):
+    //   - Write sentinel pixels to FB page 0 (write bank) at rows ERASE_Y and NEAR_Y
+    //   - Write sentinel pixels to FB page 1 (display bank) at row ERASE_Y
+    //   - Drive HBLANK for vpos=ERASE_Y with vblank_n=1 and no_erase=0
+    //     → line erase fires and clears row ERASE_Y of page 0 (512 pixels, 512 cycles)
+    //
+    // Checks:
+    //   1. Page 0, row ERASE_Y → 0x0000 (erased by line erase)
+    //   2. Page 0, row NEAR_Y  → original value (adjacent row not erased)
+    //   3. Page 1, row ERASE_Y → original value (display bank not touched by line erase)
+    {
+        reset();
+        const int CTRL_BASE = 0x0C000;
+        // no_erase=0 (default after reset) — line erase is enabled
+
+        const int ERASE_Y    = 30;   // row to be erased by line erase
+        const int NEAR_Y     = 31;   // adjacent row — must NOT be erased
+        const int XPAIR      = 8;    // pixel pair x=16,17
+        const int SENTINEL_A = 0xCAFE;  // page 0, erase row
+        const int SENTINEL_B = 0xDEAD;  // page 0, near row
+        const int SENTINEL_C = 0xBEEF;  // page 1, erase row
+
+        // FB word addresses: cpu_addr[18]=1, cpu_addr[16]=page, [15:8]=y, [7:0]=x_pair
+        // Page 0 base: 0x40000 (bit18=1, bit16=0)
+        // Page 1 base: 0x50000 (bit18=1, bit16=1)
+        const int ADDR_P0_EY = 0x40000 | (0 << 16) | (ERASE_Y << 8) | XPAIR;
+        const int ADDR_P0_NY = 0x40000 | (0 << 16) | (NEAR_Y  << 8) | XPAIR;
+        const int ADDR_P1_EY = 0x40000 | (1 << 16) | (ERASE_Y << 8) | XPAIR;
+
+        // Write sentinel pixels to both pages
+        cpu_write(ADDR_P0_EY, SENTINEL_A, 0x3);  // write bank, erase row
+        cpu_write(ADDR_P0_NY, SENTINEL_B, 0x3);  // write bank, near row
+        cpu_write(ADDR_P1_EY, SENTINEL_C, 0x3);  // display bank, erase row
+        tick(); tick();
+
+        // Drive HBLANK for vpos=ERASE_Y (active display: vblank_n=1).
+        // Line erase triggers on hblank_fall and runs for 512 cycles.
+        // Drive 600 cycles of HBLANK to give plenty of margin.
+        dut->vpos     = (uint8_t)ERASE_Y;
+        dut->hblank_n = 1;
+        dut->vblank_n = 1;
+        tick(); tick();  // settle vpos before falling edge
+
+        dut->hblank_n = 0;
+        for (int i = 0; i < 600; i++) tick();
+        dut->hblank_n = 1;
+        tick(); tick();  // wait for any in-progress erase to settle
+
+        int le_errors = 0;
+
+        // Check 1: Write bank (page 0), row ERASE_Y → must be zero (erased)
+        // 2-cycle FB read latency: tick1 updates fb_dout, tick2 updates cpu_dout
+        {
+            dut->cpu_cs   = 1;
+            dut->cpu_we   = 0;
+            dut->cpu_addr = (uint32_t)ADDR_P0_EY;
+            dut->cpu_be   = 0x3;
+            tick();  // fb_dout ← framebuffer[page0][ERASE_Y][x]
+            tick();  // cpu_dout ← fb_dout
+            dut->cpu_cs   = 0;
+            uint16_t got = dut->cpu_dout;
+            if (got == 0) ++pass;
+            else { ++fail; ++le_errors;
+                   printf("FAIL [line_erase_row] got=0x%04X exp=0x0000 (write bank row %d not erased)\n",
+                          got, ERASE_Y); }
+        }
+
+        // Check 2: Write bank (page 0), adjacent row NEAR_Y → must be intact
+        {
+            dut->cpu_cs   = 1;
+            dut->cpu_we   = 0;
+            dut->cpu_addr = (uint32_t)ADDR_P0_NY;
+            dut->cpu_be   = 0x3;
+            tick();  // fb_dout ← framebuffer[page0][NEAR_Y][x]
+            tick();  // cpu_dout ← fb_dout
+            dut->cpu_cs   = 0;
+            uint16_t got  = dut->cpu_dout;
+            uint16_t exp  = (uint16_t)SENTINEL_B;
+            if (got == exp) ++pass;
+            else { ++fail; ++le_errors;
+                   printf("FAIL [line_erase_near_row] got=0x%04X exp=0x%04X (row %d unexpectedly cleared)\n",
+                          got, exp, NEAR_Y); }
+        }
+
+        // Check 3: Display bank (page 1), row ERASE_Y → must be intact (not erased)
+        {
+            dut->cpu_cs   = 1;
+            dut->cpu_we   = 0;
+            dut->cpu_addr = (uint32_t)ADDR_P1_EY;
+            dut->cpu_be   = 0x3;
+            tick();  // fb_dout ← framebuffer[page1][ERASE_Y][x]
+            tick();  // cpu_dout ← fb_dout
+            dut->cpu_cs   = 0;
+            uint16_t got  = dut->cpu_dout;
+            uint16_t exp  = (uint16_t)SENTINEL_C;
+            if (got == exp) ++pass;
+            else { ++fail; ++le_errors;
+                   printf("FAIL [line_erase_display_bank] got=0x%04X exp=0x%04X (display bank row %d incorrectly erased)\n",
+                          got, exp, ERASE_Y); }
+        }
+
+        if (le_errors == 0)
+            printf("  Line erase test: 3/3 checks OK\n");
     }
 
     printf("\n%s: %d/%d tests passed\n", (fail==0)?"PASS":"FAIL", pass, pass+fail);

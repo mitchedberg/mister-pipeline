@@ -387,9 +387,10 @@ logic [ 7:0] spr_fb_wy;
 logic [ 7:0] spr_fb_wdata;
 logic        spr_fb_erase;   // pulse: clear active write page
 
-// Framebuffer erase FSM: counter-based clear of active page
-// Clears all 512×256 = 131072 pixels sequentially (one per cycle).
-// Triggered by spr_fb_erase pulse.
+// ── Bulk erase FSM ─────────────────────────────────────────────────────────
+// Counter-based clear of the entire active write page (512×256 pixels).
+// Triggered by spr_fb_erase pulse from the sprite engine at VBLANK start.
+// Runs during VBLANK; clears one pixel per cycle (131072 cycles total).
 logic        erase_active;
 // Flat 17-bit counter: counts 0..131071 (512×256 pixels).
 // erase_y_c = cnt[16:9] (divides by 512), erase_x_c = cnt[8:0] (mod 512).
@@ -415,14 +416,50 @@ always_ff @(posedge clk) begin
     end
 end
 
+// ── Per-line HBLANK erase FSM ───────────────────────────────────────────────
+// During active display (vblank_n=1), erases one row of the write bank each
+// HBLANK.  This mirrors the TC0180VCU hardware behaviour: the write bank is
+// cleared line-by-line during HBLANK so that it is ready for the next frame's
+// sprite render without a visible pop.  Only runs when fb_no_erase=0.
+//
+// Triggered by hblank_fall while vblank_n=1 and !fb_no_erase.
+// Clears 512 pixels of row vpos in the write bank.
+// Uses a 9-bit pixel counter; takes 512 cycles (fits well within HBLANK slack
+// that the testbench provides).
+logic        line_erase_active;
+logic [ 8:0] line_erase_x;
+logic [ 7:0] line_erase_row;   // vpos captured at hblank_fall
+
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        line_erase_active <= 1'b0;
+        line_erase_x      <= 9'b0;
+        line_erase_row    <= 8'b0;
+    end else if (hblank_fall && vblank_n && !fb_no_erase && !line_erase_active) begin
+        // Capture current scanline and start erasing
+        line_erase_active <= 1'b1;
+        line_erase_x      <= 9'b0;
+        line_erase_row    <= vpos;
+    end else if (line_erase_active) begin
+        if (line_erase_x == 9'd511) begin
+            line_erase_active <= 1'b0;
+        end else begin
+            line_erase_x <= line_erase_x + 9'd1;
+        end
+    end
+end
+
 always_ff @(posedge clk) begin
     // CPU writes (highest priority for correctness)
     if (sel_fb && cpu_we) begin
         if (cpu_be[1]) framebuffer[fb_cpu_page][fb_sy][{fb_sx_pair, 1'b0}] <= cpu_din[15:8];
         if (cpu_be[0]) framebuffer[fb_cpu_page][fb_sy][{fb_sx_pair, 1'b1}] <= cpu_din[ 7:0];
     end else if (erase_active) begin
-        // Erase the active write page
+        // Bulk erase: clear write page pixel-by-pixel during VBLANK
         framebuffer[fb_page_reg][erase_y_c][erase_x_c] <= 8'b0;
+    end else if (line_erase_active) begin
+        // Per-line HBLANK erase: clear one row of write bank during active display
+        framebuffer[fb_page_reg][line_erase_row][line_erase_x] <= 8'b0;
     end else if (spr_fb_wr) begin
         // Sprite pixel write to active write page
         framebuffer[fb_page_reg][spr_fb_wy][spr_fb_wx] <= spr_fb_wdata;
