@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — BG Tilemap Layer Engine  (Step 5: global scroll + rowscroll)
+// TC0630FDP — BG Tilemap Layer Engine  (Step 6: +zoom)
 // =============================================================================
 // One instance per playfield (PF1–PF4). PLANE parameter = 0..3.
 //
@@ -27,6 +27,16 @@
 //
 // Alt-tilemap (Step 5; section1 §9.2 bit[9]):
 //   When ls_alt_tilemap=1, tile addresses in PF RAM are offset by +0x1800 words.
+//
+// Zoom (Step 6; section1 §9.9):
+//   X zoom (ls_zoom_x): 0x00 = 1:1 (no zoom), >0x00 = zoom in.
+//     Fractional X accumulator:
+//       zoom_step_fp = 0x100 + ls_zoom_x (9-bit, base 256 = 1.0 step per pixel)
+//       acc[fp] starts at effective_x * 256 (16.8 fixed-point).
+//       At each output pixel: canvas_x = acc >> 8; acc += zoom_step_fp.
+//   Y zoom (ls_zoom_y): 0x80 = 1:1 (no zoom).
+//     Effective Y row = (canvas_y_raw * ls_zoom_y) >> 7  (scaled by yscale/128).
+//     canvas_y_raw = (vpos + 1 + yscroll_int) & 0x1FF.
 //
 // FSM: 5 states × 21 tiles + 1 IDLE = 106 cycles < 112-cycle HBLANK budget.
 //   BG_IDLE → (hblank_rise) → [per-tile:] BG_ATTR → BG_CODE → BG_GFX0 →
@@ -69,6 +79,12 @@ module tc0630fdp_bg #(
     input  logic [15:0] ls_rowscroll,
     // ls_alt_tilemap: when 1, PF RAM tile address += 0x1800 words.
     input  logic        ls_alt_tilemap,
+
+    // ── Per-scanline zoom (Step 6) ───────────────────────────────────────────
+    // ls_zoom_x: X zoom factor. 0x00 = 1:1 (no zoom), >0x00 = zoom in.
+    input  logic [ 7:0] ls_zoom_x,
+    // ls_zoom_y: Y zoom factor. 0x80 = 1:1 (no zoom).
+    input  logic [ 7:0] ls_zoom_y,
 
     // ── PF RAM async read port (0x1800 words per PF) ─────────────────────
     output logic [12:0] pf_rd_addr,
@@ -117,32 +133,32 @@ assign hblank_rise = hblank_r & ~hblank_r2;
 // This ensures the FSM reads correct values on the same clock edge as
 // hblank_rise, rather than getting the previous scanline's stale latched values.
 // =============================================================================
-logic [3:0] fetch_py;           // pixel row within 16px tile: canvas_y[3:0]
-logic [4:0] fetch_ty;           // tile row (0..31):            canvas_y[8:4]
-logic [5:0] fetch_first_tx;     // first visible map tile column
-logic [3:0] fetch_xoff;         // pixel offset within first tile (0..15)
+logic [3:0] fetch_py;           // pixel row within 16px tile (zoomed): canvas_y_z[3:0]
+logic [4:0] fetch_ty;           // tile row (0..31) (zoomed):            canvas_y_z[8:4]
 logic       fetch_extend;       // extend_mode passthrough
 
-// Suppress unused sub-field warnings for scroll registers
+// Suppress unused sub-field warnings for scroll registers and zoom
 /* verilator lint_off UNUSED */
 logic _unused_scroll;
 assign _unused_scroll = ^{pf_xscroll[5:0], pf_yscroll[6:0], ls_rowscroll[5:0]};
 /* verilator lint_on UNUSED */
 
+// Y-zoom product intermediate (outside always_comb to control lint suppression).
+// canvas_y_raw (9-bit) * ls_zoom_y (8-bit) = 17-bit; we use bits [15:7] = 9 bits.
+/* verilator lint_off UNUSED */
+logic [16:0] cy_zoomed_w;
+/* verilator lint_on UNUSED */
+always_comb begin
+    logic [8:0] canvas_y_raw;
+    canvas_y_raw    = (vpos[8:0] + 9'd1) + pf_yscroll[15:7];
+    cy_zoomed_w     = {1'b0, canvas_y_raw} * {1'b0, ls_zoom_y};
+end
+
 always_comb begin
     logic [8:0] canvas_y;
-    logic [9:0] cx0;
-    // Y: canvas_y = (vpos + 1 + yscroll_int) & 0x1FF
-    // vpos+1 is 9-bit (max 262, wraps fine)
-    canvas_y        = (vpos[8:0] + 9'd1) + pf_yscroll[15:7];
+    canvas_y        = cy_zoomed_w[15:7];
     fetch_py        = canvas_y[3:0];
     fetch_ty        = canvas_y[8:4];
-    // X: effective_x = pf_xscroll[15:6] + ls_rowscroll[15:6]
-    //    Both values are 10.6 fixed-point; integer part = [15:6] (10-bit).
-    //    Adding the integer parts gives the effective canvas X at screen col 0.
-    cx0             = pf_xscroll[15:6] + ls_rowscroll[15:6];
-    fetch_first_tx  = cx0[9:4] & 6'h3F;   // tile col (mod 64)
-    fetch_xoff      = cx0[3:0];            // pixel offset within tile
     fetch_extend    = extend_mode;
 end
 
@@ -166,10 +182,17 @@ logic [4:0] map_ty;      // current map tile row (= fetch_ty, fixed per scanline
 // Per-FSM-run snapshot of fetch geometry — latched when FSM starts (BG_IDLE→BG_ATTR)
 // fetch_py and fetch_xoff are needed throughout the tile fetch loop; latch them once
 // so they don't change mid-fetch if vpos wraps.
-logic [3:0] run_py;       // snapshot of fetch_py at FSM start
-logic [3:0] run_xoff;     // snapshot of fetch_xoff at FSM start
-logic       run_extend;   // snapshot of fetch_extend at FSM start
-logic       run_alt;      // snapshot of ls_alt_tilemap at FSM start
+logic [3:0] run_py;              // snapshot of fetch_py at FSM start (zoomed Y row)
+logic [3:0] run_xoff;            // snapshot of fetch_xoff at FSM start (pixel offset in first tile)
+logic       run_extend;          // snapshot of fetch_extend at FSM start
+logic       run_alt;             // snapshot of ls_alt_tilemap at FSM start
+// Zoom state latched at FSM start (Step 6)
+logic [8:0] run_zoom_step;       // zoom step per output pixel (0x100 = 1.0, no zoom)
+// 19-bit zoom accumulator (8 fractional bits):
+//   bits[18:8] = integer canvas_x, bits[7:0] = fractional
+// Initialized to run_eff_x << 8 at FSM start.
+// Advanced by 16 * run_zoom_step after each 16-pixel tile slot.
+logic [18:0] run_zoom_acc_fp;
 
 // =============================================================================
 // Tile attribute and code registers
@@ -193,6 +216,8 @@ logic [31:0] gfx_right_data_r;
 
 // =============================================================================
 // Combinational: PF RAM address
+// map_tx is now updated in BG_IDLE and after each tile slot in BG_WRITE
+// using the zoom accumulator.
 // tile_index = map_ty * map_width + map_tx
 //   standard (map_width=32): {map_ty[4:0], map_tx[4:0]} → 10 bits
 //   extended (map_width=64): {map_ty[4:0], map_tx[5:0]} → 11 bits
@@ -214,6 +239,20 @@ always_comb begin
     base_addr = {1'b0, tileword_base} + (run_alt ? 13'h1000 : 13'h0000);
     pf_attr_addr_c = base_addr;         // attr word (offset 0)
     pf_code_addr_c = base_addr + 13'd1; // code word (offset 1)
+end
+
+// =============================================================================
+// Combinational: next zoom accumulator after a tile slot of 16 output pixels.
+// Used in BG_WRITE to compute next map_tx.
+// next_zoom_acc = run_zoom_acc_fp + 16 * run_zoom_step (capped at 19 bits)
+// =============================================================================
+logic [18:0] next_zoom_acc_fp;
+always_comb begin
+    // 16 * zoom_step: zoom_step is 9-bit (max 511), 16*511=8176 < 8192=13-bit.
+    // Use 13-bit for step16, zero-extend to 19 bits for addition.
+    logic [12:0] step16;
+    step16 = {4'b0, run_zoom_step} << 4;   // 16 * zoom_step (fits in 13 bits)
+    next_zoom_acc_fp = run_zoom_acc_fp + {6'b0, step16};
 end
 
 always_comb begin
@@ -281,6 +320,8 @@ always_ff @(posedge clk) begin
         run_xoff         <= 4'b0;
         run_extend       <= 1'b0;
         run_alt          <= 1'b0;
+        run_zoom_step    <= 9'd256;
+        run_zoom_acc_fp  <= 19'b0;
         tile_palette_r   <= 9'b0;
         tile_blend_r     <= 1'b0;
         tile_xplanes_r   <= 2'b0;
@@ -298,14 +339,29 @@ always_ff @(posedge clk) begin
             // Geometry is combinational — fetch_ty/fetch_first_tx are valid NOW.
             BG_IDLE: begin
                 if (hblank_rise) begin
-                    tile_col   <= 5'b0;
-                    map_ty     <= fetch_ty;
-                    map_tx     <= fetch_first_tx;
-                    run_py     <= fetch_py;
-                    run_xoff   <= fetch_xoff;
-                    run_extend <= fetch_extend;
-                    run_alt    <= ls_alt_tilemap;
-                    state      <= BG_ATTR;
+                    begin
+                        // Compute effective_x = pf_xscroll[15:6] + ls_rowscroll[15:6]
+                        logic [9:0]  eff_x;
+                        logic [8:0]  zstep;
+                        logic [18:0] zacc;
+                        eff_x = pf_xscroll[15:6] + ls_rowscroll[15:6];
+                        run_xoff  <= eff_x[3:0];
+                        // Zoom step: 0x100 + zoom_x. 0x100 = 1.0 (no zoom).
+                        zstep = 9'd256 + {1'b0, ls_zoom_x};
+                        run_zoom_step <= zstep;
+                        // Zoom accumulator: start at eff_x * 256 (8 fractional bits).
+                        zacc = {1'b0, eff_x, 8'b0};
+                        run_zoom_acc_fp <= zacc;
+                        // map_tx for tile_col=0: integer canvas_x at output pixel 0.
+                        // canvas_x = zacc >> 8 = eff_x. Tile = eff_x >> 4.
+                        map_tx <= eff_x[9:4] & (fetch_extend ? 6'h3F : 6'h1F);
+                    end
+                    tile_col      <= 5'b0;
+                    map_ty        <= fetch_ty;
+                    run_py        <= fetch_py;
+                    run_extend    <= fetch_extend;
+                    run_alt       <= ls_alt_tilemap;
+                    state         <= BG_ATTR;
                 end
             end
 
@@ -361,35 +417,56 @@ always_ff @(posedge clk) begin
 
             // ─── Decode 16 pixels; write linebuf; advance ────────────────────
             // Both gfx_left_data_r and gfx_right_data_r are valid.
+            //
+            // With X zoom: each output pixel p in 0..15 maps to source canvas_x
+            // computed from the zoom accumulator:
+            //   canvas_x_fp = run_zoom_acc_fp + p * run_zoom_step
+            //   canvas_x    = canvas_x_fp >> 8   (integer part)
+            //   px_in_tile  = canvas_x & 0xF     (pixel column within this 16-px tile)
+            //
+            // The tile fetched (map_tx) corresponds to run_zoom_acc_fp's tile column,
+            // which is the canvas tile at the start of this 16-output-pixel slot.
+            // Pixels whose canvas_x falls outside this tile (mod 16 wraps) are handled
+            // by the px_in_tile extraction, which gives correct nibble select.
+            //
+            // Screen column: scol = tile_col * 16 - run_xoff + p  (unchanged from Step 5).
             BG_WRITE: begin
                 begin
-                    // scol_base = tile_col * 16 - run_xoff  (signed 11-bit)
                     logic signed [10:0] scol_base;
                     scol_base = $signed({1'b0, tile_col, 4'b0}) -
                                 $signed({7'b0, run_xoff});
 
+/* verilator lint_off UNUSED */
                     for (int px = 0; px < 16; px++) begin
                         automatic logic signed [10:0] scol;
-                        automatic logic [2:0]  ni;         // nibble index 0..7
-                        automatic logic [3:0]  pen;
-                        automatic logic [31:0] src;
-                        automatic logic [4:0]  sh;
+                        // acc_px: per-pixel zoom accumulator (19-bit).
+                        // canvas_x[3:0] = acc_px[11:8] (bits above fractional 8 bits,
+                        // below tile-column bits). Only [11:8] are used; others suppressed.
+                        automatic logic [18:0] acc_px;
+                        automatic logic [ 3:0] px_tile; // pixel within 16-px tile
+                        automatic logic [ 2:0] ni;      // nibble index within 8-px half
+                        automatic logic [31:0] src;     // 8-pixel source word
+                        automatic logic [ 4:0] sh;      // nibble shift amount
+                        automatic logic [ 3:0] pen;
 
-                        scol = scol_base + $signed(11'(px));
+                        scol    = scol_base + $signed(11'(px));
+                        acc_px  = run_zoom_acc_fp + 19'(px) * 19'({10'b0, run_zoom_step});
+                        px_tile = acc_px[11:8];   // canvas_x[3:0]
 
-                        // Nibble index within 8-px fetch word
-                        // Normal:  ni = px & 7  (px0→ni=0→bits[31:28])
-                        // FlipX:   ni = 7 - (px & 7)
-                        ni = tile_flipx_r ? 3'(7 - (px & 7)) : 3'(px & 7);
+                        // Select left (0..7) or right (8..15) fetch word based on
+                        // canvas pixel position (px_tile[3]). Zoom does not change
+                        // which half is selected — that is determined by the source
+                        // canvas pixel's half-tile position.
+                        src = px_tile[3] ? gfx_right_data_r : gfx_left_data_r;
 
-                        // Select left or right 32-bit word
-                        src = (px < 8) ? gfx_left_data_r : gfx_right_data_r;
+                        // Nibble index within the selected 8-px word.
+                        // Normal:  ni = px_tile[2:0] (pixel 0 of the half → nibble 0 → bits[31:28])
+                        // FlipX:   ni = 7 - px_tile[2:0] (reverse nibble order within the half)
+                        ni  = tile_flipx_r ? 3'(7 - px_tile[2:0]) : 3'(px_tile[2:0]);
 
-                        // Extract nibble: nibble at ni → bits[(7-ni)*4+3:(7-ni)*4]
-                        // shift = (7 - ni) * 4 = 28 - ni*4
-                        // Use 5-bit arithmetic: all values 0..28 fit in 5 bits
-                        sh  = 5'({2'b00, ni} << 2);         // ni * 4, 5-bit
-                        sh  = 5'd28 - sh;                    // 28 - ni*4, fits 5-bit
+                        // Extract nibble: ni=0 → bits[31:28], ni=7 → bits[3:0]
+                        sh  = 5'({2'b00, ni} << 2);    // ni * 4
+                        sh  = 5'd28 - sh;               // 28 - ni*4
                         pen = 4'(src >> sh);
 
                         if (scol >= 0 && scol < 320) begin
@@ -399,9 +476,14 @@ always_ff @(posedge clk) begin
                 end
 
                 begin
-                    // Advance map_tx (wrap mod 32 or 64)
+                    // Advance zoom accumulator by 16 output pixels.
+                    // next_zoom_acc_fp was computed combinationally above.
+                    // Derive next map_tx from the new accumulator.
+                    // next_canvas_x tile column = next_zoom_acc_fp[17:12] (canvas_x[9:4])
                     logic [5:0] next_tx;
-                    next_tx = (map_tx + 6'd1) & (run_extend ? 6'h3F : 6'h1F);
+                    next_tx = next_zoom_acc_fp[17:12] & (run_extend ? 6'h3F : 6'h1F);
+
+                    run_zoom_acc_fp <= next_zoom_acc_fp;
 
                     if (tile_col == 5'd20) begin
                         state <= BG_IDLE;

@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Line RAM Parser  (Step 5: rowscroll + enable bits only)
+// TC0630FDP — Line RAM Parser  (Step 6: rowscroll + zoom + enable bits)
 // =============================================================================
 // The Line RAM is 64 KB (32768 × 16-bit words) that provides per-scanline
 // override of virtually every display parameter.  This module:
@@ -12,7 +12,8 @@
 //     scan.
 //
 // Step 5 implementation: rowscroll + rowscroll-enable + alt-tilemap enable.
-// Everything else is parsed but not output (will be added in later steps).
+// Step 6 addition: per-scanline zoom (X and Y) for PF1–PF4 (section1 §9.9).
+//   PF2/PF4 Y-zoom are physically swapped in hardware — corrected here.
 //
 // Address layout — chip-relative 16-bit WORD addresses within Line RAM BRAM
 // (convert from section1 byte addresses by dividing by 2):
@@ -20,10 +21,15 @@
 //   Enable/latch control (lower half, word addrs 0x0000–0x1FFF):
 //     Rowscroll enable base  : byte 0x0C00 → word 0x0600  (256 scanlines)
 //     Colscroll/alt-tmap en  : byte 0x0000 → word 0x0000  (256 scanlines)
+//     Zoom enable base       : byte 0x0800 → word 0x0400  (256 scanlines)
 //
 //   Per-scanline data (upper half, word addrs 0x2000–0x7FFF):
 //     Colscroll PF1–PF4 base : byte 0x4000 → word 0x2000  (stride 0x100 per PF)
 //     Rowscroll PF1–PF4 base : byte 0xA000 → word 0x5000  (stride 0x100 per PF)
+//     Zoom PF1               : byte 0x8000 → word 0x4000  (256 scanlines)
+//     Zoom PF3               : byte 0x8200 → word 0x4100  (256 scanlines)
+//     Zoom PF2               : byte 0x8400 → word 0x4200  (256 scanlines, PF4 Y-zoom here)
+//     Zoom PF4               : byte 0x8600 → word 0x4300  (256 scanlines, PF2 Y-zoom here)
 //
 // section1 §9.1 rowscroll enable:
 //   word_addr = 0x0600 + scan,  bits[3:0] = enable per PF (PF1=bit0..PF4=bit3)
@@ -31,11 +37,23 @@
 // section1 §9.1 colscroll/alt-tilemap enable:
 //   word_addr = 0x0000 + scan,  bits[7:4] = alt-tmap enable per PF
 //
+// section1 §9.1 zoom enable:
+//   word_addr = 0x0400 + scan,  bits[3:0] = enable per PF (PF1=bit0..PF4=bit3)
+//
 // section1 §9.11 rowscroll data:
 //   PFn (n=0..3): word_addr = 0x5000 + n*0x100 + scan
 //
 // section1 §9.2 colscroll data (bit[9] = alt-tilemap flag):
 //   PFn (n=0..3): word_addr = 0x2000 + n*0x100 + scan
+//
+// section1 §9.9 zoom data (format: bits[15:8]=Y_scale, bits[7:0]=X_scale):
+//   PF1: word_addr = 0x4000 + scan
+//   PF3: word_addr = 0x4100 + scan
+//   PF2: word_addr = 0x4200 + scan  (NOTE: PF4 Y-zoom stored here in hardware)
+//   PF4: word_addr = 0x4300 + scan  (NOTE: PF2 Y-zoom stored here in hardware)
+//   PF2/PF4 Y-zoom swap: when outputting ls_zoom_y[1] (PF2), read from 0x4300+scan.
+//                        when outputting ls_zoom_y[3] (PF4), read from 0x4200+scan.
+//   X-zoom is NOT swapped: ls_zoom_x[1] from 0x4200+scan, ls_zoom_x[3] from 0x4300+scan.
 // =============================================================================
 
 module tc0630fdp_lineram (
@@ -59,7 +77,13 @@ module tc0630fdp_lineram (
     // Zero when rowscroll is disabled for that PF.
     output logic [15:0] ls_rowscroll   [0:3],
     // alt_tilemap[n]: 1 → PF(n+1) reads tile data from +0x1800 offset in PF RAM.
-    output logic        ls_alt_tilemap [0:3]
+    output logic        ls_alt_tilemap [0:3],
+    // zoom_x[n]: X zoom factor for PF(n+1).  0x00 = no zoom (1:1).
+    // Zero (no zoom) when zoom is disabled for that PF.
+    output logic [ 7:0] ls_zoom_x      [0:3],
+    // zoom_y[n]: Y zoom factor for PF(n+1).  0x80 = no zoom (1:1).
+    // 0x80 (no zoom) when zoom is disabled for that PF.
+    output logic [ 7:0] ls_zoom_y      [0:3]
 );
 
 // =============================================================================
@@ -103,13 +127,18 @@ assign next_scan = vpos[7:0] + 8'd1;
 // always_ff block; the array reads are effectively asynchronous in simulation.
 logic [15:0] en_row_word;    // rowscroll enable word
 logic [15:0] en_col_word;    // colscroll/alt-tilemap enable word
+/* verilator lint_off UNUSEDSIGNAL */
+logic [15:0] en_zoom_word;   // zoom enable word (Step 6) — only bits[3:0] used
+/* verilator lint_on UNUSEDSIGNAL */
 logic [15:0] rs_word  [0:3]; // rowscroll data per PF
 logic [15:0] cs_word  [0:3]; // colscroll data per PF (for alt-tilemap bit[9])
+logic [15:0] zm_word  [0:3]; // zoom data per PF (bits[15:8]=Y, bits[7:0]=X)
 
 // Combinational reads from line_ram (one address per wire).
 // Address arithmetic: 15-bit = base + {7'b0, next_scan}
 assign en_row_word   = line_ram[15'h0600 + {7'b0, next_scan}];
 assign en_col_word   = line_ram[15'h0000 + {7'b0, next_scan}];
+assign en_zoom_word  = line_ram[15'h0400 + {7'b0, next_scan}];  // §9.1 zoom enable
 assign rs_word[0]    = line_ram[15'h5000 + {7'b0, next_scan}];
 assign rs_word[1]    = line_ram[15'h5100 + {7'b0, next_scan}];
 assign rs_word[2]    = line_ram[15'h5200 + {7'b0, next_scan}];
@@ -118,6 +147,22 @@ assign cs_word[0]    = line_ram[15'h2000 + {7'b0, next_scan}];
 assign cs_word[1]    = line_ram[15'h2100 + {7'b0, next_scan}];
 assign cs_word[2]    = line_ram[15'h2200 + {7'b0, next_scan}];
 assign cs_word[3]    = line_ram[15'h2300 + {7'b0, next_scan}];
+// Zoom data: PF1=0x4000, PF3=0x4100, PF2=0x4200, PF4=0x4300  (§9.9)
+assign zm_word[0]    = line_ram[15'h4000 + {7'b0, next_scan}];  // PF1
+assign zm_word[1]    = line_ram[15'h4200 + {7'b0, next_scan}];  // PF2 (X here; Y physically at PF4 addr)
+assign zm_word[2]    = line_ram[15'h4100 + {7'b0, next_scan}];  // PF3
+assign zm_word[3]    = line_ram[15'h4300 + {7'b0, next_scan}];  // PF4 (X here; Y physically at PF2 addr)
+
+// PF2/PF4 Y-zoom cross-read wires (hardware swap, §9.9):
+// PF2 Y-zoom is stored at PF4's RAM address (0x4300+scan).
+// PF4 Y-zoom is stored at PF2's RAM address (0x4200+scan).
+// Only the Y byte [15:8] is used from each swap wire; X byte [7:0] is unused.
+/* verilator lint_off UNUSEDSIGNAL */
+logic [15:0] zm_word_pf2_yswap;   // contains PF2 Y-zoom (from PF4's address)
+logic [15:0] zm_word_pf4_yswap;   // contains PF4 Y-zoom (from PF2's address)
+/* verilator lint_on UNUSEDSIGNAL */
+assign zm_word_pf2_yswap = line_ram[15'h4300 + {7'b0, next_scan}];  // PF2 Y from PF4 addr
+assign zm_word_pf4_yswap = line_ram[15'h4200 + {7'b0, next_scan}];  // PF4 Y from PF2 addr
 
 // Register outputs at hblank_fall
 always_ff @(posedge clk) begin
@@ -125,6 +170,8 @@ always_ff @(posedge clk) begin
         for (int i = 0; i < 4; i++) begin
             ls_rowscroll[i]   <= 16'b0;
             ls_alt_tilemap[i] <= 1'b0;
+            ls_zoom_x[i]      <= 8'h00;
+            ls_zoom_y[i]      <= 8'h80;
         end
     end else if (hblank_fall) begin
         for (int n = 0; n < 4; n++) begin
@@ -132,6 +179,37 @@ always_ff @(posedge clk) begin
             ls_rowscroll[n]   <= en_row_word[n] ? rs_word[n] : 16'b0;
             // Alt-tilemap: enable bit n of en_col_word[7:4], data bit[9] of cs_word
             ls_alt_tilemap[n] <= en_col_word[4+n] ? cs_word[n][9] : 1'b0;
+        end
+        // Zoom X and Y: enable bit n of en_zoom_word[3:0]
+        // X-zoom: not swapped — read from each PF's own address
+        // Y-zoom: PF2 and PF4 are physically swapped — use cross-read wires
+        if (en_zoom_word[0]) begin
+            ls_zoom_x[0] <= zm_word[0][7:0];    // PF1 X: from 0x4000+scan
+            ls_zoom_y[0] <= zm_word[0][15:8];   // PF1 Y: from 0x4000+scan (no swap)
+        end else begin
+            ls_zoom_x[0] <= 8'h00;
+            ls_zoom_y[0] <= 8'h80;
+        end
+        if (en_zoom_word[1]) begin
+            ls_zoom_x[1] <= zm_word[1][7:0];           // PF2 X: from 0x4200+scan
+            ls_zoom_y[1] <= zm_word_pf2_yswap[15:8];   // PF2 Y: from 0x4300+scan (swap)
+        end else begin
+            ls_zoom_x[1] <= 8'h00;
+            ls_zoom_y[1] <= 8'h80;
+        end
+        if (en_zoom_word[2]) begin
+            ls_zoom_x[2] <= zm_word[2][7:0];    // PF3 X: from 0x4100+scan
+            ls_zoom_y[2] <= zm_word[2][15:8];   // PF3 Y: from 0x4100+scan (no swap)
+        end else begin
+            ls_zoom_x[2] <= 8'h00;
+            ls_zoom_y[2] <= 8'h80;
+        end
+        if (en_zoom_word[3]) begin
+            ls_zoom_x[3] <= zm_word[3][7:0];           // PF4 X: from 0x4300+scan
+            ls_zoom_y[3] <= zm_word_pf4_yswap[15:8];   // PF4 Y: from 0x4200+scan (swap)
+        end else begin
+            ls_zoom_x[3] <= 8'h00;
+            ls_zoom_y[3] <= 8'h80;
         end
     end
 end

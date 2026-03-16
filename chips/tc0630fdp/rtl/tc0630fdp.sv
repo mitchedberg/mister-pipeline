@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Taito F3 Display Processor (Step 5: Line RAM + Rowscroll)
+// TC0630FDP — Taito F3 Display Processor (Step 6: +Per-Scanline Zoom)
 // =============================================================================
 // Integrates all video functions for Taito F3 arcade hardware (1992–1997):
 //   · 4 scrolling tilemap layers (PF1–PF4), 16×16 tiles, 4bpp  ← STEP 3 ✓
@@ -492,20 +492,24 @@ assign hblank_fall = hblank & ~hblank_r2;
 // Per-scanline outputs from Line RAM parser
 logic [15:0] ls_rowscroll   [0:3];
 logic        ls_alt_tilemap [0:3];
+logic [ 7:0] ls_zoom_x      [0:3];   // Step 6: X zoom per PF
+logic [ 7:0] ls_zoom_y      [0:3];   // Step 6: Y zoom per PF
 
 tc0630fdp_lineram u_lineram (
-    .clk          (clk),
-    .rst_n        (rst_n),
-    .cpu_cs       (cs_line),
-    .cpu_rw       (cpu_rw),
-    .cpu_addr     (cpu_addr[15:1]),
-    .cpu_din      (cpu_din),
-    .cpu_be       (cpu_be),
-    .cpu_dout     (line_cpu_dout),
-    .vpos         (vpos),
-    .hblank_fall  (hblank_fall),
-    .ls_rowscroll (ls_rowscroll),
-    .ls_alt_tilemap(ls_alt_tilemap)
+    .clk           (clk),
+    .rst_n         (rst_n),
+    .cpu_cs        (cs_line),
+    .cpu_rw        (cpu_rw),
+    .cpu_addr      (cpu_addr[15:1]),
+    .cpu_din       (cpu_din),
+    .cpu_be        (cpu_be),
+    .cpu_dout      (line_cpu_dout),
+    .vpos          (vpos),
+    .hblank_fall   (hblank_fall),
+    .ls_rowscroll  (ls_rowscroll),
+    .ls_alt_tilemap(ls_alt_tilemap),
+    .ls_zoom_x     (ls_zoom_x),
+    .ls_zoom_y     (ls_zoom_y)
 );
 
 // =============================================================================
@@ -540,6 +544,8 @@ generate
             .extend_mode    (extend_mode),
             .ls_rowscroll   (ls_rowscroll[gi]),
             .ls_alt_tilemap (ls_alt_tilemap[gi]),
+            .ls_zoom_x      (ls_zoom_x[gi]),
+            .ls_zoom_y      (ls_zoom_y[gi]),
             .pf_rd_addr     (pf_rd_addr_w[gi]),
             .pf_q           (pf_q_w[gi]),
             .gfx_addr       (bg_gfx_addr[gi]),

@@ -92,7 +92,7 @@ _UNUSED_REGS = {8, 9, 10, 11, 14}
 
 
 class TaitoF3Model:
-    """Steps 1–5 behavioral model: control registers, video timing, text layer, BG layers, Line RAM."""
+    """Steps 1–6 behavioral model: control registers, video timing, text layer, BG layers, Line RAM, zoom."""
 
     # Memory sizes
     TEXT_RAM_WORDS  = 4096    # 64×64 tile map × 1 word each
@@ -231,7 +231,7 @@ class TaitoF3Model:
         """Read 16-bit word from Line RAM at 15-bit word address."""
         return self.line_ram[word_addr & 0x7FFF]
 
-    # ── Line RAM decoder helpers (Step 5) ────────────────────────────────────
+    # ── Line RAM decoder helpers (Step 5 + Step 6) ───────────────────────────
 
     def _line_rowscroll(self, plane: int, scan: int) -> int:
         """Return effective rowscroll for PF(plane+1) on scanline scan.
@@ -262,7 +262,52 @@ class TaitoF3Model:
         cs_word = self.line_ram[0x2000 + plane * 0x100 + scan8]
         return bool((cs_word >> 9) & 1)
 
-    # ── BG layer render (Step 3+5) ────────────────────────────────────────────
+    def _line_zoom(self, plane: int, scan: int) -> tuple:
+        """Return (zoom_x, zoom_y) for PF(plane+1) on scanline scan (Step 6).
+
+        Returns (0x00, 0x80) if zoom is disabled for this PF/scanline
+        (0x00 = no X zoom, 0x80 = 1:1 Y zoom).
+
+        section1 §9.9 + §9.1:
+          enable word: line_ram[0x0400 + (scan & 0xFF)], bit[plane] = enable
+          data words (§9.9):
+            PF1: line_ram[0x4000 + scan]   — normal (no swap)
+            PF2: line_ram[0x4200 + scan]   — X zoom; Y physically at PF4 addr
+            PF3: line_ram[0x4100 + scan]   — normal (no swap)
+            PF4: line_ram[0x4300 + scan]   — X zoom; Y physically at PF2 addr
+          format: bits[15:8] = Y_scale, bits[7:0] = X_scale
+          PF2/PF4 Y-zoom swap (hardware quirk):
+            PF2 Y-zoom stored at 0x4300+scan (PF4 addr)
+            PF4 Y-zoom stored at 0x4200+scan (PF2 addr)
+        """
+        scan8 = scan & 0xFF
+        en_word = self.line_ram[0x0400 + scan8]
+        if not (en_word >> plane) & 1:
+            return (0x00, 0x80)
+
+        # X-zoom addresses (not swapped)
+        # Y-zoom addresses (PF2 and PF4 are physically swapped)
+        if plane == 0:    # PF1: both X and Y from 0x4000+scan
+            w = self.line_ram[0x4000 + scan8]
+            zoom_x = w & 0xFF
+            zoom_y = (w >> 8) & 0xFF
+        elif plane == 1:  # PF2: X from 0x4200+scan, Y from 0x4300+scan (swap)
+            wx = self.line_ram[0x4200 + scan8]
+            wy = self.line_ram[0x4300 + scan8]
+            zoom_x = wx & 0xFF
+            zoom_y = (wy >> 8) & 0xFF
+        elif plane == 2:  # PF3: both X and Y from 0x4100+scan
+            w = self.line_ram[0x4100 + scan8]
+            zoom_x = w & 0xFF
+            zoom_y = (w >> 8) & 0xFF
+        else:             # PF4: X from 0x4300+scan, Y from 0x4200+scan (swap)
+            wx = self.line_ram[0x4300 + scan8]
+            wy = self.line_ram[0x4200 + scan8]
+            zoom_x = wx & 0xFF
+            zoom_y = (wy >> 8) & 0xFF
+        return (zoom_x, zoom_y)
+
+    # ── BG layer render (Step 3+5+6) ─────────────────────────────────────────
 
     def render_bg_scanline(self, vpos: int, plane: int,
                            xscroll: int, yscroll: int,
@@ -286,37 +331,31 @@ class TaitoF3Model:
           xscroll_int = xscroll >> 6   (10-bit integer pixel offset)
           yscroll_int = yscroll >> 7   (9-bit integer pixel offset)
 
-        Canvas Y = (vpos + 1 + yscroll_int) & 0x1FF
-        fetch_py = canvas_y & 0xF     (row within 16px tile)
-        fetch_ty = (canvas_y >> 4) & 0x1F  (tile row 0..31)
+        Canvas Y (Step 6 zoom):
+          canvas_y_raw = (vpos + 1 + yscroll_int) & 0x1FF
+          canvas_y = (canvas_y_raw * zoom_y) >> 7   (0x80 = 1:1)
 
-        Canvas X at screen col 0 = xscroll_int
-        first_tx = (xscroll_int >> 4) & (63 if extend_mode else 31)
-        fetch_xoff = xscroll_int & 0xF  (pixel offset within first tile)
-
-        Tile fetch per screen column c:
-          canvas_x = (c + xscroll_int) & wrap_mask
-          tile_x = canvas_x >> 4
-          tile_y = fetch_ty  (fixed per scanline)
-          tile_idx = tile_y * map_width + tile_x
-          word_base = tile_idx * 2
-          attr_word = pf_ram[plane][word_base]
-          code_word = pf_ram[plane][word_base + 1]
+        X zoom accumulator (Step 6, §9.9):
+          zoom_step = 0x100 + zoom_x   (0x100 = no zoom / 1:1)
+          acc = eff_x * 256 at pixel 0
+          per output pixel p: canvas_x_fp = acc + p * zoom_step
+          canvas_x = canvas_x_fp >> 8; px_in_tile = canvas_x & 0xF
+          advance after 16 pixels: acc += 16 * zoom_step; next_tile = acc >> 12
 
         GFX ROM decode:
           tile_code = code_word
           flipY: row = 15 - fetch_py if flipy else fetch_py
           left_word  = gfx_rom[tile_code * 32 + row * 2]
           right_word = gfx_rom[tile_code * 32 + row * 2 + 1]
-          pixel px (0..7 in left, 8..15 in right):
-            half_px = px & 7
+          pixel px_in_tile (0..15 within tile):
+            half_px = px_in_tile & 7
             ni = (7 - half_px) if flipX else half_px   # flipX reversal
-            src_word = left_word if px < 8 else right_word
+            src_word = left_word if px_in_tile < 8 else right_word
             pen = (src_word >> ((7 - ni) * 4)) & 0xF
         """
         plane = plane & 3
         map_width = 64 if extend_mode else 32
-        wrap_mask_px = (map_width * 16) - 1   # 1023 or 511
+        wrap_mask_tile = map_width - 1
 
         # Scroll decode
         xscroll_int = (xscroll >> 6) & 0x3FF    # 10-bit integer part
@@ -329,50 +368,77 @@ class TaitoF3Model:
         alt_tmap  = self._line_alt_tilemap(plane, vpos + 1)
         pf_base_offset = 0x1000 if alt_tmap else 0   # alt-tilemap: +0x1000 words (=+0x2000 bytes)
 
-        # Next scanline geometry
-        canvas_y = ((vpos + 1) + yscroll_int) & 0x1FF
+        # Step 6: zoom (§9.9)
+        zoom_x, zoom_y = self._line_zoom(plane, vpos + 1)
+
+        # Y zoom: canvas_y_raw * zoom_y >> 7  (9-bit * 8-bit = 17-bit; use bits[15:7])
+        canvas_y_raw = ((vpos + 1) + yscroll_int) & 0x1FF
+        canvas_y = ((canvas_y_raw * zoom_y) >> 7) & 0x1FF
         fetch_py = canvas_y & 0xF
         fetch_ty = (canvas_y >> 4) & 0x1F
 
+        # X zoom accumulator: zoom_step = 0x100 + zoom_x
+        zoom_step = 0x100 + zoom_x   # 9-bit (256 = 1:1)
+
+        # acc is 19-bit: 11 integer bits (canvas_x[10:0]) + 8 fractional bits
+        acc = (eff_x_int & 0x3FF) << 8   # eff_x * 256 (start of first output pixel)
+
+        # Fetch the first tile for this scanline
+        first_tile_x = ((acc >> 12) & 0x3FF) & wrap_mask_tile
+        current_tile_x = first_tile_x
+
         linebuf = [0] * 320
-        for scol in range(320):
-            canvas_x = (scol + eff_x_int) & wrap_mask_px
-            tile_x   = (canvas_x >> 4) & (map_width - 1)
-            tile_idx = fetch_ty * map_width + tile_x
+
+        # Simulate the FSM's 21-tile fetch loop
+        for slot in range(21):
+            # Fetch tile at current_tile_x
+            tile_idx  = fetch_ty * map_width + current_tile_x
             word_base = tile_idx * 2 + pf_base_offset
 
             attr_word = self.pf_ram[plane][word_base]     if word_base < self.PF_RAM_WORDS else 0
             code_word = self.pf_ram[plane][word_base + 1] if word_base + 1 < self.PF_RAM_WORDS else 0
 
-            palette     = attr_word & 0x1FF           # bits[8:0]
-            flipx       = bool(attr_word & (1 << 14))
-            flipy       = bool(attr_word & (1 << 15))
-            tile_code   = code_word & 0xFFFF
+            palette   = attr_word & 0x1FF
+            flipx     = bool(attr_word & (1 << 14))
+            flipy     = bool(attr_word & (1 << 15))
+            tile_code = code_word & 0xFFFF
 
             row = (15 - fetch_py) if flipy else fetch_py
 
-            # GFX ROM lookup
             left_addr  = tile_code * 32 + row * 2
             right_addr = left_addr + 1
-
             left_word  = self.gfx_rom[left_addr]  if left_addr  < self.GFX_ROM_WORDS else 0
             right_word = self.gfx_rom[right_addr] if right_addr < self.GFX_ROM_WORDS else 0
 
-            # Pixel position within tile row (0..15)
-            px_in_tile = canvas_x & 0xF   # 0..15
+            # Compute screen column base for this 16-output-pixel slot
+            # run_xoff = eff_x_int & 0xF (pixel offset into first tile)
+            run_xoff = eff_x_int & 0xF
+            scol_base = slot * 16 - run_xoff
 
-            # Half: left (0..7) or right (8..15)
-            half_px = px_in_tile & 7
-            src_word = left_word if px_in_tile < 8 else right_word
+            # Write 16 output pixels for this slot
+            for px in range(16):
+                scol = scol_base + px
+                if scol < 0 or scol >= 320:
+                    continue
 
-            # Nibble index (flipX reverses order)
-            ni = (7 - half_px) if flipx else half_px
+                # Per-pixel canvas X from zoom accumulator
+                acc_px = acc + px * zoom_step
+                px_in_tile = (acc_px >> 8) & 0xF   # canvas_x[3:0]
 
-            # Extract nibble: px0 at bits[31:28] → shift = (7 - ni) * 4
-            shift = (7 - ni) * 4
-            pen = (src_word >> shift) & 0xF
+                # Select half word based on canvas pixel position (NOT flipped)
+                src_word = right_word if (px_in_tile & 8) else left_word
+                # Nibble index within the selected 8-px word.
+                # Normal:  ni = px_in_tile & 7  (pixel 0 of half → nibble 0 → bits[31:28])
+                # FlipX:   ni = 7 - (px_in_tile & 7)  (reverse within the half)
+                ni    = (7 - (px_in_tile & 7)) if flipx else (px_in_tile & 7)
+                shift = 28 - (ni * 4)     # ni=0→bits[31:28], ni=7→bits[3:0]
+                pen   = (src_word >> shift) & 0xF
 
-            linebuf[scol] = (palette << 4) | pen
+                linebuf[scol] = (palette << 4) | pen
+
+            # Advance accumulator and compute next tile
+            acc = (acc + 16 * zoom_step) & 0x7FFFF   # keep 19 bits
+            current_tile_x = (acc >> 12) & wrap_mask_tile
 
         return linebuf
 
