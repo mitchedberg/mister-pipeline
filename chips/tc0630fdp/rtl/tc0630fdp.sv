@@ -1,10 +1,10 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Taito F3 Display Processor (Step 2: Text Layer)
+// TC0630FDP — Taito F3 Display Processor (Step 3: BG tilemap layers PF1–PF4)
 // =============================================================================
 // Integrates all video functions for Taito F3 arcade hardware (1992–1997):
-//   · 4 scrolling tilemap layers (PF1–PF4), 16×16 tiles, 4/5/6bpp
-//   · Text layer (64×64 8×8 tiles, CPU-writable characters)       ← STEP 2 ✓
+//   · 4 scrolling tilemap layers (PF1–PF4), 16×16 tiles, 4bpp  ← STEP 3 ✓
+//   · Text layer (64×64 8×8 tiles, CPU-writable characters)     ← STEP 2 ✓
 //   · Pivot/pixel layer (64×32 8×8 tiles, column-major, CPU-writable)
 //   · Sprite engine: 17-bit tile codes, 8-bit zoom, 4 priority groups, alpha blend
 //   · Per-scanline Line RAM: rowscroll, colscroll, zoom, priority, clip, alpha, mosaic
@@ -14,10 +14,22 @@
 // Games: RayForce, Darius Gaiden, Elevator Action Returns, Bubble Symphony, etc.
 //
 // CPU address map (chip-relative 18-bit word addresses, i.e. cpu_addr[18:1]):
-//   0x00000–0x0DFFF: (Sprite RAM, PF RAM — added in later steps)
-//   0x0E000–0x0EFFF: Text RAM      (4096 × 16-bit words, 8KB)  ← STEP 2
-//   0x0F000–0x0FFFF: Character RAM (4096 × 16-bit words = 8192 bytes) ← STEP 2
-//   0x00000–0x0000F: Display control registers (testbench word addr 0–15)
+//   0x04000–0x05FFF: PF1 RAM  (0x1800 words = 12KB)  ← STEP 3
+//   0x06000–0x07FFF: PF2 RAM  (0x1800 words)         ← STEP 3
+//   0x08000–0x09FFF: PF3 RAM  (0x1800 words)         ← STEP 3
+//   0x0A000–0x0BFFF: PF4 RAM  (0x1800 words)         ← STEP 3
+//   0x0E000–0x0EFFF: Text RAM (4096 × 16-bit words, 8KB)   ← STEP 2
+//   0x0F000–0x0FFFF: Char RAM (4096 × 16-bit words = 8192 bytes) ← STEP 2
+//   0x00000–0x0000F: Display control registers (word addr 0–15)
+//
+// F3 CPU byte-address map (for reference):
+//   0x610000–0x612FFF: PF1 RAM  (chip word addr 0x04000–0x057FF)
+//   0x613000–0x615FFF: PF2 RAM  (chip word addr 0x06000–0x077FF)
+//   0x616000–0x618FFF: PF3 RAM  (chip word addr 0x08000–0x097FF)
+//   0x619000–0x61BFFF: PF4 RAM  (chip word addr 0x0A000–0x0B7FF)
+//   0x61C000–0x61DFFF: Text RAM (chip word addr 0x0E000–0x0EFFF)
+//   0x61E000–0x61FFFF: Char RAM (chip word addr 0x0F000–0x0FFFF)
+//   0x660000–0x66001F: Display ctrl (chip word addr 0x30000–0x3000F)
 //
 // Video timing (pixel clock domain):
 //   Pixel clock: 26.686 MHz / 4 = 6.6715 MHz
@@ -25,11 +37,11 @@
 //   V total: 262 lines,  V active: 232 lines,  V start: line 24
 //   Refresh: ~58.97 Hz
 //
-// Step 2 additions:
-//   · Text RAM (4096 × 16-bit) with CPU read/write
-//   · Character RAM (2048 × 32-bit = 8KB) with CPU read/write
-//   · tc0630fdp_text submodule instantiated and wired
-//   · text_pixel_out port exposes text layer pixel for testbench validation
+// Step 3 additions:
+//   · PF RAM ×4 (0x1800 words each, CPU r/w)
+//   · tc0630fdp_bg × 4 instantiated (PF1–PF4) with global X/Y scroll
+//   · Fake GFX ROM: 32-bit wide BRAM, CPU-writable via dedicated port
+//   · bg_pixel_out[0..3] ports expose BG layer pixels for testbench validation
 // =============================================================================
 
 module tc0630fdp (
@@ -59,7 +71,7 @@ module tc0630fdp (
     output logic        int_vblank,     // INT2: fires at VBLANK start
     output logic        int_hblank,     // INT3: pseudo-hblank (~10K CPU cycles after INT2)
 
-    // ── GFX ROM Interface (stub — driven 0 until PF layer step) ──────────
+    // ── GFX ROM Interface (stub port — real ROM via gfx_word_* below) ─────
     output logic [24:0] gfx_lo_addr,    // GFX ROM low-plane byte address
     output logic        gfx_lo_rd,      // GFX ROM low-plane read strobe
     input  logic [ 7:0] gfx_lo_data,   // GFX ROM low-plane read data
@@ -68,20 +80,31 @@ module tc0630fdp (
     output logic        gfx_hi_rd,     // GFX ROM hi-plane read strobe
     input  logic [ 7:0] gfx_hi_data,  // GFX ROM hi-plane read data
 
-    // ── Palette Interface (stub — driven 0 until compositor step) ─────────
+    // ── Palette Interface (stub) ───────────────────────────────────────────
     output logic [14:0] pal_addr,       // palette RAM address
     output logic        pal_rd,         // palette read strobe
     input  logic [15:0] pal_data,       // palette read data
 
-    // ── Video Output (stub — driven 0 until compositor step) ─────────────
+    // ── Video Output (stub) ───────────────────────────────────────────────
     output logic [23:0] rgb_out,        // 24-bit RGB to TC0650FDA DAC
     output logic        pixel_valid,    // high during active display
 
     // ── Text Layer Pixel Output (Step 2) ──────────────────────────────────
-    // Exposes the text layer line buffer pixel at the current hpos.
-    // Format: {color[4:0], pen[3:0]}  (pen==0 → transparent)
-    // Used by the testbench to validate tile rendering.
-    output logic [ 8:0] text_pixel_out
+    output logic [ 8:0] text_pixel_out,
+
+    // ── BG Layer Pixel Outputs (Step 3) ───────────────────────────────────
+    // Format: {palette[8:0], pen[3:0]}  (pen==0 → transparent)
+    // Used by testbench to validate BG tile rendering.
+    output logic [12:0] bg_pixel_out [0:3],
+
+    // ── GFX ROM Write Port (Step 3 testbench) ─────────────────────────────
+    // The testbench writes tile graphics data here before rendering.
+    // gfx_wr_addr: 32-bit word address into the shared GFX ROM.
+    // gfx_wr_data: 32-bit write data.
+    // gfx_wr_en:   write enable (active high, registered on posedge clk).
+    input  logic [21:0] gfx_wr_addr,
+    input  logic [31:0] gfx_wr_data,
+    input  logic        gfx_wr_en
 );
 
 // =============================================================================
@@ -98,21 +121,6 @@ assign rst_n = rst_pipe[1];
 // =============================================================================
 // Video Timing Generator
 // =============================================================================
-// H timing (pixel clock domain):
-//   H total:   432 pixels (0..431)
-//   H active:  pixels 46..365  (320 pixels)
-//   H blank:   pixels 0..45 and 366..431
-//   H sync:    pixels 0..31  (within blanking period)
-//
-// V timing:
-//   V total:   262 lines (0..261)
-//   V active:  lines 24..255  (232 lines)
-//   V blank:   lines 0..23 and 256..261
-//   V sync:    lines 0..3  (within blanking period)
-//
-// Derived from MAME: screen.set_raw(26.686_MHz_XTAL/4, 432, 46, 320+46, 262, 24, 232+24)
-// =============================================================================
-
 localparam int H_TOTAL   = 432;
 localparam int H_START   = 46;
 localparam int H_END     = 366;
@@ -122,7 +130,6 @@ localparam int V_START   = 24;
 localparam int V_END     = 256;
 localparam int V_SYNC_E  = 4;
 
-// H/V counters
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         hpos <= 10'b0;
@@ -140,7 +147,6 @@ always_ff @(posedge clk) begin
     end
 end
 
-// Timing outputs (combinational)
 always_comb begin
     hblank = (hpos < 10'(H_START)) || (hpos >= 10'(H_END));
     vblank = (vpos <  9'(V_START)) || (vpos >=  9'(V_END));
@@ -188,40 +194,36 @@ end
 // CPU Address Decode
 // =============================================================================
 // cpu_addr[18:1] is the word address within the TC0630FDP chip window.
-// The full F3 CPU map is:
-//   0x600000–0x60FFFF → Sprite RAM     (word addr 0x00000–0x07FFF, 32K words)
-//   0x610000–0x61BFFF → Playfield RAM  (word addr 0x08000–0x0DFFF, 24K words)
-//   0x61C000–0x61DFFF → Text RAM       (word addr 0x0E000–0x0EFFF,  4K words)
-//   0x61E000–0x61FFFF → Character RAM  (word addr 0x0F000–0x0FFFF,  4K words = 4096×16b)
-//   ...
-//   0x660000–0x66001F → Display ctrl   (word addr 0x30000–0x3000F, 16 words)
-//
-// For testbench simplicity (cpu_addr is 18-bit), we map:
-//   Text RAM:    cpu_addr[18:13] = 6'b000_111_0 (addr[18:12]=0x0E xxx → bits[18:12]=b0001110)
-//     → cpu_addr[18:12] == 7'b000_1110 → addr range 0x0E000–0x0EFFF
-//   Char RAM:    cpu_addr[18:12] == 7'b000_1111 → addr range 0x0F000–0x0FFFF
-//   Ctrl regs:   cpu_addr[18:4]  == 15'h3000x
-//
-// Simplified decode: use cpu_addr[18:12] for region selection.
-// =============================================================================
-logic cs_ctrl;     // display control registers
-logic cs_text;     // text RAM
-logic cs_char;     // character RAM
+// Decode uses cpu_addr[18:13] (6 bits = RTL bits 18..13 = C++ value >> 12):
+//   PF1 RAM : 0x04000–0x057FF  → cpu_addr[18:13] in {6'h04, 6'h05}
+//   PF2 RAM : 0x06000–0x077FF  → cpu_addr[18:13] in {6'h06, 6'h07}
+//   PF3 RAM : 0x08000–0x097FF  → cpu_addr[18:13] in {6'h08, 6'h09}
+//   PF4 RAM : 0x0A000–0x0B7FF  → cpu_addr[18:13] in {6'h0A, 6'h0B}
+//   Text RAM: 0x0E000–0x0EFFF  → cpu_addr[18:13] == 6'h0E
+//   Char RAM: 0x0F000–0x0FFFF  → cpu_addr[18:13] == 6'h0F
+//   Ctrl reg: 0x00000–0x0000F  → catch-all default
+
+logic cs_ctrl;
+logic cs_text;
+logic cs_char;
+logic cs_pf [0:3];   // PF1=0, PF2=1, PF3=2, PF4=3
 
 always_comb begin
-    cs_ctrl = 1'b0;
-    cs_text = 1'b0;
-    cs_char = 1'b0;
+    cs_ctrl  = 1'b0;
+    cs_text  = 1'b0;
+    cs_char  = 1'b0;
+    for (int p = 0; p < 4; p++) cs_pf[p] = 1'b0;
     if (cpu_cs) begin
-        // cpu_addr[18:1] is the 18-bit word address within the chip window.
-        // Region decode using cpu_addr[18:13] (6 bits = top 6 of 18):
-        //   Text RAM : 0x0E000–0x0EFFF → cpu_addr[18:13] = 6'b001110 = 6'h0E
-        //   Char RAM : 0x0F000–0x0FFFF → cpu_addr[18:13] = 6'b001111 = 6'h0F
-        //   Ctrl regs: 0x00000–0x0000F → cpu_addr[18:13] = 6'h00
-        //              (testbench drives addr 0..15 directly for ctrl accesses)
-        if      (cpu_addr[18:13] == 6'h0f) cs_char = 1'b1;
-        else if (cpu_addr[18:13] == 6'h0e) cs_text = 1'b1;
-        else                                cs_ctrl = 1'b1;
+        // cpu_addr[18:13] = C++ value >> 12 (6 bits select 8KB block)
+        unique case (cpu_addr[18:13])
+            6'h04, 6'h05: cs_pf[0] = 1'b1;   // PF1: 0x04000–0x057FF
+            6'h06, 6'h07: cs_pf[1] = 1'b1;   // PF2: 0x06000–0x077FF
+            6'h08, 6'h09: cs_pf[2] = 1'b1;   // PF3: 0x08000–0x097FF
+            6'h0A, 6'h0B: cs_pf[3] = 1'b1;   // PF4: 0x0A000–0x0B7FF
+            6'h0F:         cs_char = 1'b1;    // Char RAM: 0x0F000–0x0FFFF
+            6'h0E:         cs_text = 1'b1;    // Text RAM: 0x0E000–0x0EFFF
+            default:       cs_ctrl = 1'b1;    // ctrl regs and all other
+        endcase
     end
 end
 
@@ -236,7 +238,6 @@ assign cpu_be = {~cpu_uds_n, ~cpu_lds_n};
 logic [3:0] ctrl_idx;
 assign ctrl_idx = cpu_addr[4:1];
 
-// Write
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         for (int i = 0; i < 16; i++) ctrl[i] <= 16'b0;
@@ -250,7 +251,6 @@ always_ff @(posedge clk) begin
     end
 end
 
-// Read + DTACK
 logic [15:0] ctrl_rdata;
 always_ff @(posedge clk) begin
     if (!rst_n) begin
@@ -289,26 +289,22 @@ assign extend_mode = ctrl[15][7];
 
 // =============================================================================
 // Text RAM (4096 × 16-bit = 8KB)
-// CPU address range: cpu_addr[18:12]==0x0E → word index cpu_addr[11:0]
 // =============================================================================
 logic [15:0] text_ram [0:4095];
 
 logic [11:0] text_wr_addr;
 logic [11:0] text_cpu_raddr;
-assign text_wr_addr   = cpu_addr[12:1];   // bits[12:1] = word index within text RAM
+assign text_wr_addr   = cpu_addr[12:1];
 assign text_cpu_raddr = cpu_addr[12:1];
 
-// CPU write to Text RAM
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        // No reset needed for RAM; initial contents are undefined (same as BRAM)
     end else if (cs_text && !cpu_rw) begin
         if (cpu_be[1]) text_ram[text_wr_addr][15:8] <= cpu_din[15:8];
         if (cpu_be[0]) text_ram[text_wr_addr][ 7:0] <= cpu_din[ 7:0];
     end
 end
 
-// CPU read from Text RAM (registered, 1-cycle latency)
 logic [15:0] text_cpu_rdata;
 always_ff @(posedge clk) begin
     if (!rst_n)
@@ -317,46 +313,26 @@ always_ff @(posedge clk) begin
         text_cpu_rdata <= text_ram[text_cpu_raddr];
 end
 
-// Async read port for tc0630fdp_text submodule
 logic [11:0] text_rd_addr_w;
 logic [15:0] text_q_w;
 assign text_q_w = text_ram[text_rd_addr_w];
 
 // =============================================================================
-// Character RAM (256 tiles × 8 rows × 4 bytes = 2048 words × 32-bit = 8KB)
-// CPU address range: cpu_addr[18:12]==0x0F → word index cpu_addr[11:1]
-// CPU accesses are 16-bit (big-endian words); two 16-bit writes fill one 32-bit word.
-// char_ram is organized as 2048 × 32-bit words:
-//   word index = {char_code[7:0], fetch_py[2:0]} (11 bits)
-//   within each word: bits[31:24]=b3, [23:16]=b2, [15:8]=b1, [7:0]=b0
-// CPU word address cpu_addr[12:1] maps to half-word:
-//   upper 32-bit word = cpu_addr[12:2] (10 bits)
-//   upper/lower 16-bit half = cpu_addr[1]
+// Character RAM (256 tiles × 8 rows × 4 bytes = 8KB)
 // =============================================================================
-// We store character RAM as 4096 × 8-bit bytes to simplify CPU 16-bit write access.
-// The text submodule reads it as 2048 × 32-bit words.
 logic [7:0] char_ram [0:8191];
 
-// char_word_addr: 12-bit word address within char RAM (2 bytes per word → 4096 words max,
-// but char RAM is only 8KB = 4096 bytes = 2048 16-bit words → addr[12:1]).
-// cpu_addr[13:1] gives word address; [0] = 0 always (16-bit aligned access).
-// char_word_addr: 12-bit word index within char RAM (4096 × 16-bit words = 8KB).
-// cpu_addr[12:1] gives the word address; cpu_addr[13] selects char RAM region.
 logic [11:0] char_word_addr;
-assign char_word_addr = cpu_addr[12:1];   // 12-bit word index (0..4095)
+assign char_word_addr = cpu_addr[12:1];
 
-// CPU write to Character RAM (byte-lane aware)
-// Each 16-bit CPU word writes two consecutive bytes at byte offset = char_word_addr*2.
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        // No reset for RAM
     end else if (cs_char && !cpu_rw) begin
         if (cpu_be[1]) char_ram[{char_word_addr, 1'b0}] <= cpu_din[15:8];
         if (cpu_be[0]) char_ram[{char_word_addr, 1'b1}] <= cpu_din[ 7:0];
     end
 end
 
-// CPU read from Character RAM (registered, 1-cycle)
 logic [15:0] char_cpu_rdata;
 always_ff @(posedge clk) begin
     if (!rst_n)
@@ -367,30 +343,109 @@ always_ff @(posedge clk) begin
     end
 end
 
-// Async 32-bit read port for tc0630fdp_text submodule
-// char_rd_addr[10:0] = {char_code[7:0], fetch_py[2:0]} → byte_base = addr * 4
-// char_q[31:0] is LITTLE-ENDIAN: char_q[7:0]=b0, [15:8]=b1, [23:16]=b2, [31:24]=b3
-// where b0..b3 are sequential bytes starting at byte_base:
-//   b0 = char_ram[byte_base+0], b1 = char_ram[byte_base+1],
-//   b2 = char_ram[byte_base+2], b3 = char_ram[byte_base+3]
-// The CPU writes b0/b1 as one 16-bit word (cpu_din[15:8]=b0, cpu_din[7:0]=b1)
-// and b2/b3 as the next word.
 logic [10:0] char_rd_addr_w;
 logic [31:0] char_q_w;
-assign char_q_w = {char_ram[{char_rd_addr_w, 2'd3}],   // char_q[31:24] = b3
-                   char_ram[{char_rd_addr_w, 2'd2}],   // char_q[23:16] = b2
-                   char_ram[{char_rd_addr_w, 2'd1}],   // char_q[15:8]  = b1
-                   char_ram[{char_rd_addr_w, 2'd0}]};  // char_q[7:0]   = b0
+assign char_q_w = {char_ram[{char_rd_addr_w, 2'd3}],
+                   char_ram[{char_rd_addr_w, 2'd2}],
+                   char_ram[{char_rd_addr_w, 2'd1}],
+                   char_ram[{char_rd_addr_w, 2'd0}]};
+
+// =============================================================================
+// Playfield RAM ×4 (each 0x1800 × 16-bit words)
+// CPU word address within a PF RAM:
+//   PF n base: cpu_addr[18:13] == (2+n)  → addr[12:1] within PF RAM region
+//   But PF RAM is 0x1800 words → addr[12:0] is sufficient (13 bits: 0..0x17FF)
+//   We use cpu_addr[13:1] = 13 bits for the PF word offset.
+// =============================================================================
+logic [15:0] pf_ram [0:3][0:6143];    // 0x1800 = 6144 words per PF
+
+logic [12:0] pf_cpu_addr [0:3];
+// PF CPU word address: cpu_addr[13:1] gives 13-bit offset within PF RAM block
+// PF base word address = 0x04000 + n*0x2000 → cpu_addr bits [13:1] within that base
+assign pf_cpu_addr[0] = cpu_addr[13:1];
+assign pf_cpu_addr[1] = cpu_addr[13:1];
+assign pf_cpu_addr[2] = cpu_addr[13:1];
+assign pf_cpu_addr[3] = cpu_addr[13:1];
+
+logic [15:0] pf_cpu_rdata [0:3];
+
+genvar gi;
+generate
+    for (gi = 0; gi < 4; gi++) begin : gen_pf_ram
+        // CPU write
+        always_ff @(posedge clk) begin
+            if (cs_pf[gi] && !cpu_rw) begin
+                if (cpu_be[1]) pf_ram[gi][pf_cpu_addr[gi]][15:8] <= cpu_din[15:8];
+                if (cpu_be[0]) pf_ram[gi][pf_cpu_addr[gi]][ 7:0] <= cpu_din[ 7:0];
+            end
+        end
+        // CPU read (registered)
+        always_ff @(posedge clk) begin
+            if (!rst_n)
+                pf_cpu_rdata[gi] <= 16'b0;
+            else if (cs_pf[gi] && cpu_rw)
+                pf_cpu_rdata[gi] <= pf_ram[gi][pf_cpu_addr[gi]];
+        end
+    end
+endgenerate
+
+// Async read ports for tc0630fdp_bg submodules
+logic [12:0] pf_rd_addr_w [0:3];
+logic [15:0] pf_q_w [0:3];
+generate
+    for (gi = 0; gi < 4; gi++) begin : gen_pf_rd
+        assign pf_q_w[gi] = pf_ram[gi][pf_rd_addr_w[gi]];
+    end
+endgenerate
+
+// =============================================================================
+// GFX ROM (32-bit wide, 4M words = 16MB — simulable BRAM for testbench)
+// CPU writes via gfx_wr_* ports. BG modules read via per-instance async ports.
+// In real hardware this is external SDRAM; here it's an on-chip BRAM model.
+//
+// One shared ROM, all 4 BG instances address it simultaneously (simulation
+// only — no bus conflicts since each has its own combinational read port,
+// implemented via replicated assign from the same array).
+// =============================================================================
+// Size: 4096 × 32-bit words = 16KB (enough for test tiles; expand as needed)
+localparam int GFX_ROM_WORDS = 4096;
+logic [31:0] gfx_rom [0:GFX_ROM_WORDS-1];
+
+// CPU write port
+always_ff @(posedge clk) begin
+    if (gfx_wr_en) begin
+        if (gfx_wr_addr < 22'(GFX_ROM_WORDS))
+            gfx_rom[gfx_wr_addr[11:0]] <= gfx_wr_data;
+    end
+end
+
+// Async read ports (one per BG instance)
+logic [21:0] bg_gfx_addr [0:3];
+logic [31:0] bg_gfx_data [0:3];
+logic        bg_gfx_rd   [0:3];
+
+generate
+    for (gi = 0; gi < 4; gi++) begin : gen_gfx_rd
+        // Combinational read (addr truncated to GFX_ROM_WORDS range)
+        assign bg_gfx_data[gi] = (bg_gfx_addr[gi] < 22'(GFX_ROM_WORDS))
+                                  ? gfx_rom[bg_gfx_addr[gi][11:0]]
+                                  : 32'b0;
+    end
+endgenerate
 
 // =============================================================================
 // CPU read data mux
 // =============================================================================
 always_comb begin
     unique case (1'b1)
-        cs_ctrl: cpu_dout = ctrl_rdata;
-        cs_text: cpu_dout = text_cpu_rdata;
-        cs_char: cpu_dout = char_cpu_rdata;
-        default: cpu_dout = 16'b0;
+        cs_ctrl:   cpu_dout = ctrl_rdata;
+        cs_text:   cpu_dout = text_cpu_rdata;
+        cs_char:   cpu_dout = char_cpu_rdata;
+        cs_pf[0]:  cpu_dout = pf_cpu_rdata[0];
+        cs_pf[1]:  cpu_dout = pf_cpu_rdata[1];
+        cs_pf[2]:  cpu_dout = pf_cpu_rdata[2];
+        cs_pf[3]:  cpu_dout = pf_cpu_rdata[3];
+        default:   cpu_dout = 16'b0;
     endcase
 end
 
@@ -411,7 +466,31 @@ tc0630fdp_text u_text (
 );
 
 // =============================================================================
-// GFX ROM / Palette / RGB stubs (driven 0 until later steps)
+// tc0630fdp_bg × 4 — BG tilemap engines (Step 3)
+// =============================================================================
+generate
+    for (gi = 0; gi < 4; gi++) begin : gen_bg
+        tc0630fdp_bg #(.PLANE(gi)) u_bg (
+            .clk          (clk),
+            .rst_n        (rst_n),
+            .hblank       (hblank),
+            .vpos         (vpos),
+            .hpos         (hpos),
+            .pf_xscroll   (pf_xscroll[gi]),
+            .pf_yscroll   (pf_yscroll[gi]),
+            .extend_mode  (extend_mode),
+            .pf_rd_addr   (pf_rd_addr_w[gi]),
+            .pf_q         (pf_q_w[gi]),
+            .gfx_addr     (bg_gfx_addr[gi]),
+            .gfx_data     (bg_gfx_data[gi]),
+            .gfx_rd       (bg_gfx_rd[gi]),
+            .bg_pixel     (bg_pixel_out[gi])
+        );
+    end
+endgenerate
+
+// =============================================================================
+// GFX ROM / Palette / RGB stubs
 // =============================================================================
 assign gfx_lo_addr = 25'b0;
 assign gfx_lo_rd   = 1'b0;
@@ -429,11 +508,9 @@ logic _unused;
 assign _unused = ^{gfx_lo_data,
                    gfx_hi_data,
                    pal_data,
-                   pf_xscroll[0], pf_xscroll[1], pf_xscroll[2], pf_xscroll[3],
-                   pf_yscroll[0], pf_yscroll[1], pf_yscroll[2], pf_yscroll[3],
                    pixel_xscroll, pixel_yscroll,
-                   extend_mode,
-                   vblank_rise};
+                   vblank_rise,
+                   bg_gfx_rd[0], bg_gfx_rd[1], bg_gfx_rd[2], bg_gfx_rd[3]};
 /* verilator lint_on UNUSED */
 
 endmodule

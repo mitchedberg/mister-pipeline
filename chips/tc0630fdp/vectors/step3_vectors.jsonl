@@ -1,0 +1,645 @@
+{"op": "reset", "note": "reset before step3 tests"}
+{"op": "reset", "note": "reset: PF RAM R/W test"}
+{"op": "write_pf", "addr": 16384, "data": 4660, "be": 3, "note": "write pf1[0] = 0x1234"}
+{"op": "read_pf", "addr": 16384, "exp_dout": 4660, "note": "readback pf1[0] == 0x1234: PF1 word 0"}
+{"op": "write_pf", "addr": 16385, "data": 22136, "be": 3, "note": "write pf1[1] = 0x5678"}
+{"op": "read_pf", "addr": 16385, "exp_dout": 22136, "note": "readback pf1[1] == 0x5678: PF1 word 1"}
+{"op": "write_pf", "addr": 24576, "data": 43981, "be": 3, "note": "write pf2[0] = 0xabcd"}
+{"op": "read_pf", "addr": 24576, "exp_dout": 43981, "note": "readback pf2[0] == 0xabcd: PF2 word 0"}
+{"op": "write_pf", "addr": 33024, "data": 39321, "be": 3, "note": "write pf3[256] = 0x9999"}
+{"op": "read_pf", "addr": 33024, "exp_dout": 39321, "note": "readback pf3[256] == 0x9999: PF3 word 0x100"}
+{"op": "write_pf", "addr": 47102, "data": 65535, "be": 3, "note": "write pf4[6142] = 0xffff"}
+{"op": "read_pf", "addr": 47102, "exp_dout": 65535, "note": "readback pf4[6142] == 0xffff: PF4 last attr word"}
+{"op": "write_pf", "addr": 47103, "data": 4660, "be": 3, "note": "write pf4[6143] = 0x1234"}
+{"op": "read_pf", "addr": 47103, "exp_dout": 4660, "note": "readback pf4[6143] == 0x1234: PF4 last code word"}
+{"op": "reset", "note": "reset: solid-fill tile test"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "PF1 xscroll = 0"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "PF1 yscroll = 0"}
+{"op": "write_pf", "addr": 16448, "data": 5, "be": 3, "note": "pf1 tile(0,1) attr=0x0005"}
+{"op": "write_pf", "addr": 16449, "data": 1, "be": 3, "note": "pf1 tile(0,1) code=0x0001"}
+{"op": "write_gfx", "gfx_addr": 32, "gfx_data": 2863311530, "note": "gfx tile1 row0 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 33, "gfx_data": 2863311530, "note": "gfx tile1 row0 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 34, "gfx_data": 2863311530, "note": "gfx tile1 row1 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 35, "gfx_data": 2863311530, "note": "gfx tile1 row1 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 36, "gfx_data": 2863311530, "note": "gfx tile1 row2 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 37, "gfx_data": 2863311530, "note": "gfx tile1 row2 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 38, "gfx_data": 2863311530, "note": "gfx tile1 row3 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 39, "gfx_data": 2863311530, "note": "gfx tile1 row3 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 40, "gfx_data": 2863311530, "note": "gfx tile1 row4 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 41, "gfx_data": 2863311530, "note": "gfx tile1 row4 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 42, "gfx_data": 2863311530, "note": "gfx tile1 row5 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 43, "gfx_data": 2863311530, "note": "gfx tile1 row5 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 44, "gfx_data": 2863311530, "note": "gfx tile1 row6 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 45, "gfx_data": 2863311530, "note": "gfx tile1 row6 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 46, "gfx_data": 2863311530, "note": "gfx tile1 row7 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 47, "gfx_data": 2863311530, "note": "gfx tile1 row7 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 48, "gfx_data": 2863311530, "note": "gfx tile1 row8 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 49, "gfx_data": 2863311530, "note": "gfx tile1 row8 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 50, "gfx_data": 2863311530, "note": "gfx tile1 row9 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 51, "gfx_data": 2863311530, "note": "gfx tile1 row9 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 52, "gfx_data": 2863311530, "note": "gfx tile1 row10 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 53, "gfx_data": 2863311530, "note": "gfx tile1 row10 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 54, "gfx_data": 2863311530, "note": "gfx tile1 row11 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 55, "gfx_data": 2863311530, "note": "gfx tile1 row11 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 56, "gfx_data": 2863311530, "note": "gfx tile1 row12 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 57, "gfx_data": 2863311530, "note": "gfx tile1 row12 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 58, "gfx_data": 2863311530, "note": "gfx tile1 row13 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 59, "gfx_data": 2863311530, "note": "gfx tile1 row13 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 60, "gfx_data": 2863311530, "note": "gfx tile1 row14 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 61, "gfx_data": 2863311530, "note": "gfx tile1 row14 right pen=10"}
+{"op": "write_gfx", "gfx_addr": 62, "gfx_data": 2863311530, "note": "gfx tile1 row15 left  pen=10"}
+{"op": "write_gfx", "gfx_addr": 63, "gfx_data": 2863311530, "note": "gfx tile1 row15 right pen=10"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 0, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px0: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 1, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px1: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 2, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px2: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 3, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px3: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 4, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px4: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 5, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px5: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 6, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px6: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 7, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px7: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 8, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px8: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 9, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px9: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 10, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px10: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 11, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px11: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 12, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px12: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 13, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px13: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 14, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px14: palette=5 pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 23, "screen_col": 15, "plane": 0, "exp_pixel": 90, "note": "solid-fill pf1 px15: palette=5 pen=0xa"}
+{"op": "reset", "note": "reset: transparent pen test"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "PF1 xscroll=0 for transparent test"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "PF1 yscroll=0 for transparent test"}
+{"op": "write_pf", "addr": 16516, "data": 7, "be": 3, "note": "pf1 tile(2,2) attr=0x0007"}
+{"op": "write_pf", "addr": 16517, "data": 3, "be": 3, "note": "pf1 tile(2,2) code=0x0003"}
+{"op": "write_gfx", "gfx_addr": 96, "gfx_data": 0, "note": "gfx tile3 row0 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 97, "gfx_data": 0, "note": "gfx tile3 row0 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 98, "gfx_data": 0, "note": "gfx tile3 row1 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 99, "gfx_data": 0, "note": "gfx tile3 row1 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 100, "gfx_data": 0, "note": "gfx tile3 row2 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 101, "gfx_data": 0, "note": "gfx tile3 row2 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 102, "gfx_data": 0, "note": "gfx tile3 row3 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 103, "gfx_data": 0, "note": "gfx tile3 row3 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 104, "gfx_data": 0, "note": "gfx tile3 row4 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 105, "gfx_data": 0, "note": "gfx tile3 row4 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 106, "gfx_data": 0, "note": "gfx tile3 row5 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 107, "gfx_data": 0, "note": "gfx tile3 row5 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 108, "gfx_data": 0, "note": "gfx tile3 row6 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 109, "gfx_data": 0, "note": "gfx tile3 row6 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 110, "gfx_data": 0, "note": "gfx tile3 row7 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 111, "gfx_data": 0, "note": "gfx tile3 row7 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 112, "gfx_data": 0, "note": "gfx tile3 row8 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 113, "gfx_data": 0, "note": "gfx tile3 row8 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 114, "gfx_data": 0, "note": "gfx tile3 row9 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 115, "gfx_data": 0, "note": "gfx tile3 row9 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 116, "gfx_data": 0, "note": "gfx tile3 row10 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 117, "gfx_data": 0, "note": "gfx tile3 row10 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 118, "gfx_data": 0, "note": "gfx tile3 row11 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 119, "gfx_data": 0, "note": "gfx tile3 row11 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 120, "gfx_data": 0, "note": "gfx tile3 row12 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 121, "gfx_data": 0, "note": "gfx tile3 row12 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 122, "gfx_data": 0, "note": "gfx tile3 row13 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 123, "gfx_data": 0, "note": "gfx tile3 row13 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 124, "gfx_data": 0, "note": "gfx tile3 row14 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 125, "gfx_data": 0, "note": "gfx tile3 row14 right pen=0"}
+{"op": "write_gfx", "gfx_addr": 126, "gfx_data": 0, "note": "gfx tile3 row15 left  pen=0"}
+{"op": "write_gfx", "gfx_addr": 127, "gfx_data": 0, "note": "gfx tile3 row15 right pen=0"}
+{"op": "check_bg_pixel", "vpos": 39, "screen_col": 32, "plane": 0, "exp_pixel": 112, "note": "pen=0 pf1 screen_col=32: palette=7"}
+{"op": "check_bg_pixel", "vpos": 39, "screen_col": 33, "plane": 0, "exp_pixel": 112, "note": "pen=0 pf1 screen_col=33: palette=7"}
+{"op": "check_bg_pixel", "vpos": 39, "screen_col": 34, "plane": 0, "exp_pixel": 112, "note": "pen=0 pf1 screen_col=34: palette=7"}
+{"op": "check_bg_pixel", "vpos": 39, "screen_col": 35, "plane": 0, "exp_pixel": 112, "note": "pen=0 pf1 screen_col=35: palette=7"}
+{"op": "check_bg_pixel", "vpos": 39, "screen_col": 36, "plane": 0, "exp_pixel": 112, "note": "pen=0 pf1 screen_col=36: palette=7"}
+{"op": "check_bg_pixel", "vpos": 39, "screen_col": 37, "plane": 0, "exp_pixel": 112, "note": "pen=0 pf1 screen_col=37: palette=7"}
+{"op": "check_bg_pixel", "vpos": 39, "screen_col": 38, "plane": 0, "exp_pixel": 112, "note": "pen=0 pf1 screen_col=38: palette=7"}
+{"op": "check_bg_pixel", "vpos": 39, "screen_col": 39, "plane": 0, "exp_pixel": 112, "note": "pen=0 pf1 screen_col=39: palette=7"}
+{"op": "reset", "note": "reset: nibble order test"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "PF1 xscroll=0 for nibble-order test"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "PF1 yscroll=0 for nibble-order test"}
+{"op": "write_pf", "addr": 16576, "data": 2, "be": 3, "note": "pf1 tile(0,3) attr=0x0002"}
+{"op": "write_pf", "addr": 16577, "data": 5, "be": 3, "note": "pf1 tile(0,3) code=0x0005"}
+{"op": "write_gfx", "gfx_addr": 176, "gfx_data": 305419896, "note": "gfx tile5 row8 left  pens=[1, 2, 3, 4, 5, 6, 7, 8]"}
+{"op": "write_gfx", "gfx_addr": 177, "gfx_data": 2596069104, "note": "gfx tile5 row8 right pens=[9, 10, 11, 12, 13, 14, 15, 0]"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 0, "plane": 0, "exp_pixel": 33, "note": "nibble-order px0: exp pen=0x1"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 1, "plane": 0, "exp_pixel": 34, "note": "nibble-order px1: exp pen=0x2"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 2, "plane": 0, "exp_pixel": 35, "note": "nibble-order px2: exp pen=0x3"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 3, "plane": 0, "exp_pixel": 36, "note": "nibble-order px3: exp pen=0x4"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 4, "plane": 0, "exp_pixel": 37, "note": "nibble-order px4: exp pen=0x5"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 5, "plane": 0, "exp_pixel": 38, "note": "nibble-order px5: exp pen=0x6"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 6, "plane": 0, "exp_pixel": 39, "note": "nibble-order px6: exp pen=0x7"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 7, "plane": 0, "exp_pixel": 40, "note": "nibble-order px7: exp pen=0x8"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 8, "plane": 0, "exp_pixel": 41, "note": "nibble-order px8: exp pen=0x9"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 9, "plane": 0, "exp_pixel": 42, "note": "nibble-order px9: exp pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 10, "plane": 0, "exp_pixel": 43, "note": "nibble-order px10: exp pen=0xb"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 11, "plane": 0, "exp_pixel": 44, "note": "nibble-order px11: exp pen=0xc"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 12, "plane": 0, "exp_pixel": 45, "note": "nibble-order px12: exp pen=0xd"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 13, "plane": 0, "exp_pixel": 46, "note": "nibble-order px13: exp pen=0xe"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 14, "plane": 0, "exp_pixel": 47, "note": "nibble-order px14: exp pen=0xf"}
+{"op": "check_bg_pixel", "vpos": 55, "screen_col": 15, "plane": 0, "exp_pixel": 32, "note": "nibble-order px15: exp pen=0x0"}
+{"op": "reset", "note": "reset: flipX test"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "PF1 xscroll=0 for flipX test"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "PF1 yscroll=0 for flipX test"}
+{"op": "write_pf", "addr": 16640, "data": 16387, "be": 3, "note": "pf1 tile(0,4) attr=0x4003"}
+{"op": "write_pf", "addr": 16641, "data": 7, "be": 3, "note": "pf1 tile(0,4) code=0x0007"}
+{"op": "write_gfx", "gfx_addr": 240, "gfx_data": 305419896, "note": "gfx tile7 row8 left  pens=[1, 2, 3, 4, 5, 6, 7, 8]"}
+{"op": "write_gfx", "gfx_addr": 241, "gfx_data": 2596069104, "note": "gfx tile7 row8 right pens=[9, 10, 11, 12, 13, 14, 15, 0]"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 0, "plane": 0, "exp_pixel": 56, "note": "flipX px0: exp pen=0x8"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 1, "plane": 0, "exp_pixel": 55, "note": "flipX px1: exp pen=0x7"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 2, "plane": 0, "exp_pixel": 54, "note": "flipX px2: exp pen=0x6"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 3, "plane": 0, "exp_pixel": 53, "note": "flipX px3: exp pen=0x5"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 4, "plane": 0, "exp_pixel": 52, "note": "flipX px4: exp pen=0x4"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 5, "plane": 0, "exp_pixel": 51, "note": "flipX px5: exp pen=0x3"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 6, "plane": 0, "exp_pixel": 50, "note": "flipX px6: exp pen=0x2"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 7, "plane": 0, "exp_pixel": 49, "note": "flipX px7: exp pen=0x1"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 8, "plane": 0, "exp_pixel": 48, "note": "flipX px8: exp pen=0x0"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 9, "plane": 0, "exp_pixel": 63, "note": "flipX px9: exp pen=0xf"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 10, "plane": 0, "exp_pixel": 62, "note": "flipX px10: exp pen=0xe"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 11, "plane": 0, "exp_pixel": 61, "note": "flipX px11: exp pen=0xd"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 12, "plane": 0, "exp_pixel": 60, "note": "flipX px12: exp pen=0xc"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 13, "plane": 0, "exp_pixel": 59, "note": "flipX px13: exp pen=0xb"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 14, "plane": 0, "exp_pixel": 58, "note": "flipX px14: exp pen=0xa"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 15, "plane": 0, "exp_pixel": 57, "note": "flipX px15: exp pen=0x9"}
+{"op": "reset", "note": "reset: flipY test"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "PF1 xscroll=0 for flipY test"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "PF1 yscroll=0 for flipY test"}
+{"op": "write_pf", "addr": 16640, "data": 4, "be": 3, "note": "pf1 tile(0,4) attr=0x0004"}
+{"op": "write_pf", "addr": 16641, "data": 9, "be": 3, "note": "pf1 tile(0,4) code=0x0009"}
+{"op": "write_pf", "addr": 16644, "data": 32772, "be": 3, "note": "pf1 tile(2,4) attr=0x8004"}
+{"op": "write_pf", "addr": 16645, "data": 10, "be": 3, "note": "pf1 tile(2,4) code=0x000a"}
+{"op": "write_gfx", "gfx_addr": 302, "gfx_data": 3435973836, "note": "gfx tile9 row7 left  pens=[12, 12, 12, 12, 12, 12, 12, 12]"}
+{"op": "write_gfx", "gfx_addr": 303, "gfx_data": 3435973836, "note": "gfx tile9 row7 right pens=[12, 12, 12, 12, 12, 12, 12, 12]"}
+{"op": "write_gfx", "gfx_addr": 304, "gfx_data": 858993459, "note": "gfx tile9 row8 left  pens=[3, 3, 3, 3, 3, 3, 3, 3]"}
+{"op": "write_gfx", "gfx_addr": 305, "gfx_data": 858993459, "note": "gfx tile9 row8 right pens=[3, 3, 3, 3, 3, 3, 3, 3]"}
+{"op": "write_gfx", "gfx_addr": 334, "gfx_data": 3435973836, "note": "gfx tile10 row7 left  pens=[12, 12, 12, 12, 12, 12, 12, 12]"}
+{"op": "write_gfx", "gfx_addr": 335, "gfx_data": 3435973836, "note": "gfx tile10 row7 right pens=[12, 12, 12, 12, 12, 12, 12, 12]"}
+{"op": "write_gfx", "gfx_addr": 336, "gfx_data": 858993459, "note": "gfx tile10 row8 left  pens=[3, 3, 3, 3, 3, 3, 3, 3]"}
+{"op": "write_gfx", "gfx_addr": 337, "gfx_data": 858993459, "note": "gfx tile10 row8 right pens=[3, 3, 3, 3, 3, 3, 3, 3]"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 0, "plane": 0, "exp_pixel": 67, "note": "flipY=0: tile reads row 8 \u2192 pen=0x3"}
+{"op": "check_bg_pixel", "vpos": 71, "screen_col": 32, "plane": 0, "exp_pixel": 76, "note": "flipY=1: tile reads row 7 \u2192 pen=0xc"}
+{"op": "reset", "note": "reset: X scroll test"}
+{"op": "write", "addr": 0, "data": 1024, "be": 3, "note": "PF1 xscroll = 16 px (reg=0x0400)"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "PF1 yscroll=0 for X scroll test"}
+{"op": "write_pf", "addr": 16704, "data": 8, "be": 3, "note": "pf1 tile(0,5) attr=0x0008"}
+{"op": "write_pf", "addr": 16705, "data": 11, "be": 3, "note": "pf1 tile(0,5) code=0x000b"}
+{"op": "write_pf", "addr": 16706, "data": 9, "be": 3, "note": "pf1 tile(1,5) attr=0x0009"}
+{"op": "write_pf", "addr": 16707, "data": 12, "be": 3, "note": "pf1 tile(1,5) code=0x000c"}
+{"op": "write_gfx", "gfx_addr": 352, "gfx_data": 4008636142, "note": "gfx tile11 row0 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 353, "gfx_data": 4008636142, "note": "gfx tile11 row0 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 354, "gfx_data": 4008636142, "note": "gfx tile11 row1 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 355, "gfx_data": 4008636142, "note": "gfx tile11 row1 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 356, "gfx_data": 4008636142, "note": "gfx tile11 row2 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 357, "gfx_data": 4008636142, "note": "gfx tile11 row2 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 358, "gfx_data": 4008636142, "note": "gfx tile11 row3 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 359, "gfx_data": 4008636142, "note": "gfx tile11 row3 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 360, "gfx_data": 4008636142, "note": "gfx tile11 row4 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 361, "gfx_data": 4008636142, "note": "gfx tile11 row4 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 362, "gfx_data": 4008636142, "note": "gfx tile11 row5 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 363, "gfx_data": 4008636142, "note": "gfx tile11 row5 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 364, "gfx_data": 4008636142, "note": "gfx tile11 row6 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 365, "gfx_data": 4008636142, "note": "gfx tile11 row6 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 366, "gfx_data": 4008636142, "note": "gfx tile11 row7 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 367, "gfx_data": 4008636142, "note": "gfx tile11 row7 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 368, "gfx_data": 4008636142, "note": "gfx tile11 row8 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 369, "gfx_data": 4008636142, "note": "gfx tile11 row8 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 370, "gfx_data": 4008636142, "note": "gfx tile11 row9 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 371, "gfx_data": 4008636142, "note": "gfx tile11 row9 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 372, "gfx_data": 4008636142, "note": "gfx tile11 row10 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 373, "gfx_data": 4008636142, "note": "gfx tile11 row10 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 374, "gfx_data": 4008636142, "note": "gfx tile11 row11 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 375, "gfx_data": 4008636142, "note": "gfx tile11 row11 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 376, "gfx_data": 4008636142, "note": "gfx tile11 row12 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 377, "gfx_data": 4008636142, "note": "gfx tile11 row12 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 378, "gfx_data": 4008636142, "note": "gfx tile11 row13 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 379, "gfx_data": 4008636142, "note": "gfx tile11 row13 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 380, "gfx_data": 4008636142, "note": "gfx tile11 row14 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 381, "gfx_data": 4008636142, "note": "gfx tile11 row14 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 382, "gfx_data": 4008636142, "note": "gfx tile11 row15 left  pen=14"}
+{"op": "write_gfx", "gfx_addr": 383, "gfx_data": 4008636142, "note": "gfx tile11 row15 right pen=14"}
+{"op": "write_gfx", "gfx_addr": 384, "gfx_data": 1431655765, "note": "gfx tile12 row0 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 385, "gfx_data": 1431655765, "note": "gfx tile12 row0 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 386, "gfx_data": 1431655765, "note": "gfx tile12 row1 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 387, "gfx_data": 1431655765, "note": "gfx tile12 row1 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 388, "gfx_data": 1431655765, "note": "gfx tile12 row2 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 389, "gfx_data": 1431655765, "note": "gfx tile12 row2 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 390, "gfx_data": 1431655765, "note": "gfx tile12 row3 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 391, "gfx_data": 1431655765, "note": "gfx tile12 row3 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 392, "gfx_data": 1431655765, "note": "gfx tile12 row4 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 393, "gfx_data": 1431655765, "note": "gfx tile12 row4 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 394, "gfx_data": 1431655765, "note": "gfx tile12 row5 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 395, "gfx_data": 1431655765, "note": "gfx tile12 row5 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 396, "gfx_data": 1431655765, "note": "gfx tile12 row6 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 397, "gfx_data": 1431655765, "note": "gfx tile12 row6 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 398, "gfx_data": 1431655765, "note": "gfx tile12 row7 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 399, "gfx_data": 1431655765, "note": "gfx tile12 row7 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 400, "gfx_data": 1431655765, "note": "gfx tile12 row8 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 401, "gfx_data": 1431655765, "note": "gfx tile12 row8 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 402, "gfx_data": 1431655765, "note": "gfx tile12 row9 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 403, "gfx_data": 1431655765, "note": "gfx tile12 row9 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 404, "gfx_data": 1431655765, "note": "gfx tile12 row10 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 405, "gfx_data": 1431655765, "note": "gfx tile12 row10 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 406, "gfx_data": 1431655765, "note": "gfx tile12 row11 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 407, "gfx_data": 1431655765, "note": "gfx tile12 row11 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 408, "gfx_data": 1431655765, "note": "gfx tile12 row12 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 409, "gfx_data": 1431655765, "note": "gfx tile12 row12 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 410, "gfx_data": 1431655765, "note": "gfx tile12 row13 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 411, "gfx_data": 1431655765, "note": "gfx tile12 row13 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 412, "gfx_data": 1431655765, "note": "gfx tile12 row14 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 413, "gfx_data": 1431655765, "note": "gfx tile12 row14 right pen=5"}
+{"op": "write_gfx", "gfx_addr": 414, "gfx_data": 1431655765, "note": "gfx tile12 row15 left  pen=5"}
+{"op": "write_gfx", "gfx_addr": 415, "gfx_data": 1431655765, "note": "gfx tile12 row15 right pen=5"}
+{"op": "check_bg_pixel", "vpos": 87, "screen_col": 0, "plane": 0, "exp_pixel": 149, "note": "xscroll=16: screen0 \u2192 tile_x=1 pen=0x5"}
+{"op": "check_bg_pixel", "vpos": 87, "screen_col": 1, "plane": 0, "exp_pixel": 149, "note": "xscroll=16: screen1 \u2192 tile_x=1 pen=0x5"}
+{"op": "check_bg_pixel", "vpos": 87, "screen_col": 2, "plane": 0, "exp_pixel": 149, "note": "xscroll=16: screen2 \u2192 tile_x=1 pen=0x5"}
+{"op": "check_bg_pixel", "vpos": 87, "screen_col": 3, "plane": 0, "exp_pixel": 149, "note": "xscroll=16: screen3 \u2192 tile_x=1 pen=0x5"}
+{"op": "check_bg_pixel", "vpos": 87, "screen_col": 4, "plane": 0, "exp_pixel": 149, "note": "xscroll=16: screen4 \u2192 tile_x=1 pen=0x5"}
+{"op": "check_bg_pixel", "vpos": 87, "screen_col": 5, "plane": 0, "exp_pixel": 149, "note": "xscroll=16: screen5 \u2192 tile_x=1 pen=0x5"}
+{"op": "check_bg_pixel", "vpos": 87, "screen_col": 6, "plane": 0, "exp_pixel": 149, "note": "xscroll=16: screen6 \u2192 tile_x=1 pen=0x5"}
+{"op": "check_bg_pixel", "vpos": 87, "screen_col": 7, "plane": 0, "exp_pixel": 149, "note": "xscroll=16: screen7 \u2192 tile_x=1 pen=0x5"}
+{"op": "reset", "note": "reset: Y scroll test"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "PF1 xscroll=0 for Y scroll test"}
+{"op": "write", "addr": 4, "data": 2048, "be": 3, "note": "PF1 yscroll=16 px (reg=0x0800)"}
+{"op": "write_pf", "addr": 16704, "data": 16, "be": 3, "note": "pf1 tile(0,5) attr=0x0010"}
+{"op": "write_pf", "addr": 16705, "data": 14, "be": 3, "note": "pf1 tile(0,5) code=0x000e"}
+{"op": "write_pf", "addr": 16768, "data": 17, "be": 3, "note": "pf1 tile(0,6) attr=0x0011"}
+{"op": "write_pf", "addr": 16769, "data": 15, "be": 3, "note": "pf1 tile(0,6) code=0x000f"}
+{"op": "write_gfx", "gfx_addr": 448, "gfx_data": 286331153, "note": "gfx tile14 row0 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 449, "gfx_data": 286331153, "note": "gfx tile14 row0 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 450, "gfx_data": 286331153, "note": "gfx tile14 row1 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 451, "gfx_data": 286331153, "note": "gfx tile14 row1 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 452, "gfx_data": 286331153, "note": "gfx tile14 row2 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 453, "gfx_data": 286331153, "note": "gfx tile14 row2 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 454, "gfx_data": 286331153, "note": "gfx tile14 row3 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 455, "gfx_data": 286331153, "note": "gfx tile14 row3 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 456, "gfx_data": 286331153, "note": "gfx tile14 row4 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 457, "gfx_data": 286331153, "note": "gfx tile14 row4 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 458, "gfx_data": 286331153, "note": "gfx tile14 row5 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 459, "gfx_data": 286331153, "note": "gfx tile14 row5 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 460, "gfx_data": 286331153, "note": "gfx tile14 row6 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 461, "gfx_data": 286331153, "note": "gfx tile14 row6 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 462, "gfx_data": 286331153, "note": "gfx tile14 row7 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 463, "gfx_data": 286331153, "note": "gfx tile14 row7 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 464, "gfx_data": 286331153, "note": "gfx tile14 row8 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 465, "gfx_data": 286331153, "note": "gfx tile14 row8 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 466, "gfx_data": 286331153, "note": "gfx tile14 row9 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 467, "gfx_data": 286331153, "note": "gfx tile14 row9 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 468, "gfx_data": 286331153, "note": "gfx tile14 row10 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 469, "gfx_data": 286331153, "note": "gfx tile14 row10 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 470, "gfx_data": 286331153, "note": "gfx tile14 row11 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 471, "gfx_data": 286331153, "note": "gfx tile14 row11 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 472, "gfx_data": 286331153, "note": "gfx tile14 row12 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 473, "gfx_data": 286331153, "note": "gfx tile14 row12 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 474, "gfx_data": 286331153, "note": "gfx tile14 row13 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 475, "gfx_data": 286331153, "note": "gfx tile14 row13 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 476, "gfx_data": 286331153, "note": "gfx tile14 row14 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 477, "gfx_data": 286331153, "note": "gfx tile14 row14 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 478, "gfx_data": 286331153, "note": "gfx tile14 row15 left  pen=1"}
+{"op": "write_gfx", "gfx_addr": 479, "gfx_data": 286331153, "note": "gfx tile14 row15 right pen=1"}
+{"op": "write_gfx", "gfx_addr": 480, "gfx_data": 572662306, "note": "gfx tile15 row0 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 481, "gfx_data": 572662306, "note": "gfx tile15 row0 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 482, "gfx_data": 572662306, "note": "gfx tile15 row1 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 483, "gfx_data": 572662306, "note": "gfx tile15 row1 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 484, "gfx_data": 572662306, "note": "gfx tile15 row2 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 485, "gfx_data": 572662306, "note": "gfx tile15 row2 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 486, "gfx_data": 572662306, "note": "gfx tile15 row3 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 487, "gfx_data": 572662306, "note": "gfx tile15 row3 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 488, "gfx_data": 572662306, "note": "gfx tile15 row4 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 489, "gfx_data": 572662306, "note": "gfx tile15 row4 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 490, "gfx_data": 572662306, "note": "gfx tile15 row5 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 491, "gfx_data": 572662306, "note": "gfx tile15 row5 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 492, "gfx_data": 572662306, "note": "gfx tile15 row6 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 493, "gfx_data": 572662306, "note": "gfx tile15 row6 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 494, "gfx_data": 572662306, "note": "gfx tile15 row7 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 495, "gfx_data": 572662306, "note": "gfx tile15 row7 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 496, "gfx_data": 572662306, "note": "gfx tile15 row8 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 497, "gfx_data": 572662306, "note": "gfx tile15 row8 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 498, "gfx_data": 572662306, "note": "gfx tile15 row9 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 499, "gfx_data": 572662306, "note": "gfx tile15 row9 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 500, "gfx_data": 572662306, "note": "gfx tile15 row10 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 501, "gfx_data": 572662306, "note": "gfx tile15 row10 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 502, "gfx_data": 572662306, "note": "gfx tile15 row11 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 503, "gfx_data": 572662306, "note": "gfx tile15 row11 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 504, "gfx_data": 572662306, "note": "gfx tile15 row12 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 505, "gfx_data": 572662306, "note": "gfx tile15 row12 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 506, "gfx_data": 572662306, "note": "gfx tile15 row13 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 507, "gfx_data": 572662306, "note": "gfx tile15 row13 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 508, "gfx_data": 572662306, "note": "gfx tile15 row14 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 509, "gfx_data": 572662306, "note": "gfx tile15 row14 right pen=2"}
+{"op": "write_gfx", "gfx_addr": 510, "gfx_data": 572662306, "note": "gfx tile15 row15 left  pen=2"}
+{"op": "write_gfx", "gfx_addr": 511, "gfx_data": 572662306, "note": "gfx tile15 row15 right pen=2"}
+{"op": "check_bg_pixel", "vpos": 87, "screen_col": 0, "plane": 0, "exp_pixel": 274, "note": "yscroll=16: screen0 \u2192 tile_ty=6 pen=0x2"}
+{"op": "reset", "note": "reset: tile boundary test"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "PF1 xscroll=0 for boundary test"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "PF1 yscroll=0 for boundary test"}
+{"op": "write_pf", "addr": 16774, "data": 18, "be": 3, "note": "pf1 tile(3,6) attr=0x0012"}
+{"op": "write_pf", "addr": 16775, "data": 16, "be": 3, "note": "pf1 tile(3,6) code=0x0010"}
+{"op": "write_pf", "addr": 16776, "data": 19, "be": 3, "note": "pf1 tile(4,6) attr=0x0013"}
+{"op": "write_pf", "addr": 16777, "data": 17, "be": 3, "note": "pf1 tile(4,6) code=0x0011"}
+{"op": "write_gfx", "gfx_addr": 512, "gfx_data": 2004318071, "note": "gfx tile16 row0 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 513, "gfx_data": 2004318071, "note": "gfx tile16 row0 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 514, "gfx_data": 2004318071, "note": "gfx tile16 row1 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 515, "gfx_data": 2004318071, "note": "gfx tile16 row1 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 516, "gfx_data": 2004318071, "note": "gfx tile16 row2 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 517, "gfx_data": 2004318071, "note": "gfx tile16 row2 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 518, "gfx_data": 2004318071, "note": "gfx tile16 row3 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 519, "gfx_data": 2004318071, "note": "gfx tile16 row3 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 520, "gfx_data": 2004318071, "note": "gfx tile16 row4 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 521, "gfx_data": 2004318071, "note": "gfx tile16 row4 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 522, "gfx_data": 2004318071, "note": "gfx tile16 row5 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 523, "gfx_data": 2004318071, "note": "gfx tile16 row5 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 524, "gfx_data": 2004318071, "note": "gfx tile16 row6 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 525, "gfx_data": 2004318071, "note": "gfx tile16 row6 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 526, "gfx_data": 2004318071, "note": "gfx tile16 row7 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 527, "gfx_data": 2004318071, "note": "gfx tile16 row7 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 528, "gfx_data": 2004318071, "note": "gfx tile16 row8 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 529, "gfx_data": 2004318071, "note": "gfx tile16 row8 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 530, "gfx_data": 2004318071, "note": "gfx tile16 row9 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 531, "gfx_data": 2004318071, "note": "gfx tile16 row9 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 532, "gfx_data": 2004318071, "note": "gfx tile16 row10 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 533, "gfx_data": 2004318071, "note": "gfx tile16 row10 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 534, "gfx_data": 2004318071, "note": "gfx tile16 row11 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 535, "gfx_data": 2004318071, "note": "gfx tile16 row11 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 536, "gfx_data": 2004318071, "note": "gfx tile16 row12 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 537, "gfx_data": 2004318071, "note": "gfx tile16 row12 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 538, "gfx_data": 2004318071, "note": "gfx tile16 row13 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 539, "gfx_data": 2004318071, "note": "gfx tile16 row13 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 540, "gfx_data": 2004318071, "note": "gfx tile16 row14 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 541, "gfx_data": 2004318071, "note": "gfx tile16 row14 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 542, "gfx_data": 2004318071, "note": "gfx tile16 row15 left  pen=7"}
+{"op": "write_gfx", "gfx_addr": 543, "gfx_data": 2004318071, "note": "gfx tile16 row15 right pen=7"}
+{"op": "write_gfx", "gfx_addr": 544, "gfx_data": 3722304989, "note": "gfx tile17 row0 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 545, "gfx_data": 3722304989, "note": "gfx tile17 row0 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 546, "gfx_data": 3722304989, "note": "gfx tile17 row1 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 547, "gfx_data": 3722304989, "note": "gfx tile17 row1 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 548, "gfx_data": 3722304989, "note": "gfx tile17 row2 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 549, "gfx_data": 3722304989, "note": "gfx tile17 row2 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 550, "gfx_data": 3722304989, "note": "gfx tile17 row3 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 551, "gfx_data": 3722304989, "note": "gfx tile17 row3 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 552, "gfx_data": 3722304989, "note": "gfx tile17 row4 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 553, "gfx_data": 3722304989, "note": "gfx tile17 row4 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 554, "gfx_data": 3722304989, "note": "gfx tile17 row5 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 555, "gfx_data": 3722304989, "note": "gfx tile17 row5 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 556, "gfx_data": 3722304989, "note": "gfx tile17 row6 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 557, "gfx_data": 3722304989, "note": "gfx tile17 row6 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 558, "gfx_data": 3722304989, "note": "gfx tile17 row7 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 559, "gfx_data": 3722304989, "note": "gfx tile17 row7 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 560, "gfx_data": 3722304989, "note": "gfx tile17 row8 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 561, "gfx_data": 3722304989, "note": "gfx tile17 row8 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 562, "gfx_data": 3722304989, "note": "gfx tile17 row9 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 563, "gfx_data": 3722304989, "note": "gfx tile17 row9 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 564, "gfx_data": 3722304989, "note": "gfx tile17 row10 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 565, "gfx_data": 3722304989, "note": "gfx tile17 row10 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 566, "gfx_data": 3722304989, "note": "gfx tile17 row11 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 567, "gfx_data": 3722304989, "note": "gfx tile17 row11 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 568, "gfx_data": 3722304989, "note": "gfx tile17 row12 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 569, "gfx_data": 3722304989, "note": "gfx tile17 row12 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 570, "gfx_data": 3722304989, "note": "gfx tile17 row13 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 571, "gfx_data": 3722304989, "note": "gfx tile17 row13 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 572, "gfx_data": 3722304989, "note": "gfx tile17 row14 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 573, "gfx_data": 3722304989, "note": "gfx tile17 row14 right pen=13"}
+{"op": "write_gfx", "gfx_addr": 574, "gfx_data": 3722304989, "note": "gfx tile17 row15 left  pen=13"}
+{"op": "write_gfx", "gfx_addr": 575, "gfx_data": 3722304989, "note": "gfx tile17 row15 right pen=13"}
+{"op": "check_bg_pixel", "vpos": 103, "screen_col": 63, "plane": 0, "exp_pixel": 295, "note": "boundary: last px of tile_x=3 (scol=63) pen=0x7"}
+{"op": "check_bg_pixel", "vpos": 103, "screen_col": 64, "plane": 0, "exp_pixel": 317, "note": "boundary: first px of tile_x=4 (scol=64) pen=0xd"}
+{"op": "reset", "note": "reset: multi-plane independence test"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "PF1 xscroll=0 multi-plane"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "PF1 yscroll=0 multi-plane"}
+{"op": "write", "addr": 1, "data": 0, "be": 3, "note": "PF2 xscroll=0 multi-plane"}
+{"op": "write", "addr": 5, "data": 0, "be": 3, "note": "PF2 yscroll=0 multi-plane"}
+{"op": "write_pf", "addr": 16832, "data": 26, "be": 3, "note": "pf1 tile(0,7) attr=0x001a"}
+{"op": "write_pf", "addr": 16833, "data": 18, "be": 3, "note": "pf1 tile(0,7) code=0x0012"}
+{"op": "write_pf", "addr": 25024, "data": 27, "be": 3, "note": "pf2 tile(0,7) attr=0x001b"}
+{"op": "write_pf", "addr": 25025, "data": 19, "be": 3, "note": "pf2 tile(0,7) code=0x0013"}
+{"op": "write_gfx", "gfx_addr": 576, "gfx_data": 4294967295, "note": "gfx tile18 row0 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 577, "gfx_data": 4294967295, "note": "gfx tile18 row0 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 578, "gfx_data": 4294967295, "note": "gfx tile18 row1 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 579, "gfx_data": 4294967295, "note": "gfx tile18 row1 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 580, "gfx_data": 4294967295, "note": "gfx tile18 row2 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 581, "gfx_data": 4294967295, "note": "gfx tile18 row2 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 582, "gfx_data": 4294967295, "note": "gfx tile18 row3 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 583, "gfx_data": 4294967295, "note": "gfx tile18 row3 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 584, "gfx_data": 4294967295, "note": "gfx tile18 row4 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 585, "gfx_data": 4294967295, "note": "gfx tile18 row4 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 586, "gfx_data": 4294967295, "note": "gfx tile18 row5 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 587, "gfx_data": 4294967295, "note": "gfx tile18 row5 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 588, "gfx_data": 4294967295, "note": "gfx tile18 row6 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 589, "gfx_data": 4294967295, "note": "gfx tile18 row6 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 590, "gfx_data": 4294967295, "note": "gfx tile18 row7 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 591, "gfx_data": 4294967295, "note": "gfx tile18 row7 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 592, "gfx_data": 4294967295, "note": "gfx tile18 row8 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 593, "gfx_data": 4294967295, "note": "gfx tile18 row8 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 594, "gfx_data": 4294967295, "note": "gfx tile18 row9 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 595, "gfx_data": 4294967295, "note": "gfx tile18 row9 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 596, "gfx_data": 4294967295, "note": "gfx tile18 row10 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 597, "gfx_data": 4294967295, "note": "gfx tile18 row10 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 598, "gfx_data": 4294967295, "note": "gfx tile18 row11 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 599, "gfx_data": 4294967295, "note": "gfx tile18 row11 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 600, "gfx_data": 4294967295, "note": "gfx tile18 row12 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 601, "gfx_data": 4294967295, "note": "gfx tile18 row12 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 602, "gfx_data": 4294967295, "note": "gfx tile18 row13 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 603, "gfx_data": 4294967295, "note": "gfx tile18 row13 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 604, "gfx_data": 4294967295, "note": "gfx tile18 row14 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 605, "gfx_data": 4294967295, "note": "gfx tile18 row14 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 606, "gfx_data": 4294967295, "note": "gfx tile18 row15 left  pen=15"}
+{"op": "write_gfx", "gfx_addr": 607, "gfx_data": 4294967295, "note": "gfx tile18 row15 right pen=15"}
+{"op": "write_gfx", "gfx_addr": 608, "gfx_data": 1717986918, "note": "gfx tile19 row0 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 609, "gfx_data": 1717986918, "note": "gfx tile19 row0 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 610, "gfx_data": 1717986918, "note": "gfx tile19 row1 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 611, "gfx_data": 1717986918, "note": "gfx tile19 row1 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 612, "gfx_data": 1717986918, "note": "gfx tile19 row2 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 613, "gfx_data": 1717986918, "note": "gfx tile19 row2 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 614, "gfx_data": 1717986918, "note": "gfx tile19 row3 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 615, "gfx_data": 1717986918, "note": "gfx tile19 row3 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 616, "gfx_data": 1717986918, "note": "gfx tile19 row4 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 617, "gfx_data": 1717986918, "note": "gfx tile19 row4 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 618, "gfx_data": 1717986918, "note": "gfx tile19 row5 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 619, "gfx_data": 1717986918, "note": "gfx tile19 row5 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 620, "gfx_data": 1717986918, "note": "gfx tile19 row6 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 621, "gfx_data": 1717986918, "note": "gfx tile19 row6 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 622, "gfx_data": 1717986918, "note": "gfx tile19 row7 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 623, "gfx_data": 1717986918, "note": "gfx tile19 row7 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 624, "gfx_data": 1717986918, "note": "gfx tile19 row8 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 625, "gfx_data": 1717986918, "note": "gfx tile19 row8 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 626, "gfx_data": 1717986918, "note": "gfx tile19 row9 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 627, "gfx_data": 1717986918, "note": "gfx tile19 row9 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 628, "gfx_data": 1717986918, "note": "gfx tile19 row10 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 629, "gfx_data": 1717986918, "note": "gfx tile19 row10 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 630, "gfx_data": 1717986918, "note": "gfx tile19 row11 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 631, "gfx_data": 1717986918, "note": "gfx tile19 row11 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 632, "gfx_data": 1717986918, "note": "gfx tile19 row12 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 633, "gfx_data": 1717986918, "note": "gfx tile19 row12 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 634, "gfx_data": 1717986918, "note": "gfx tile19 row13 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 635, "gfx_data": 1717986918, "note": "gfx tile19 row13 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 636, "gfx_data": 1717986918, "note": "gfx tile19 row14 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 637, "gfx_data": 1717986918, "note": "gfx tile19 row14 right pen=6"}
+{"op": "write_gfx", "gfx_addr": 638, "gfx_data": 1717986918, "note": "gfx tile19 row15 left  pen=6"}
+{"op": "write_gfx", "gfx_addr": 639, "gfx_data": 1717986918, "note": "gfx tile19 row15 right pen=6"}
+{"op": "check_bg_pixel", "vpos": 119, "screen_col": 0, "plane": 0, "exp_pixel": 431, "note": "plane0 independent px0"}
+{"op": "check_bg_pixel", "vpos": 119, "screen_col": 0, "plane": 1, "exp_pixel": 438, "note": "plane1 independent px0"}
+{"op": "check_bg_pixel", "vpos": 119, "screen_col": 1, "plane": 0, "exp_pixel": 431, "note": "plane0 independent px1"}
+{"op": "check_bg_pixel", "vpos": 119, "screen_col": 1, "plane": 1, "exp_pixel": 438, "note": "plane1 independent px1"}
+{"op": "check_bg_pixel", "vpos": 119, "screen_col": 2, "plane": 0, "exp_pixel": 431, "note": "plane0 independent px2"}
+{"op": "check_bg_pixel", "vpos": 119, "screen_col": 2, "plane": 1, "exp_pixel": 438, "note": "plane1 independent px2"}
+{"op": "check_bg_pixel", "vpos": 119, "screen_col": 3, "plane": 0, "exp_pixel": 431, "note": "plane0 independent px3"}
+{"op": "check_bg_pixel", "vpos": 119, "screen_col": 3, "plane": 1, "exp_pixel": 438, "note": "plane1 independent px3"}
+{"op": "reset", "note": "reset: model cross-check"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "PF1 xscroll=0 model-check"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "PF1 yscroll=0 model-check"}
+{"op": "write_gfx", "gfx_addr": 656, "gfx_data": 1431655765, "note": "gfx tile20 row8 left  pens=[5, 5, 5, 5, 5, 5, 5, 5]"}
+{"op": "write_gfx", "gfx_addr": 657, "gfx_data": 1431655765, "note": "gfx tile20 row8 right pens=[5, 5, 5, 5, 5, 5, 5, 5]"}
+{"op": "write_gfx", "gfx_addr": 688, "gfx_data": 2863311530, "note": "gfx tile21 row8 left  pens=[10, 10, 10, 10, 10, 10, 10, 10]"}
+{"op": "write_gfx", "gfx_addr": 689, "gfx_data": 2863311530, "note": "gfx tile21 row8 right pens=[10, 10, 10, 10, 10, 10, 10, 10]"}
+{"op": "write_pf", "addr": 16896, "data": 80, "be": 3, "note": "pf1 tile(0,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16897, "data": 20, "be": 3, "note": "pf1 tile(0,8) code=0x0014"}
+{"op": "write_pf", "addr": 16898, "data": 81, "be": 3, "note": "pf1 tile(1,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16899, "data": 21, "be": 3, "note": "pf1 tile(1,8) code=0x0015"}
+{"op": "write_pf", "addr": 16900, "data": 80, "be": 3, "note": "pf1 tile(2,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16901, "data": 20, "be": 3, "note": "pf1 tile(2,8) code=0x0014"}
+{"op": "write_pf", "addr": 16902, "data": 81, "be": 3, "note": "pf1 tile(3,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16903, "data": 21, "be": 3, "note": "pf1 tile(3,8) code=0x0015"}
+{"op": "write_pf", "addr": 16904, "data": 80, "be": 3, "note": "pf1 tile(4,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16905, "data": 20, "be": 3, "note": "pf1 tile(4,8) code=0x0014"}
+{"op": "write_pf", "addr": 16906, "data": 81, "be": 3, "note": "pf1 tile(5,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16907, "data": 21, "be": 3, "note": "pf1 tile(5,8) code=0x0015"}
+{"op": "write_pf", "addr": 16908, "data": 80, "be": 3, "note": "pf1 tile(6,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16909, "data": 20, "be": 3, "note": "pf1 tile(6,8) code=0x0014"}
+{"op": "write_pf", "addr": 16910, "data": 81, "be": 3, "note": "pf1 tile(7,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16911, "data": 21, "be": 3, "note": "pf1 tile(7,8) code=0x0015"}
+{"op": "write_pf", "addr": 16912, "data": 80, "be": 3, "note": "pf1 tile(8,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16913, "data": 20, "be": 3, "note": "pf1 tile(8,8) code=0x0014"}
+{"op": "write_pf", "addr": 16914, "data": 81, "be": 3, "note": "pf1 tile(9,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16915, "data": 21, "be": 3, "note": "pf1 tile(9,8) code=0x0015"}
+{"op": "write_pf", "addr": 16916, "data": 80, "be": 3, "note": "pf1 tile(10,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16917, "data": 20, "be": 3, "note": "pf1 tile(10,8) code=0x0014"}
+{"op": "write_pf", "addr": 16918, "data": 81, "be": 3, "note": "pf1 tile(11,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16919, "data": 21, "be": 3, "note": "pf1 tile(11,8) code=0x0015"}
+{"op": "write_pf", "addr": 16920, "data": 80, "be": 3, "note": "pf1 tile(12,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16921, "data": 20, "be": 3, "note": "pf1 tile(12,8) code=0x0014"}
+{"op": "write_pf", "addr": 16922, "data": 81, "be": 3, "note": "pf1 tile(13,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16923, "data": 21, "be": 3, "note": "pf1 tile(13,8) code=0x0015"}
+{"op": "write_pf", "addr": 16924, "data": 80, "be": 3, "note": "pf1 tile(14,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16925, "data": 20, "be": 3, "note": "pf1 tile(14,8) code=0x0014"}
+{"op": "write_pf", "addr": 16926, "data": 81, "be": 3, "note": "pf1 tile(15,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16927, "data": 21, "be": 3, "note": "pf1 tile(15,8) code=0x0015"}
+{"op": "write_pf", "addr": 16928, "data": 80, "be": 3, "note": "pf1 tile(16,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16929, "data": 20, "be": 3, "note": "pf1 tile(16,8) code=0x0014"}
+{"op": "write_pf", "addr": 16930, "data": 81, "be": 3, "note": "pf1 tile(17,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16931, "data": 21, "be": 3, "note": "pf1 tile(17,8) code=0x0015"}
+{"op": "write_pf", "addr": 16932, "data": 80, "be": 3, "note": "pf1 tile(18,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16933, "data": 20, "be": 3, "note": "pf1 tile(18,8) code=0x0014"}
+{"op": "write_pf", "addr": 16934, "data": 81, "be": 3, "note": "pf1 tile(19,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16935, "data": 21, "be": 3, "note": "pf1 tile(19,8) code=0x0015"}
+{"op": "write_pf", "addr": 16936, "data": 80, "be": 3, "note": "pf1 tile(20,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16937, "data": 20, "be": 3, "note": "pf1 tile(20,8) code=0x0014"}
+{"op": "write_pf", "addr": 16938, "data": 81, "be": 3, "note": "pf1 tile(21,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16939, "data": 21, "be": 3, "note": "pf1 tile(21,8) code=0x0015"}
+{"op": "write_pf", "addr": 16940, "data": 80, "be": 3, "note": "pf1 tile(22,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16941, "data": 20, "be": 3, "note": "pf1 tile(22,8) code=0x0014"}
+{"op": "write_pf", "addr": 16942, "data": 81, "be": 3, "note": "pf1 tile(23,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16943, "data": 21, "be": 3, "note": "pf1 tile(23,8) code=0x0015"}
+{"op": "write_pf", "addr": 16944, "data": 80, "be": 3, "note": "pf1 tile(24,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16945, "data": 20, "be": 3, "note": "pf1 tile(24,8) code=0x0014"}
+{"op": "write_pf", "addr": 16946, "data": 81, "be": 3, "note": "pf1 tile(25,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16947, "data": 21, "be": 3, "note": "pf1 tile(25,8) code=0x0015"}
+{"op": "write_pf", "addr": 16948, "data": 80, "be": 3, "note": "pf1 tile(26,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16949, "data": 20, "be": 3, "note": "pf1 tile(26,8) code=0x0014"}
+{"op": "write_pf", "addr": 16950, "data": 81, "be": 3, "note": "pf1 tile(27,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16951, "data": 21, "be": 3, "note": "pf1 tile(27,8) code=0x0015"}
+{"op": "write_pf", "addr": 16952, "data": 80, "be": 3, "note": "pf1 tile(28,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16953, "data": 20, "be": 3, "note": "pf1 tile(28,8) code=0x0014"}
+{"op": "write_pf", "addr": 16954, "data": 81, "be": 3, "note": "pf1 tile(29,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16955, "data": 21, "be": 3, "note": "pf1 tile(29,8) code=0x0015"}
+{"op": "write_pf", "addr": 16956, "data": 80, "be": 3, "note": "pf1 tile(30,8) attr=0x0050"}
+{"op": "write_pf", "addr": 16957, "data": 20, "be": 3, "note": "pf1 tile(30,8) code=0x0014"}
+{"op": "write_pf", "addr": 16958, "data": 81, "be": 3, "note": "pf1 tile(31,8) attr=0x0051"}
+{"op": "write_pf", "addr": 16959, "data": 21, "be": 3, "note": "pf1 tile(31,8) code=0x0015"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 0, "plane": 0, "exp_pixel": 1285, "note": "model-check: scol=0 exp=0x0505"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 16, "plane": 0, "exp_pixel": 1306, "note": "model-check: scol=16 exp=0x051a"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 32, "plane": 0, "exp_pixel": 1285, "note": "model-check: scol=32 exp=0x0505"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 48, "plane": 0, "exp_pixel": 1306, "note": "model-check: scol=48 exp=0x051a"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 64, "plane": 0, "exp_pixel": 1285, "note": "model-check: scol=64 exp=0x0505"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 80, "plane": 0, "exp_pixel": 1306, "note": "model-check: scol=80 exp=0x051a"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 96, "plane": 0, "exp_pixel": 1285, "note": "model-check: scol=96 exp=0x0505"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 112, "plane": 0, "exp_pixel": 1306, "note": "model-check: scol=112 exp=0x051a"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 128, "plane": 0, "exp_pixel": 1285, "note": "model-check: scol=128 exp=0x0505"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 144, "plane": 0, "exp_pixel": 1306, "note": "model-check: scol=144 exp=0x051a"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 160, "plane": 0, "exp_pixel": 1285, "note": "model-check: scol=160 exp=0x0505"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 176, "plane": 0, "exp_pixel": 1306, "note": "model-check: scol=176 exp=0x051a"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 192, "plane": 0, "exp_pixel": 1285, "note": "model-check: scol=192 exp=0x0505"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 208, "plane": 0, "exp_pixel": 1306, "note": "model-check: scol=208 exp=0x051a"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 224, "plane": 0, "exp_pixel": 1285, "note": "model-check: scol=224 exp=0x0505"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 240, "plane": 0, "exp_pixel": 1306, "note": "model-check: scol=240 exp=0x051a"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 256, "plane": 0, "exp_pixel": 1285, "note": "model-check: scol=256 exp=0x0505"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 272, "plane": 0, "exp_pixel": 1306, "note": "model-check: scol=272 exp=0x051a"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 288, "plane": 0, "exp_pixel": 1285, "note": "model-check: scol=288 exp=0x0505"}
+{"op": "check_bg_pixel", "vpos": 135, "screen_col": 304, "plane": 0, "exp_pixel": 1306, "note": "model-check: scol=304 exp=0x051a"}
+{"op": "reset", "note": "reset: scroll wrap-around test"}
+{"op": "write", "addr": 0, "data": 32256, "be": 3, "note": "PF1 xscroll=504 (wrap test)"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "PF1 yscroll=0 for wrap test"}
+{"op": "write_pf", "addr": 16960, "data": 28, "be": 3, "note": "pf1 tile(0,9) attr=0x001c"}
+{"op": "write_pf", "addr": 16961, "data": 22, "be": 3, "note": "pf1 tile(0,9) code=0x0016"}
+{"op": "write_pf", "addr": 17022, "data": 29, "be": 3, "note": "pf1 tile(31,9) attr=0x001d"}
+{"op": "write_pf", "addr": 17023, "data": 23, "be": 3, "note": "pf1 tile(31,9) code=0x0017"}
+{"op": "write_gfx", "gfx_addr": 704, "gfx_data": 1145324612, "note": "gfx tile22 row0 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 705, "gfx_data": 1145324612, "note": "gfx tile22 row0 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 706, "gfx_data": 1145324612, "note": "gfx tile22 row1 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 707, "gfx_data": 1145324612, "note": "gfx tile22 row1 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 708, "gfx_data": 1145324612, "note": "gfx tile22 row2 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 709, "gfx_data": 1145324612, "note": "gfx tile22 row2 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 710, "gfx_data": 1145324612, "note": "gfx tile22 row3 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 711, "gfx_data": 1145324612, "note": "gfx tile22 row3 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 712, "gfx_data": 1145324612, "note": "gfx tile22 row4 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 713, "gfx_data": 1145324612, "note": "gfx tile22 row4 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 714, "gfx_data": 1145324612, "note": "gfx tile22 row5 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 715, "gfx_data": 1145324612, "note": "gfx tile22 row5 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 716, "gfx_data": 1145324612, "note": "gfx tile22 row6 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 717, "gfx_data": 1145324612, "note": "gfx tile22 row6 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 718, "gfx_data": 1145324612, "note": "gfx tile22 row7 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 719, "gfx_data": 1145324612, "note": "gfx tile22 row7 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 720, "gfx_data": 1145324612, "note": "gfx tile22 row8 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 721, "gfx_data": 1145324612, "note": "gfx tile22 row8 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 722, "gfx_data": 1145324612, "note": "gfx tile22 row9 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 723, "gfx_data": 1145324612, "note": "gfx tile22 row9 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 724, "gfx_data": 1145324612, "note": "gfx tile22 row10 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 725, "gfx_data": 1145324612, "note": "gfx tile22 row10 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 726, "gfx_data": 1145324612, "note": "gfx tile22 row11 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 727, "gfx_data": 1145324612, "note": "gfx tile22 row11 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 728, "gfx_data": 1145324612, "note": "gfx tile22 row12 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 729, "gfx_data": 1145324612, "note": "gfx tile22 row12 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 730, "gfx_data": 1145324612, "note": "gfx tile22 row13 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 731, "gfx_data": 1145324612, "note": "gfx tile22 row13 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 732, "gfx_data": 1145324612, "note": "gfx tile22 row14 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 733, "gfx_data": 1145324612, "note": "gfx tile22 row14 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 734, "gfx_data": 1145324612, "note": "gfx tile22 row15 left  pen=4"}
+{"op": "write_gfx", "gfx_addr": 735, "gfx_data": 1145324612, "note": "gfx tile22 row15 right pen=4"}
+{"op": "write_gfx", "gfx_addr": 736, "gfx_data": 3149642683, "note": "gfx tile23 row0 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 737, "gfx_data": 3149642683, "note": "gfx tile23 row0 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 738, "gfx_data": 3149642683, "note": "gfx tile23 row1 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 739, "gfx_data": 3149642683, "note": "gfx tile23 row1 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 740, "gfx_data": 3149642683, "note": "gfx tile23 row2 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 741, "gfx_data": 3149642683, "note": "gfx tile23 row2 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 742, "gfx_data": 3149642683, "note": "gfx tile23 row3 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 743, "gfx_data": 3149642683, "note": "gfx tile23 row3 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 744, "gfx_data": 3149642683, "note": "gfx tile23 row4 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 745, "gfx_data": 3149642683, "note": "gfx tile23 row4 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 746, "gfx_data": 3149642683, "note": "gfx tile23 row5 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 747, "gfx_data": 3149642683, "note": "gfx tile23 row5 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 748, "gfx_data": 3149642683, "note": "gfx tile23 row6 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 749, "gfx_data": 3149642683, "note": "gfx tile23 row6 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 750, "gfx_data": 3149642683, "note": "gfx tile23 row7 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 751, "gfx_data": 3149642683, "note": "gfx tile23 row7 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 752, "gfx_data": 3149642683, "note": "gfx tile23 row8 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 753, "gfx_data": 3149642683, "note": "gfx tile23 row8 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 754, "gfx_data": 3149642683, "note": "gfx tile23 row9 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 755, "gfx_data": 3149642683, "note": "gfx tile23 row9 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 756, "gfx_data": 3149642683, "note": "gfx tile23 row10 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 757, "gfx_data": 3149642683, "note": "gfx tile23 row10 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 758, "gfx_data": 3149642683, "note": "gfx tile23 row11 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 759, "gfx_data": 3149642683, "note": "gfx tile23 row11 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 760, "gfx_data": 3149642683, "note": "gfx tile23 row12 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 761, "gfx_data": 3149642683, "note": "gfx tile23 row12 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 762, "gfx_data": 3149642683, "note": "gfx tile23 row13 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 763, "gfx_data": 3149642683, "note": "gfx tile23 row13 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 764, "gfx_data": 3149642683, "note": "gfx tile23 row14 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 765, "gfx_data": 3149642683, "note": "gfx tile23 row14 right pen=11"}
+{"op": "write_gfx", "gfx_addr": 766, "gfx_data": 3149642683, "note": "gfx tile23 row15 left  pen=11"}
+{"op": "write_gfx", "gfx_addr": 767, "gfx_data": 3149642683, "note": "gfx tile23 row15 right pen=11"}
+{"op": "check_bg_pixel", "vpos": 143, "screen_col": 0, "plane": 0, "exp_pixel": 475, "note": "wrap: scol=0 \u2192 tile_x=31 pen=0xb"}
+{"op": "check_bg_pixel", "vpos": 143, "screen_col": 7, "plane": 0, "exp_pixel": 475, "note": "wrap: scol=7 \u2192 tile_x=31 pen=0xb"}
+{"op": "check_bg_pixel", "vpos": 143, "screen_col": 8, "plane": 0, "exp_pixel": 452, "note": "wrap: scol=8 \u2192 tile_x=0 (wrap) pen=0x4"}

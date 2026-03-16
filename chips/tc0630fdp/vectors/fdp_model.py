@@ -1,5 +1,5 @@
 """
-TC0630FDP behavioral model — Python reference implementation (Steps 1–2).
+TC0630FDP behavioral model — Python reference implementation (Steps 1–3).
 
 Step 1 scope:
   - Display control register bank (16 × 16-bit registers)
@@ -11,6 +11,31 @@ Step 2 scope (added):
   - Text RAM (4096 × 16-bit words): tile words for 64×64 8×8-tile text layer
   - Character RAM (8192 bytes): CPU-writable pixel data for 256 tiles × 32 bytes
   - render_text_scanline(vpos): returns 320-entry list of {color[4:0], pen[3:0]}
+
+Step 3 scope (added):
+  - PF RAM × 4 (0x1800 words each = 6144 × 16-bit): two words per 16×16 tile entry
+  - GFX ROM (32-bit word array): nibble-packed 4bpp tile graphics
+  - render_bg_scanline(vpos, plane, xscroll, yscroll, extend_mode):
+      returns 320-entry list of {palette[8:0], pen[3:0]} packed as 13-bit int
+
+  BG tile word format (section1 §4):
+    Word 0 (attr): bits[8:0]=palette, bit[9]=blend, bits[11:10]=extra_planes,
+                   bit[14]=flipX, bit[15]=flipY.
+    Word 1 (code): bits[15:0]=tile_code.
+
+  GFX ROM format (section1 §11.3, 32-bit wide, nibble-packed 4bpp):
+    128 bytes (32 × 32-bit words) per 16×16 tile.
+    Row r of tile T: left-8px word = gfx_rom[T*32 + r*2],
+                     right-8px word = gfx_rom[T*32 + r*2 + 1].
+    Within 32-bit word: bits[31:28]=px0, [27:24]=px1, ..., [3:0]=px7.
+    flipX: read nibbles in reverse (px7..px0 → left..right output).
+    flipY: row = 15 - fetch_py.
+
+  Scroll (global, Step 3):
+    X: pf_xscroll[15:6] = integer pixel offset.
+       canvas_x at screen col 0 = xscroll_int = pf_xscroll >> 6.
+    Y: pf_yscroll[15:7] = integer pixel offset.
+       canvas_y = (vpos + 1 + yscroll_int) & 0x1FF.
 
   Text tile word format (section1 §5):
     bits[10:0]  = character code (wraps mod 256 for 256-tile char RAM)
@@ -67,16 +92,20 @@ _UNUSED_REGS = {8, 9, 10, 11, 14}
 
 
 class TaitoF3Model:
-    """Steps 1–2 behavioral model: control registers, video timing, text layer."""
+    """Steps 1–3 behavioral model: control registers, video timing, text layer, BG layers."""
 
     # Memory sizes
     TEXT_RAM_WORDS  = 4096    # 64×64 tile map × 1 word each
     CHAR_RAM_BYTES  = 8192    # 256 tiles × 32 bytes = 8KB
+    PF_RAM_WORDS    = 6144    # 0x1800 words per playfield
+    GFX_ROM_WORDS   = 4096    # simulation GFX ROM (32-bit words) — matches RTL BRAM
 
     def __init__(self):
         self.ctrl     = [0] * 16          # 16 × 16-bit display control registers
         self.text_ram = [0] * self.TEXT_RAM_WORDS   # step 2
         self.char_ram = [0] * self.CHAR_RAM_BYTES   # step 2 (bytes)
+        self.pf_ram   = [[0] * self.PF_RAM_WORDS for _ in range(4)]  # step 3
+        self.gfx_rom  = [0] * self.GFX_ROM_WORDS   # step 3 (32-bit words)
         self._rst()
 
     def _rst(self):
@@ -84,6 +113,8 @@ class TaitoF3Model:
         self.ctrl     = [0] * 16
         self.text_ram = [0] * self.TEXT_RAM_WORDS
         self.char_ram = [0] * self.CHAR_RAM_BYTES
+        self.pf_ram   = [[0] * self.PF_RAM_WORDS for _ in range(4)]
+        self.gfx_rom  = [0] * self.GFX_ROM_WORDS
 
     # ── Address decode ──────────────────────────────────────────────────────
 
@@ -152,6 +183,137 @@ class TaitoF3Model:
         """Read 16-bit word from Character RAM at byte address."""
         byte_addr &= 0x1FFE
         return (self.char_ram[byte_addr] << 8) | self.char_ram[byte_addr + 1]
+
+    # ── PF RAM read/write (Step 3) ──────────────────────────────────────────
+
+    def write_pf_ram(self, plane: int, word_idx: int, data: int,
+                     be: int = 0x3) -> None:
+        """Write 16-bit word to PF RAM for plane (0–3) at word index."""
+        plane &= 3
+        word_idx &= 0x17FF   # 0x1800 words max
+        data &= 0xFFFF
+        cur = self.pf_ram[plane][word_idx]
+        if be & 0x2: cur = (cur & 0x00FF) | (data & 0xFF00)
+        if be & 0x1: cur = (cur & 0xFF00) | (data & 0x00FF)
+        self.pf_ram[plane][word_idx] = cur
+
+    def read_pf_ram(self, plane: int, word_idx: int) -> int:
+        """Read 16-bit word from PF RAM."""
+        return self.pf_ram[plane & 3][word_idx & 0x17FF]
+
+    # ── GFX ROM write (Step 3) ──────────────────────────────────────────────
+
+    def write_gfx_rom(self, word_addr: int, data: int) -> None:
+        """Write 32-bit word to GFX ROM at word address."""
+        if word_addr < self.GFX_ROM_WORDS:
+            self.gfx_rom[word_addr] = data & 0xFFFFFFFF
+
+    # ── BG layer render (Step 3) ────────────────────────────────────────────
+
+    def render_bg_scanline(self, vpos: int, plane: int,
+                           xscroll: int, yscroll: int,
+                           extend_mode: bool = False) -> list:
+        """Return 320-entry list of BG layer pixels for the scanline AFTER vpos.
+
+        Pre-fetch pattern (matches RTL): fills during HBLANK of vpos,
+        renders vpos+1.
+
+        Each entry: {palette[8:0], pen[3:0]} packed as 13-bit int.
+        pen == 0 → transparent (but pixel is still written with palette).
+
+        Parameters:
+          vpos        : current scanline (FSM fires on HBLANK of this line)
+          plane       : 0..3 (PF1..PF4)
+          xscroll     : raw pf_xscroll register value (16-bit)
+          yscroll     : raw pf_yscroll register value (16-bit)
+          extend_mode : False=32-wide map, True=64-wide map
+
+        Scroll decode (section1 §3.1):
+          xscroll_int = xscroll >> 6   (10-bit integer pixel offset)
+          yscroll_int = yscroll >> 7   (9-bit integer pixel offset)
+
+        Canvas Y = (vpos + 1 + yscroll_int) & 0x1FF
+        fetch_py = canvas_y & 0xF     (row within 16px tile)
+        fetch_ty = (canvas_y >> 4) & 0x1F  (tile row 0..31)
+
+        Canvas X at screen col 0 = xscroll_int
+        first_tx = (xscroll_int >> 4) & (63 if extend_mode else 31)
+        fetch_xoff = xscroll_int & 0xF  (pixel offset within first tile)
+
+        Tile fetch per screen column c:
+          canvas_x = (c + xscroll_int) & wrap_mask
+          tile_x = canvas_x >> 4
+          tile_y = fetch_ty  (fixed per scanline)
+          tile_idx = tile_y * map_width + tile_x
+          word_base = tile_idx * 2
+          attr_word = pf_ram[plane][word_base]
+          code_word = pf_ram[plane][word_base + 1]
+
+        GFX ROM decode:
+          tile_code = code_word
+          flipY: row = 15 - fetch_py if flipy else fetch_py
+          left_word  = gfx_rom[tile_code * 32 + row * 2]
+          right_word = gfx_rom[tile_code * 32 + row * 2 + 1]
+          pixel px (0..7 in left, 8..15 in right):
+            half_px = px & 7
+            ni = (7 - half_px) if flipX else half_px   # flipX reversal
+            src_word = left_word if px < 8 else right_word
+            pen = (src_word >> ((7 - ni) * 4)) & 0xF
+        """
+        plane = plane & 3
+        map_width = 64 if extend_mode else 32
+        wrap_mask_px = (map_width * 16) - 1   # 1023 or 511
+
+        # Scroll decode
+        xscroll_int = (xscroll >> 6) & 0x3FF    # 10-bit
+        yscroll_int = (yscroll >> 7) & 0x1FF    # 9-bit
+
+        # Next scanline geometry
+        canvas_y = ((vpos + 1) + yscroll_int) & 0x1FF
+        fetch_py = canvas_y & 0xF
+        fetch_ty = (canvas_y >> 4) & 0x1F
+
+        linebuf = [0] * 320
+        for scol in range(320):
+            canvas_x = (scol + xscroll_int) & wrap_mask_px
+            tile_x   = (canvas_x >> 4) & (map_width - 1)
+            tile_idx = fetch_ty * map_width + tile_x
+            word_base = tile_idx * 2
+
+            attr_word = self.pf_ram[plane][word_base]
+            code_word = self.pf_ram[plane][word_base + 1]
+
+            palette     = attr_word & 0x1FF           # bits[8:0]
+            flipx       = bool(attr_word & (1 << 14))
+            flipy       = bool(attr_word & (1 << 15))
+            tile_code   = code_word & 0xFFFF
+
+            row = (15 - fetch_py) if flipy else fetch_py
+
+            # GFX ROM lookup
+            left_addr  = tile_code * 32 + row * 2
+            right_addr = left_addr + 1
+
+            left_word  = self.gfx_rom[left_addr]  if left_addr  < self.GFX_ROM_WORDS else 0
+            right_word = self.gfx_rom[right_addr] if right_addr < self.GFX_ROM_WORDS else 0
+
+            # Pixel position within tile row (0..15)
+            px_in_tile = canvas_x & 0xF   # 0..15
+
+            # Half: left (0..7) or right (8..15)
+            half_px = px_in_tile & 7
+            src_word = left_word if px_in_tile < 8 else right_word
+
+            # Nibble index (flipX reverses order)
+            ni = (7 - half_px) if flipx else half_px
+
+            # Extract nibble: px0 at bits[31:28] → shift = (7 - ni) * 4
+            shift = (7 - ni) * 4
+            pen = (src_word >> shift) & 0xF
+
+            linebuf[scol] = (palette << 4) | pen
+
+        return linebuf
 
     # ── Text layer render ───────────────────────────────────────────────────
 
