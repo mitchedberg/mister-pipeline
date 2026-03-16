@@ -1,0 +1,81 @@
+{"op": "reset", "note": "assert reset \u2014 all regs should be 0 after"}
+{"op": "read", "addr": 0, "exp_dout": 0, "note": "post-reset readback ctrl[0] == 0"}
+{"op": "read", "addr": 1, "exp_dout": 0, "note": "post-reset readback ctrl[1] == 0"}
+{"op": "read", "addr": 2, "exp_dout": 0, "note": "post-reset readback ctrl[2] == 0"}
+{"op": "read", "addr": 3, "exp_dout": 0, "note": "post-reset readback ctrl[3] == 0"}
+{"op": "read", "addr": 4, "exp_dout": 0, "note": "post-reset readback ctrl[4] == 0"}
+{"op": "read", "addr": 5, "exp_dout": 0, "note": "post-reset readback ctrl[5] == 0"}
+{"op": "read", "addr": 6, "exp_dout": 0, "note": "post-reset readback ctrl[6] == 0"}
+{"op": "read", "addr": 7, "exp_dout": 0, "note": "post-reset readback ctrl[7] == 0"}
+{"op": "read", "addr": 8, "exp_dout": 0, "note": "post-reset readback ctrl[8] == 0"}
+{"op": "read", "addr": 9, "exp_dout": 0, "note": "post-reset readback ctrl[9] == 0"}
+{"op": "read", "addr": 10, "exp_dout": 0, "note": "post-reset readback ctrl[10] == 0"}
+{"op": "read", "addr": 11, "exp_dout": 0, "note": "post-reset readback ctrl[11] == 0"}
+{"op": "read", "addr": 12, "exp_dout": 0, "note": "post-reset readback ctrl[12] == 0"}
+{"op": "read", "addr": 13, "exp_dout": 0, "note": "post-reset readback ctrl[13] == 0"}
+{"op": "read", "addr": 14, "exp_dout": 0, "note": "post-reset readback ctrl[14] == 0"}
+{"op": "read", "addr": 15, "exp_dout": 0, "note": "post-reset readback ctrl[15] == 0"}
+{"op": "write", "addr": 0, "data": 64, "be": 3, "note": "write ctrl[0]=0x0040"}
+{"op": "read", "addr": 0, "exp_dout": 64, "note": "read  ctrl[0]=0x0040"}
+{"op": "write", "addr": 1, "data": 384, "be": 3, "note": "write ctrl[1]=0x0180"}
+{"op": "read", "addr": 1, "exp_dout": 384, "note": "read  ctrl[1]=0x0180"}
+{"op": "write", "addr": 2, "data": 21760, "be": 3, "note": "write ctrl[2]=0x5500"}
+{"op": "read", "addr": 2, "exp_dout": 21760, "note": "read  ctrl[2]=0x5500"}
+{"op": "write", "addr": 3, "data": 43648, "be": 3, "note": "write ctrl[3]=0xAA80"}
+{"op": "read", "addr": 3, "exp_dout": 43648, "note": "read  ctrl[3]=0xAA80"}
+{"op": "write", "addr": 4, "data": 32, "be": 3, "note": "write ctrl[4]=0x0020"}
+{"op": "read", "addr": 4, "exp_dout": 32, "note": "read  ctrl[4]=0x0020"}
+{"op": "write", "addr": 5, "data": 192, "be": 3, "note": "write ctrl[5]=0x00C0"}
+{"op": "read", "addr": 5, "exp_dout": 192, "note": "read  ctrl[5]=0x00C0"}
+{"op": "write", "addr": 6, "data": 13056, "be": 3, "note": "write ctrl[6]=0x3300"}
+{"op": "read", "addr": 6, "exp_dout": 13056, "note": "read  ctrl[6]=0x3300"}
+{"op": "write", "addr": 7, "data": 52288, "be": 3, "note": "write ctrl[7]=0xCC40"}
+{"op": "read", "addr": 7, "exp_dout": 52288, "note": "read  ctrl[7]=0xCC40"}
+{"op": "write", "addr": 8, "data": 57005, "be": 3, "note": "write ctrl[8]=0xDEAD"}
+{"op": "read", "addr": 8, "exp_dout": 0, "note": "read  ctrl[8]=0xDEAD"}
+{"op": "write", "addr": 9, "data": 48879, "be": 3, "note": "write ctrl[9]=0xBEEF"}
+{"op": "read", "addr": 9, "exp_dout": 0, "note": "read  ctrl[9]=0xBEEF"}
+{"op": "write", "addr": 10, "data": 4660, "be": 3, "note": "write ctrl[10]=0x1234"}
+{"op": "read", "addr": 10, "exp_dout": 0, "note": "read  ctrl[10]=0x1234"}
+{"op": "write", "addr": 11, "data": 22136, "be": 3, "note": "write ctrl[11]=0x5678"}
+{"op": "read", "addr": 11, "exp_dout": 0, "note": "read  ctrl[11]=0x5678"}
+{"op": "write", "addr": 12, "data": 96, "be": 3, "note": "write ctrl[12]=0x0060"}
+{"op": "read", "addr": 12, "exp_dout": 96, "note": "read  ctrl[12]=0x0060"}
+{"op": "write", "addr": 13, "data": 112, "be": 3, "note": "write ctrl[13]=0x0070"}
+{"op": "read", "addr": 13, "exp_dout": 112, "note": "read  ctrl[13]=0x0070"}
+{"op": "write", "addr": 14, "data": 64206, "be": 3, "note": "write ctrl[14]=0xFACE"}
+{"op": "read", "addr": 14, "exp_dout": 0, "note": "read  ctrl[14]=0xFACE"}
+{"op": "write", "addr": 15, "data": 128, "be": 3, "note": "write ctrl[15]=0x0080"}
+{"op": "read", "addr": 15, "exp_dout": 128, "note": "read  ctrl[15]=0x0080"}
+{"op": "reset", "note": "reset before byte-lane tests"}
+{"op": "write", "addr": 0, "data": 43981, "be": 2, "note": "be=0x2 (upper only): ctrl[0] should be 0xAB00"}
+{"op": "read", "addr": 0, "exp_dout": 43776, "note": "readback after upper-byte-only write"}
+{"op": "write", "addr": 0, "data": 4660, "be": 1, "note": "be=0x1 (lower only): ctrl[0] should be 0xAB34"}
+{"op": "read", "addr": 0, "exp_dout": 43828, "note": "readback after lower-byte-only write"}
+{"op": "write", "addr": 1, "data": 23130, "be": 3, "note": "be=0x3 (both bytes): ctrl[1] should be 0x5A5A"}
+{"op": "read", "addr": 1, "exp_dout": 23130, "note": "readback after full-word write"}
+{"op": "reset", "note": "reset before extend_mode test"}
+{"op": "write", "addr": 15, "data": 0, "be": 3, "note": "EXTEND_MODE=0 (512px wide)"}
+{"op": "read", "addr": 15, "exp_dout": 0, "note": "readback EXTEND_MODE=0"}
+{"op": "check_extend_mode", "exp": 0, "note": "extend_mode output should be 0"}
+{"op": "write", "addr": 15, "data": 128, "be": 3, "note": "EXTEND_MODE=1 (1024px wide, bit7=1)"}
+{"op": "read", "addr": 15, "exp_dout": 128, "note": "readback EXTEND_MODE=1"}
+{"op": "check_extend_mode", "exp": 1, "note": "extend_mode output should be 1"}
+{"op": "write", "addr": 15, "data": 65535, "be": 3, "note": "ctrl[15]=0xFFFF (all bits set)"}
+{"op": "read", "addr": 15, "exp_dout": 65535, "note": "readback ctrl[15]=0xFFFF"}
+{"op": "check_extend_mode", "exp": 1, "note": "extend_mode output should still be 1"}
+{"op": "write", "addr": 15, "data": 65407, "be": 3, "note": "ctrl[15]=0xFF7F (bit7=0, others set)"}
+{"op": "read", "addr": 15, "exp_dout": 65407, "note": "readback ctrl[15]=0xFF7F"}
+{"op": "check_extend_mode", "exp": 0, "note": "extend_mode output should be 0 again"}
+{"op": "reset", "note": "reset before timing frame test"}
+{"op": "timing_frame", "frames": 1, "exp_pv": 74240, "exp_int_vblank": 2, "exp_int_hblank": 2, "note": "full frame: expect 74240 pixel_valid cycles, 2 int_vblank, 2 int_hblank"}
+{"op": "timing_check", "hpos": 46, "vpos": 24, "exp_hblank": 0, "exp_vblank": 0, "exp_pv": 1, "note": "timing at (46,24): hb=0 vb=0 pv=1"}
+{"op": "timing_check", "hpos": 365, "vpos": 24, "exp_hblank": 0, "exp_vblank": 0, "exp_pv": 1, "note": "timing at (365,24): hb=0 vb=0 pv=1"}
+{"op": "timing_check", "hpos": 46, "vpos": 255, "exp_hblank": 0, "exp_vblank": 0, "exp_pv": 1, "note": "timing at (46,255): hb=0 vb=0 pv=1"}
+{"op": "timing_check", "hpos": 365, "vpos": 255, "exp_hblank": 0, "exp_vblank": 0, "exp_pv": 1, "note": "timing at (365,255): hb=0 vb=0 pv=1"}
+{"op": "timing_check", "hpos": 366, "vpos": 24, "exp_hblank": 1, "exp_vblank": 0, "exp_pv": 0, "note": "timing at (366,24): hb=1 vb=0 pv=0"}
+{"op": "timing_check", "hpos": 45, "vpos": 24, "exp_hblank": 1, "exp_vblank": 0, "exp_pv": 0, "note": "timing at (45,24): hb=1 vb=0 pv=0"}
+{"op": "timing_check", "hpos": 46, "vpos": 256, "exp_hblank": 0, "exp_vblank": 1, "exp_pv": 0, "note": "timing at (46,256): hb=0 vb=1 pv=0"}
+{"op": "timing_check", "hpos": 46, "vpos": 23, "exp_hblank": 0, "exp_vblank": 1, "exp_pv": 0, "note": "timing at (46,23): hb=0 vb=1 pv=0"}
+{"op": "timing_check", "hpos": 0, "vpos": 0, "exp_hblank": 1, "exp_vblank": 1, "exp_pv": 0, "note": "timing at (0,0): hb=1 vb=1 pv=0"}
+{"op": "timing_check", "hpos": 0, "vpos": 0, "exp_hblank": 1, "exp_vblank": 1, "exp_pv": 0, "note": "timing at (0,0): hb=1 vb=1 pv=0"}
