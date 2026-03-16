@@ -1,0 +1,379 @@
+{"op": "write", "addr": 49152, "data": 42240, "be": 3, "exp_dout": 0, "note": "ctrl[0] write 0xa500"}
+{"op": "write", "addr": 49153, "data": 4608, "be": 3, "exp_dout": 0, "note": "ctrl[1] write 0x1200"}
+{"op": "write", "addr": 49154, "data": 65280, "be": 3, "exp_dout": 0, "note": "ctrl[2] write 0xff00"}
+{"op": "write", "addr": 49155, "data": 256, "be": 3, "exp_dout": 0, "note": "ctrl[3] write 0x0100"}
+{"op": "write", "addr": 49156, "data": 16128, "be": 3, "exp_dout": 0, "note": "ctrl[4] write 0x3f00"}
+{"op": "write", "addr": 49157, "data": 8192, "be": 3, "exp_dout": 0, "note": "ctrl[5] write 0x2000"}
+{"op": "write", "addr": 49158, "data": 3840, "be": 3, "exp_dout": 0, "note": "ctrl[6] write 0x0f00"}
+{"op": "write", "addr": 49159, "data": 38912, "be": 3, "exp_dout": 0, "note": "ctrl[7] write 0x9800"}
+{"op": "write", "addr": 49160, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[8] write 0x0000"}
+{"op": "write", "addr": 49161, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[9] write 0x0000"}
+{"op": "write", "addr": 49162, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[10] write 0x0000"}
+{"op": "write", "addr": 49163, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[11] write 0x0000"}
+{"op": "write", "addr": 49164, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[12] write 0x0000"}
+{"op": "write", "addr": 49165, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[13] write 0x0000"}
+{"op": "write", "addr": 49166, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[14] write 0x0000"}
+{"op": "write", "addr": 49167, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[15] write 0x0000"}
+{"op": "read", "addr": 49152, "data": 0, "be": 3, "exp_dout": 42240, "note": "ctrl[0] readback"}
+{"op": "read", "addr": 49153, "data": 0, "be": 3, "exp_dout": 4608, "note": "ctrl[1] readback"}
+{"op": "read", "addr": 49154, "data": 0, "be": 3, "exp_dout": 65280, "note": "ctrl[2] readback"}
+{"op": "read", "addr": 49155, "data": 0, "be": 3, "exp_dout": 256, "note": "ctrl[3] readback"}
+{"op": "read", "addr": 49156, "data": 0, "be": 3, "exp_dout": 16128, "note": "ctrl[4] readback"}
+{"op": "read", "addr": 49157, "data": 0, "be": 3, "exp_dout": 8192, "note": "ctrl[5] readback"}
+{"op": "read", "addr": 49158, "data": 0, "be": 3, "exp_dout": 3840, "note": "ctrl[6] readback"}
+{"op": "read", "addr": 49159, "data": 0, "be": 3, "exp_dout": 38912, "note": "ctrl[7] readback"}
+{"op": "read", "addr": 49160, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[8] readback"}
+{"op": "read", "addr": 49161, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[9] readback"}
+{"op": "read", "addr": 49162, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[10] readback"}
+{"op": "read", "addr": 49163, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[11] readback"}
+{"op": "read", "addr": 49164, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[12] readback"}
+{"op": "read", "addr": 49165, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[13] readback"}
+{"op": "read", "addr": 49166, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[14] readback"}
+{"op": "read", "addr": 49167, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[15] readback"}
+{"op": "write", "addr": 49152, "data": 21760, "be": 2, "exp_dout": 0, "note": "ctrl[0] high-byte write 0x55"}
+{"op": "read", "addr": 49152, "data": 0, "be": 3, "exp_dout": 21760, "note": "ctrl[0] after high-byte write"}
+{"op": "write", "addr": 49153, "data": 170, "be": 1, "exp_dout": 0, "note": "ctrl[1] low-byte write 0xAA"}
+{"op": "read", "addr": 49153, "data": 0, "be": 3, "exp_dout": 4778, "note": "ctrl[1] after low-byte write"}
+{"op": "write", "addr": 49152, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[0] clear"}
+{"op": "write", "addr": 49153, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[1] clear"}
+{"op": "write", "addr": 49154, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[2] clear"}
+{"op": "write", "addr": 49155, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[3] clear"}
+{"op": "write", "addr": 49156, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[4] clear"}
+{"op": "write", "addr": 49157, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[5] clear"}
+{"op": "write", "addr": 49158, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[6] clear"}
+{"op": "write", "addr": 49159, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[7] clear"}
+{"op": "write", "addr": 49160, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[8] clear"}
+{"op": "write", "addr": 49161, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[9] clear"}
+{"op": "write", "addr": 49162, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[10] clear"}
+{"op": "write", "addr": 49163, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[11] clear"}
+{"op": "write", "addr": 49164, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[12] clear"}
+{"op": "write", "addr": 49165, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[13] clear"}
+{"op": "write", "addr": 49166, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[14] clear"}
+{"op": "write", "addr": 49167, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[15] clear"}
+{"op": "read", "addr": 49152, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[0] zero check"}
+{"op": "read", "addr": 49153, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[1] zero check"}
+{"op": "read", "addr": 49154, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[2] zero check"}
+{"op": "read", "addr": 49155, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[3] zero check"}
+{"op": "read", "addr": 49156, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[4] zero check"}
+{"op": "read", "addr": 49157, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[5] zero check"}
+{"op": "read", "addr": 49158, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[6] zero check"}
+{"op": "read", "addr": 49159, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[7] zero check"}
+{"op": "read", "addr": 49160, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[8] zero check"}
+{"op": "read", "addr": 49161, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[9] zero check"}
+{"op": "read", "addr": 49162, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[10] zero check"}
+{"op": "read", "addr": 49163, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[11] zero check"}
+{"op": "read", "addr": 49164, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[12] zero check"}
+{"op": "read", "addr": 49165, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[13] zero check"}
+{"op": "read", "addr": 49166, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[14] zero check"}
+{"op": "read", "addr": 49167, "data": 0, "be": 3, "exp_dout": 0, "note": "ctrl[15] zero check"}
+{"op": "write", "addr": 0, "data": 43981, "be": 3, "exp_dout": 0, "note": "vram[0] first write"}
+{"op": "write", "addr": 1, "data": 4660, "be": 3, "exp_dout": 0, "note": "vram[1] write"}
+{"op": "write", "addr": 4095, "data": 22136, "be": 3, "exp_dout": 0, "note": "vram[0xFFF] bank boundary write"}
+{"op": "write", "addr": 4096, "data": 39612, "be": 3, "exp_dout": 0, "note": "vram[0x1000] write"}
+{"op": "write", "addr": 16383, "data": 57005, "be": 3, "exp_dout": 0, "note": "vram[0x3FFF] tile map boundary write"}
+{"op": "write", "addr": 16384, "data": 48879, "be": 3, "exp_dout": 0, "note": "vram[0x4000] BG bank start write"}
+{"op": "write", "addr": 32766, "data": 51966, "be": 3, "exp_dout": 0, "note": "vram[0x7FFE] near end write"}
+{"op": "write", "addr": 32767, "data": 61453, "be": 3, "exp_dout": 0, "note": "vram[0x7FFF] last word write"}
+{"op": "read", "addr": 0, "data": 0, "be": 3, "exp_dout": 43981, "note": "vram[0] first readback"}
+{"op": "read", "addr": 1, "data": 0, "be": 3, "exp_dout": 4660, "note": "vram[1] readback"}
+{"op": "read", "addr": 4095, "data": 0, "be": 3, "exp_dout": 22136, "note": "vram[0xFFF] bank boundary readback"}
+{"op": "read", "addr": 4096, "data": 0, "be": 3, "exp_dout": 39612, "note": "vram[0x1000] readback"}
+{"op": "read", "addr": 16383, "data": 0, "be": 3, "exp_dout": 57005, "note": "vram[0x3FFF] tile map boundary readback"}
+{"op": "read", "addr": 16384, "data": 0, "be": 3, "exp_dout": 48879, "note": "vram[0x4000] BG bank start readback"}
+{"op": "read", "addr": 32766, "data": 0, "be": 3, "exp_dout": 51966, "note": "vram[0x7FFE] near end readback"}
+{"op": "read", "addr": 32767, "data": 0, "be": 3, "exp_dout": 61453, "note": "vram[0x7FFF] last word readback"}
+{"op": "write", "addr": 256, "data": 65280, "be": 2, "exp_dout": 0, "note": "vram high byte only write"}
+{"op": "read", "addr": 256, "data": 0, "be": 3, "exp_dout": 65280, "note": "vram after high byte write"}
+{"op": "write", "addr": 256, "data": 255, "be": 1, "exp_dout": 0, "note": "vram low byte only write"}
+{"op": "read", "addr": 256, "data": 0, "be": 3, "exp_dout": 65535, "note": "vram after low byte write"}
+{"op": "write", "addr": 49152, "data": 8192, "be": 2, "exp_dout": 0, "note": "ctrl[0]: fg_bank0=0, fg_bank1=2"}
+{"op": "write", "addr": 0, "data": 66, "be": 3, "exp_dout": 0, "note": "vram: fg tile code at bank0"}
+{"op": "write", "addr": 8192, "data": 31, "be": 3, "exp_dout": 0, "note": "vram: fg attr at bank1"}
+{"op": "read", "addr": 0, "data": 0, "be": 3, "exp_dout": 66, "note": "vram: fg tile code bank0 readback"}
+{"op": "read", "addr": 8192, "data": 0, "be": 3, "exp_dout": 31, "note": "vram: fg attr bank1 readback"}
+{"op": "write", "addr": 49153, "data": 16640, "be": 2, "exp_dout": 0, "note": "ctrl[1]: bg_bank0=1, bg_bank1=4"}
+{"op": "write", "addr": 4096, "data": 32767, "be": 3, "exp_dout": 0, "note": "vram: bg tile at bank0=1"}
+{"op": "write", "addr": 16384, "data": 49152, "be": 3, "exp_dout": 0, "note": "vram: bg attr at bank1=4 (flipx+flipy)"}
+{"op": "read", "addr": 4096, "data": 0, "be": 3, "exp_dout": 32767, "note": "vram: bg tile readback"}
+{"op": "read", "addr": 16384, "data": 0, "be": 3, "exp_dout": 49152, "note": "vram: bg attr readback"}
+{"op": "write", "addr": 49158, "data": 512, "be": 2, "exp_dout": 0, "note": "ctrl[6]: tx_rampage=2 \u2192 tx_base=0x1000"}
+{"op": "write", "addr": 49156, "data": 256, "be": 2, "exp_dout": 0, "note": "ctrl[4]: tx_bank0=1 \u2192 gfx prefix=0x800"}
+{"op": "write", "addr": 4096, "data": 20735, "be": 3, "exp_dout": 0, "note": "vram: tx tile (color=5, bank_sel=1, idx=0x0FF)"}
+{"op": "read", "addr": 4096, "data": 0, "be": 3, "exp_dout": 20735, "note": "tx tile readback"}
+{"op": "write", "addr": 32768, "data": 4660, "be": 3, "exp_dout": 0, "note": "spr[0] code=0x1234"}
+{"op": "write", "addr": 32769, "data": 32799, "be": 3, "exp_dout": 0, "note": "spr[0] flipy=1, color=0x1F"}
+{"op": "write", "addr": 32770, "data": 80, "be": 3, "exp_dout": 0, "note": "spr[0] x=80"}
+{"op": "write", "addr": 32771, "data": 64, "be": 3, "exp_dout": 0, "note": "spr[0] y=64"}
+{"op": "write", "addr": 32772, "data": 16416, "be": 3, "exp_dout": 0, "note": "spr[0] zoomx=0x40, zoomy=0x20"}
+{"op": "write", "addr": 32773, "data": 0, "be": 3, "exp_dout": 0, "note": "spr[0] single tile"}
+{"op": "read", "addr": 32768, "data": 0, "be": 3, "exp_dout": 4660, "note": "spr[0] word0 readback"}
+{"op": "read", "addr": 32769, "data": 0, "be": 3, "exp_dout": 32799, "note": "spr[0] word1 readback"}
+{"op": "read", "addr": 32770, "data": 0, "be": 3, "exp_dout": 80, "note": "spr[0] word2 readback"}
+{"op": "read", "addr": 32771, "data": 0, "be": 3, "exp_dout": 64, "note": "spr[0] word3 readback"}
+{"op": "read", "addr": 32772, "data": 0, "be": 3, "exp_dout": 16416, "note": "spr[0] word4 readback"}
+{"op": "read", "addr": 32773, "data": 0, "be": 3, "exp_dout": 0, "note": "spr[0] word5 readback"}
+{"op": "write", "addr": 36024, "data": 32767, "be": 3, "exp_dout": 0, "note": "spr[407] code=0x7FFF (max)"}
+{"op": "write", "addr": 36025, "data": 16447, "be": 3, "exp_dout": 0, "note": "spr[407] flipx=1, color=0x3F"}
+{"op": "write", "addr": 36026, "data": 511, "be": 3, "exp_dout": 0, "note": "spr[407] x=0x1FF (511)"}
+{"op": "write", "addr": 36027, "data": 511, "be": 3, "exp_dout": 0, "note": "spr[407] y=511"}
+{"op": "write", "addr": 36028, "data": 32896, "be": 3, "exp_dout": 0, "note": "spr[407] zoom 50% both"}
+{"op": "write", "addr": 36029, "data": 771, "be": 3, "exp_dout": 0, "note": "spr[407] big sprite 4\u00d74"}
+{"op": "read", "addr": 36024, "data": 0, "be": 3, "exp_dout": 32767, "note": "spr[407] word0 readback"}
+{"op": "read", "addr": 36025, "data": 0, "be": 3, "exp_dout": 16447, "note": "spr[407] word1 readback"}
+{"op": "read", "addr": 36026, "data": 0, "be": 3, "exp_dout": 511, "note": "spr[407] word2 readback"}
+{"op": "read", "addr": 36027, "data": 0, "be": 3, "exp_dout": 511, "note": "spr[407] word3 readback"}
+{"op": "read", "addr": 36028, "data": 0, "be": 3, "exp_dout": 32896, "note": "spr[407] word4 readback"}
+{"op": "read", "addr": 36029, "data": 0, "be": 3, "exp_dout": 771, "note": "spr[407] word5 readback"}
+{"op": "write", "addr": 32850, "data": 1023, "be": 3, "exp_dout": 0, "note": "spr[10] x=0x3FF (-1 signed)"}
+{"op": "write", "addr": 32851, "data": 1023, "be": 3, "exp_dout": 0, "note": "spr[10] y=-1"}
+{"op": "read", "addr": 32848, "data": 0, "be": 3, "exp_dout": 0, "note": "spr[10] word0"}
+{"op": "read", "addr": 32849, "data": 0, "be": 3, "exp_dout": 0, "note": "spr[10] word1"}
+{"op": "read", "addr": 32850, "data": 0, "be": 3, "exp_dout": 1023, "note": "spr[10] word2"}
+{"op": "write", "addr": 39936, "data": 160, "be": 3, "exp_dout": 0, "note": "fg scrollX block0 = 0x00A0"}
+{"op": "write", "addr": 39937, "data": 16, "be": 3, "exp_dout": 0, "note": "fg scrollY block0 = 0x0010"}
+{"op": "read", "addr": 39936, "data": 0, "be": 3, "exp_dout": 160, "note": "fg scrollX readback"}
+{"op": "read", "addr": 39937, "data": 0, "be": 3, "exp_dout": 16, "note": "fg scrollY readback"}
+{"op": "write", "addr": 40448, "data": 496, "be": 3, "exp_dout": 0, "note": "bg scrollX block0"}
+{"op": "write", "addr": 40449, "data": 240, "be": 3, "exp_dout": 0, "note": "bg scrollY block0"}
+{"op": "read", "addr": 40448, "data": 0, "be": 3, "exp_dout": 496, "note": "bg scrollX readback"}
+{"op": "read", "addr": 40449, "data": 0, "be": 3, "exp_dout": 240, "note": "bg scrollY readback"}
+{"op": "write", "addr": 49154, "data": 61440, "be": 2, "exp_dout": 0, "note": "ctrl[2]: fg lpb=16 (N=0xF0)"}
+{"op": "write", "addr": 39968, "data": 512, "be": 3, "exp_dout": 0, "note": "fg scrollX block1 (lpb=16)"}
+{"op": "write", "addr": 39969, "data": 128, "be": 3, "exp_dout": 0, "note": "fg scrollY block1"}
+{"op": "read", "addr": 39968, "data": 0, "be": 3, "exp_dout": 512, "note": "fg block1 scrollX readback"}
+{"op": "read", "addr": 39969, "data": 0, "be": 3, "exp_dout": 128, "note": "fg block1 scrollY readback"}
+{"op": "write", "addr": 49152, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[0]"}
+{"op": "write", "addr": 49153, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[1]"}
+{"op": "write", "addr": 49154, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[2]"}
+{"op": "write", "addr": 49155, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[3]"}
+{"op": "write", "addr": 49156, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[4]"}
+{"op": "write", "addr": 49157, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[5]"}
+{"op": "write", "addr": 49158, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[6]"}
+{"op": "write", "addr": 49159, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[7]"}
+{"op": "write", "addr": 49160, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[8]"}
+{"op": "write", "addr": 49161, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[9]"}
+{"op": "write", "addr": 49162, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[10]"}
+{"op": "write", "addr": 49163, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[11]"}
+{"op": "write", "addr": 49164, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[12]"}
+{"op": "write", "addr": 49165, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[13]"}
+{"op": "write", "addr": 49166, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[14]"}
+{"op": "write", "addr": 49167, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: clear ctrl[15]"}
+{"op": "write", "addr": 1280, "data": 43690, "be": 3, "exp_dout": 0, "note": "isolation: write vram[0x500]"}
+{"op": "write", "addr": 1281, "data": 21845, "be": 3, "exp_dout": 0, "note": "isolation: write vram[0x501]"}
+{"op": "read", "addr": 49152, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: ctrl[0] still 0"}
+{"op": "read", "addr": 49153, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: ctrl[1] still 0"}
+{"op": "read", "addr": 49154, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: ctrl[2] still 0"}
+{"op": "read", "addr": 49155, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: ctrl[3] still 0"}
+{"op": "read", "addr": 49156, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: ctrl[4] still 0"}
+{"op": "read", "addr": 49157, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: ctrl[5] still 0"}
+{"op": "read", "addr": 49158, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: ctrl[6] still 0"}
+{"op": "read", "addr": 49159, "data": 0, "be": 3, "exp_dout": 0, "note": "isolation: ctrl[7] still 0"}
+{"op": "read", "addr": 32768, "data": 0, "be": 3, "exp_dout": 4660, "note": "isolation: spr[0] code unchanged"}
+{"op": "write", "addr": 49159, "data": 4096, "be": 2, "exp_dout": 0, "note": "video_ctrl: screen_flip=1"}
+{"op": "read", "addr": 49159, "data": 0, "be": 3, "exp_dout": 4096, "note": "video_ctrl readback flip=1"}
+{"op": "write", "addr": 49159, "data": 2048, "be": 2, "exp_dout": 0, "note": "video_ctrl: sprite_priority=1"}
+{"op": "read", "addr": 49159, "data": 0, "be": 3, "exp_dout": 2048, "note": "video_ctrl readback priority=1"}
+{"op": "write", "addr": 49159, "data": 49152, "be": 2, "exp_dout": 0, "note": "video_ctrl: fb_manual=1, fb_page=1"}
+{"op": "read", "addr": 49159, "data": 0, "be": 3, "exp_dout": 49152, "note": "video_ctrl fb manual"}
+{"op": "write", "addr": 49159, "data": 47360, "be": 2, "exp_dout": 0, "note": "video_ctrl: all bits"}
+{"op": "read", "addr": 49159, "data": 0, "be": 3, "exp_dout": 47360, "note": "video_ctrl all bits readback"}
+{"op": "write", "addr": 2391, "data": 44060, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 2391, "data": 0, "be": 3, "exp_dout": 44060, "note": "random vram readback"}
+{"op": "write", "addr": 22008, "data": 61039, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 22008, "data": 0, "be": 3, "exp_dout": 61039, "note": "random vram readback"}
+{"op": "write", "addr": 22949, "data": 57426, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 22949, "data": 0, "be": 3, "exp_dout": 57426, "note": "random vram readback"}
+{"op": "write", "addr": 29035, "data": 36708, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 29035, "data": 0, "be": 3, "exp_dout": 36708, "note": "random vram readback"}
+{"op": "write", "addr": 2813, "data": 32664, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 2813, "data": 0, "be": 3, "exp_dout": 32664, "note": "random vram readback"}
+{"op": "write", "addr": 25910, "data": 8202, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 25910, "data": 0, "be": 3, "exp_dout": 8202, "note": "random vram readback"}
+{"op": "write", "addr": 532, "data": 62671, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 532, "data": 0, "be": 3, "exp_dout": 62671, "note": "random vram readback"}
+{"op": "write", "addr": 11853, "data": 22194, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 11853, "data": 0, "be": 3, "exp_dout": 22194, "note": "random vram readback"}
+{"op": "write", "addr": 22349, "data": 39552, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 22349, "data": 0, "be": 3, "exp_dout": 39552, "note": "random vram readback"}
+{"op": "write", "addr": 1806, "data": 26677, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 1806, "data": 0, "be": 3, "exp_dout": 26677, "note": "random vram readback"}
+{"op": "write", "addr": 6609, "data": 37227, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 6609, "data": 0, "be": 3, "exp_dout": 37227, "note": "random vram readback"}
+{"op": "write", "addr": 330, "data": 34377, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 330, "data": 0, "be": 3, "exp_dout": 34377, "note": "random vram readback"}
+{"op": "write", "addr": 22345, "data": 17546, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 22345, "data": 0, "be": 3, "exp_dout": 17546, "note": "random vram readback"}
+{"op": "write", "addr": 12942, "data": 24927, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 12942, "data": 0, "be": 3, "exp_dout": 24927, "note": "random vram readback"}
+{"op": "write", "addr": 1493, "data": 23966, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 1493, "data": 0, "be": 3, "exp_dout": 23966, "note": "random vram readback"}
+{"op": "write", "addr": 2694, "data": 41712, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 2694, "data": 0, "be": 3, "exp_dout": 41712, "note": "random vram readback"}
+{"op": "write", "addr": 31152, "data": 3058, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 31152, "data": 0, "be": 3, "exp_dout": 3058, "note": "random vram readback"}
+{"op": "write", "addr": 13873, "data": 7057, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 13873, "data": 0, "be": 3, "exp_dout": 7057, "note": "random vram readback"}
+{"op": "write", "addr": 8256, "data": 63045, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 8256, "data": 0, "be": 3, "exp_dout": 63045, "note": "random vram readback"}
+{"op": "write", "addr": 5427, "data": 42694, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 5427, "data": 0, "be": 3, "exp_dout": 42694, "note": "random vram readback"}
+{"op": "write", "addr": 32255, "data": 1303, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 32255, "data": 0, "be": 3, "exp_dout": 1303, "note": "random vram readback"}
+{"op": "write", "addr": 28181, "data": 37603, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 28181, "data": 0, "be": 3, "exp_dout": 37603, "note": "random vram readback"}
+{"op": "write", "addr": 17446, "data": 42392, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 17446, "data": 0, "be": 3, "exp_dout": 42392, "note": "random vram readback"}
+{"op": "write", "addr": 17237, "data": 30143, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 17237, "data": 0, "be": 3, "exp_dout": 30143, "note": "random vram readback"}
+{"op": "write", "addr": 14394, "data": 27872, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 14394, "data": 0, "be": 3, "exp_dout": 27872, "note": "random vram readback"}
+{"op": "write", "addr": 11578, "data": 50795, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 11578, "data": 0, "be": 3, "exp_dout": 50795, "note": "random vram readback"}
+{"op": "write", "addr": 7717, "data": 51333, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 7717, "data": 0, "be": 3, "exp_dout": 51333, "note": "random vram readback"}
+{"op": "write", "addr": 9800, "data": 60738, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 9800, "data": 0, "be": 3, "exp_dout": 60738, "note": "random vram readback"}
+{"op": "write", "addr": 17615, "data": 54217, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 17615, "data": 0, "be": 3, "exp_dout": 54217, "note": "random vram readback"}
+{"op": "write", "addr": 24936, "data": 56470, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 24936, "data": 0, "be": 3, "exp_dout": 56470, "note": "random vram readback"}
+{"op": "write", "addr": 20891, "data": 32308, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 20891, "data": 0, "be": 3, "exp_dout": 32308, "note": "random vram readback"}
+{"op": "write", "addr": 4075, "data": 51095, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 4075, "data": 0, "be": 3, "exp_dout": 51095, "note": "random vram readback"}
+{"op": "write", "addr": 2493, "data": 47063, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 2493, "data": 0, "be": 3, "exp_dout": 47063, "note": "random vram readback"}
+{"op": "write", "addr": 21511, "data": 12708, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 21511, "data": 0, "be": 3, "exp_dout": 12708, "note": "random vram readback"}
+{"op": "write", "addr": 29528, "data": 34327, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 29528, "data": 0, "be": 3, "exp_dout": 34327, "note": "random vram readback"}
+{"op": "write", "addr": 17077, "data": 10393, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 17077, "data": 0, "be": 3, "exp_dout": 10393, "note": "random vram readback"}
+{"op": "write", "addr": 8263, "data": 59556, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 8263, "data": 0, "be": 3, "exp_dout": 59556, "note": "random vram readback"}
+{"op": "write", "addr": 26203, "data": 29165, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 26203, "data": 0, "be": 3, "exp_dout": 29165, "note": "random vram readback"}
+{"op": "write", "addr": 24391, "data": 30568, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 24391, "data": 0, "be": 3, "exp_dout": 30568, "note": "random vram readback"}
+{"op": "write", "addr": 6153, "data": 7383, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 6153, "data": 0, "be": 3, "exp_dout": 7383, "note": "random vram readback"}
+{"op": "write", "addr": 20346, "data": 21506, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 20346, "data": 0, "be": 3, "exp_dout": 21506, "note": "random vram readback"}
+{"op": "write", "addr": 6395, "data": 53906, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 6395, "data": 0, "be": 3, "exp_dout": 53906, "note": "random vram readback"}
+{"op": "write", "addr": 24552, "data": 11717, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 24552, "data": 0, "be": 3, "exp_dout": 11717, "note": "random vram readback"}
+{"op": "write", "addr": 17734, "data": 57363, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 17734, "data": 0, "be": 3, "exp_dout": 57363, "note": "random vram readback"}
+{"op": "write", "addr": 7619, "data": 28553, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 7619, "data": 0, "be": 3, "exp_dout": 28553, "note": "random vram readback"}
+{"op": "write", "addr": 32211, "data": 56432, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 32211, "data": 0, "be": 3, "exp_dout": 56432, "note": "random vram readback"}
+{"op": "write", "addr": 9369, "data": 64180, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 9369, "data": 0, "be": 3, "exp_dout": 64180, "note": "random vram readback"}
+{"op": "write", "addr": 3124, "data": 49349, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 3124, "data": 0, "be": 3, "exp_dout": 49349, "note": "random vram readback"}
+{"op": "write", "addr": 15393, "data": 48878, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 15393, "data": 0, "be": 3, "exp_dout": 48878, "note": "random vram readback"}
+{"op": "write", "addr": 21671, "data": 692, "be": 3, "exp_dout": 0, "note": "random vram write"}
+{"op": "read", "addr": 21671, "data": 0, "be": 3, "exp_dout": 692, "note": "random vram readback"}
+{"op": "write", "addr": 35772, "data": 27256, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 35772, "data": 0, "be": 3, "exp_dout": 27256, "note": "random sprite readback"}
+{"op": "write", "addr": 33058, "data": 9323, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 33058, "data": 0, "be": 3, "exp_dout": 9323, "note": "random sprite readback"}
+{"op": "write", "addr": 34318, "data": 11890, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 34318, "data": 0, "be": 3, "exp_dout": 11890, "note": "random sprite readback"}
+{"op": "write", "addr": 34745, "data": 22861, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 34745, "data": 0, "be": 3, "exp_dout": 22861, "note": "random sprite readback"}
+{"op": "write", "addr": 32914, "data": 4994, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 32914, "data": 0, "be": 3, "exp_dout": 4994, "note": "random sprite readback"}
+{"op": "write", "addr": 33842, "data": 18416, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 33842, "data": 0, "be": 3, "exp_dout": 18416, "note": "random sprite readback"}
+{"op": "write", "addr": 34722, "data": 2431, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 34722, "data": 0, "be": 3, "exp_dout": 2431, "note": "random sprite readback"}
+{"op": "write", "addr": 33298, "data": 50415, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 33298, "data": 0, "be": 3, "exp_dout": 50415, "note": "random sprite readback"}
+{"op": "write", "addr": 36000, "data": 12737, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 36000, "data": 0, "be": 3, "exp_dout": 12737, "note": "random sprite readback"}
+{"op": "write", "addr": 34900, "data": 34336, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 34900, "data": 0, "be": 3, "exp_dout": 34336, "note": "random sprite readback"}
+{"op": "write", "addr": 32880, "data": 364, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 32880, "data": 0, "be": 3, "exp_dout": 364, "note": "random sprite readback"}
+{"op": "write", "addr": 34250, "data": 45271, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 34250, "data": 0, "be": 3, "exp_dout": 45271, "note": "random sprite readback"}
+{"op": "write", "addr": 34274, "data": 53384, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 34274, "data": 0, "be": 3, "exp_dout": 53384, "note": "random sprite readback"}
+{"op": "write", "addr": 33984, "data": 24017, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 33984, "data": 0, "be": 3, "exp_dout": 24017, "note": "random sprite readback"}
+{"op": "write", "addr": 35992, "data": 16472, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 35992, "data": 0, "be": 3, "exp_dout": 16472, "note": "random sprite readback"}
+{"op": "write", "addr": 34160, "data": 9932, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 34160, "data": 0, "be": 3, "exp_dout": 9932, "note": "random sprite readback"}
+{"op": "write", "addr": 33224, "data": 64642, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 33224, "data": 0, "be": 3, "exp_dout": 64642, "note": "random sprite readback"}
+{"op": "write", "addr": 34454, "data": 14688, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 34454, "data": 0, "be": 3, "exp_dout": 14688, "note": "random sprite readback"}
+{"op": "write", "addr": 34683, "data": 41588, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 34683, "data": 0, "be": 3, "exp_dout": 41588, "note": "random sprite readback"}
+{"op": "write", "addr": 35764, "data": 31641, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 35764, "data": 0, "be": 3, "exp_dout": 31641, "note": "random sprite readback"}
+{"op": "write", "addr": 34320, "data": 9602, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 34320, "data": 0, "be": 3, "exp_dout": 9602, "note": "random sprite readback"}
+{"op": "write", "addr": 35932, "data": 33433, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 35932, "data": 0, "be": 3, "exp_dout": 33433, "note": "random sprite readback"}
+{"op": "write", "addr": 34495, "data": 33303, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 34495, "data": 0, "be": 3, "exp_dout": 33303, "note": "random sprite readback"}
+{"op": "write", "addr": 35458, "data": 22708, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 35458, "data": 0, "be": 3, "exp_dout": 22708, "note": "random sprite readback"}
+{"op": "write", "addr": 32999, "data": 59106, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 32999, "data": 0, "be": 3, "exp_dout": 59106, "note": "random sprite readback"}
+{"op": "write", "addr": 32787, "data": 32321, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 32787, "data": 0, "be": 3, "exp_dout": 32321, "note": "random sprite readback"}
+{"op": "write", "addr": 33602, "data": 47859, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 33602, "data": 0, "be": 3, "exp_dout": 47859, "note": "random sprite readback"}
+{"op": "write", "addr": 34806, "data": 41067, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 34806, "data": 0, "be": 3, "exp_dout": 41067, "note": "random sprite readback"}
+{"op": "write", "addr": 35005, "data": 14343, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 35005, "data": 0, "be": 3, "exp_dout": 14343, "note": "random sprite readback"}
+{"op": "write", "addr": 35370, "data": 58915, "be": 3, "exp_dout": 0, "note": "random sprite write"}
+{"op": "read", "addr": 35370, "data": 0, "be": 3, "exp_dout": 58915, "note": "random sprite readback"}
+{"op": "write", "addr": 40697, "data": 42903, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40697, "data": 0, "be": 3, "exp_dout": 42903, "note": "random scroll readback"}
+{"op": "write", "addr": 40902, "data": 19246, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40902, "data": 0, "be": 3, "exp_dout": 19246, "note": "random scroll readback"}
+{"op": "write", "addr": 40380, "data": 14152, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40380, "data": 0, "be": 3, "exp_dout": 14152, "note": "random scroll readback"}
+{"op": "write", "addr": 40296, "data": 32975, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40296, "data": 0, "be": 3, "exp_dout": 32975, "note": "random scroll readback"}
+{"op": "write", "addr": 40692, "data": 3809, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40692, "data": 0, "be": 3, "exp_dout": 3809, "note": "random scroll readback"}
+{"op": "write", "addr": 40775, "data": 39512, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40775, "data": 0, "be": 3, "exp_dout": 39512, "note": "random scroll readback"}
+{"op": "write", "addr": 40667, "data": 6638, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40667, "data": 0, "be": 3, "exp_dout": 6638, "note": "random scroll readback"}
+{"op": "write", "addr": 39982, "data": 47190, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 39982, "data": 0, "be": 3, "exp_dout": 47190, "note": "random scroll readback"}
+{"op": "write", "addr": 40679, "data": 50515, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40679, "data": 0, "be": 3, "exp_dout": 50515, "note": "random scroll readback"}
+{"op": "write", "addr": 40923, "data": 52149, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40923, "data": 0, "be": 3, "exp_dout": 52149, "note": "random scroll readback"}
+{"op": "write", "addr": 40836, "data": 39244, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40836, "data": 0, "be": 3, "exp_dout": 39244, "note": "random scroll readback"}
+{"op": "write", "addr": 40010, "data": 9917, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40010, "data": 0, "be": 3, "exp_dout": 9917, "note": "random scroll readback"}
+{"op": "write", "addr": 40320, "data": 42492, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40320, "data": 0, "be": 3, "exp_dout": 42492, "note": "random scroll readback"}
+{"op": "write", "addr": 40173, "data": 6714, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40173, "data": 0, "be": 3, "exp_dout": 6714, "note": "random scroll readback"}
+{"op": "write", "addr": 40340, "data": 61721, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40340, "data": 0, "be": 3, "exp_dout": 61721, "note": "random scroll readback"}
+{"op": "write", "addr": 40284, "data": 40810, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40284, "data": 0, "be": 3, "exp_dout": 40810, "note": "random scroll readback"}
+{"op": "write", "addr": 40350, "data": 33467, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40350, "data": 0, "be": 3, "exp_dout": 33467, "note": "random scroll readback"}
+{"op": "write", "addr": 40170, "data": 29577, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40170, "data": 0, "be": 3, "exp_dout": 29577, "note": "random scroll readback"}
+{"op": "write", "addr": 40095, "data": 35004, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40095, "data": 0, "be": 3, "exp_dout": 35004, "note": "random scroll readback"}
+{"op": "write", "addr": 40355, "data": 8947, "be": 3, "exp_dout": 0, "note": "random scroll write"}
+{"op": "read", "addr": 40355, "data": 0, "be": 3, "exp_dout": 8947, "note": "random scroll readback"}
