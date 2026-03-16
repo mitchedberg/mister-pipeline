@@ -1,0 +1,292 @@
+{"op": "reset", "note": "reset for char-update next-frame test"}
+{"op": "write_text", "addr": 57667, "data": 14496, "be": 3, "note": "char-update: tile rowA=5 col3 = char0xa0"}
+{"op": "write_text", "addr": 57731, "data": 14496, "be": 3, "note": "char-update: tile rowB=6 col3 = char0xa0"}
+{"op": "write_char", "addr": 64000, "data": 21845, "be": 3, "note": "char-update-v1: char0xa0 py=0 b0b1"}
+{"op": "write_char", "addr": 64001, "data": 21845, "be": 3, "note": "char-update-v1: char0xa0 py=0 b2b3"}
+{"op": "check_text_pixel", "vpos": 39, "screen_col": 24, "exp_pixel": 117, "note": "char-update: scanline A vpos=39 \u2192 pen=0x5 (v1)"}
+{"op": "write_char", "addr": 64000, "data": 61166, "be": 3, "note": "char-update-v2: char0xa0 py=0 b0b1"}
+{"op": "write_char", "addr": 64001, "data": 61166, "be": 3, "note": "char-update-v2: char0xa0 py=0 b2b3"}
+{"op": "check_text_pixel", "vpos": 47, "screen_col": 24, "exp_pixel": 126, "note": "char-update: scanline B vpos=47 \u2192 pen=0xe (v2, updated)"}
+{"op": "reset", "note": "reset for color field test (all 32 values)"}
+{"op": "write_text", "addr": 57792, "data": 176, "be": 3, "note": "color-field: col0 color=0x00"}
+{"op": "write_text", "addr": 57793, "data": 2224, "be": 3, "note": "color-field: col1 color=0x01"}
+{"op": "write_text", "addr": 57794, "data": 4272, "be": 3, "note": "color-field: col2 color=0x02"}
+{"op": "write_text", "addr": 57795, "data": 6320, "be": 3, "note": "color-field: col3 color=0x03"}
+{"op": "write_text", "addr": 57796, "data": 8368, "be": 3, "note": "color-field: col4 color=0x04"}
+{"op": "write_text", "addr": 57797, "data": 10416, "be": 3, "note": "color-field: col5 color=0x05"}
+{"op": "write_text", "addr": 57798, "data": 12464, "be": 3, "note": "color-field: col6 color=0x06"}
+{"op": "write_text", "addr": 57799, "data": 14512, "be": 3, "note": "color-field: col7 color=0x07"}
+{"op": "write_text", "addr": 57800, "data": 16560, "be": 3, "note": "color-field: col8 color=0x08"}
+{"op": "write_text", "addr": 57801, "data": 18608, "be": 3, "note": "color-field: col9 color=0x09"}
+{"op": "write_text", "addr": 57802, "data": 20656, "be": 3, "note": "color-field: col10 color=0x0a"}
+{"op": "write_text", "addr": 57803, "data": 22704, "be": 3, "note": "color-field: col11 color=0x0b"}
+{"op": "write_text", "addr": 57804, "data": 24752, "be": 3, "note": "color-field: col12 color=0x0c"}
+{"op": "write_text", "addr": 57805, "data": 26800, "be": 3, "note": "color-field: col13 color=0x0d"}
+{"op": "write_text", "addr": 57806, "data": 28848, "be": 3, "note": "color-field: col14 color=0x0e"}
+{"op": "write_text", "addr": 57807, "data": 30896, "be": 3, "note": "color-field: col15 color=0x0f"}
+{"op": "write_text", "addr": 57808, "data": 32944, "be": 3, "note": "color-field: col16 color=0x10"}
+{"op": "write_text", "addr": 57809, "data": 34992, "be": 3, "note": "color-field: col17 color=0x11"}
+{"op": "write_text", "addr": 57810, "data": 37040, "be": 3, "note": "color-field: col18 color=0x12"}
+{"op": "write_text", "addr": 57811, "data": 39088, "be": 3, "note": "color-field: col19 color=0x13"}
+{"op": "write_text", "addr": 57812, "data": 41136, "be": 3, "note": "color-field: col20 color=0x14"}
+{"op": "write_text", "addr": 57813, "data": 43184, "be": 3, "note": "color-field: col21 color=0x15"}
+{"op": "write_text", "addr": 57814, "data": 45232, "be": 3, "note": "color-field: col22 color=0x16"}
+{"op": "write_text", "addr": 57815, "data": 47280, "be": 3, "note": "color-field: col23 color=0x17"}
+{"op": "write_text", "addr": 57816, "data": 49328, "be": 3, "note": "color-field: col24 color=0x18"}
+{"op": "write_text", "addr": 57817, "data": 51376, "be": 3, "note": "color-field: col25 color=0x19"}
+{"op": "write_text", "addr": 57818, "data": 53424, "be": 3, "note": "color-field: col26 color=0x1a"}
+{"op": "write_text", "addr": 57819, "data": 55472, "be": 3, "note": "color-field: col27 color=0x1b"}
+{"op": "write_text", "addr": 57820, "data": 57520, "be": 3, "note": "color-field: col28 color=0x1c"}
+{"op": "write_text", "addr": 57821, "data": 59568, "be": 3, "note": "color-field: col29 color=0x1d"}
+{"op": "write_text", "addr": 57822, "data": 61616, "be": 3, "note": "color-field: col30 color=0x1e"}
+{"op": "write_text", "addr": 57823, "data": 63664, "be": 3, "note": "color-field: col31 color=0x1f"}
+{"op": "write_char", "addr": 64256, "data": 39321, "be": 3, "note": "color-field: char0xb0 py=0 b0b1"}
+{"op": "write_char", "addr": 64257, "data": 39321, "be": 3, "note": "color-field: char0xb0 py=0 b2b3"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 4, "exp_pixel": 9, "note": "color-field: color=0x00 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 12, "exp_pixel": 25, "note": "color-field: color=0x01 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 20, "exp_pixel": 41, "note": "color-field: color=0x02 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 28, "exp_pixel": 57, "note": "color-field: color=0x03 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 36, "exp_pixel": 73, "note": "color-field: color=0x04 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 44, "exp_pixel": 89, "note": "color-field: color=0x05 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 52, "exp_pixel": 105, "note": "color-field: color=0x06 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 60, "exp_pixel": 121, "note": "color-field: color=0x07 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 68, "exp_pixel": 137, "note": "color-field: color=0x08 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 76, "exp_pixel": 153, "note": "color-field: color=0x09 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 84, "exp_pixel": 169, "note": "color-field: color=0x0a pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 92, "exp_pixel": 185, "note": "color-field: color=0x0b pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 100, "exp_pixel": 201, "note": "color-field: color=0x0c pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 108, "exp_pixel": 217, "note": "color-field: color=0x0d pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 116, "exp_pixel": 233, "note": "color-field: color=0x0e pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 124, "exp_pixel": 249, "note": "color-field: color=0x0f pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 132, "exp_pixel": 265, "note": "color-field: color=0x10 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 140, "exp_pixel": 281, "note": "color-field: color=0x11 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 148, "exp_pixel": 297, "note": "color-field: color=0x12 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 156, "exp_pixel": 313, "note": "color-field: color=0x13 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 164, "exp_pixel": 329, "note": "color-field: color=0x14 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 172, "exp_pixel": 345, "note": "color-field: color=0x15 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 180, "exp_pixel": 361, "note": "color-field: color=0x16 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 188, "exp_pixel": 377, "note": "color-field: color=0x17 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 196, "exp_pixel": 393, "note": "color-field: color=0x18 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 204, "exp_pixel": 409, "note": "color-field: color=0x19 pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 212, "exp_pixel": 425, "note": "color-field: color=0x1a pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 220, "exp_pixel": 441, "note": "color-field: color=0x1b pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 228, "exp_pixel": 457, "note": "color-field: color=0x1c pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 236, "exp_pixel": 473, "note": "color-field: color=0x1d pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 244, "exp_pixel": 489, "note": "color-field: color=0x1e pen=0x9"}
+{"op": "check_text_pixel", "vpos": 55, "screen_col": 252, "exp_pixel": 505, "note": "color-field: color=0x1f pen=0x9"}
+{"op": "reset", "note": "reset for text-over-BG test"}
+{"op": "write_text", "addr": 57986, "data": 55488, "be": 3, "note": "text-over-BG: text tile row10 col2=char0xc0"}
+{"op": "write_char", "addr": 64512, "data": 56797, "be": 3, "note": "text-over-BG text: char0xc0 py=0 b0b1"}
+{"op": "write_char", "addr": 64513, "data": 56797, "be": 3, "note": "text-over-BG text: char0xc0 py=0 b2b3"}
+{"op": "write_pf", "addr": 16706, "data": 298, "be": 3, "note": "PF1 tile[161] attr=0x012a"}
+{"op": "write_pf", "addr": 16707, "data": 2, "be": 3, "note": "PF1 tile[161] code=0x0002"}
+{"op": "write_gfx", "gfx_addr": 64, "gfx_data": 2004318071, "note": "gfx tile0x0002 row0 left=0x77777777"}
+{"op": "write_gfx", "gfx_addr": 65, "gfx_data": 2004318071, "note": "gfx tile0x0002 row0 right=0x77777777"}
+{"op": "check_text_over_bg", "vpos": 79, "screen_col": 16, "exp_text": 445, "exp_bg": 4775, "note": "text-over-BG: text pixel (col=16)"}
+{"op": "check_text_over_bg", "vpos": 79, "screen_col": 17, "exp_text": 445, "exp_bg": 4775, "note": "text-over-BG: pixel col=17"}
+{"op": "check_text_over_bg", "vpos": 79, "screen_col": 18, "exp_text": 445, "exp_bg": 4775, "note": "text-over-BG: pixel col=18"}
+{"op": "check_text_over_bg", "vpos": 79, "screen_col": 19, "exp_text": 445, "exp_bg": 4775, "note": "text-over-BG: pixel col=19"}
+{"op": "reset", "note": "reset for full-row multi-tile model cross-check"}
+{"op": "write_text", "addr": 58048, "data": 2256, "be": 3, "note": "full-row: col0 char=0xd0 color=1"}
+{"op": "write_char", "addr": 64768, "data": 4369, "be": 3, "note": "full-row: char0xd0 py=0 b0b1"}
+{"op": "write_char", "addr": 64769, "data": 4369, "be": 3, "note": "full-row: char0xd0 py=0 b2b3"}
+{"op": "write_text", "addr": 58049, "data": 8401, "be": 3, "note": "full-row: col1 char=0xd1 color=4"}
+{"op": "write_char", "addr": 64784, "data": 8738, "be": 3, "note": "full-row: char0xd1 py=0 b0b1"}
+{"op": "write_char", "addr": 64785, "data": 8738, "be": 3, "note": "full-row: char0xd1 py=0 b2b3"}
+{"op": "write_text", "addr": 58050, "data": 14546, "be": 3, "note": "full-row: col2 char=0xd2 color=7"}
+{"op": "write_char", "addr": 64800, "data": 13107, "be": 3, "note": "full-row: char0xd2 py=0 b0b1"}
+{"op": "write_char", "addr": 64801, "data": 13107, "be": 3, "note": "full-row: char0xd2 py=0 b2b3"}
+{"op": "write_text", "addr": 58051, "data": 20691, "be": 3, "note": "full-row: col3 char=0xd3 color=10"}
+{"op": "write_char", "addr": 64816, "data": 17476, "be": 3, "note": "full-row: char0xd3 py=0 b0b1"}
+{"op": "write_char", "addr": 64817, "data": 17476, "be": 3, "note": "full-row: char0xd3 py=0 b2b3"}
+{"op": "write_text", "addr": 58052, "data": 26836, "be": 3, "note": "full-row: col4 char=0xd4 color=13"}
+{"op": "write_char", "addr": 64832, "data": 21845, "be": 3, "note": "full-row: char0xd4 py=0 b0b1"}
+{"op": "write_char", "addr": 64833, "data": 21845, "be": 3, "note": "full-row: char0xd4 py=0 b2b3"}
+{"op": "write_text", "addr": 58053, "data": 32981, "be": 3, "note": "full-row: col5 char=0xd5 color=16"}
+{"op": "write_char", "addr": 64848, "data": 26214, "be": 3, "note": "full-row: char0xd5 py=0 b0b1"}
+{"op": "write_char", "addr": 64849, "data": 26214, "be": 3, "note": "full-row: char0xd5 py=0 b2b3"}
+{"op": "write_text", "addr": 58054, "data": 39126, "be": 3, "note": "full-row: col6 char=0xd6 color=19"}
+{"op": "write_char", "addr": 64864, "data": 30583, "be": 3, "note": "full-row: char0xd6 py=0 b0b1"}
+{"op": "write_char", "addr": 64865, "data": 30583, "be": 3, "note": "full-row: char0xd6 py=0 b2b3"}
+{"op": "write_text", "addr": 58055, "data": 45271, "be": 3, "note": "full-row: col7 char=0xd7 color=22"}
+{"op": "write_char", "addr": 64880, "data": 34952, "be": 3, "note": "full-row: char0xd7 py=0 b0b1"}
+{"op": "write_char", "addr": 64881, "data": 34952, "be": 3, "note": "full-row: char0xd7 py=0 b2b3"}
+{"op": "write_text", "addr": 58056, "data": 51416, "be": 3, "note": "full-row: col8 char=0xd8 color=25"}
+{"op": "write_char", "addr": 64896, "data": 39321, "be": 3, "note": "full-row: char0xd8 py=0 b0b1"}
+{"op": "write_char", "addr": 64897, "data": 39321, "be": 3, "note": "full-row: char0xd8 py=0 b2b3"}
+{"op": "write_text", "addr": 58057, "data": 57561, "be": 3, "note": "full-row: col9 char=0xd9 color=28"}
+{"op": "write_char", "addr": 64912, "data": 43690, "be": 3, "note": "full-row: char0xd9 py=0 b0b1"}
+{"op": "write_char", "addr": 64913, "data": 43690, "be": 3, "note": "full-row: char0xd9 py=0 b2b3"}
+{"op": "write_text", "addr": 58058, "data": 63706, "be": 3, "note": "full-row: col10 char=0xda color=31"}
+{"op": "write_char", "addr": 64928, "data": 48059, "be": 3, "note": "full-row: char0xda py=0 b0b1"}
+{"op": "write_char", "addr": 64929, "data": 48059, "be": 3, "note": "full-row: char0xda py=0 b2b3"}
+{"op": "write_text", "addr": 58059, "data": 4315, "be": 3, "note": "full-row: col11 char=0xdb color=2"}
+{"op": "write_char", "addr": 64944, "data": 52428, "be": 3, "note": "full-row: char0xdb py=0 b0b1"}
+{"op": "write_char", "addr": 64945, "data": 52428, "be": 3, "note": "full-row: char0xdb py=0 b2b3"}
+{"op": "write_text", "addr": 58060, "data": 10460, "be": 3, "note": "full-row: col12 char=0xdc color=5"}
+{"op": "write_char", "addr": 64960, "data": 56797, "be": 3, "note": "full-row: char0xdc py=0 b0b1"}
+{"op": "write_char", "addr": 64961, "data": 56797, "be": 3, "note": "full-row: char0xdc py=0 b2b3"}
+{"op": "write_text", "addr": 58061, "data": 16605, "be": 3, "note": "full-row: col13 char=0xdd color=8"}
+{"op": "write_char", "addr": 64976, "data": 61166, "be": 3, "note": "full-row: char0xdd py=0 b0b1"}
+{"op": "write_char", "addr": 64977, "data": 61166, "be": 3, "note": "full-row: char0xdd py=0 b2b3"}
+{"op": "write_text", "addr": 58062, "data": 22750, "be": 3, "note": "full-row: col14 char=0xde color=11"}
+{"op": "write_char", "addr": 64992, "data": 65535, "be": 3, "note": "full-row: char0xde py=0 b0b1"}
+{"op": "write_char", "addr": 64993, "data": 65535, "be": 3, "note": "full-row: char0xde py=0 b2b3"}
+{"op": "write_text", "addr": 58063, "data": 28895, "be": 3, "note": "full-row: col15 char=0xdf color=14"}
+{"op": "write_char", "addr": 65008, "data": 4369, "be": 3, "note": "full-row: char0xdf py=0 b0b1"}
+{"op": "write_char", "addr": 65009, "data": 4369, "be": 3, "note": "full-row: char0xdf py=0 b2b3"}
+{"op": "write_text", "addr": 58064, "data": 35024, "be": 3, "note": "full-row: col16 char=0xd0 color=17"}
+{"op": "write_char", "addr": 64768, "data": 8738, "be": 3, "note": "full-row: char0xd0 py=0 b0b1"}
+{"op": "write_char", "addr": 64769, "data": 8738, "be": 3, "note": "full-row: char0xd0 py=0 b2b3"}
+{"op": "write_text", "addr": 58065, "data": 41169, "be": 3, "note": "full-row: col17 char=0xd1 color=20"}
+{"op": "write_char", "addr": 64784, "data": 13107, "be": 3, "note": "full-row: char0xd1 py=0 b0b1"}
+{"op": "write_char", "addr": 64785, "data": 13107, "be": 3, "note": "full-row: char0xd1 py=0 b2b3"}
+{"op": "write_text", "addr": 58066, "data": 47314, "be": 3, "note": "full-row: col18 char=0xd2 color=23"}
+{"op": "write_char", "addr": 64800, "data": 17476, "be": 3, "note": "full-row: char0xd2 py=0 b0b1"}
+{"op": "write_char", "addr": 64801, "data": 17476, "be": 3, "note": "full-row: char0xd2 py=0 b2b3"}
+{"op": "write_text", "addr": 58067, "data": 53459, "be": 3, "note": "full-row: col19 char=0xd3 color=26"}
+{"op": "write_char", "addr": 64816, "data": 21845, "be": 3, "note": "full-row: char0xd3 py=0 b0b1"}
+{"op": "write_char", "addr": 64817, "data": 21845, "be": 3, "note": "full-row: char0xd3 py=0 b2b3"}
+{"op": "write_text", "addr": 58068, "data": 59604, "be": 3, "note": "full-row: col20 char=0xd4 color=29"}
+{"op": "write_char", "addr": 64832, "data": 26214, "be": 3, "note": "full-row: char0xd4 py=0 b0b1"}
+{"op": "write_char", "addr": 64833, "data": 26214, "be": 3, "note": "full-row: char0xd4 py=0 b2b3"}
+{"op": "write_text", "addr": 58069, "data": 213, "be": 3, "note": "full-row: col21 char=0xd5 color=0"}
+{"op": "write_char", "addr": 64848, "data": 30583, "be": 3, "note": "full-row: char0xd5 py=0 b0b1"}
+{"op": "write_char", "addr": 64849, "data": 30583, "be": 3, "note": "full-row: char0xd5 py=0 b2b3"}
+{"op": "write_text", "addr": 58070, "data": 6358, "be": 3, "note": "full-row: col22 char=0xd6 color=3"}
+{"op": "write_char", "addr": 64864, "data": 34952, "be": 3, "note": "full-row: char0xd6 py=0 b0b1"}
+{"op": "write_char", "addr": 64865, "data": 34952, "be": 3, "note": "full-row: char0xd6 py=0 b2b3"}
+{"op": "write_text", "addr": 58071, "data": 12503, "be": 3, "note": "full-row: col23 char=0xd7 color=6"}
+{"op": "write_char", "addr": 64880, "data": 39321, "be": 3, "note": "full-row: char0xd7 py=0 b0b1"}
+{"op": "write_char", "addr": 64881, "data": 39321, "be": 3, "note": "full-row: char0xd7 py=0 b2b3"}
+{"op": "write_text", "addr": 58072, "data": 18648, "be": 3, "note": "full-row: col24 char=0xd8 color=9"}
+{"op": "write_char", "addr": 64896, "data": 43690, "be": 3, "note": "full-row: char0xd8 py=0 b0b1"}
+{"op": "write_char", "addr": 64897, "data": 43690, "be": 3, "note": "full-row: char0xd8 py=0 b2b3"}
+{"op": "write_text", "addr": 58073, "data": 24793, "be": 3, "note": "full-row: col25 char=0xd9 color=12"}
+{"op": "write_char", "addr": 64912, "data": 48059, "be": 3, "note": "full-row: char0xd9 py=0 b0b1"}
+{"op": "write_char", "addr": 64913, "data": 48059, "be": 3, "note": "full-row: char0xd9 py=0 b2b3"}
+{"op": "write_text", "addr": 58074, "data": 30938, "be": 3, "note": "full-row: col26 char=0xda color=15"}
+{"op": "write_char", "addr": 64928, "data": 52428, "be": 3, "note": "full-row: char0xda py=0 b0b1"}
+{"op": "write_char", "addr": 64929, "data": 52428, "be": 3, "note": "full-row: char0xda py=0 b2b3"}
+{"op": "write_text", "addr": 58075, "data": 37083, "be": 3, "note": "full-row: col27 char=0xdb color=18"}
+{"op": "write_char", "addr": 64944, "data": 56797, "be": 3, "note": "full-row: char0xdb py=0 b0b1"}
+{"op": "write_char", "addr": 64945, "data": 56797, "be": 3, "note": "full-row: char0xdb py=0 b2b3"}
+{"op": "write_text", "addr": 58076, "data": 43228, "be": 3, "note": "full-row: col28 char=0xdc color=21"}
+{"op": "write_char", "addr": 64960, "data": 61166, "be": 3, "note": "full-row: char0xdc py=0 b0b1"}
+{"op": "write_char", "addr": 64961, "data": 61166, "be": 3, "note": "full-row: char0xdc py=0 b2b3"}
+{"op": "write_text", "addr": 58077, "data": 49373, "be": 3, "note": "full-row: col29 char=0xdd color=24"}
+{"op": "write_char", "addr": 64976, "data": 65535, "be": 3, "note": "full-row: char0xdd py=0 b0b1"}
+{"op": "write_char", "addr": 64977, "data": 65535, "be": 3, "note": "full-row: char0xdd py=0 b2b3"}
+{"op": "write_text", "addr": 58078, "data": 55518, "be": 3, "note": "full-row: col30 char=0xde color=27"}
+{"op": "write_char", "addr": 64992, "data": 4369, "be": 3, "note": "full-row: char0xde py=0 b0b1"}
+{"op": "write_char", "addr": 64993, "data": 4369, "be": 3, "note": "full-row: char0xde py=0 b2b3"}
+{"op": "write_text", "addr": 58079, "data": 61663, "be": 3, "note": "full-row: col31 char=0xdf color=30"}
+{"op": "write_char", "addr": 65008, "data": 8738, "be": 3, "note": "full-row: char0xdf py=0 b0b1"}
+{"op": "write_char", "addr": 65009, "data": 8738, "be": 3, "note": "full-row: char0xdf py=0 b2b3"}
+{"op": "write_text", "addr": 58080, "data": 2256, "be": 3, "note": "full-row: col32 char=0xd0 color=1"}
+{"op": "write_char", "addr": 64768, "data": 13107, "be": 3, "note": "full-row: char0xd0 py=0 b0b1"}
+{"op": "write_char", "addr": 64769, "data": 13107, "be": 3, "note": "full-row: char0xd0 py=0 b2b3"}
+{"op": "write_text", "addr": 58081, "data": 8401, "be": 3, "note": "full-row: col33 char=0xd1 color=4"}
+{"op": "write_char", "addr": 64784, "data": 17476, "be": 3, "note": "full-row: char0xd1 py=0 b0b1"}
+{"op": "write_char", "addr": 64785, "data": 17476, "be": 3, "note": "full-row: char0xd1 py=0 b2b3"}
+{"op": "write_text", "addr": 58082, "data": 14546, "be": 3, "note": "full-row: col34 char=0xd2 color=7"}
+{"op": "write_char", "addr": 64800, "data": 21845, "be": 3, "note": "full-row: char0xd2 py=0 b0b1"}
+{"op": "write_char", "addr": 64801, "data": 21845, "be": 3, "note": "full-row: char0xd2 py=0 b2b3"}
+{"op": "write_text", "addr": 58083, "data": 20691, "be": 3, "note": "full-row: col35 char=0xd3 color=10"}
+{"op": "write_char", "addr": 64816, "data": 26214, "be": 3, "note": "full-row: char0xd3 py=0 b0b1"}
+{"op": "write_char", "addr": 64817, "data": 26214, "be": 3, "note": "full-row: char0xd3 py=0 b2b3"}
+{"op": "write_text", "addr": 58084, "data": 26836, "be": 3, "note": "full-row: col36 char=0xd4 color=13"}
+{"op": "write_char", "addr": 64832, "data": 30583, "be": 3, "note": "full-row: char0xd4 py=0 b0b1"}
+{"op": "write_char", "addr": 64833, "data": 30583, "be": 3, "note": "full-row: char0xd4 py=0 b2b3"}
+{"op": "write_text", "addr": 58085, "data": 32981, "be": 3, "note": "full-row: col37 char=0xd5 color=16"}
+{"op": "write_char", "addr": 64848, "data": 34952, "be": 3, "note": "full-row: char0xd5 py=0 b0b1"}
+{"op": "write_char", "addr": 64849, "data": 34952, "be": 3, "note": "full-row: char0xd5 py=0 b2b3"}
+{"op": "write_text", "addr": 58086, "data": 39126, "be": 3, "note": "full-row: col38 char=0xd6 color=19"}
+{"op": "write_char", "addr": 64864, "data": 39321, "be": 3, "note": "full-row: char0xd6 py=0 b0b1"}
+{"op": "write_char", "addr": 64865, "data": 39321, "be": 3, "note": "full-row: char0xd6 py=0 b2b3"}
+{"op": "write_text", "addr": 58087, "data": 45271, "be": 3, "note": "full-row: col39 char=0xd7 color=22"}
+{"op": "write_char", "addr": 64880, "data": 43690, "be": 3, "note": "full-row: char0xd7 py=0 b0b1"}
+{"op": "write_char", "addr": 64881, "data": 43690, "be": 3, "note": "full-row: char0xd7 py=0 b2b3"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 0, "exp_pixel": 19, "note": "full-row: col0 scol=0 exp=0x013"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 8, "exp_pixel": 68, "note": "full-row: col1 scol=8 exp=0x044"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 16, "exp_pixel": 117, "note": "full-row: col2 scol=16 exp=0x075"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 24, "exp_pixel": 166, "note": "full-row: col3 scol=24 exp=0x0a6"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 32, "exp_pixel": 215, "note": "full-row: col4 scol=32 exp=0x0d7"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 40, "exp_pixel": 264, "note": "full-row: col5 scol=40 exp=0x108"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 48, "exp_pixel": 313, "note": "full-row: col6 scol=48 exp=0x139"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 56, "exp_pixel": 362, "note": "full-row: col7 scol=56 exp=0x16a"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 64, "exp_pixel": 410, "note": "full-row: col8 scol=64 exp=0x19a"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 72, "exp_pixel": 459, "note": "full-row: col9 scol=72 exp=0x1cb"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 80, "exp_pixel": 508, "note": "full-row: col10 scol=80 exp=0x1fc"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 88, "exp_pixel": 45, "note": "full-row: col11 scol=88 exp=0x02d"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 96, "exp_pixel": 94, "note": "full-row: col12 scol=96 exp=0x05e"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 104, "exp_pixel": 143, "note": "full-row: col13 scol=104 exp=0x08f"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 112, "exp_pixel": 177, "note": "full-row: col14 scol=112 exp=0x0b1"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 120, "exp_pixel": 226, "note": "full-row: col15 scol=120 exp=0x0e2"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 128, "exp_pixel": 275, "note": "full-row: col16 scol=128 exp=0x113"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 136, "exp_pixel": 324, "note": "full-row: col17 scol=136 exp=0x144"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 144, "exp_pixel": 373, "note": "full-row: col18 scol=144 exp=0x175"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 152, "exp_pixel": 422, "note": "full-row: col19 scol=152 exp=0x1a6"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 160, "exp_pixel": 471, "note": "full-row: col20 scol=160 exp=0x1d7"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 168, "exp_pixel": 8, "note": "full-row: col21 scol=168 exp=0x008"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 176, "exp_pixel": 57, "note": "full-row: col22 scol=176 exp=0x039"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 184, "exp_pixel": 106, "note": "full-row: col23 scol=184 exp=0x06a"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 192, "exp_pixel": 154, "note": "full-row: col24 scol=192 exp=0x09a"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 200, "exp_pixel": 203, "note": "full-row: col25 scol=200 exp=0x0cb"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 208, "exp_pixel": 252, "note": "full-row: col26 scol=208 exp=0x0fc"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 216, "exp_pixel": 301, "note": "full-row: col27 scol=216 exp=0x12d"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 224, "exp_pixel": 350, "note": "full-row: col28 scol=224 exp=0x15e"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 232, "exp_pixel": 399, "note": "full-row: col29 scol=232 exp=0x18f"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 240, "exp_pixel": 433, "note": "full-row: col30 scol=240 exp=0x1b1"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 248, "exp_pixel": 482, "note": "full-row: col31 scol=248 exp=0x1e2"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 256, "exp_pixel": 19, "note": "full-row: col32 scol=256 exp=0x013"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 264, "exp_pixel": 68, "note": "full-row: col33 scol=264 exp=0x044"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 272, "exp_pixel": 117, "note": "full-row: col34 scol=272 exp=0x075"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 280, "exp_pixel": 166, "note": "full-row: col35 scol=280 exp=0x0a6"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 288, "exp_pixel": 215, "note": "full-row: col36 scol=288 exp=0x0d7"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 296, "exp_pixel": 264, "note": "full-row: col37 scol=296 exp=0x108"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 304, "exp_pixel": 313, "note": "full-row: col38 scol=304 exp=0x139"}
+{"op": "check_text_pixel", "vpos": 87, "screen_col": 312, "exp_pixel": 362, "note": "full-row: col39 scol=312 exp=0x16a"}
+{"op": "reset", "note": "reset for charlayout py test (py=4 and py=7)"}
+{"op": "write_text", "addr": 58053, "data": 24800, "be": 3, "note": "py-test: tile row11 col5 char=0xe0"}
+{"op": "write_char", "addr": 65032, "data": 21845, "be": 3, "note": "py-test py=4: char0xe0 py=4 b0b1"}
+{"op": "write_char", "addr": 65033, "data": 21845, "be": 3, "note": "py-test py=4: char0xe0 py=4 b2b3"}
+{"op": "check_text_pixel", "vpos": 91, "screen_col": 40, "exp_pixel": 197, "note": "py-test py=4: vpos=91 pen=0x5"}
+{"op": "check_text_pixel", "vpos": 91, "screen_col": 47, "exp_pixel": 197, "note": "py-test py=4: last px of tile col=5"}
+{"op": "write_text", "addr": 58053, "data": 24800, "be": 3, "note": "py-test: tile row11 col5 char=0xe0"}
+{"op": "write_char", "addr": 65038, "data": 34952, "be": 3, "note": "py-test py=7: char0xe0 py=7 b0b1"}
+{"op": "write_char", "addr": 65039, "data": 34952, "be": 3, "note": "py-test py=7: char0xe0 py=7 b2b3"}
+{"op": "check_text_pixel", "vpos": 94, "screen_col": 40, "exp_pixel": 200, "note": "py-test py=7: vpos=94 pen=0x8"}
+{"op": "check_text_pixel", "vpos": 94, "screen_col": 47, "exp_pixel": 200, "note": "py-test py=7: last px of tile col=5"}
+{"op": "reset", "note": "reset for char code boundary test"}
+{"op": "write_text", "addr": 58176, "data": 10240, "be": 3, "note": "char-boundary: col0=char0"}
+{"op": "write_char", "addr": 61440, "data": 13107, "be": 3, "note": "char-boundary char0: char0x00 py=0 b0b1"}
+{"op": "write_char", "addr": 61441, "data": 13107, "be": 3, "note": "char-boundary char0: char0x00 py=0 b2b3"}
+{"op": "check_text_pixel", "vpos": 103, "screen_col": 0, "exp_pixel": 83, "note": "char-boundary: char_code=0 px0"}
+{"op": "check_text_pixel", "vpos": 103, "screen_col": 7, "exp_pixel": 83, "note": "char-boundary: char_code=0 px7"}
+{"op": "write_text", "addr": 58177, "data": 49407, "be": 3, "note": "char-boundary: col1=char255"}
+{"op": "write_char", "addr": 65520, "data": 43690, "be": 3, "note": "char-boundary char255: char0xff py=0 b0b1"}
+{"op": "write_char", "addr": 65521, "data": 43690, "be": 3, "note": "char-boundary char255: char0xff py=0 b2b3"}
+{"op": "check_text_pixel", "vpos": 103, "screen_col": 8, "exp_pixel": 394, "note": "char-boundary: char_code=255 px8"}
+{"op": "check_text_pixel", "vpos": 103, "screen_col": 15, "exp_pixel": 394, "note": "char-boundary: char_code=255 px15"}
+{"op": "reset", "note": "reset for tile map row boundary test"}
+{"op": "write_text", "addr": 57344, "data": 35056, "be": 3, "note": "row-boundary: row0 col0=char0xf0"}
+{"op": "write_char", "addr": 65294, "data": 26214, "be": 3, "note": "row-boundary row0: char0xf0 py=7 b0b1"}
+{"op": "write_char", "addr": 65295, "data": 26214, "be": 3, "note": "row-boundary row0: char0xf0 py=7 b2b3"}
+{"op": "check_text_pixel", "vpos": 6, "screen_col": 0, "exp_pixel": 278, "note": "row-boundary: tile map row=0 py=7"}
+{"op": "check_text_pixel", "vpos": 6, "screen_col": 4, "exp_pixel": 278, "note": "row-boundary: tile map row=0 py=7 mid-tile"}
+{"op": "write_text", "addr": 59392, "data": 61681, "be": 3, "note": "row-boundary: row32 col0=char0xf1"}
+{"op": "write_char", "addr": 65296, "data": 48059, "be": 3, "note": "row-boundary row32: char0xf1 py=0 b0b1"}
+{"op": "write_char", "addr": 65297, "data": 48059, "be": 3, "note": "row-boundary row32: char0xf1 py=0 b2b3"}
+{"op": "check_text_pixel", "vpos": 255, "screen_col": 0, "exp_pixel": 491, "note": "row-boundary: tile map row=32 py=0"}
+{"op": "reset", "note": "reset for pen-0-over-BG test"}
+{"op": "write_text", "addr": 58243, "data": 41202, "be": 3, "note": "pen0-over-BG: text tile row14 col3=char0xf2"}
+{"op": "write_char", "addr": 65312, "data": 0, "be": 3, "note": "pen0-over-BG text: char0xf2 py=0 b0b1"}
+{"op": "write_char", "addr": 65313, "data": 0, "be": 3, "note": "pen0-over-BG text: char0xf2 py=0 b2b3"}
+{"op": "write_pf", "addr": 16834, "data": 90, "be": 3, "note": "PF1 tile[225] attr=0x005a"}
+{"op": "write_pf", "addr": 16835, "data": 3, "be": 3, "note": "PF1 tile[225] code=0x0003"}
+{"op": "write_gfx", "gfx_addr": 96, "gfx_data": 2290649224, "note": "gfx tile0x0003 row0 left=0x88888888"}
+{"op": "write_gfx", "gfx_addr": 97, "gfx_data": 2290649224, "note": "gfx tile0x0003 row0 right=0x88888888"}
+{"op": "check_text_over_bg", "vpos": 111, "screen_col": 24, "exp_text": 320, "exp_bg": 1448, "note": "pen0-over-BG: text pen=0 transparent, BG visible col=24"}
+{"op": "check_text_over_bg", "vpos": 111, "screen_col": 25, "exp_text": 320, "exp_bg": 1448, "note": "pen0-over-BG: col=25"}
+{"op": "check_text_over_bg", "vpos": 111, "screen_col": 26, "exp_text": 320, "exp_bg": 1448, "note": "pen0-over-BG: col=26"}

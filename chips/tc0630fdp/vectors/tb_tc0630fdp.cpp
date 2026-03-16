@@ -1,5 +1,5 @@
 // =============================================================================
-// Gate 4 (Steps 1–3): Verilator testbench for tc0630fdp.sv
+// Gate 4 (Steps 1–4): Verilator testbench for tc0630fdp.sv
 //
 // Reads one or more vector files (jsonl). Each line is a JSON object with "op":
 //
@@ -20,14 +20,23 @@
 //     Advance to HBLANK at vpos. Wait 90 cycles. Advance to active display
 //     of vpos+1 at screen_col. Sample text_pixel_out. Compare to exp_pixel.
 //
-// Step 3 ops (new):
+// Step 3 ops:
 //   op="write_pf":    CPU write to PF RAM (plane 0..3, pf_word_addr, data).
 //   op="read_pf":     CPU read from PF RAM; compare exp_dout.
 //   op="write_gfx":   Write 32-bit word to GFX ROM via gfx_wr_* ports.
 //   op="check_bg_pixel":
 //     Similar to check_text_pixel: advance to HBLANK at vpos, wait for BG FSM
-//     (110 cycles), advance to active display of vpos+1 at screen_col, sample
+//     (115 cycles), advance to active display of vpos+1 at screen_col, sample
 //     bg_pixel_out[plane]. Compare to exp_pixel (13-bit: {palette[8:0],pen[3:0]}).
+//
+// Step 4 ops (Plan Step 4: Text Layer + Character RAM — completion tests):
+//   op="check_text_over_bg":
+//     Advance to HBLANK at vpos. Wait 115 cycles (covers both text FSM ≤80 and
+//     BG FSM ≤106). Advance to active display of vpos+1 at screen_col.
+//     Sample BOTH text_pixel_out (9-bit) AND bg_pixel_out[0] (13-bit).
+//     Compare each independently: exp_text vs text_pixel_out, exp_bg vs bg[0].
+//     Validates that text and BG layers both render correctly at the same
+//     screen position — compositing priority ("text wins") is Plan Step 11.
 //
 // All passing tests: prints "PASS [note]"
 // Any failure:       prints "FAIL [note]: got=X exp=Y"
@@ -248,6 +257,68 @@ static void check_text_pixel(int target_vpos, int screen_col,
 }
 
 // ---------------------------------------------------------------------------
+// Step 4: check_text_over_bg — sample BOTH text_pixel_out AND bg_pixel_out[0]
+// at the same screen coordinate.
+//
+// Strategy:
+//   1. Advance to hpos==H_END, vpos==target_vpos (HBLANK start).
+//   2. Clock 115 cycles (covers BG FSM ≤106 cycles AND text FSM ≤80 cycles).
+//   3. Advance to hpos=H_START+screen_col, vpos=target_vpos+1.
+//   4. Sample text_pixel_out (9-bit) and bg_pixel_out[0] (13-bit).
+//   5. Compare each to its expected value independently.
+//
+// This is Plan Step 4, Test 4: both layers must have content at the same
+// screen coordinate.  The text layer renders correctly (text_pixel == exp_text)
+// and the BG layer renders correctly (bg_pixel == exp_bg).
+// Compositing priority ("text wins") is deferred to Step 11.
+// ---------------------------------------------------------------------------
+static void check_text_over_bg(int target_vpos, int screen_col,
+                                int exp_text, int exp_bg,
+                                const std::string& note) {
+    int limit = 2 * H_TOTAL * V_TOTAL;
+
+    // Step 1: advance to HBLANK start of target_vpos
+    int found = 0;
+    for (int i = 0; i < limit; i++) {
+        if ((int)dut->hpos == H_END && (int)dut->vpos == target_vpos) {
+            found = 1;
+            break;
+        }
+        tick();
+    }
+    if (!found) {
+        printf("FAIL %s: could not reach hpos=%d vpos=%d\n",
+               note.c_str(), H_END, target_vpos);
+        g_fail += 2;   // two checks per call
+        return;
+    }
+
+    // Step 2: wait for both FSMs to complete (BG needs 115, text needs 80)
+    for (int i = 0; i < 115; i++) tick();
+
+    // Step 3: advance to active display of vpos+1 at screen_col
+    int disp_vpos = (target_vpos + 1) % V_TOTAL;
+    int disp_hpos = H_START + screen_col;
+
+    for (int i = 0; i < limit; i++) {
+        if ((int)dut->hpos == disp_hpos && (int)dut->vpos == disp_vpos)
+            break;
+        tick();
+    }
+
+    dut->eval();
+
+    // Step 4: sample both layer outputs
+    int got_text = (int)dut->text_pixel_out & 0x1FF;
+    int got_bg   = (int)dut->bg_pixel_out[0] & 0x1FFF;
+
+    check(got_text == (exp_text & 0x1FF),
+          note + " [text]",   got_text, exp_text & 0x1FF);
+    check(got_bg   == (exp_bg   & 0x1FFF),
+          note + " [bg]",     got_bg,   exp_bg   & 0x1FFF);
+}
+
+// ---------------------------------------------------------------------------
 // Step 3: check BG layer pixel
 //
 // Strategy (same as check_text_pixel but with longer FSM wait):
@@ -415,6 +486,18 @@ int main(int argc, char** argv) {
                                jint(line, "plane"),
                                jint(line, "exp_pixel"),
                                note);
+
+            // ── Step 4 ops ──────────────────────────────────────────────────
+            } else if (op == "check_text_over_bg") {
+                // Plan Step 4, Test 4: both text layer and BG layer (PF1)
+                // must produce non-transparent pixels at the same screen column.
+                // Validates that both layers render correctly at overlapping
+                // positions — compositing priority is deferred to Step 11.
+                check_text_over_bg(jint(line, "vpos"),
+                                   jint(line, "screen_col"),
+                                   jint(line, "exp_text"),
+                                   jint(line, "exp_bg"),
+                                   note);
 
             } else {
                 fprintf(stderr, "Unknown op: %s\n", op.c_str());
