@@ -1,0 +1,214 @@
+{"op": "reset", "note": "reset before step2 tests"}
+{"op": "reset", "note": "reset before text RAM R/W tests"}
+{"op": "write_text", "addr": 57344, "data": 4660, "be": 3, "note": "write text_ram[0] = 0x1234"}
+{"op": "read_text", "addr": 57344, "exp_dout": 4660, "note": "readback text_ram[0] == 0x1234: tile word 0: char=0x034, color=0x02"}
+{"op": "write_text", "addr": 57407, "data": 32767, "be": 3, "note": "write text_ram[63] = 0x7fff"}
+{"op": "read_text", "addr": 57407, "exp_dout": 32767, "note": "readback text_ram[63] == 0x7fff: tile word 63: max char code bits, color 0x1F"}
+{"op": "write_text", "addr": 57408, "data": 42435, "be": 3, "note": "write text_ram[64] = 0xa5c3"}
+{"op": "read_text", "addr": 57408, "exp_dout": 42435, "note": "readback text_ram[64] == 0xa5c3: tile word 64 (row 1, col 0)"}
+{"op": "write_text", "addr": 61439, "data": 1, "be": 3, "note": "write text_ram[4095] = 0x0001"}
+{"op": "read_text", "addr": 61439, "exp_dout": 1, "note": "readback text_ram[4095] == 0x0001: tile word 4095 (last tile)"}
+{"op": "reset", "note": "reset before char RAM R/W tests"}
+{"op": "write_char", "addr": 61440, "data": 43981, "be": 3, "note": "write char_ram byte 0 = 0xabcd"}
+{"op": "read_char", "addr": 61440, "exp_dout": 43981, "note": "readback char_ram byte 0 == 0xabcd: char RAM byte 0..1 (tile 0, row 0, b0b1)"}
+{"op": "write_char", "addr": 61441, "data": 61185, "be": 3, "note": "write char_ram byte 2 = 0xef01"}
+{"op": "read_char", "addr": 61441, "exp_dout": 61185, "note": "readback char_ram byte 2 == 0xef01: char RAM byte 2..3 (tile 0, row 0, b2b3)"}
+{"op": "write_char", "addr": 61456, "data": 4660, "be": 3, "note": "write char_ram byte 32 = 0x1234"}
+{"op": "read_char", "addr": 61456, "exp_dout": 4660, "note": "readback char_ram byte 32 == 0x1234: char RAM byte 32..33 (tile 0, row 1, b0b1)"}
+{"op": "write_char", "addr": 65535, "data": 22136, "be": 3, "note": "write char_ram byte 8190 = 0x5678"}
+{"op": "read_char", "addr": 65535, "exp_dout": 22136, "note": "readback char_ram byte 8190 == 0x5678: char RAM byte 8190..8191 (last tile, last row)"}
+{"op": "reset", "note": "reset for solid-fill tile test"}
+{"op": "write_text", "addr": 59392, "data": 6145, "be": 3, "note": "solid-fill: tile[2048]=char1,color3"}
+{"op": "write_char", "addr": 61456, "data": 21845, "be": 3, "note": "char1 row0: b0=0x55 b1=0x55"}
+{"op": "write_char", "addr": 61457, "data": 21845, "be": 3, "note": "char1 row0: b2=0x55 b3=0x55"}
+{"op": "check_text_pixel", "vpos": 255, "screen_col": 0, "exp_pixel": 53, "note": "solid-fill px0: exp color=3 pen=5"}
+{"op": "check_text_pixel", "vpos": 255, "screen_col": 1, "exp_pixel": 53, "note": "solid-fill px1: exp color=3 pen=5"}
+{"op": "check_text_pixel", "vpos": 255, "screen_col": 2, "exp_pixel": 53, "note": "solid-fill px2: exp color=3 pen=5"}
+{"op": "check_text_pixel", "vpos": 255, "screen_col": 3, "exp_pixel": 53, "note": "solid-fill px3: exp color=3 pen=5"}
+{"op": "check_text_pixel", "vpos": 255, "screen_col": 4, "exp_pixel": 53, "note": "solid-fill px4: exp color=3 pen=5"}
+{"op": "check_text_pixel", "vpos": 255, "screen_col": 5, "exp_pixel": 53, "note": "solid-fill px5: exp color=3 pen=5"}
+{"op": "check_text_pixel", "vpos": 255, "screen_col": 6, "exp_pixel": 53, "note": "solid-fill px6: exp color=3 pen=5"}
+{"op": "check_text_pixel", "vpos": 255, "screen_col": 7, "exp_pixel": 53, "note": "solid-fill px7: exp color=3 pen=5"}
+{"op": "reset", "note": "reset for transparency test"}
+{"op": "write_text", "addr": 57541, "data": 14338, "be": 3, "note": "transparent: tile[197]=char2,color7"}
+{"op": "write_char", "addr": 61472, "data": 0, "be": 3, "note": "transparent: char2 row0 b0b1=0"}
+{"op": "write_char", "addr": 61473, "data": 0, "be": 3, "note": "transparent: char2 row0 b2b3=0"}
+{"op": "check_text_pixel", "vpos": 23, "screen_col": 40, "exp_pixel": 112, "note": "transparent px40: pen=0 \u2192 pixel=0x070 (color=7,pen=0)"}
+{"op": "check_text_pixel", "vpos": 23, "screen_col": 41, "exp_pixel": 112, "note": "transparent px41: pen=0 \u2192 pixel=0x070 (color=7,pen=0)"}
+{"op": "check_text_pixel", "vpos": 23, "screen_col": 42, "exp_pixel": 112, "note": "transparent px42: pen=0 \u2192 pixel=0x070 (color=7,pen=0)"}
+{"op": "check_text_pixel", "vpos": 23, "screen_col": 43, "exp_pixel": 112, "note": "transparent px43: pen=0 \u2192 pixel=0x070 (color=7,pen=0)"}
+{"op": "check_text_pixel", "vpos": 23, "screen_col": 44, "exp_pixel": 112, "note": "transparent px44: pen=0 \u2192 pixel=0x070 (color=7,pen=0)"}
+{"op": "check_text_pixel", "vpos": 23, "screen_col": 45, "exp_pixel": 112, "note": "transparent px45: pen=0 \u2192 pixel=0x070 (color=7,pen=0)"}
+{"op": "check_text_pixel", "vpos": 23, "screen_col": 46, "exp_pixel": 112, "note": "transparent px46: pen=0 \u2192 pixel=0x070 (color=7,pen=0)"}
+{"op": "check_text_pixel", "vpos": 23, "screen_col": 47, "exp_pixel": 112, "note": "transparent px47: pen=0 \u2192 pixel=0x070 (color=7,pen=0)"}
+{"op": "reset", "note": "reset for charlayout nibble order test"}
+{"op": "write_text", "addr": 57730, "data": 53251, "be": 3, "note": "nibble order: tile[386]=char3,color0x1a"}
+{"op": "write_char", "addr": 61488, "data": 22136, "be": 3, "note": "nibble order: char3 row0 b0=0x56 b1=0x78"}
+{"op": "write_char", "addr": 61489, "data": 4660, "be": 3, "note": "nibble order: char3 row0 b2=0x12 b3=0x34"}
+{"op": "check_text_pixel", "vpos": 47, "screen_col": 16, "exp_pixel": 417, "note": "nibble-order px0: exp color=0x1a pen=1"}
+{"op": "check_text_pixel", "vpos": 47, "screen_col": 17, "exp_pixel": 418, "note": "nibble-order px1: exp color=0x1a pen=2"}
+{"op": "check_text_pixel", "vpos": 47, "screen_col": 18, "exp_pixel": 419, "note": "nibble-order px2: exp color=0x1a pen=3"}
+{"op": "check_text_pixel", "vpos": 47, "screen_col": 19, "exp_pixel": 420, "note": "nibble-order px3: exp color=0x1a pen=4"}
+{"op": "check_text_pixel", "vpos": 47, "screen_col": 20, "exp_pixel": 421, "note": "nibble-order px4: exp color=0x1a pen=5"}
+{"op": "check_text_pixel", "vpos": 47, "screen_col": 21, "exp_pixel": 422, "note": "nibble-order px5: exp color=0x1a pen=6"}
+{"op": "check_text_pixel", "vpos": 47, "screen_col": 22, "exp_pixel": 423, "note": "nibble-order px6: exp color=0x1a pen=7"}
+{"op": "check_text_pixel", "vpos": 47, "screen_col": 23, "exp_pixel": 424, "note": "nibble-order px7: exp color=0x1a pen=8"}
+{"op": "reset", "note": "reset for tile boundary test"}
+{"op": "write_text", "addr": 57984, "data": 2052, "be": 3, "note": "boundary: tile row10 col0=char4,color1"}
+{"op": "write_char", "addr": 61504, "data": 43690, "be": 3, "note": "boundary: char4 row0 b0b1"}
+{"op": "write_char", "addr": 61505, "data": 43690, "be": 3, "note": "boundary: char4 row0 b2b3"}
+{"op": "write_text", "addr": 57985, "data": 4101, "be": 3, "note": "boundary: tile row10 col1=char5,color2"}
+{"op": "write_char", "addr": 61520, "data": 48059, "be": 3, "note": "boundary: char5 row0 b0b1"}
+{"op": "write_char", "addr": 61521, "data": 48059, "be": 3, "note": "boundary: char5 row0 b2b3"}
+{"op": "check_text_pixel", "vpos": 79, "screen_col": 7, "exp_pixel": 26, "note": "boundary: last px of col=0 tile (screen_col=7)"}
+{"op": "check_text_pixel", "vpos": 79, "screen_col": 8, "exp_pixel": 43, "note": "boundary: first px of col=1 tile (screen_col=8)"}
+{"op": "reset", "note": "reset for pixel row index test"}
+{"op": "write_text", "addr": 57604, "data": 30726, "be": 3, "note": "row-index: tile row4 col4=char6"}
+{"op": "write_char", "addr": 61536, "data": 4369, "be": 3, "note": "row-index: char6 py=0 b0b1 pen=1"}
+{"op": "write_char", "addr": 61537, "data": 4369, "be": 3, "note": "row-index: char6 py=0 b2b3 pen=1"}
+{"op": "check_text_pixel", "vpos": 31, "screen_col": 32, "exp_pixel": 241, "note": "row-index: vpos=31 py=0 \u2192 pen=1"}
+{"op": "write_text", "addr": 57604, "data": 30726, "be": 3, "note": "row-index: tile row4 col4=char6"}
+{"op": "write_char", "addr": 61542, "data": 17476, "be": 3, "note": "row-index: char6 py=3 b0b1 pen=4"}
+{"op": "write_char", "addr": 61543, "data": 17476, "be": 3, "note": "row-index: char6 py=3 b2b3 pen=4"}
+{"op": "check_text_pixel", "vpos": 34, "screen_col": 32, "exp_pixel": 244, "note": "row-index: vpos=34 py=3 \u2192 pen=4"}
+{"op": "reset", "note": "reset for model cross-check"}
+{"op": "write_text", "addr": 57856, "data": 2064, "be": 3, "note": "model-check: tile col0"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57857, "data": 4113, "be": 3, "note": "model-check: tile col1"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57858, "data": 2064, "be": 3, "note": "model-check: tile col2"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57859, "data": 4113, "be": 3, "note": "model-check: tile col3"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57860, "data": 2064, "be": 3, "note": "model-check: tile col4"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57861, "data": 4113, "be": 3, "note": "model-check: tile col5"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57862, "data": 2064, "be": 3, "note": "model-check: tile col6"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57863, "data": 4113, "be": 3, "note": "model-check: tile col7"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57864, "data": 2064, "be": 3, "note": "model-check: tile col8"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57865, "data": 4113, "be": 3, "note": "model-check: tile col9"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57866, "data": 2064, "be": 3, "note": "model-check: tile col10"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57867, "data": 4113, "be": 3, "note": "model-check: tile col11"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57868, "data": 2064, "be": 3, "note": "model-check: tile col12"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57869, "data": 4113, "be": 3, "note": "model-check: tile col13"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57870, "data": 2064, "be": 3, "note": "model-check: tile col14"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57871, "data": 4113, "be": 3, "note": "model-check: tile col15"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57872, "data": 2064, "be": 3, "note": "model-check: tile col16"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57873, "data": 4113, "be": 3, "note": "model-check: tile col17"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57874, "data": 2064, "be": 3, "note": "model-check: tile col18"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57875, "data": 4113, "be": 3, "note": "model-check: tile col19"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57876, "data": 2064, "be": 3, "note": "model-check: tile col20"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57877, "data": 4113, "be": 3, "note": "model-check: tile col21"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57878, "data": 2064, "be": 3, "note": "model-check: tile col22"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57879, "data": 4113, "be": 3, "note": "model-check: tile col23"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57880, "data": 2064, "be": 3, "note": "model-check: tile col24"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57881, "data": 4113, "be": 3, "note": "model-check: tile col25"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57882, "data": 2064, "be": 3, "note": "model-check: tile col26"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57883, "data": 4113, "be": 3, "note": "model-check: tile col27"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57884, "data": 2064, "be": 3, "note": "model-check: tile col28"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57885, "data": 4113, "be": 3, "note": "model-check: tile col29"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57886, "data": 2064, "be": 3, "note": "model-check: tile col30"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57887, "data": 4113, "be": 3, "note": "model-check: tile col31"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57888, "data": 2064, "be": 3, "note": "model-check: tile col32"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57889, "data": 4113, "be": 3, "note": "model-check: tile col33"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57890, "data": 2064, "be": 3, "note": "model-check: tile col34"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57891, "data": 4113, "be": 3, "note": "model-check: tile col35"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57892, "data": 2064, "be": 3, "note": "model-check: tile col36"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57893, "data": 4113, "be": 3, "note": "model-check: tile col37"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "write_text", "addr": 57894, "data": 2064, "be": 3, "note": "model-check: tile col38"}
+{"op": "write_char", "addr": 61700, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b0b1"}
+{"op": "write_char", "addr": 61701, "data": 52428, "be": 3, "note": "model-check: char0x10 py=2 b2b3"}
+{"op": "write_text", "addr": 57895, "data": 4113, "be": 3, "note": "model-check: tile col39"}
+{"op": "write_char", "addr": 61716, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b0b1"}
+{"op": "write_char", "addr": 61717, "data": 13107, "be": 3, "note": "model-check: char0x11 py=2 b2b3"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 0, "exp_pixel": 28, "note": "model-check: scanline65 col0 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 16, "exp_pixel": 28, "note": "model-check: scanline65 col16 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 32, "exp_pixel": 28, "note": "model-check: scanline65 col32 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 48, "exp_pixel": 28, "note": "model-check: scanline65 col48 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 64, "exp_pixel": 28, "note": "model-check: scanline65 col64 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 80, "exp_pixel": 28, "note": "model-check: scanline65 col80 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 96, "exp_pixel": 28, "note": "model-check: scanline65 col96 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 112, "exp_pixel": 28, "note": "model-check: scanline65 col112 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 128, "exp_pixel": 28, "note": "model-check: scanline65 col128 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 144, "exp_pixel": 28, "note": "model-check: scanline65 col144 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 160, "exp_pixel": 28, "note": "model-check: scanline65 col160 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 176, "exp_pixel": 28, "note": "model-check: scanline65 col176 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 192, "exp_pixel": 28, "note": "model-check: scanline65 col192 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 208, "exp_pixel": 28, "note": "model-check: scanline65 col208 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 224, "exp_pixel": 28, "note": "model-check: scanline65 col224 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 240, "exp_pixel": 28, "note": "model-check: scanline65 col240 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 256, "exp_pixel": 28, "note": "model-check: scanline65 col256 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 272, "exp_pixel": 28, "note": "model-check: scanline65 col272 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 288, "exp_pixel": 28, "note": "model-check: scanline65 col288 exp=0x01c"}
+{"op": "check_text_pixel", "vpos": 65, "screen_col": 304, "exp_pixel": 28, "note": "model-check: scanline65 col304 exp=0x01c"}

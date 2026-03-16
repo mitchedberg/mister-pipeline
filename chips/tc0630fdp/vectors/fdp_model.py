@@ -1,11 +1,28 @@
 """
-TC0630FDP behavioral model — Python reference implementation (Step 1).
+TC0630FDP behavioral model — Python reference implementation (Steps 1–2).
 
 Step 1 scope:
   - Display control register bank (16 × 16-bit registers)
   - CPU bus read/write with byte-lane enables
   - Video timing: H/V counters, hblank/vblank/hsync/vsync, pixel_valid
   - Interrupt generation (int_vblank, int_hblank)
+
+Step 2 scope (added):
+  - Text RAM (4096 × 16-bit words): tile words for 64×64 8×8-tile text layer
+  - Character RAM (8192 bytes): CPU-writable pixel data for 256 tiles × 32 bytes
+  - render_text_scanline(vpos): returns 320-entry list of {color[4:0], pen[3:0]}
+
+  Text tile word format (section1 §5):
+    bits[10:0]  = character code (wraps mod 256 for 256-tile char RAM)
+    bits[15:11] = color (5 bits)
+
+  Character RAM GFX decode (charlayout, section1 §11.1):
+    8×8 tile, 4bpp, 32 bytes/tile.
+    Each pixel row = 4 bytes at byte offset: char_code*32 + fetch_py*4
+    X-offsets {20,16,28,24,4,0,12,8} → nibble mapping:
+      px0→b2[7:4]  px1→b2[3:0]  px2→b3[7:4]  px3→b3[3:0]
+      px4→b0[7:4]  px5→b0[3:0]  px6→b1[7:4]  px7→b1[3:0]
+    where b0..b3 are the 4 bytes of the row (byte-address order).
 
 Register map:
   Word 0  = PF1_XSCROLL   (10.6 fixed-point, inverted frac)
@@ -50,15 +67,23 @@ _UNUSED_REGS = {8, 9, 10, 11, 14}
 
 
 class TaitoF3Model:
-    """Step 1 behavioral model: control registers + video timing."""
+    """Steps 1–2 behavioral model: control registers, video timing, text layer."""
+
+    # Memory sizes
+    TEXT_RAM_WORDS  = 4096    # 64×64 tile map × 1 word each
+    CHAR_RAM_BYTES  = 8192    # 256 tiles × 32 bytes = 8KB
 
     def __init__(self):
-        self.ctrl = [0] * 16   # 16 × 16-bit display control registers
+        self.ctrl     = [0] * 16          # 16 × 16-bit display control registers
+        self.text_ram = [0] * self.TEXT_RAM_WORDS   # step 2
+        self.char_ram = [0] * self.CHAR_RAM_BYTES   # step 2 (bytes)
         self._rst()
 
     def _rst(self):
         """Reset all state (mirrors async_rst_n behaviour)."""
-        self.ctrl = [0] * 16
+        self.ctrl     = [0] * 16
+        self.text_ram = [0] * self.TEXT_RAM_WORDS
+        self.char_ram = [0] * self.CHAR_RAM_BYTES
 
     # ── Address decode ──────────────────────────────────────────────────────
 
@@ -98,6 +123,92 @@ class TaitoF3Model:
         if idx in _UNUSED_REGS:
             return 0
         return self.ctrl[idx]
+
+    # ── Text RAM read/write ─────────────────────────────────────────────────
+
+    def write_text_ram(self, word_idx: int, data: int, be: int = 0x3) -> None:
+        """Write 16-bit word to Text RAM at word index 0–4095."""
+        word_idx &= 0xFFF
+        data &= 0xFFFF
+        cur = self.text_ram[word_idx]
+        if be & 0x2: cur = (cur & 0x00FF) | (data & 0xFF00)
+        if be & 0x1: cur = (cur & 0xFF00) | (data & 0x00FF)
+        self.text_ram[word_idx] = cur
+
+    def read_text_ram(self, word_idx: int) -> int:
+        """Read 16-bit word from Text RAM at word index 0–4095."""
+        return self.text_ram[word_idx & 0xFFF]
+
+    # ── Character RAM read/write ─────────────────────────────────────────────
+
+    def write_char_ram(self, byte_addr: int, data: int, be: int = 0x3) -> None:
+        """Write 16-bit word to Character RAM at byte address (byte_addr must be even)."""
+        byte_addr &= 0x1FFE   # align to word boundary within 8KB
+        data &= 0xFFFF
+        if be & 0x2: self.char_ram[byte_addr]     = (data >> 8) & 0xFF
+        if be & 0x1: self.char_ram[byte_addr + 1] = data & 0xFF
+
+    def read_char_ram(self, byte_addr: int) -> int:
+        """Read 16-bit word from Character RAM at byte address."""
+        byte_addr &= 0x1FFE
+        return (self.char_ram[byte_addr] << 8) | self.char_ram[byte_addr + 1]
+
+    # ── Text layer render ───────────────────────────────────────────────────
+
+    def render_text_scanline(self, vpos: int) -> list:
+        """Return 320-entry list of text layer pixels for the scanline AFTER vpos.
+
+        Pre-fetch pattern (matches RTL): fills during HBLANK of vpos, renders vpos+1.
+        Each entry: {color[4:0], pen[3:0]} packed as 9-bit int (bits 8:4=color, 3:0=pen).
+        pen == 0 → transparent.
+
+        Text layer: 64×64 tile map, 8×8 tiles, 4bpp.
+        Text canvas is 512×512 pixels (64 tiles × 8 px = 512).
+        Screen shows 320 pixels wide → 40 tile columns.
+
+        Charlayout nibble decode (section1 §11.1):
+          Each tile row = 4 bytes at byte offset = char_code * 32 + fetch_py * 4.
+          X-offsets {20,16,28,24,4,0,12,8} → nibble mapping:
+            px0 → b2[7:4],  px1 → b2[3:0],
+            px2 → b3[7:4],  px3 → b3[3:0],
+            px4 → b0[7:4],  px5 → b0[3:0],
+            px6 → b1[7:4],  px7 → b1[3:0]
+        """
+        fetch_vpos = (vpos + 1) & 0x1FF   # 9-bit wrap (canvas is 512px tall)
+        fetch_py   = fetch_vpos & 0x7      # pixel row within tile (0..7)
+        fetch_row  = (fetch_vpos >> 3) & 0x3F   # tile row in 64-row map (0..63)
+
+        linebuf = [0] * 320
+        for col in range(40):    # 40 tiles × 8 px = 320 screen pixels
+            tile_word = self.text_ram[fetch_row * 64 + col]
+            color     = (tile_word >> 11) & 0x1F   # bits[15:11]
+            char_code = tile_word & 0xFF             # bits[7:0] (lower 8 bits, wraps mod 256)
+
+            # Charlayout byte offsets within tile
+            row_base = char_code * 32 + fetch_py * 4
+            b0 = self.char_ram[row_base + 0]
+            b1 = self.char_ram[row_base + 1]
+            b2 = self.char_ram[row_base + 2]
+            b3 = self.char_ram[row_base + 3]
+
+            # Decode 8 pixels from nibbles
+            pens = [
+                (b2 >> 4) & 0xF,   # px0: b2[7:4]
+                (b2     ) & 0xF,   # px1: b2[3:0]
+                (b3 >> 4) & 0xF,   # px2: b3[7:4]
+                (b3     ) & 0xF,   # px3: b3[3:0]
+                (b0 >> 4) & 0xF,   # px4: b0[7:4]
+                (b0     ) & 0xF,   # px5: b0[3:0]
+                (b1 >> 4) & 0xF,   # px6: b1[7:4]
+                (b1     ) & 0xF,   # px7: b1[3:0]
+            ]
+
+            for px, pen in enumerate(pens):
+                screen_x = col * 8 + px
+                if screen_x < 320:
+                    linebuf[screen_x] = (color << 4) | pen
+
+        return linebuf
 
     # ── Decoded control register properties ─────────────────────────────────
 
