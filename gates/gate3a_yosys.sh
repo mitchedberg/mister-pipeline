@@ -93,7 +93,9 @@ if [[ -n "$DUPLICATE_REGS" ]]; then
     FAIL=1
 fi
 
-if echo "$YOSYS_OUTPUT" | grep -qiE "latch inferred|inferring latch"; then
+# "No latch inferred" messages are informational (Yosys confirming no latch).
+# Only fail if a latch IS inferred (without the "No" prefix).
+if echo "$YOSYS_OUTPUT" | grep -iE "latch inferred|inferring latch" | grep -qviE "^[[:space:]]*No latch inferred"; then
     echo "[GATE3A] FAIL — Latch inference detected"
     FAIL=1
 fi

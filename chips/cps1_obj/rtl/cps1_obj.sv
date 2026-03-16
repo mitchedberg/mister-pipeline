@@ -509,18 +509,23 @@ always_ff @(posedge clk) begin
             ROM_WR0: begin
                 begin
                     // Write 8 pixels from rom_latch into back line buffer.
-                    // When flipx=0: half-0 is left half (pixels at tile_px+0..+7).
-                    //   ROM data bit layout: pixel[i] at bits[i*4+3:i*4], pixel 0 = leftmost.
-                    // When flipx=1: half-0 is right half (fetched first).
-                    //   Right half pixels go at tile_px+8..+15 (reversed within half).
+                    // pixel[i] = rom_latch[i*4 +: 4], pixel 0 = leftmost in half.
+                    //
+                    // When flipx=0: half-0 is left half (pixels 0-7 of tile).
+                    //   pixel i → screen x = tile_px + i.
+                    //
+                    // When flipx=1: half-0 is right half (pixels 8-15, fetched first).
+                    //   For full-tile horizontal reversal:
+                    //   pixel[8+i] (i=0..7) should appear at screen tile_px + (7-i).
+                    //   i.e. pixel[8] → tile_px+7, pixel[15] → tile_px+0.
                     logic [8:0] px;
                     logic [3:0] pd;
 
                     for (int i = 0; i < 8; i++) begin
                         pd = rom_latch[i*4 +: 4];
                         if (spr_flipx) begin
-                            // Right half fetched first; pixel i → x = tile_px + 15 - i
-                            px = (tile_px + 9'd15 - 9'(i)) & 9'h1FF;
+                            // Right half fetched first; pixel 8+i → x = tile_px + 7 - i
+                            px = (tile_px + 9'd7 - 9'(i)) & 9'h1FF;
                         end else begin
                             // Left half; pixel i → x = tile_px + i
                             px = (tile_px + 9'(i)) & 9'h1FF;
@@ -555,8 +560,9 @@ always_ff @(posedge clk) begin
                     for (int i = 0; i < 8; i++) begin
                         pd = rom_latch[i*4 +: 4];
                         if (spr_flipx) begin
-                            // Left half (second fetch); pixel i → x = tile_px + 7 - i
-                            px = (tile_px + 9'd7 - 9'(i)) & 9'h1FF;
+                            // Left half (second fetch, pixels 0-7); pixel i → x = tile_px + 15 - i
+                            // i.e. pixel[0] → tile_px+15, pixel[7] → tile_px+8
+                            px = (tile_px + 9'd15 - 9'(i)) & 9'h1FF;
                         end else begin
                             // Right half; pixel i → x = tile_px + 8 + i
                             px = (tile_px + 9'd8 + 9'(i)) & 9'h1FF;
