@@ -196,6 +196,21 @@ static void cpu_write(int addr, int data, int be = 3) {
     dut->cpu_cs = 0;
 }
 
+// ---------------------------------------------------------------------------
+// Clear word+5 (big-sprite field) for all 408 sprite RAM entries.
+// Called before single-tile sprite tests to prevent stale big-sprite anchors
+// (left by generate_vectors.py or earlier tests) from consuming test entries
+// as group tiles.
+//
+// Sprite RAM CPU base = 0x8000 (word address). Each sprite = 8 words.
+// word+5 address for sprite i = 0x8000 + i*8 + 5.
+// ---------------------------------------------------------------------------
+static void clear_all_spr_big() {
+    const int SPR_CPU_BASE = 0x8000;
+    for (int i = 0; i < 408; i++)
+        cpu_write(SPR_CPU_BASE + i * 8 + 5, 0x0000, 0x3);
+}
+
 int main(int argc, char** argv) {
     if (argc < 2) { fprintf(stderr, "Usage: %s <tier1_vectors.jsonl>\n", argv[0]); return 1; }
     init_gfx_rom();
@@ -952,6 +967,10 @@ int main(int argc, char** argv) {
         cpu_write(SCROLL_CPU + 0x200, 0, 0x3);
         cpu_write(SCROLL_CPU + 0x201, 0, 0x3);
 
+        // Clear big-sprite fields for all entries to prevent stale anchors
+        // from generate_vectors.py or previous tests consuming entry 0.
+        clear_all_spr_big();
+
         // Write sprite 0 (highest priority) to sprite RAM.
         // Sprite RAM chip address: 0x10000 → word address 0x8000.
         // Sprite 0 base word: 0x8000 + 0*8 = 0x8000.
@@ -1070,6 +1089,8 @@ int main(int argc, char** argv) {
         cpu_write(SCROLL_CPU + 0x200, 0, 0x3);
         cpu_write(SCROLL_CPU + 0x201, 0, 0x3);
 
+        clear_all_spr_big();
+
         // Sprite 0: tile=0x0055, color=0x0A, x=100, y=80, flipX=1, flipY=0
         const int SPR_BASE_CPU = 0x8000;
         const int SPR_TILE2  = 0x0055;
@@ -1170,6 +1191,8 @@ int main(int argc, char** argv) {
         cpu_write(SCROLL_CPU + 0x001, 0, 0x3);
         cpu_write(SCROLL_CPU + 0x200, 0, 0x3);
         cpu_write(SCROLL_CPU + 0x201, 0, 0x3);
+
+        clear_all_spr_big();
 
         // Sprite 0: tile=0x0055, color=0x0A, x=32, y=32, zoom=0x8080, big=0, no flip
         const int ZM1_BASE  = 0x8000;
@@ -1274,6 +1297,8 @@ int main(int argc, char** argv) {
         cpu_write(SCROLL_CPU + 0x200, 0, 0x3);
         cpu_write(SCROLL_CPU + 0x201, 0, 0x3);
 
+        clear_all_spr_big();
+
         // Sprite 0: tile=0x0033, color=0x15, x=100, y=80, zoom=0xC0C0, big=0, no flip
         const int ZM2_BASE  = 0x8000;
         const int ZM2_TILE  = 0x0033;
@@ -1355,6 +1380,172 @@ int main(int argc, char** argv) {
         }
         if (zm2_errors == 0)
             printf("  Sprite zoom 25%% test: %d/%d pixels OK\n", zm2_total, zm2_total);
+    }
+
+    // ── Big Sprite Test: 2×2 group (4 tiles), unzoomed (zoom=0x0000) ─────────
+    //
+    // Sprite RAM layout (all sprites, processed reverse 407→0):
+    //   Entry 3 (word index 24 = SPR_BASE+24): ANCHOR x=80,y=60,zoom=0,big=0x0101
+    //     tile_code=0x0010, color=0x05, flipX=0, flipY=0
+    //     big=0x0101 → x_num=1, y_num=1 → 2 columns × 2 rows = 4 tiles
+    //   Entry 2 (word index 16 = SPR_BASE+16): GROUP TILE tile_code=0x0011
+    //   Entry 1 (word index  8 = SPR_BASE+8):  GROUP TILE tile_code=0x0012
+    //   Entry 0 (word index  0 = SPR_BASE+0):  GROUP TILE tile_code=0x0013
+    //
+    // With zoom=0 (zoomx=zoomy=0): 0xFF - zoom = 255.
+    //   x_no=0: x_off = (0*255+15)/16 = 0;  x_off_next = (1*255+15)/16 = 16; zx=16
+    //   x_no=1: x_off = 16;                 x_off_next = (2*255+15)/16 = 32; zx=16
+    //   y_no=0: y_off = 0; y_off_next = 16; zy=16
+    //   y_no=1: y_off = 16; y_off_next = 32; zy=16
+    //
+    // Processing order (reverse walk: entry 3, 2, 1, 0):
+    //   Entry 3: anchor → tile(x_no=0, y_no=0): x=80+0=80,  y=60+0=60,  zx=zy=16, code=0x0010
+    //   Entry 2: group  → tile(x_no=0, y_no=1): x=80+0=80,  y=60+16=76, zx=zy=16, code=0x0011
+    //   Entry 1: group  → tile(x_no=1, y_no=0): x=80+16=96, y=60+0=60,  zx=zy=16, code=0x0012
+    //   Entry 0: group  → tile(x_no=1, y_no=1): x=80+16=96, y=60+16=76, zx=zy=16, code=0x0013
+    //
+    // Check 4 corner pixels for each tile (px in {0,15}, py in {0,15}).
+    {
+        reset();
+        const int CTRL_BASE = 0x0C000;
+
+        // All tilemap layers transparent
+        cpu_write(CTRL_BASE + 0, (7 << 12) | (7 << 8), 0x3);  // FG transparent
+        cpu_write(CTRL_BASE + 1, (7 << 12) | (7 << 8), 0x3);  // BG transparent
+        cpu_write(CTRL_BASE + 6, 0x0700, 0x2);                 // TX transparent
+        cpu_write(CTRL_BASE + 7, 0x0800, 0x2);                 // sprite_priority=1
+
+        const int SCROLL_CPU = 0x09C00;
+        cpu_write(SCROLL_CPU + 0x000, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x001, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x200, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x201, 0, 0x3);
+
+        // Sprite RAM: entries 0..3 at word addresses 0x8000..0x8003*8
+        const int SPR_BASE_CPU = 0x8000;
+
+        // Entry 3 = ANCHOR at word offset 24 (3*8 words)
+        // In sprite RAM: raw_idx=3 → base = 3*8 = 24 words → SPR_BASE_CPU + 24
+        const int BS_TILE0  = 0x0010;
+        const int BS_TILE1  = 0x0011;
+        const int BS_TILE2  = 0x0012;
+        const int BS_TILE3  = 0x0013;
+        const int BS_COLOR  = 0x05;
+        const int BS_ATTR   = BS_COLOR;  // no flip
+        const int BS_X      = 80;
+        const int BS_Y      = 60;
+        const int BS_ZOOM   = 0x0000;   // unzoomed
+        const int BS_BIG    = 0x0101;   // x_num=1, y_num=1
+
+        // Entry 3 (anchor): words 24..31
+        cpu_write(SPR_BASE_CPU + 24, BS_TILE0, 0x3);  // word+0
+        cpu_write(SPR_BASE_CPU + 25, BS_ATTR,  0x3);  // word+1
+        cpu_write(SPR_BASE_CPU + 26, BS_X,     0x3);  // word+2
+        cpu_write(SPR_BASE_CPU + 27, BS_Y,     0x3);  // word+3
+        cpu_write(SPR_BASE_CPU + 28, BS_ZOOM,  0x3);  // word+4
+        cpu_write(SPR_BASE_CPU + 29, BS_BIG,   0x3);  // word+5
+
+        // Entry 2 (group tile 1): words 16..23
+        cpu_write(SPR_BASE_CPU + 16, BS_TILE1, 0x3);
+        cpu_write(SPR_BASE_CPU + 17, BS_ATTR,  0x3);
+        cpu_write(SPR_BASE_CPU + 18, 0,        0x3);
+        cpu_write(SPR_BASE_CPU + 19, 0,        0x3);
+        cpu_write(SPR_BASE_CPU + 20, BS_ZOOM,  0x3);
+        cpu_write(SPR_BASE_CPU + 21, 0x0000,   0x3);  // big=0 (group tile)
+
+        // Entry 1 (group tile 2): words 8..15
+        cpu_write(SPR_BASE_CPU +  8, BS_TILE2, 0x3);
+        cpu_write(SPR_BASE_CPU +  9, BS_ATTR,  0x3);
+        cpu_write(SPR_BASE_CPU + 10, 0,        0x3);
+        cpu_write(SPR_BASE_CPU + 11, 0,        0x3);
+        cpu_write(SPR_BASE_CPU + 12, BS_ZOOM,  0x3);
+        cpu_write(SPR_BASE_CPU + 13, 0x0000,   0x3);
+
+        // Entry 0 (group tile 3): words 0..7
+        cpu_write(SPR_BASE_CPU +  0, BS_TILE3, 0x3);
+        cpu_write(SPR_BASE_CPU +  1, BS_ATTR,  0x3);
+        cpu_write(SPR_BASE_CPU +  2, 0,        0x3);
+        cpu_write(SPR_BASE_CPU +  3, 0,        0x3);
+        cpu_write(SPR_BASE_CPU +  4, BS_ZOOM,  0x3);
+        cpu_write(SPR_BASE_CPU +  5, 0x0000,   0x3);
+
+        tick(); tick();
+
+        // Two VBLANKs (same page-flip pattern as other sprite tests)
+        for (int vb = 0; vb < 2; vb++) {
+            dut->vblank_n = 0;
+            dut->hblank_n = 1;
+            dut->vpos     = 0;
+            dut->hpos     = 0;
+            for (int i = 0; i < 300000; i++) tick();
+            dut->vblank_n = 1;
+            tick(); tick();
+        }
+
+        // Helper: compute expected FB pixel for a 16×16 unzoomed tile (full size)
+        // at output pixel (px, py) with no flip.
+        auto bs_expected = [&](int tile_code, int px, int py) -> uint8_t {
+            // Unzoomed: src_x=px, src_y=py directly (zx=zy=16 → src=out*16/16=out)
+            int src_x    = px;
+            int src_y    = py;
+            int tile_row = (src_y >> 3) & 1;
+            int char_row = src_y & 7;
+            int half     = (src_x >> 3) & 1;
+            int lx       = src_x & 7;
+            int char_block = tile_row * 2 + half;  // no flip
+            int char_base  = tile_code * 128 + char_block * 32 + char_row * 2;
+            uint8_t p0 = gfx_rom[char_base + 0];
+            uint8_t p1 = gfx_rom[char_base + 1];
+            uint8_t p2 = gfx_rom[char_base + 16];
+            uint8_t p3 = gfx_rom[char_base + 17];
+            int bit    = 7 - lx;  // flipX=0
+            int pix_idx = (((p3 >> bit) & 1) << 3) |
+                          (((p2 >> bit) & 1) << 2) |
+                          (((p1 >> bit) & 1) << 1) |
+                          (((p0 >> bit) & 1));
+            if (pix_idx == 0) return 0;
+            return (uint8_t)((BS_COLOR << 2) | (pix_idx & 3));
+        };
+
+        // Expected tile positions (unzoomed, 16×16):
+        //   Tile0 (code=0x0010): screen (80, 60)
+        //   Tile1 (code=0x0011): screen (80, 76)   [y_no=1]
+        //   Tile2 (code=0x0012): screen (96, 60)   [x_no=1, y_no=0]
+        //   Tile3 (code=0x0013): screen (96, 76)   [x_no=1, y_no=1]
+        struct { int tile_code; int base_x; int base_y; const char* name; } tiles[4] = {
+            { BS_TILE0, 80, 60, "tile0(0,0)" },
+            { BS_TILE1, 80, 76, "tile1(0,1)" },
+            { BS_TILE2, 96, 60, "tile2(1,0)" },
+            { BS_TILE3, 96, 76, "tile3(1,1)" }
+        };
+
+        int bs_errors = 0;
+        // Sample 4 corner pixels per tile: (px,py) ∈ {0,15} × {0,15}
+        for (auto& t : tiles) {
+            for (int py : {0, 15}) {
+                for (int px : {0, 15}) {
+                    int screen_x = t.base_x + px;
+                    int screen_y = t.base_y + py;
+                    uint8_t exp  = bs_expected(t.tile_code, px, py);
+
+                    dut->vpos = (uint8_t)screen_y;
+                    dut->hpos = (uint16_t)screen_x;
+                    dut->clk  = 0; dut->eval();
+                    uint8_t got = (uint8_t)(dut->pixel_out & 0xFF);
+
+                    if (got == exp) {
+                        ++pass;
+                    } else {
+                        ++fail; ++bs_errors;
+                        printf("FAIL [bigsprite %s px=%d py=%d hpos=%d vpos=%d] "
+                               "got=0x%02X exp=0x%02X\n",
+                               t.name, px, py, screen_x, screen_y, got, exp);
+                    }
+                }
+            }
+        }
+        if (bs_errors == 0)
+            printf("  Big sprite 2x2 test: 16/16 corner pixels OK\n");
     }
 
     printf("\n%s: %d/%d tests passed\n", (fail==0)?"PASS":"FAIL", pass, pass+fail);

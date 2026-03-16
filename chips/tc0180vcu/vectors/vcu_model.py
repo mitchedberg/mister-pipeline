@@ -339,109 +339,157 @@ class TC0180VCU:
 
     # ── Sprite framebuffer rendering (step 6) ───────────────────────────────
 
+    def _render_tile(self, tile_code: int, color: int, flipx: bool, flipy: bool,
+                     tile_x: int, tile_y: int, zx: int, zy: int,
+                     gfx_rom: bytes) -> None:
+        """Render a single 16×16 tile (with zoom) into the active framebuffer page.
+
+        tile_x, tile_y: top-left screen position (signed; wrapped modulo 512/256).
+        zx, zy:         render dimensions in pixels (1..16); must be > 0.
+        Nearest-neighbor zoom: src = out * 16 // zx.
+        fb_pixel = color<<2 | (pixel_idx & 3); transparent if pixel_idx==0.
+        """
+        tile_base = tile_code * 128
+
+        for out_sy in range(zy):
+            src_y    = out_sy * 16 // zy
+            py_eff   = (15 - src_y) if flipy else src_y
+            char_row = py_eff & 0x7
+            tile_row = (py_eff >> 3) & 0x1
+
+            row_bytes = []
+            for half in range(2):
+                cb_left  = tile_row * 2 + 0
+                cb_right = tile_row * 2 + 1
+                cb = (cb_right if half == 0 else cb_left) if flipx else \
+                     (cb_left  if half == 0 else cb_right)
+                char_base = tile_base + cb * 32 + char_row * 2
+                b0 = gfx_rom[char_base + 0]
+                b1 = gfx_rom[char_base + 1]
+                b2 = gfx_rom[char_base + 16]
+                b3 = gfx_rom[char_base + 17]
+                row_bytes.append((b0, b1, b2, b3))
+
+            screen_y = (tile_y + out_sy) & 0xFF
+
+            for out_sx in range(zx):
+                src_x   = out_sx * 16 // zx
+                half    = (src_x >> 3) & 1
+                local_x = src_x & 7
+                bit = local_x if flipx else (7 - local_x)
+                b0, b1, b2, b3 = row_bytes[half]
+                pidx = (((b3 >> bit) & 1) << 3 |
+                        ((b2 >> bit) & 1) << 2 |
+                        ((b1 >> bit) & 1) << 1 |
+                        ((b0 >> bit) & 1))
+                if pidx == 0:
+                    continue
+                fb_pixel = (color << 2) | (pidx & 3)
+                screen_x = (tile_x + out_sx) & 0x1FF
+                self.fb[self.fb_page][screen_y * 512 + screen_x] = fb_pixel
+
     def render_sprites(self, gfx_rom: bytes) -> None:
-        """Render all non-big sprites into the active framebuffer page using the
-        unified zoom path (handles both zoomed and unzoomed sprites).
+        """Render all sprites (including big sprite groups) into the active framebuffer
+        page, implementing the MAME draw_sprites algorithm (section2_behavior.md §2.1).
 
-        Zoom encoding:
-          zx = (0x100 - zoomx) // 16   (tile render width,  0..16 pixels)
-          zy = (0x100 - zoomy) // 16   (tile render height, 0..16 pixels)
-          When zx==0 or zy==0: sprite invisible (skip).
+        Big sprite state machine (MAME algorithm):
+          Walk sprite RAM from index 407 down to 0. A sprite with word+5 != 0 and
+          not currently in a big sprite group is the ANCHOR: latches x/y/zoom/counts,
+          starts group with x_no=0, y_no=0. Subsequent entries are group tiles.
 
-        Nearest-neighbor zoom: for output pixel (sx, sy):
-          src_x = sx * 16 // zx
-          src_y = sy * 16 // zy
+          For group tile (x_no, y_no):
+            zoomx, zoomy = zoomxlatch, zoomylatch  (from anchor)
+            x = xlatch + (x_no * (0xFF - zoomx) + 15) // 16
+            y = ylatch + (y_no * (0xFF - zoomy) + 15) // 16
+            zx = x_of(x_no+1) - x
+            zy = y_of(y_no+1) - y
+          y_no advances first, then x_no (y 0→y_num inside each x column).
+          Group ends when x_no > x_num.
 
-        Mirrors tc0180vcu_sprite.sv FSM exactly:
-          - If VIDEO_CTRL[0]=0: erase active page to 0 first.
-          - Walk sprite RAM from index 407 down to 0 (reverse order → sprite 0
-            is drawn last and has highest priority).
-          - Skip big sprites (big != 0).
-          - Skip invisible sprites (zx==0 or zy==0).
-          - For each qualifying sprite, render zx×zy pixels using nearest-neighbor.
-              fb_pixel = color<<2 | (pixel_idx & 3)   (lower 2 bits of 4-bit idx)
-              pixel_idx==0 → transparent (skip write).
-          - After rendering, flip fb_page (like the hardware page-flip at VBLANK).
+        Single-tile sprites (word+5 == 0, not in big sprite group):
+          zx = (0x100 - zoomx) // 16
+          zy = (0x100 - zoomy) // 16
+          Skip if zx==0 or zy==0.
 
         Framebuffer layout: self.fb[page][y*512 + x] (flat 512×256 array).
         gfx_rom: bytes-like, at least 8MB (0x800000 bytes).
         """
         no_erase = bool(self.video_ctrl & 0x01)
 
-        # Erase active page if requested
         if not no_erase:
             self.fb[self.fb_page] = [0] * (512 * 256)
 
-        # Walk sprites in reverse RAM order (407 → 0); sprite 0 drawn last = highest priority
+        # Big sprite group state
+        in_big  = False
+        x_num   = 0
+        y_num   = 0
+        x_no    = 0
+        y_no    = 0
+        xlatch  = 0
+        ylatch  = 0
+        zoomxl  = 0
+        zoomyl  = 0
+
+        def bs_pos(xno, zoomx):
+            """Compute big-sprite tile x offset for column xno."""
+            return (xno * (0xFF - zoomx) + 15) // 16
+
+        # Walk sprites 407 → 0 (lower index = higher priority = drawn last)
         for raw_idx in range(407, -1, -1):
             spr = self.sprite(raw_idx)
-            # Skip big sprites (step 7)
-            if spr['is_big']:
-                continue
 
-            zoomx = spr['zoomx']
-            zoomy = spr['zoomy']
-            zx = (0x100 - zoomx) // 16
-            zy = (0x100 - zoomy) // 16
+            # Recover the raw big word (word+5) for this entry
+            big_word = self.sprite_ram[raw_idx * 8 + 5]
 
-            # Skip invisible sprites
-            if zx == 0 or zy == 0:
-                continue
+            if big_word != 0 and not in_big:
+                # ── Anchor: start new big sprite group ──────────────────────
+                x_num  = (big_word >> 8) & 0xFF
+                y_num  = (big_word >> 0) & 0xFF
+                xlatch = spr['x']
+                ylatch = spr['y']
+                zoomxl = spr['zoomx']
+                zoomyl = spr['zoomy']
+                x_no   = 0
+                y_no   = 0
+                in_big = True
 
-            tile_code = spr['code']
-            color     = spr['color']
-            flipx     = spr['flipx']
-            flipy     = spr['flipy']
-            spr_x     = spr['x']  # signed, already sign-extended by sprite()
-            spr_y     = spr['y']
+            if in_big:
+                # ── Big sprite tile (anchor or subsequent entry) ─────────────
+                # Override position and zoom from anchor
+                x_off      = bs_pos(x_no,     zoomxl)
+                x_off_next = bs_pos(x_no + 1, zoomxl)
+                y_off      = bs_pos(y_no,     zoomyl)
+                y_off_next = bs_pos(y_no + 1, zoomyl)
 
-            tile_base = tile_code * 128  # byte offset in GFX ROM
+                tile_x = xlatch + x_off
+                tile_y = ylatch + y_off
+                zx = x_off_next - x_off
+                zy = y_off_next - y_off
 
-            for out_sy in range(zy):
-                # Map output row → source row (nearest-neighbor)
-                src_y    = out_sy * 16 // zy
-                py_eff   = (15 - src_y) if flipy else src_y
-                char_row = py_eff & 0x7
-                tile_row = (py_eff >> 3) & 0x1
+                # Advance counters (y first, then x)
+                y_no += 1
+                if y_no > y_num:
+                    y_no = 0
+                    x_no += 1
+                    if x_no > x_num:
+                        in_big = False
 
-                # Pre-fetch all 8 GFX bytes for this source row (both halves)
-                row_bytes = []
-                for half in range(2):
-                    cb_left  = tile_row * 2 + 0
-                    cb_right = tile_row * 2 + 1
-                    if flipx:
-                        cb = cb_right if half == 0 else cb_left
-                    else:
-                        cb = cb_left  if half == 0 else cb_right
+                if zx > 0 and zy > 0:
+                    self._render_tile(spr['code'], spr['color'],
+                                      spr['flipx'], spr['flipy'],
+                                      tile_x, tile_y, zx, zy, gfx_rom)
 
-                    char_base = tile_base + cb * 32 + char_row * 2
-                    b0 = gfx_rom[char_base + 0]
-                    b1 = gfx_rom[char_base + 1]
-                    b2 = gfx_rom[char_base + 16]
-                    b3 = gfx_rom[char_base + 17]
-                    row_bytes.append((b0, b1, b2, b3))
-
-                screen_y = (spr_y + out_sy) & 0xFF  # 8-bit, mod 256
-
-                for out_sx in range(zx):
-                    # Map output col → source col (nearest-neighbor)
-                    src_x   = out_sx * 16 // zx
-                    half    = (src_x >> 3) & 1
-                    local_x = src_x & 7
-                    bit = local_x if flipx else (7 - local_x)
-
-                    b0, b1, b2, b3 = row_bytes[half]
-                    pidx = (((b3 >> bit) & 1) << 3 |
-                            ((b2 >> bit) & 1) << 2 |
-                            ((b1 >> bit) & 1) << 1 |
-                            ((b0 >> bit) & 1))
-                    if pidx == 0:
-                        continue  # transparent
-
-                    fb_pixel = (color << 2) | (pidx & 3)
-
-                    screen_x = (spr_x + out_sx) & 0x1FF  # 9-bit, mod 512
-                    self.fb[self.fb_page][screen_y * 512 + screen_x] = fb_pixel
+            else:
+                # ── Single-tile sprite ───────────────────────────────────────
+                zoomx = spr['zoomx']
+                zoomy = spr['zoomy']
+                zx = (0x100 - zoomx) // 16
+                zy = (0x100 - zoomy) // 16
+                if zx == 0 or zy == 0:
+                    continue
+                self._render_tile(spr['code'], spr['color'],
+                                  spr['flipx'], spr['flipy'],
+                                  spr['x'], spr['y'], zx, zy, gfx_rom)
 
         # Page flip (mirrors RTL vblank_fall page toggle)
         self.fb_page ^= 1
