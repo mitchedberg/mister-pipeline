@@ -1,10 +1,14 @@
+/* verilator lint_off DECLFILENAME */
 module TC0140SYT #(
+/* verilator lint_on DECLFILENAME */
     parameter logic [26:0] ADPCMA_ROM_BASE = 27'h0,
     parameter logic [26:0] ADPCMB_ROM_BASE = 27'h0
 ) (
     input             clk,
+    /* verilator lint_off UNUSEDSIGNAL */
     input             ce_12m,
     input             ce_4m,
+    /* verilator lint_on UNUSEDSIGNAL */
 
     input             RESn,
 
@@ -23,7 +27,9 @@ module TC0140SYT #(
     input             RDn,
     input             WRn,
 
+    /* verilator lint_off UNUSEDSIGNAL */
     input      [15:0] A,
+    /* verilator lint_on UNUSEDSIGNAL */
     input       [3:0] Din,
     output reg  [3:0] Dout,
 
@@ -43,12 +49,14 @@ module TC0140SYT #(
     output      [7:0] YAD,
     output      [7:0] YBD,
 
-    // Peripheral?
+    // Peripheral? (unimplemented stub outputs)
+    /* verilator lint_off UNDRIVEN */
     output            CSAn,
     output            CSBn,
 
     output      [2:0] IOA,
     output            IOC,
+    /* verilator lint_on UNDRIVEN */
 
     // ROM interface
     output reg [26:0] sdr_address,
@@ -61,7 +69,9 @@ reg [2:0] rom_bank;
 reg [3:0] slave_idx, master_idx;
 reg [3:0] status_reg;
 reg       reset_reg;
+/* verilator lint_off UNUSEDSIGNAL */
 reg nmi_enabled;
+/* verilator lint_on UNUSEDSIGNAL */
 reg [15:0] slave_data;
 reg [15:0] master_data;
 
@@ -228,10 +238,14 @@ end
 
 reg [15:0] cha_data, chb_data;
 reg [23:0] cha_addr, chb_addr;
+/* verilator lint_off PROCASSINIT */
 reg cha_request_pending = 0;
 reg chb_request_pending = 0;
+/* verilator lint_on PROCASSINIT */
 reg cha_oe_n, chb_oe_n;
+/* verilator lint_off PROCASSINIT */
 reg [1:0] request_active = 0;
+/* verilator lint_on PROCASSINIT */
 
 wire cha_oe_edge = ~YAOEn & cha_oe_n;
 wire chb_oe_edge = ~YBOEn & chb_oe_n;

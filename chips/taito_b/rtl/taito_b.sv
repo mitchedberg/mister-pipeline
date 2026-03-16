@@ -24,6 +24,9 @@
 // =============================================================================
 `default_nettype none
 
+// reset_n is used async in taito_b always_ff blocks and sync inside TC0140SYT (RESn).
+// This is correct for the hardware; suppress the mixed-sensitivity Verilator warning.
+/* verilator lint_off SYNCASYNCNET */
 module taito_b #(
     // ── Address decode parameters (WORD addresses = byte_addr >> 1) ────────
     // nastar (rastsag2) defaults:
@@ -358,7 +361,9 @@ TC0220IOC u_ioc (
 
     .RES_CLK_IN   (1'b0),
     .RES_INn      (1'b1),
+    /* verilator lint_off PINCONNECTEMPTY */
     .RES_OUTn     (),               // unconnected — watchdog not implemented
+    /* verilator lint_on PINCONNECTEMPTY */
 
     // Address: A[3:0] = cpu_addr[4:1] (4-bit register select)
     .A            (cpu_addr[4:1]),
@@ -373,10 +378,12 @@ TC0220IOC u_ioc (
     .Dout         (ioc_dout),
 
     // Physical outputs — not used in MiSTer (no solenoids)
+    /* verilator lint_off PINCONNECTEMPTY */
     .COIN_LOCK_A  (),
     .COIN_LOCK_B  (),
     .COINMETER_A  (),
     .COINMETER_B  (),
+    /* verilator lint_on PINCONNECTEMPTY */
 
     // Input buses
     // INB: {2'b11, TILT(tied hi), SERVICE, COIN2, COIN1, START2, START1}
@@ -460,6 +467,7 @@ TC0140SYT #(
     .YBOEn   (1'b1),                // tie inactive — no ADPCM-B fetches
     .YAA     (24'b0),
     .YBA     (24'b0),
+    /* verilator lint_off PINCONNECTEMPTY */
     .YAD     (),                    // ADPCM-A data to YM2610 — leave unconnected
     .YBD     (),                    // ADPCM-B data to YM2610 — leave unconnected
 
@@ -468,6 +476,7 @@ TC0140SYT #(
     .CSBn    (),
     .IOA     (),
     .IOC     (),
+    /* verilator lint_on PINCONNECTEMPTY */
 
     // SDRAM for ADPCM ROM
     .sdr_address (sdr_addr),
@@ -646,7 +655,7 @@ assign vsync_n  = vsync_n_in;
 // =============================================================================
 /* verilator lint_off UNUSED */
 logic _unused;
-assign _unused = ^{vcu_pixel_valid};
+assign _unused = ^{vcu_pixel_valid, z80_din[7:4], pal_ram_addr[13]};
 /* verilator lint_on UNUSED */
 
 endmodule
