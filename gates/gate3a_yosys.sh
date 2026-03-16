@@ -79,8 +79,17 @@ if echo "$YOSYS_OUTPUT" | grep -qiE "^ERROR:"; then
     FAIL=1
 fi
 
-if echo "$YOSYS_OUTPUT" | grep -qiE "Warning.*multidriver|multiple drivers|multi.?driver"; then
-    echo "[GATE3A] FAIL — Multi-driver signal detected"
+if echo "$YOSYS_OUTPUT" | grep -qiE "Warning.*multiple drivers|Warning.*multi-driver|ERROR.*multiple drivers"; then
+    echo "[GATE3A] FAIL — Multi-driver signal detected (Yosys warning)"
+    FAIL=1
+fi
+
+# Detect multiple always blocks creating registers for the same signal
+# Pattern: "Creating register for signal `\module.\signame'" appearing more than once for same signame
+DUPLICATE_REGS="$(echo "$YOSYS_OUTPUT" | grep -oE "Creating register for signal [^ ]+" | sort | uniq -d || true)"
+if [[ -n "$DUPLICATE_REGS" ]]; then
+    echo "[GATE3A] FAIL — Multi-driver detected: same signal registered by multiple always blocks:"
+    echo "$DUPLICATE_REGS" | sed 's/^/  /'
     FAIL=1
 fi
 
