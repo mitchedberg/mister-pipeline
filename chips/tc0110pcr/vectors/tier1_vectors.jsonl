@@ -1,0 +1,282 @@
+{"addr": 0, "data": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 0, "note": "zero entry"}
+{"addr": 0, "data": 32767, "exp_r": 31, "exp_g": 31, "exp_b": 31, "exp_cpu_dout": 32767, "note": "all channels max (addr 0)"}
+{"addr": 1, "data": 31, "exp_r": 31, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 31, "note": "R=31 only (addr 1)"}
+{"addr": 2, "data": 992, "exp_r": 0, "exp_g": 31, "exp_b": 0, "exp_cpu_dout": 992, "note": "G=31 only (addr 2)"}
+{"addr": 3, "data": 31744, "exp_r": 0, "exp_g": 0, "exp_b": 31, "exp_cpu_dout": 31744, "note": "B=31 only (addr 3)"}
+{"addr": 4, "data": 1, "exp_r": 1, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 1, "note": "R=1 only"}
+{"addr": 5, "data": 32, "exp_r": 0, "exp_g": 1, "exp_b": 0, "exp_cpu_dout": 32, "note": "G=1 only"}
+{"addr": 6, "data": 1024, "exp_r": 0, "exp_g": 0, "exp_b": 1, "exp_cpu_dout": 1024, "note": "B=1 only"}
+{"addr": 7, "data": 16, "exp_r": 16, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 16, "note": "R=16 only"}
+{"addr": 8, "data": 512, "exp_r": 0, "exp_g": 16, "exp_b": 0, "exp_cpu_dout": 512, "note": "G=16 only"}
+{"addr": 9, "data": 16384, "exp_r": 0, "exp_g": 0, "exp_b": 16, "exp_cpu_dout": 16384, "note": "B=16 only"}
+{"addr": 10, "data": 32768, "exp_r": 0, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 32768, "note": "bit15 set only \u2014 all DAC outputs zero"}
+{"addr": 11, "data": 32799, "exp_r": 31, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 32799, "note": "bit15 set + R=31"}
+{"addr": 12, "data": 65535, "exp_r": 31, "exp_g": 31, "exp_b": 31, "exp_cpu_dout": 65535, "note": "all bits set \u2014 R=31 G=31 B=31 (bit15 ignored)"}
+{"addr": 16, "data": 21845, "exp_r": 21, "exp_g": 10, "exp_b": 21, "exp_cpu_dout": 21845, "note": "alternating bits 0xAAAA\u2192R/G/B split check"}
+{"addr": 17, "data": 10922, "exp_r": 10, "exp_g": 21, "exp_b": 10, "exp_cpu_dout": 10922, "note": "alternating bits"}
+{"addr": 18, "data": 5461, "exp_r": 21, "exp_g": 10, "exp_b": 5, "exp_cpu_dout": 5461, "note": "pattern 0x1555"}
+{"addr": 19, "data": 25368, "exp_r": 24, "exp_g": 24, "exp_b": 24, "exp_cpu_dout": 25368, "note": "pattern R=24 G=24 B=24"}
+{"addr": 0, "data": 1, "exp_r": 1, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 1, "note": "addr 0x000 minimum"}
+{"addr": 4095, "data": 32767, "exp_r": 31, "exp_g": 31, "exp_b": 31, "exp_cpu_dout": 32767, "note": "addr 0xFFF maximum"}
+{"addr": 2048, "data": 16912, "exp_r": 16, "exp_g": 16, "exp_b": 16, "exp_cpu_dout": 16912, "note": "addr 0x800 midpoint"}
+{"addr": 2047, "data": 15855, "exp_r": 15, "exp_g": 15, "exp_b": 15, "exp_cpu_dout": 15855, "note": "addr 0x7FF"}
+{"addr": 256, "data": 11361, "exp_r": 1, "exp_g": 3, "exp_b": 11, "exp_cpu_dout": 11361, "note": "sparse addr 0x100"}
+{"addr": 257, "data": 1069, "exp_r": 13, "exp_g": 1, "exp_b": 1, "exp_cpu_dout": 1069, "note": "sparse addr 0x101"}
+{"addr": 511, "data": 7936, "exp_r": 0, "exp_g": 24, "exp_b": 7, "exp_cpu_dout": 7936, "note": "sparse addr 0x1FF"}
+{"addr": 512, "data": 28092, "exp_r": 28, "exp_g": 13, "exp_b": 27, "exp_cpu_dout": 28092, "note": "sparse addr 0x200"}
+{"addr": 1023, "data": 12495, "exp_r": 15, "exp_g": 6, "exp_b": 12, "exp_cpu_dout": 12495, "note": "sparse addr 0x3FF"}
+{"addr": 1024, "data": 19472, "exp_r": 16, "exp_g": 0, "exp_b": 19, "exp_cpu_dout": 19472, "note": "sparse addr 0x400"}
+{"addr": 2046, "data": 30826, "exp_r": 10, "exp_g": 3, "exp_b": 30, "exp_cpu_dout": 30826, "note": "sparse addr 0x7FE"}
+{"addr": 2047, "data": 26644, "exp_r": 20, "exp_g": 0, "exp_b": 26, "exp_cpu_dout": 26644, "note": "sparse addr 0x7FF"}
+{"addr": 1280, "data": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 0, "note": "sequential block 0x500"}
+{"addr": 1281, "data": 1057, "exp_r": 1, "exp_g": 1, "exp_b": 1, "exp_cpu_dout": 1057, "note": "sequential block 0x501"}
+{"addr": 1282, "data": 2114, "exp_r": 2, "exp_g": 2, "exp_b": 2, "exp_cpu_dout": 2114, "note": "sequential block 0x502"}
+{"addr": 1283, "data": 3171, "exp_r": 3, "exp_g": 3, "exp_b": 3, "exp_cpu_dout": 3171, "note": "sequential block 0x503"}
+{"addr": 1284, "data": 4228, "exp_r": 4, "exp_g": 4, "exp_b": 4, "exp_cpu_dout": 4228, "note": "sequential block 0x504"}
+{"addr": 1285, "data": 5285, "exp_r": 5, "exp_g": 5, "exp_b": 5, "exp_cpu_dout": 5285, "note": "sequential block 0x505"}
+{"addr": 1286, "data": 6342, "exp_r": 6, "exp_g": 6, "exp_b": 6, "exp_cpu_dout": 6342, "note": "sequential block 0x506"}
+{"addr": 1287, "data": 7399, "exp_r": 7, "exp_g": 7, "exp_b": 7, "exp_cpu_dout": 7399, "note": "sequential block 0x507"}
+{"addr": 1288, "data": 8456, "exp_r": 8, "exp_g": 8, "exp_b": 8, "exp_cpu_dout": 8456, "note": "sequential block 0x508"}
+{"addr": 1289, "data": 9513, "exp_r": 9, "exp_g": 9, "exp_b": 9, "exp_cpu_dout": 9513, "note": "sequential block 0x509"}
+{"addr": 1290, "data": 10570, "exp_r": 10, "exp_g": 10, "exp_b": 10, "exp_cpu_dout": 10570, "note": "sequential block 0x50A"}
+{"addr": 1291, "data": 11627, "exp_r": 11, "exp_g": 11, "exp_b": 11, "exp_cpu_dout": 11627, "note": "sequential block 0x50B"}
+{"addr": 1292, "data": 12684, "exp_r": 12, "exp_g": 12, "exp_b": 12, "exp_cpu_dout": 12684, "note": "sequential block 0x50C"}
+{"addr": 1293, "data": 13741, "exp_r": 13, "exp_g": 13, "exp_b": 13, "exp_cpu_dout": 13741, "note": "sequential block 0x50D"}
+{"addr": 1294, "data": 14798, "exp_r": 14, "exp_g": 14, "exp_b": 14, "exp_cpu_dout": 14798, "note": "sequential block 0x50E"}
+{"addr": 1295, "data": 15855, "exp_r": 15, "exp_g": 15, "exp_b": 15, "exp_cpu_dout": 15855, "note": "sequential block 0x50F"}
+{"addr": 1296, "data": 16912, "exp_r": 16, "exp_g": 16, "exp_b": 16, "exp_cpu_dout": 16912, "note": "sequential block 0x510"}
+{"addr": 1297, "data": 17969, "exp_r": 17, "exp_g": 17, "exp_b": 17, "exp_cpu_dout": 17969, "note": "sequential block 0x511"}
+{"addr": 1298, "data": 19026, "exp_r": 18, "exp_g": 18, "exp_b": 18, "exp_cpu_dout": 19026, "note": "sequential block 0x512"}
+{"addr": 1299, "data": 20083, "exp_r": 19, "exp_g": 19, "exp_b": 19, "exp_cpu_dout": 20083, "note": "sequential block 0x513"}
+{"addr": 1300, "data": 21140, "exp_r": 20, "exp_g": 20, "exp_b": 20, "exp_cpu_dout": 21140, "note": "sequential block 0x514"}
+{"addr": 1301, "data": 22197, "exp_r": 21, "exp_g": 21, "exp_b": 21, "exp_cpu_dout": 22197, "note": "sequential block 0x515"}
+{"addr": 1302, "data": 23254, "exp_r": 22, "exp_g": 22, "exp_b": 22, "exp_cpu_dout": 23254, "note": "sequential block 0x516"}
+{"addr": 1303, "data": 24311, "exp_r": 23, "exp_g": 23, "exp_b": 23, "exp_cpu_dout": 24311, "note": "sequential block 0x517"}
+{"addr": 1304, "data": 25368, "exp_r": 24, "exp_g": 24, "exp_b": 24, "exp_cpu_dout": 25368, "note": "sequential block 0x518"}
+{"addr": 1305, "data": 26425, "exp_r": 25, "exp_g": 25, "exp_b": 25, "exp_cpu_dout": 26425, "note": "sequential block 0x519"}
+{"addr": 1306, "data": 27482, "exp_r": 26, "exp_g": 26, "exp_b": 26, "exp_cpu_dout": 27482, "note": "sequential block 0x51A"}
+{"addr": 1307, "data": 28539, "exp_r": 27, "exp_g": 27, "exp_b": 27, "exp_cpu_dout": 28539, "note": "sequential block 0x51B"}
+{"addr": 1308, "data": 29596, "exp_r": 28, "exp_g": 28, "exp_b": 28, "exp_cpu_dout": 29596, "note": "sequential block 0x51C"}
+{"addr": 1309, "data": 30653, "exp_r": 29, "exp_g": 29, "exp_b": 29, "exp_cpu_dout": 30653, "note": "sequential block 0x51D"}
+{"addr": 1310, "data": 31710, "exp_r": 30, "exp_g": 30, "exp_b": 30, "exp_cpu_dout": 31710, "note": "sequential block 0x51E"}
+{"addr": 1311, "data": 32767, "exp_r": 31, "exp_g": 31, "exp_b": 31, "exp_cpu_dout": 32767, "note": "sequential block 0x51F"}
+{"addr": 3472, "data": 43244, "exp_r": 12, "exp_g": 7, "exp_b": 10, "exp_cpu_dout": 43244, "note": "random addr=0xD90"}
+{"addr": 1324, "data": 55457, "exp_r": 1, "exp_g": 5, "exp_b": 22, "exp_cpu_dout": 55457, "note": "random addr=0x52C"}
+{"addr": 3557, "data": 40048, "exp_r": 16, "exp_g": 3, "exp_b": 7, "exp_cpu_dout": 40048, "note": "random addr=0xDE5"}
+{"addr": 809, "data": 45343, "exp_r": 31, "exp_g": 8, "exp_b": 12, "exp_cpu_dout": 45343, "note": "random addr=0x329"}
+{"addr": 937, "data": 44989, "exp_r": 29, "exp_g": 29, "exp_b": 11, "exp_cpu_dout": 44989, "note": "random addr=0x3A9"}
+{"addr": 1254, "data": 32542, "exp_r": 30, "exp_g": 24, "exp_b": 31, "exp_cpu_dout": 32542, "note": "random addr=0x4E6"}
+{"addr": 3518, "data": 9144, "exp_r": 24, "exp_g": 29, "exp_b": 8, "exp_cpu_dout": 9144, "note": "random addr=0xDBE"}
+{"addr": 1088, "data": 26158, "exp_r": 14, "exp_g": 17, "exp_b": 25, "exp_cpu_dout": 26158, "note": "random addr=0x440"}
+{"addr": 3086, "data": 62558, "exp_r": 30, "exp_g": 2, "exp_b": 29, "exp_cpu_dout": 62558, "note": "random addr=0xC0E"}
+{"addr": 3576, "data": 24471, "exp_r": 23, "exp_g": 28, "exp_b": 23, "exp_cpu_dout": 24471, "note": "random addr=0xDF8"}
+{"addr": 1468, "data": 37980, "exp_r": 28, "exp_g": 2, "exp_b": 5, "exp_cpu_dout": 37980, "note": "random addr=0x5BC"}
+{"addr": 255, "data": 9009, "exp_r": 17, "exp_g": 25, "exp_b": 8, "exp_cpu_dout": 9009, "note": "random addr=0x0FF"}
+{"addr": 2123, "data": 29836, "exp_r": 12, "exp_g": 4, "exp_b": 29, "exp_cpu_dout": 29836, "note": "random addr=0x84B"}
+{"addr": 3292, "data": 26338, "exp_r": 2, "exp_g": 23, "exp_b": 25, "exp_cpu_dout": 26338, "note": "random addr=0xCDC"}
+{"addr": 856, "data": 36551, "exp_r": 7, "exp_g": 22, "exp_b": 3, "exp_cpu_dout": 36551, "note": "random addr=0x358"}
+{"addr": 2760, "data": 715, "exp_r": 11, "exp_g": 22, "exp_b": 0, "exp_cpu_dout": 715, "note": "random addr=0xAC8"}
+{"addr": 367, "data": 8911, "exp_r": 15, "exp_g": 22, "exp_b": 8, "exp_cpu_dout": 8911, "note": "random addr=0x16F"}
+{"addr": 874, "data": 31235, "exp_r": 3, "exp_g": 16, "exp_b": 30, "exp_cpu_dout": 31235, "note": "random addr=0x36A"}
+{"addr": 2726, "data": 27414, "exp_r": 22, "exp_g": 24, "exp_b": 26, "exp_cpu_dout": 27414, "note": "random addr=0xAA6"}
+{"addr": 846, "data": 17165, "exp_r": 13, "exp_g": 24, "exp_b": 16, "exp_cpu_dout": 17165, "note": "random addr=0x34E"}
+{"addr": 2674, "data": 15747, "exp_r": 3, "exp_g": 12, "exp_b": 15, "exp_cpu_dout": 15747, "note": "random addr=0xA72"}
+{"addr": 2144, "data": 15090, "exp_r": 18, "exp_g": 23, "exp_b": 14, "exp_cpu_dout": 15090, "note": "random addr=0x860"}
+{"addr": 2169, "data": 27247, "exp_r": 15, "exp_g": 19, "exp_b": 26, "exp_cpu_dout": 27247, "note": "random addr=0x879"}
+{"addr": 837, "data": 51563, "exp_r": 11, "exp_g": 11, "exp_b": 18, "exp_cpu_dout": 51563, "note": "random addr=0x345"}
+{"addr": 3784, "data": 1979, "exp_r": 27, "exp_g": 29, "exp_b": 1, "exp_cpu_dout": 1979, "note": "random addr=0xEC8"}
+{"addr": 2642, "data": 57489, "exp_r": 17, "exp_g": 4, "exp_b": 24, "exp_cpu_dout": 57489, "note": "random addr=0xA52"}
+{"addr": 3172, "data": 60441, "exp_r": 25, "exp_g": 0, "exp_b": 27, "exp_cpu_dout": 60441, "note": "random addr=0xC64"}
+{"addr": 2506, "data": 21118, "exp_r": 30, "exp_g": 19, "exp_b": 20, "exp_cpu_dout": 21118, "note": "random addr=0x9CA"}
+{"addr": 2185, "data": 42012, "exp_r": 28, "exp_g": 0, "exp_b": 9, "exp_cpu_dout": 42012, "note": "random addr=0x889"}
+{"addr": 3879, "data": 62898, "exp_r": 18, "exp_g": 13, "exp_b": 29, "exp_cpu_dout": 62898, "note": "random addr=0xF27"}
+{"addr": 910, "data": 5767, "exp_r": 7, "exp_g": 20, "exp_b": 5, "exp_cpu_dout": 5767, "note": "random addr=0x38E"}
+{"addr": 1568, "data": 56183, "exp_r": 23, "exp_g": 27, "exp_b": 22, "exp_cpu_dout": 56183, "note": "random addr=0x620"}
+{"addr": 3460, "data": 60294, "exp_r": 6, "exp_g": 28, "exp_b": 26, "exp_cpu_dout": 60294, "note": "random addr=0xD84"}
+{"addr": 975, "data": 43753, "exp_r": 9, "exp_g": 23, "exp_b": 10, "exp_cpu_dout": 43753, "note": "random addr=0x3CF"}
+{"addr": 2032, "data": 7133, "exp_r": 29, "exp_g": 30, "exp_b": 6, "exp_cpu_dout": 7133, "note": "random addr=0x7F0"}
+{"addr": 1103, "data": 54167, "exp_r": 23, "exp_g": 28, "exp_b": 20, "exp_cpu_dout": 54167, "note": "random addr=0x44F"}
+{"addr": 1367, "data": 54564, "exp_r": 4, "exp_g": 9, "exp_b": 21, "exp_cpu_dout": 54564, "note": "random addr=0x557"}
+{"addr": 313, "data": 32723, "exp_r": 19, "exp_g": 30, "exp_b": 31, "exp_cpu_dout": 32723, "note": "random addr=0x139"}
+{"addr": 3077, "data": 50142, "exp_r": 30, "exp_g": 30, "exp_b": 16, "exp_cpu_dout": 50142, "note": "random addr=0xC05"}
+{"addr": 3728, "data": 37588, "exp_r": 20, "exp_g": 22, "exp_b": 4, "exp_cpu_dout": 37588, "note": "random addr=0xE90"}
+{"addr": 1966, "data": 4402, "exp_r": 18, "exp_g": 9, "exp_b": 4, "exp_cpu_dout": 4402, "note": "random addr=0x7AE"}
+{"addr": 933, "data": 31701, "exp_r": 21, "exp_g": 30, "exp_b": 30, "exp_cpu_dout": 31701, "note": "random addr=0x3A5"}
+{"addr": 582, "data": 46443, "exp_r": 11, "exp_g": 11, "exp_b": 13, "exp_cpu_dout": 46443, "note": "random addr=0x246"}
+{"addr": 2011, "data": 51970, "exp_r": 2, "exp_g": 24, "exp_b": 18, "exp_cpu_dout": 51970, "note": "random addr=0x7DB"}
+{"addr": 1262, "data": 49168, "exp_r": 16, "exp_g": 0, "exp_b": 16, "exp_cpu_dout": 49168, "note": "random addr=0x4EE"}
+{"addr": 3107, "data": 61734, "exp_r": 6, "exp_g": 9, "exp_b": 28, "exp_cpu_dout": 61734, "note": "random addr=0xC23"}
+{"addr": 897, "data": 27025, "exp_r": 17, "exp_g": 12, "exp_b": 26, "exp_cpu_dout": 27025, "note": "random addr=0x381"}
+{"addr": 2882, "data": 55036, "exp_r": 28, "exp_g": 23, "exp_b": 21, "exp_cpu_dout": 55036, "note": "random addr=0xB42"}
+{"addr": 248, "data": 56507, "exp_r": 27, "exp_g": 5, "exp_b": 23, "exp_cpu_dout": 56507, "note": "random addr=0x0F8"}
+{"addr": 2718, "data": 29712, "exp_r": 16, "exp_g": 0, "exp_b": 29, "exp_cpu_dout": 29712, "note": "random addr=0xA9E"}
+{"addr": 320, "data": 8384, "exp_r": 0, "exp_g": 6, "exp_b": 8, "exp_cpu_dout": 8384, "note": "random addr=0x140"}
+{"addr": 2568, "data": 32077, "exp_r": 13, "exp_g": 10, "exp_b": 31, "exp_cpu_dout": 32077, "note": "random addr=0xA08"}
+{"addr": 554, "data": 30511, "exp_r": 15, "exp_g": 25, "exp_b": 29, "exp_cpu_dout": 30511, "note": "random addr=0x22A"}
+{"addr": 892, "data": 51570, "exp_r": 18, "exp_g": 11, "exp_b": 18, "exp_cpu_dout": 51570, "note": "random addr=0x37C"}
+{"addr": 3068, "data": 46357, "exp_r": 21, "exp_g": 8, "exp_b": 13, "exp_cpu_dout": 46357, "note": "random addr=0xBFC"}
+{"addr": 1379, "data": 21029, "exp_r": 5, "exp_g": 17, "exp_b": 20, "exp_cpu_dout": 21029, "note": "random addr=0x563"}
+{"addr": 3872, "data": 44268, "exp_r": 12, "exp_g": 7, "exp_b": 11, "exp_cpu_dout": 44268, "note": "random addr=0xF20"}
+{"addr": 1826, "data": 1958, "exp_r": 6, "exp_g": 29, "exp_b": 1, "exp_cpu_dout": 1958, "note": "random addr=0x722"}
+{"addr": 840, "data": 51696, "exp_r": 16, "exp_g": 15, "exp_b": 18, "exp_cpu_dout": 51696, "note": "random addr=0x348"}
+{"addr": 1082, "data": 4526, "exp_r": 14, "exp_g": 13, "exp_b": 4, "exp_cpu_dout": 4526, "note": "random addr=0x43A"}
+{"addr": 742, "data": 20164, "exp_r": 4, "exp_g": 22, "exp_b": 19, "exp_cpu_dout": 20164, "note": "random addr=0x2E6"}
+{"addr": 3153, "data": 39701, "exp_r": 21, "exp_g": 24, "exp_b": 6, "exp_cpu_dout": 39701, "note": "random addr=0xC51"}
+{"addr": 78, "data": 9021, "exp_r": 29, "exp_g": 25, "exp_b": 8, "exp_cpu_dout": 9021, "note": "random addr=0x04E"}
+{"addr": 3582, "data": 54797, "exp_r": 13, "exp_g": 16, "exp_b": 21, "exp_cpu_dout": 54797, "note": "random addr=0xDFE"}
+{"addr": 939, "data": 58536, "exp_r": 8, "exp_g": 5, "exp_b": 25, "exp_cpu_dout": 58536, "note": "random addr=0x3AB"}
+{"addr": 2613, "data": 41506, "exp_r": 2, "exp_g": 17, "exp_b": 8, "exp_cpu_dout": 41506, "note": "random addr=0xA35"}
+{"addr": 942, "data": 5639, "exp_r": 7, "exp_g": 16, "exp_b": 5, "exp_cpu_dout": 5639, "note": "random addr=0x3AE"}
+{"addr": 1468, "data": 44760, "exp_r": 24, "exp_g": 22, "exp_b": 11, "exp_cpu_dout": 44760, "note": "random addr=0x5BC"}
+{"addr": 3312, "data": 22879, "exp_r": 31, "exp_g": 10, "exp_b": 22, "exp_cpu_dout": 22879, "note": "random addr=0xCF0"}
+{"addr": 1212, "data": 21112, "exp_r": 24, "exp_g": 19, "exp_b": 20, "exp_cpu_dout": 21112, "note": "random addr=0x4BC"}
+{"addr": 835, "data": 58922, "exp_r": 10, "exp_g": 17, "exp_b": 25, "exp_cpu_dout": 58922, "note": "random addr=0x343"}
+{"addr": 2543, "data": 59939, "exp_r": 3, "exp_g": 17, "exp_b": 26, "exp_cpu_dout": 59939, "note": "random addr=0x9EF"}
+{"addr": 1986, "data": 53563, "exp_r": 27, "exp_g": 9, "exp_b": 20, "exp_cpu_dout": 53563, "note": "random addr=0x7C2"}
+{"addr": 2481, "data": 29476, "exp_r": 4, "exp_g": 25, "exp_b": 28, "exp_cpu_dout": 29476, "note": "random addr=0x9B1"}
+{"addr": 2814, "data": 16230, "exp_r": 6, "exp_g": 27, "exp_b": 15, "exp_cpu_dout": 16230, "note": "random addr=0xAFE"}
+{"addr": 1355, "data": 14930, "exp_r": 18, "exp_g": 18, "exp_b": 14, "exp_cpu_dout": 14930, "note": "random addr=0x54B"}
+{"addr": 2046, "data": 10411, "exp_r": 11, "exp_g": 5, "exp_b": 10, "exp_cpu_dout": 10411, "note": "random addr=0x7FE"}
+{"addr": 2516, "data": 62557, "exp_r": 29, "exp_g": 2, "exp_b": 29, "exp_cpu_dout": 62557, "note": "random addr=0x9D4"}
+{"addr": 840, "data": 12026, "exp_r": 26, "exp_g": 23, "exp_b": 11, "exp_cpu_dout": 12026, "note": "random addr=0x348"}
+{"addr": 2764, "data": 13878, "exp_r": 22, "exp_g": 17, "exp_b": 13, "exp_cpu_dout": 13878, "note": "random addr=0xACC"}
+{"addr": 1748, "data": 260, "exp_r": 4, "exp_g": 8, "exp_b": 0, "exp_cpu_dout": 260, "note": "random addr=0x6D4"}
+{"addr": 1102, "data": 51788, "exp_r": 12, "exp_g": 18, "exp_b": 18, "exp_cpu_dout": 51788, "note": "random addr=0x44E"}
+{"addr": 3590, "data": 50445, "exp_r": 13, "exp_g": 8, "exp_b": 17, "exp_cpu_dout": 50445, "note": "random addr=0xE06"}
+{"addr": 1279, "data": 41229, "exp_r": 13, "exp_g": 8, "exp_b": 8, "exp_cpu_dout": 41229, "note": "random addr=0x4FF"}
+{"addr": 3849, "data": 16497, "exp_r": 17, "exp_g": 3, "exp_b": 16, "exp_cpu_dout": 16497, "note": "random addr=0xF09"}
+{"addr": 524, "data": 17133, "exp_r": 13, "exp_g": 23, "exp_b": 16, "exp_cpu_dout": 17133, "note": "random addr=0x20C"}
+{"addr": 3894, "data": 6655, "exp_r": 31, "exp_g": 15, "exp_b": 6, "exp_cpu_dout": 6655, "note": "random addr=0xF36"}
+{"addr": 3985, "data": 42155, "exp_r": 11, "exp_g": 5, "exp_b": 9, "exp_cpu_dout": 42155, "note": "random addr=0xF91"}
+{"addr": 550, "data": 54614, "exp_r": 22, "exp_g": 10, "exp_b": 21, "exp_cpu_dout": 54614, "note": "random addr=0x226"}
+{"addr": 2739, "data": 19565, "exp_r": 13, "exp_g": 3, "exp_b": 19, "exp_cpu_dout": 19565, "note": "random addr=0xAB3"}
+{"addr": 1663, "data": 27187, "exp_r": 19, "exp_g": 17, "exp_b": 26, "exp_cpu_dout": 27187, "note": "random addr=0x67F"}
+{"addr": 1995, "data": 17773, "exp_r": 13, "exp_g": 11, "exp_b": 17, "exp_cpu_dout": 17773, "note": "random addr=0x7CB"}
+{"addr": 2809, "data": 31821, "exp_r": 13, "exp_g": 2, "exp_b": 31, "exp_cpu_dout": 31821, "note": "random addr=0xAF9"}
+{"addr": 2052, "data": 26136, "exp_r": 24, "exp_g": 16, "exp_b": 25, "exp_cpu_dout": 26136, "note": "random addr=0x804"}
+{"addr": 1510, "data": 39211, "exp_r": 11, "exp_g": 9, "exp_b": 6, "exp_cpu_dout": 39211, "note": "random addr=0x5E6"}
+{"addr": 1608, "data": 22444, "exp_r": 12, "exp_g": 29, "exp_b": 21, "exp_cpu_dout": 22444, "note": "random addr=0x648"}
+{"addr": 3139, "data": 26744, "exp_r": 24, "exp_g": 3, "exp_b": 26, "exp_cpu_dout": 26744, "note": "random addr=0xC43"}
+{"addr": 3845, "data": 55659, "exp_r": 11, "exp_g": 11, "exp_b": 22, "exp_cpu_dout": 55659, "note": "random addr=0xF05"}
+{"addr": 1589, "data": 20309, "exp_r": 21, "exp_g": 26, "exp_b": 19, "exp_cpu_dout": 20309, "note": "random addr=0x635"}
+{"addr": 2796, "data": 26186, "exp_r": 10, "exp_g": 18, "exp_b": 25, "exp_cpu_dout": 26186, "note": "random addr=0xAEC"}
+{"addr": 1067, "data": 37473, "exp_r": 1, "exp_g": 19, "exp_b": 4, "exp_cpu_dout": 37473, "note": "random addr=0x42B"}
+{"addr": 2044, "data": 31070, "exp_r": 30, "exp_g": 10, "exp_b": 30, "exp_cpu_dout": 31070, "note": "random addr=0x7FC"}
+{"addr": 2498, "data": 826, "exp_r": 26, "exp_g": 25, "exp_b": 0, "exp_cpu_dout": 826, "note": "random addr=0x9C2"}
+{"addr": 353, "data": 50914, "exp_r": 2, "exp_g": 23, "exp_b": 17, "exp_cpu_dout": 50914, "note": "random addr=0x161"}
+{"addr": 335, "data": 16754, "exp_r": 18, "exp_g": 11, "exp_b": 16, "exp_cpu_dout": 16754, "note": "random addr=0x14F"}
+{"addr": 677, "data": 31836, "exp_r": 28, "exp_g": 2, "exp_b": 31, "exp_cpu_dout": 31836, "note": "random addr=0x2A5"}
+{"addr": 58, "data": 30607, "exp_r": 15, "exp_g": 28, "exp_b": 29, "exp_cpu_dout": 30607, "note": "random addr=0x03A"}
+{"addr": 3303, "data": 2840, "exp_r": 24, "exp_g": 24, "exp_b": 2, "exp_cpu_dout": 2840, "note": "random addr=0xCE7"}
+{"addr": 684, "data": 19898, "exp_r": 26, "exp_g": 13, "exp_b": 19, "exp_cpu_dout": 19898, "note": "random addr=0x2AC"}
+{"addr": 398, "data": 1880, "exp_r": 24, "exp_g": 26, "exp_b": 1, "exp_cpu_dout": 1880, "note": "random addr=0x18E"}
+{"addr": 1594, "data": 52969, "exp_r": 9, "exp_g": 23, "exp_b": 19, "exp_cpu_dout": 52969, "note": "random addr=0x63A"}
+{"addr": 2039, "data": 10982, "exp_r": 6, "exp_g": 23, "exp_b": 10, "exp_cpu_dout": 10982, "note": "random addr=0x7F7"}
+{"addr": 2392, "data": 52100, "exp_r": 4, "exp_g": 28, "exp_b": 18, "exp_cpu_dout": 52100, "note": "random addr=0x958"}
+{"addr": 3945, "data": 411, "exp_r": 27, "exp_g": 12, "exp_b": 0, "exp_cpu_dout": 411, "note": "random addr=0xF69"}
+{"addr": 3205, "data": 62227, "exp_r": 19, "exp_g": 24, "exp_b": 28, "exp_cpu_dout": 62227, "note": "random addr=0xC85"}
+{"addr": 2408, "data": 9121, "exp_r": 1, "exp_g": 29, "exp_b": 8, "exp_cpu_dout": 9121, "note": "random addr=0x968"}
+{"addr": 423, "data": 39181, "exp_r": 13, "exp_g": 8, "exp_b": 6, "exp_cpu_dout": 39181, "note": "random addr=0x1A7"}
+{"addr": 1946, "data": 46743, "exp_r": 23, "exp_g": 20, "exp_b": 13, "exp_cpu_dout": 46743, "note": "random addr=0x79A"}
+{"addr": 1394, "data": 31279, "exp_r": 15, "exp_g": 17, "exp_b": 30, "exp_cpu_dout": 31279, "note": "random addr=0x572"}
+{"addr": 2443, "data": 18544, "exp_r": 16, "exp_g": 3, "exp_b": 18, "exp_cpu_dout": 18544, "note": "random addr=0x98B"}
+{"addr": 0, "data": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 0, "note": "overwrite addr 0 with 0"}
+{"addr": 0, "data": 4660, "exp_r": 20, "exp_g": 17, "exp_b": 4, "exp_cpu_dout": 4660, "note": "overwrite addr 0 with 0x1234"}
+{"addr": 1, "data": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 0, "note": "overwrite addr 1 with 0"}
+{"addr": 1, "data": 22136, "exp_r": 24, "exp_g": 19, "exp_b": 21, "exp_cpu_dout": 22136, "note": "overwrite addr 1 with 0x5678"}
+{"addr": 512, "data": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 0, "note": "R ramp v=0"}
+{"addr": 513, "data": 1, "exp_r": 1, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 1, "note": "R ramp v=1"}
+{"addr": 514, "data": 2, "exp_r": 2, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 2, "note": "R ramp v=2"}
+{"addr": 515, "data": 3, "exp_r": 3, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 3, "note": "R ramp v=3"}
+{"addr": 516, "data": 4, "exp_r": 4, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 4, "note": "R ramp v=4"}
+{"addr": 517, "data": 5, "exp_r": 5, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 5, "note": "R ramp v=5"}
+{"addr": 518, "data": 6, "exp_r": 6, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 6, "note": "R ramp v=6"}
+{"addr": 519, "data": 7, "exp_r": 7, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 7, "note": "R ramp v=7"}
+{"addr": 520, "data": 8, "exp_r": 8, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 8, "note": "R ramp v=8"}
+{"addr": 521, "data": 9, "exp_r": 9, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 9, "note": "R ramp v=9"}
+{"addr": 522, "data": 10, "exp_r": 10, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 10, "note": "R ramp v=10"}
+{"addr": 523, "data": 11, "exp_r": 11, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 11, "note": "R ramp v=11"}
+{"addr": 524, "data": 12, "exp_r": 12, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 12, "note": "R ramp v=12"}
+{"addr": 525, "data": 13, "exp_r": 13, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 13, "note": "R ramp v=13"}
+{"addr": 526, "data": 14, "exp_r": 14, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 14, "note": "R ramp v=14"}
+{"addr": 527, "data": 15, "exp_r": 15, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 15, "note": "R ramp v=15"}
+{"addr": 528, "data": 16, "exp_r": 16, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 16, "note": "R ramp v=16"}
+{"addr": 529, "data": 17, "exp_r": 17, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 17, "note": "R ramp v=17"}
+{"addr": 530, "data": 18, "exp_r": 18, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 18, "note": "R ramp v=18"}
+{"addr": 531, "data": 19, "exp_r": 19, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 19, "note": "R ramp v=19"}
+{"addr": 532, "data": 20, "exp_r": 20, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 20, "note": "R ramp v=20"}
+{"addr": 533, "data": 21, "exp_r": 21, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 21, "note": "R ramp v=21"}
+{"addr": 534, "data": 22, "exp_r": 22, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 22, "note": "R ramp v=22"}
+{"addr": 535, "data": 23, "exp_r": 23, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 23, "note": "R ramp v=23"}
+{"addr": 536, "data": 24, "exp_r": 24, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 24, "note": "R ramp v=24"}
+{"addr": 537, "data": 25, "exp_r": 25, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 25, "note": "R ramp v=25"}
+{"addr": 538, "data": 26, "exp_r": 26, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 26, "note": "R ramp v=26"}
+{"addr": 539, "data": 27, "exp_r": 27, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 27, "note": "R ramp v=27"}
+{"addr": 540, "data": 28, "exp_r": 28, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 28, "note": "R ramp v=28"}
+{"addr": 541, "data": 29, "exp_r": 29, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 29, "note": "R ramp v=29"}
+{"addr": 542, "data": 30, "exp_r": 30, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 30, "note": "R ramp v=30"}
+{"addr": 543, "data": 31, "exp_r": 31, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 31, "note": "R ramp v=31"}
+{"addr": 544, "data": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 0, "note": "G ramp v=0"}
+{"addr": 545, "data": 32, "exp_r": 0, "exp_g": 1, "exp_b": 0, "exp_cpu_dout": 32, "note": "G ramp v=1"}
+{"addr": 546, "data": 64, "exp_r": 0, "exp_g": 2, "exp_b": 0, "exp_cpu_dout": 64, "note": "G ramp v=2"}
+{"addr": 547, "data": 96, "exp_r": 0, "exp_g": 3, "exp_b": 0, "exp_cpu_dout": 96, "note": "G ramp v=3"}
+{"addr": 548, "data": 128, "exp_r": 0, "exp_g": 4, "exp_b": 0, "exp_cpu_dout": 128, "note": "G ramp v=4"}
+{"addr": 549, "data": 160, "exp_r": 0, "exp_g": 5, "exp_b": 0, "exp_cpu_dout": 160, "note": "G ramp v=5"}
+{"addr": 550, "data": 192, "exp_r": 0, "exp_g": 6, "exp_b": 0, "exp_cpu_dout": 192, "note": "G ramp v=6"}
+{"addr": 551, "data": 224, "exp_r": 0, "exp_g": 7, "exp_b": 0, "exp_cpu_dout": 224, "note": "G ramp v=7"}
+{"addr": 552, "data": 256, "exp_r": 0, "exp_g": 8, "exp_b": 0, "exp_cpu_dout": 256, "note": "G ramp v=8"}
+{"addr": 553, "data": 288, "exp_r": 0, "exp_g": 9, "exp_b": 0, "exp_cpu_dout": 288, "note": "G ramp v=9"}
+{"addr": 554, "data": 320, "exp_r": 0, "exp_g": 10, "exp_b": 0, "exp_cpu_dout": 320, "note": "G ramp v=10"}
+{"addr": 555, "data": 352, "exp_r": 0, "exp_g": 11, "exp_b": 0, "exp_cpu_dout": 352, "note": "G ramp v=11"}
+{"addr": 556, "data": 384, "exp_r": 0, "exp_g": 12, "exp_b": 0, "exp_cpu_dout": 384, "note": "G ramp v=12"}
+{"addr": 557, "data": 416, "exp_r": 0, "exp_g": 13, "exp_b": 0, "exp_cpu_dout": 416, "note": "G ramp v=13"}
+{"addr": 558, "data": 448, "exp_r": 0, "exp_g": 14, "exp_b": 0, "exp_cpu_dout": 448, "note": "G ramp v=14"}
+{"addr": 559, "data": 480, "exp_r": 0, "exp_g": 15, "exp_b": 0, "exp_cpu_dout": 480, "note": "G ramp v=15"}
+{"addr": 560, "data": 512, "exp_r": 0, "exp_g": 16, "exp_b": 0, "exp_cpu_dout": 512, "note": "G ramp v=16"}
+{"addr": 561, "data": 544, "exp_r": 0, "exp_g": 17, "exp_b": 0, "exp_cpu_dout": 544, "note": "G ramp v=17"}
+{"addr": 562, "data": 576, "exp_r": 0, "exp_g": 18, "exp_b": 0, "exp_cpu_dout": 576, "note": "G ramp v=18"}
+{"addr": 563, "data": 608, "exp_r": 0, "exp_g": 19, "exp_b": 0, "exp_cpu_dout": 608, "note": "G ramp v=19"}
+{"addr": 564, "data": 640, "exp_r": 0, "exp_g": 20, "exp_b": 0, "exp_cpu_dout": 640, "note": "G ramp v=20"}
+{"addr": 565, "data": 672, "exp_r": 0, "exp_g": 21, "exp_b": 0, "exp_cpu_dout": 672, "note": "G ramp v=21"}
+{"addr": 566, "data": 704, "exp_r": 0, "exp_g": 22, "exp_b": 0, "exp_cpu_dout": 704, "note": "G ramp v=22"}
+{"addr": 567, "data": 736, "exp_r": 0, "exp_g": 23, "exp_b": 0, "exp_cpu_dout": 736, "note": "G ramp v=23"}
+{"addr": 568, "data": 768, "exp_r": 0, "exp_g": 24, "exp_b": 0, "exp_cpu_dout": 768, "note": "G ramp v=24"}
+{"addr": 569, "data": 800, "exp_r": 0, "exp_g": 25, "exp_b": 0, "exp_cpu_dout": 800, "note": "G ramp v=25"}
+{"addr": 570, "data": 832, "exp_r": 0, "exp_g": 26, "exp_b": 0, "exp_cpu_dout": 832, "note": "G ramp v=26"}
+{"addr": 571, "data": 864, "exp_r": 0, "exp_g": 27, "exp_b": 0, "exp_cpu_dout": 864, "note": "G ramp v=27"}
+{"addr": 572, "data": 896, "exp_r": 0, "exp_g": 28, "exp_b": 0, "exp_cpu_dout": 896, "note": "G ramp v=28"}
+{"addr": 573, "data": 928, "exp_r": 0, "exp_g": 29, "exp_b": 0, "exp_cpu_dout": 928, "note": "G ramp v=29"}
+{"addr": 574, "data": 960, "exp_r": 0, "exp_g": 30, "exp_b": 0, "exp_cpu_dout": 960, "note": "G ramp v=30"}
+{"addr": 575, "data": 992, "exp_r": 0, "exp_g": 31, "exp_b": 0, "exp_cpu_dout": 992, "note": "G ramp v=31"}
+{"addr": 576, "data": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "exp_cpu_dout": 0, "note": "B ramp v=0"}
+{"addr": 577, "data": 1024, "exp_r": 0, "exp_g": 0, "exp_b": 1, "exp_cpu_dout": 1024, "note": "B ramp v=1"}
+{"addr": 578, "data": 2048, "exp_r": 0, "exp_g": 0, "exp_b": 2, "exp_cpu_dout": 2048, "note": "B ramp v=2"}
+{"addr": 579, "data": 3072, "exp_r": 0, "exp_g": 0, "exp_b": 3, "exp_cpu_dout": 3072, "note": "B ramp v=3"}
+{"addr": 580, "data": 4096, "exp_r": 0, "exp_g": 0, "exp_b": 4, "exp_cpu_dout": 4096, "note": "B ramp v=4"}
+{"addr": 581, "data": 5120, "exp_r": 0, "exp_g": 0, "exp_b": 5, "exp_cpu_dout": 5120, "note": "B ramp v=5"}
+{"addr": 582, "data": 6144, "exp_r": 0, "exp_g": 0, "exp_b": 6, "exp_cpu_dout": 6144, "note": "B ramp v=6"}
+{"addr": 583, "data": 7168, "exp_r": 0, "exp_g": 0, "exp_b": 7, "exp_cpu_dout": 7168, "note": "B ramp v=7"}
+{"addr": 584, "data": 8192, "exp_r": 0, "exp_g": 0, "exp_b": 8, "exp_cpu_dout": 8192, "note": "B ramp v=8"}
+{"addr": 585, "data": 9216, "exp_r": 0, "exp_g": 0, "exp_b": 9, "exp_cpu_dout": 9216, "note": "B ramp v=9"}
+{"addr": 586, "data": 10240, "exp_r": 0, "exp_g": 0, "exp_b": 10, "exp_cpu_dout": 10240, "note": "B ramp v=10"}
+{"addr": 587, "data": 11264, "exp_r": 0, "exp_g": 0, "exp_b": 11, "exp_cpu_dout": 11264, "note": "B ramp v=11"}
+{"addr": 588, "data": 12288, "exp_r": 0, "exp_g": 0, "exp_b": 12, "exp_cpu_dout": 12288, "note": "B ramp v=12"}
+{"addr": 589, "data": 13312, "exp_r": 0, "exp_g": 0, "exp_b": 13, "exp_cpu_dout": 13312, "note": "B ramp v=13"}
+{"addr": 590, "data": 14336, "exp_r": 0, "exp_g": 0, "exp_b": 14, "exp_cpu_dout": 14336, "note": "B ramp v=14"}
+{"addr": 591, "data": 15360, "exp_r": 0, "exp_g": 0, "exp_b": 15, "exp_cpu_dout": 15360, "note": "B ramp v=15"}
+{"addr": 592, "data": 16384, "exp_r": 0, "exp_g": 0, "exp_b": 16, "exp_cpu_dout": 16384, "note": "B ramp v=16"}
+{"addr": 593, "data": 17408, "exp_r": 0, "exp_g": 0, "exp_b": 17, "exp_cpu_dout": 17408, "note": "B ramp v=17"}
+{"addr": 594, "data": 18432, "exp_r": 0, "exp_g": 0, "exp_b": 18, "exp_cpu_dout": 18432, "note": "B ramp v=18"}
+{"addr": 595, "data": 19456, "exp_r": 0, "exp_g": 0, "exp_b": 19, "exp_cpu_dout": 19456, "note": "B ramp v=19"}
+{"addr": 596, "data": 20480, "exp_r": 0, "exp_g": 0, "exp_b": 20, "exp_cpu_dout": 20480, "note": "B ramp v=20"}
+{"addr": 597, "data": 21504, "exp_r": 0, "exp_g": 0, "exp_b": 21, "exp_cpu_dout": 21504, "note": "B ramp v=21"}
+{"addr": 598, "data": 22528, "exp_r": 0, "exp_g": 0, "exp_b": 22, "exp_cpu_dout": 22528, "note": "B ramp v=22"}
+{"addr": 599, "data": 23552, "exp_r": 0, "exp_g": 0, "exp_b": 23, "exp_cpu_dout": 23552, "note": "B ramp v=23"}
+{"addr": 600, "data": 24576, "exp_r": 0, "exp_g": 0, "exp_b": 24, "exp_cpu_dout": 24576, "note": "B ramp v=24"}
+{"addr": 601, "data": 25600, "exp_r": 0, "exp_g": 0, "exp_b": 25, "exp_cpu_dout": 25600, "note": "B ramp v=25"}
+{"addr": 602, "data": 26624, "exp_r": 0, "exp_g": 0, "exp_b": 26, "exp_cpu_dout": 26624, "note": "B ramp v=26"}
+{"addr": 603, "data": 27648, "exp_r": 0, "exp_g": 0, "exp_b": 27, "exp_cpu_dout": 27648, "note": "B ramp v=27"}
+{"addr": 604, "data": 28672, "exp_r": 0, "exp_g": 0, "exp_b": 28, "exp_cpu_dout": 28672, "note": "B ramp v=28"}
+{"addr": 605, "data": 29696, "exp_r": 0, "exp_g": 0, "exp_b": 29, "exp_cpu_dout": 29696, "note": "B ramp v=29"}
+{"addr": 606, "data": 30720, "exp_r": 0, "exp_g": 0, "exp_b": 30, "exp_cpu_dout": 30720, "note": "B ramp v=30"}
+{"addr": 607, "data": 31744, "exp_r": 0, "exp_g": 0, "exp_b": 31, "exp_cpu_dout": 31744, "note": "B ramp v=31"}
