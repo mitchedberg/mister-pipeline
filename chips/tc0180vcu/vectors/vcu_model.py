@@ -214,6 +214,92 @@ class TC0180VCU:
                 linebuf[col * 8 + px] = (color << 4) | pidx
         return linebuf
 
+    def render_scanline_bg(self, vpos: int, plane: int, gfx_rom: bytes) -> list:
+        """Return 512-entry line buffer [{color[5:0], pix_idx[3:0]}, ...] for the
+        BG (plane=1) or FG (plane=0) tilemap layer, for the scanline following vpos.
+        Pre-fetch pattern: canvas_y = (vpos + 1 + scrollY) & 0x3FF.
+        gfx_rom: bytes-like, at least 8MB (0x800000 bytes).
+        Returns 0 for transparent pixels (pix_idx == 0).
+
+        GFX ROM format (16×16 tile = 128 bytes):
+          4 char-blocks 2×2: block 0=top-left, 1=top-right, 2=bot-left, 3=bot-right
+          char_base = tile_code*128 + block*32 + char_row*2
+          plane0 = gfx_rom[char_base+0],  plane1 = gfx_rom[char_base+1]
+          plane2 = gfx_rom[char_base+16], plane3 = gfx_rom[char_base+17]
+          pix_idx = {p3[7-lx], p2[7-lx], p1[7-lx], p0[7-lx]}
+        flipX: swap left/right char-blocks; reverse bit order within half.
+        flipY: py_eff = 15 - fetch_py.
+        """
+        # Scroll registers
+        scroll_base = 0x200 if plane == 1 else 0x000
+        scroll_x = self.scroll_ram[scroll_base]     & 0x3FF
+        scroll_y = self.scroll_ram[scroll_base + 1] & 0x3FF
+
+        # Fetch geometry
+        canvas_y    = (vpos + 1 + scroll_y) & 0x3FF
+        fetch_py    = canvas_y & 0xF
+        fetch_ty    = (canvas_y >> 4) & 0x3F
+        sx_frac     = scroll_x & 0xF        # pixel offset within first tile
+        sx_tile     = (scroll_x >> 4) & 0x3F  # first tile column in map
+
+        # VRAM banks
+        if plane == 1:
+            bank0 = self.bg_bank0 & 0x7
+            bank1 = self.bg_bank1 & 0x7
+        else:
+            bank0 = self.fg_bank0 & 0x7
+            bank1 = self.fg_bank1 & 0x7
+
+        linebuf = [0] * 512
+
+        for tile_col in range(22):
+            cur_map_col = (sx_tile + tile_col) & 0x3F
+            tile_map_idx = (fetch_ty << 6) | cur_map_col  # 12 bits
+            code_word = self.vram[(bank0 << 12) | tile_map_idx]
+            attr_word = self.vram[(bank1 << 12) | tile_map_idx]
+
+            tile_code = code_word & 0x7FFF
+            color     = attr_word & 0x3F
+            flipx     = bool(attr_word & 0x4000)
+            flipy     = bool(attr_word & 0x8000)
+
+            py_eff   = (15 - fetch_py) if flipy else fetch_py
+            char_row = py_eff & 0x7
+            tile_row = (py_eff >> 3) & 0x1
+
+            tile_base = tile_code * 128  # byte address of first char-block
+
+            for half in range(2):
+                # Select char-block for screen-left (half=0) and screen-right (half=1)
+                cb_left  = tile_row * 2 + 0
+                cb_right = tile_row * 2 + 1
+                if flipx:
+                    cb = cb_right if half == 0 else cb_left
+                else:
+                    cb = cb_left  if half == 0 else cb_right
+
+                char_base = tile_base + cb * 32 + char_row * 2
+                b0 = gfx_rom[char_base + 0]
+                b1 = gfx_rom[char_base + 1]
+                b2 = gfx_rom[char_base + 16]
+                b3 = gfx_rom[char_base + 17]
+
+                for lx in range(8):
+                    bit = lx if flipx else (7 - lx)
+                    pidx = (((b3 >> bit) & 1) << 3 |
+                            ((b2 >> bit) & 1) << 2 |
+                            ((b1 >> bit) & 1) << 1 |
+                            ((b0 >> bit) & 1))
+                    pos = tile_col * 16 + half * 8 + lx
+                    linebuf[pos] = 0 if pidx == 0 else ((color << 4) | pidx)
+
+        # Build output with scroll_x_frac applied
+        out = [0] * 512
+        for hpos in range(512):
+            idx = (hpos + sx_frac) & 0x1FF
+            out[hpos] = linebuf[idx]
+        return out
+
     def sprite(self, idx: int) -> dict:
         """Return sprite dict for sprite index (0 = highest priority)."""
         base  = idx * 8

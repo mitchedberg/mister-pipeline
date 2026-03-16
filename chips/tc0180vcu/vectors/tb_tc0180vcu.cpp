@@ -13,6 +13,11 @@
 // Additional TX render test:
 //   Programs VRAM with known tile words, drives HBLANK, checks pixel output.
 //   Uses a deterministic GFX ROM model: gfx_rom[addr] = (addr*37+13)^(addr>>8)
+//
+// BG/FG render test (step 3 — global scroll):
+//   Programs BG and FG VRAM + scroll RAM, drives HBLANK, checks pixel_out.
+//   BG starts after TX (321 cycles), FG starts after BG (321+224=545 cycles).
+//   Total HBLANK required: 545+224 = 769 cycles (driven for 800 cycles).
 // =============================================================================
 
 #include "Vtc0180vcu.h"
@@ -33,6 +38,11 @@ static uint8_t gfx_rom[1 << 23];
 static void init_gfx_rom() {
     for (int i = 0; i < (1 << 23); i++)
         gfx_rom[i] = (uint8_t)((i * 37 + 13) ^ (i >> 8));
+    // Tile code 0 (bytes 0-127) = all zeros → transparent sentinel.
+    // This ensures uninitialised tile slots (tile_code=0) are transparent
+    // and don't contaminate compositing tests.
+    for (int i = 0; i < 128; i++)
+        gfx_rom[i] = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -116,6 +126,74 @@ static uint8_t tx_expected_pixel(int col, int px,
                     ((b1 >> bit) & 1) << 1 |
                     ((b0 >> bit) & 1);
     return (uint8_t)((color << 4) | pixel_idx);
+}
+
+// ---------------------------------------------------------------------------
+// BG/FG expected pixel for a 16×16 tile layer.
+//
+// Parameters:
+//   screen_x     : screen column (0-based pixel column)
+//   tile_code    : 15-bit tile code from VRAM bank0
+//   color        : 6-bit color attribute (attr[5:0])
+//   flipx, flipy : from attr[14], attr[15]
+//   fetch_py     : pixel row within tile (0..15), = canvas_y & 0xF
+//
+// Returns composited pixel value: {color[5:0], pix_idx[3:0]} (10-bit packed
+// in low 10 bits of uint16_t).  Returns 0 if pix_idx==0 (transparent).
+// ---------------------------------------------------------------------------
+static uint16_t bg_expected_pixel(int screen_x, int tile_code, int color,
+                                  bool flipx, bool flipy, int fetch_py) {
+    // Effective py
+    int py_eff  = flipy ? (15 - fetch_py) : fetch_py;
+    int tile_row = (py_eff >> 3) & 1;    // 0=top, 1=bottom
+    int char_row = py_eff & 7;
+
+    // px within the 16-px tile = screen_x & 15 (with scroll=0)
+    int px       = screen_x & 15;
+    int half     = (px >> 3) & 1;        // 0=left, 1=right
+    int lx       = px & 7;
+
+    // char_block: 0=top-left, 1=top-right, 2=bot-left, 3=bot-right
+    // flipX swaps left/right char-blocks
+    int cb_left  = tile_row * 2 + 0;
+    int cb_right = tile_row * 2 + 1;
+    int char_block;
+    if (!flipx) {
+        char_block = (half == 0) ? cb_left : cb_right;
+    } else {
+        char_block = (half == 0) ? cb_right : cb_left;  // swapped
+    }
+
+    // GFX byte addresses
+    int char_base = tile_code * 128 + char_block * 32 + char_row * 2;
+    uint8_t p0 = gfx_rom[char_base + 0];
+    uint8_t p1 = gfx_rom[char_base + 1];
+    uint8_t p2 = gfx_rom[char_base + 16];
+    uint8_t p3 = gfx_rom[char_base + 17];
+
+    // Bit selection: flipX reverses pixel order within the 8-px half
+    int bit = flipx ? lx : (7 - lx);
+    int pix_idx = (((p3 >> bit) & 1) << 3) |
+                  (((p2 >> bit) & 1) << 2) |
+                  (((p1 >> bit) & 1) << 1) |
+                  (((p0 >> bit) & 1));
+
+    if (pix_idx == 0) return 0;  // transparent → compositor shows 0 (or lower layer)
+    return (uint16_t)((color << 4) | pix_idx);
+}
+
+// ---------------------------------------------------------------------------
+// CPU write helper (used in render tests)
+// ---------------------------------------------------------------------------
+static void cpu_write(int addr, int data, int be = 3) {
+    dut->cpu_cs   = 1;
+    dut->cpu_we   = 1;
+    dut->cpu_addr = (uint32_t)(addr & 0x7FFFF);
+    dut->cpu_din  = (uint16_t)(data & 0xFFFF);
+    dut->cpu_be   = (uint8_t)(be & 0x3);
+    tick();
+    dut->cpu_we = 0;
+    dut->cpu_cs = 0;
 }
 
 int main(int argc, char** argv) {
@@ -283,21 +361,24 @@ int main(int argc, char** argv) {
         dut->hblank_n = 1;
         tick(); tick();  // settle
 
-        // Check pixel output for all 8 pixels of the test tile
+        // Check pixel output for all 8 pixels of the test tile.
+        // Compositor: transparent TX pixels (pix_idx=0) show as 0 when BG/FG are empty.
         int tx_errors = 0;
         for (int px = 0; px < 8; px++) {
             int hpos_val = TEST_COL * 8 + px;
             dut->hpos = (uint16_t)hpos_val;
             dut->clk = 0; dut->eval();   // combinational update
             uint8_t got = (uint8_t)(dut->pixel_out & 0xFF);
-            uint8_t exp = tx_expected_pixel(TEST_COL, px, TILE_WORD,
+            uint8_t raw = tx_expected_pixel(TEST_COL, px, TILE_WORD,
                                             TX_BANK0, TX_BANK1, FETCH_PY);
+            // With compositor: transparent pixel (pix_idx==0) → output 0 (all layers empty)
+            uint8_t exp = ((raw & 0xF) == 0) ? 0 : raw;
             if (got == exp) {
                 ++pass;
             } else {
                 ++fail; ++tx_errors;
-                printf("FAIL [tx col=%d px=%d hpos=%d] got=0x%02X exp=0x%02X\n",
-                       TEST_COL, px, hpos_val, got, exp);
+                printf("FAIL [tx col=%d px=%d hpos=%d] got=0x%02X exp=0x%02X (raw=0x%02X)\n",
+                       TEST_COL, px, hpos_val, got, exp, raw);
             }
         }
         if (tx_errors == 0) printf("  TX render test: 8/8 pixels OK\n");
@@ -339,16 +420,211 @@ int main(int argc, char** argv) {
             dut->hpos = (uint16_t)hpos_val;
             dut->clk = 0; dut->eval();
             uint8_t got = (uint8_t)(dut->pixel_out & 0xFF);
-            uint8_t exp = tx_expected_pixel(COL2, px, TILE_WORD2,
+            uint8_t raw = tx_expected_pixel(COL2, px, TILE_WORD2,
                                             TX_BANK0, TX_BANK1, FETCH_PY);
+            // Compositor: transparent pixel (pix_idx==0) → output 0
+            uint8_t exp = ((raw & 0xF) == 0) ? 0 : raw;
             if (got == exp) {
                 ++pass;
             } else {
                 ++fail;
-                printf("FAIL [tx2 col=%d px=%d hpos=%d] got=0x%02X exp=0x%02X\n",
-                       COL2, px, hpos_val, got, exp);
+                printf("FAIL [tx2 col=%d px=%d hpos=%d] got=0x%02X exp=0x%02X (raw=0x%02X)\n",
+                       COL2, px, hpos_val, got, exp, raw);
             }
         }
+    }
+
+    // ── BG Tilemap Render Test ──────────────────────────────────────────────
+    // Use BG bg_bank0=0, bg_bank1=1 (ctrl[1][11:8]=0, ctrl[1][15:12]=1).
+    // Scroll: BG scrollX=0, scrollY=0 (scroll_ram[0x200]=0, scroll_ram[0x201]=0).
+    // Test tile: BG at (tx=3, ty=2), tile_code=0x0050, color=0x0F, flipx=0, flipy=0.
+    //   attr word = 0x000F (color=0x0F, no flip)
+    // fetch: vpos=15 → fetch vpos+1=16 → canvas_y=16 → fetch_py=0, fetch_ty=1.
+    //   Wait: ty=2 → need canvas_y[9:4]=2 → canvas_y=32 → fetch_vpos=32 → vpos=31.
+    //   fetch_py = canvas_y[3:0] = 32&0xF = 0.  tile col: scrollX=0 → first_tile=0, tile_col=3 → tx=3.
+    // BG linebuf position for screen_x in [tx*16..tx*16+15] = [48..63].
+    // At hpos=48+px: layer_pixel = linebuf[48+px] → should match bg_expected_pixel(48+px, ...).
+    //
+    // The sequencer fires bg_start at hblank_cyc==321, fg_start at ==545.
+    // Total HBLANK for all layers: need at least 545+223=768 cycles.
+    // Drive HBLANK for 800 cycles to be safe.
+    {
+        const int BG_BANK0  = 0;
+        const int BG_BANK1  = 1;
+        const int BG_TX     = 3;    // tile column in map
+        const int BG_TY     = 2;    // tile row in map
+        // vpos such that canvas_y = BG_TY*16 = 32 → vpos = 31
+        const int BG_VPOS   = 31;
+        const int BG_FETCH_PY = 0;  // canvas_y[3:0] = 0
+        const int BG_TILE_CODE = 0x0050;
+        const int BG_COLOR  = 0x0F;
+        const int BG_ATTR   = 0x000F;  // color=0x0F, no flip
+
+        reset();
+
+        // ctrl[0]: set FG bank0=7, bank1=7 → FG reads vram[0x7000+] which is all 0.
+        // With tile_code=0 transparent (gfx_rom[0..127]=0), FG produces no pixels.
+        cpu_write(0x0C000, (7 << 12) | (7 << 8), 0x3);
+
+        // ctrl[1]: bg_bank0=BG_BANK0, bg_bank1=BG_BANK1
+        // ctrl[1][11:8]=bank0, ctrl[1][15:12]=bank1 → value = (bank1<<12)|(bank0<<8)
+        cpu_write(0x0C001, (BG_BANK1 << 12) | (BG_BANK0 << 8), 0x3);
+
+        // Write tile code to VRAM: bank0_base=BG_BANK0<<12=0x0000, idx=BG_TY*64+BG_TX=131
+        int bg_code_addr = (BG_BANK0 << 12) + BG_TY * 64 + BG_TX;   // = 0x083
+        cpu_write(bg_code_addr, BG_TILE_CODE, 0x3);
+
+        // Write attr to VRAM: bank1_base=BG_BANK1<<12=0x1000
+        int bg_attr_addr = (BG_BANK1 << 12) + BG_TY * 64 + BG_TX;   // = 0x1083
+        cpu_write(bg_attr_addr, BG_ATTR, 0x3);
+
+        // Write BG scroll: scroll_ram[0x200]=scrollX=0, scroll_ram[0x201]=scrollY=0
+        // Also zero FG scroll registers to prevent FG rendering from cross-test state.
+        // scroll_ram CPU addr base = 0x09C00 (word offset 0x9C00 in 19-bit space)
+        const int SCROLL_BASE_CPU = 0x09C00;
+        cpu_write(SCROLL_BASE_CPU + 0x000, 0x0000, 0x3);  // FG scrollX (clear)
+        cpu_write(SCROLL_BASE_CPU + 0x001, 0x0000, 0x3);  // FG scrollY (clear)
+        cpu_write(SCROLL_BASE_CPU + 0x200, 0x0000, 0x3);  // BG scrollX
+        cpu_write(SCROLL_BASE_CPU + 0x201, 0x0000, 0x3);  // BG scrollY
+
+        tick(); tick();
+
+        // Drive HBLANK: TX runs 0-320, BG starts at 321, runs to ~544.
+        dut->vpos     = (uint8_t)BG_VPOS;
+        dut->hblank_n = 1; dut->vblank_n = 1; dut->cpu_cs = 0;
+        tick(); tick();
+
+        dut->hblank_n = 0;
+        for (int i = 0; i < 800; i++) tick();
+        dut->hblank_n = 1;
+        tick(); tick();
+
+        int bg_errors = 0;
+        for (int px = 0; px < 16; px++) {
+            int hpos_val = BG_TX * 16 + px;
+            dut->hpos = (uint16_t)hpos_val;
+            dut->clk = 0; dut->eval();
+            uint16_t got = dut->pixel_out & 0x3FF;
+            uint16_t exp = bg_expected_pixel(hpos_val, BG_TILE_CODE, BG_COLOR,
+                                             false, false, BG_FETCH_PY);
+            if (got == exp) {
+                ++pass;
+            } else {
+                ++fail; ++bg_errors;
+                printf("FAIL [bg px=%d hpos=%d] got=0x%03X exp=0x%03X\n",
+                       px, hpos_val, got, exp);
+            }
+        }
+        if (bg_errors == 0) printf("  BG render test: 16/16 pixels OK\n");
+
+        // Also test BG tile with flipX=1, flipY=1
+        // tile at (tx=5, ty=2): tile_code=0x0080, color=0x12, flipx=1, flipy=1
+        const int BG_TX2   = 5;
+        const int BG_TILE2 = 0x0080;
+        const int BG_COL2  = 0x12;
+        const int BG_ATTR2 = 0xC012;  // flipY[15]=1, flipX[14]=1, color[5:0]=0x12
+
+        int bg_code_addr2 = (BG_BANK0 << 12) + BG_TY * 64 + BG_TX2;
+        int bg_attr_addr2 = (BG_BANK1 << 12) + BG_TY * 64 + BG_TX2;
+        cpu_write(bg_code_addr2, BG_TILE2, 0x3);
+        cpu_write(bg_attr_addr2, BG_ATTR2, 0x3);
+        tick(); tick();
+
+        dut->vpos     = (uint8_t)BG_VPOS;
+        dut->hblank_n = 1; dut->vblank_n = 1;
+        tick(); tick();
+        dut->hblank_n = 0;
+        for (int i = 0; i < 800; i++) tick();
+        dut->hblank_n = 1;
+        tick(); tick();
+
+        int bg2_errors = 0;
+        for (int px = 0; px < 16; px++) {
+            int hpos_val = BG_TX2 * 16 + px;
+            dut->hpos = (uint16_t)hpos_val;
+            dut->clk = 0; dut->eval();
+            uint16_t got = dut->pixel_out & 0x3FF;
+            uint16_t exp = bg_expected_pixel(hpos_val, BG_TILE2, BG_COL2,
+                                             true, true, BG_FETCH_PY);
+            if (got == exp) {
+                ++pass;
+            } else {
+                ++fail; ++bg2_errors;
+                printf("FAIL [bg2 flipX/Y px=%d hpos=%d] got=0x%03X exp=0x%03X\n",
+                       px, hpos_val, got, exp);
+            }
+        }
+        if (bg2_errors == 0) printf("  BG flipX/Y test: 16/16 pixels OK\n");
+    }
+
+    // ── FG Tilemap Render Test ──────────────────────────────────────────────
+    // Use FG fg_bank0=2, fg_bank1=3 (ctrl[0][11:8]=2, ctrl[0][15:12]=3).
+    // Scroll: FG scrollX=0, scrollY=0 (scroll_ram[0x000]=0, scroll_ram[0x001]=0).
+    // Test tile: FG at (tx=4, ty=1), tile_code=0x00A0, color=0x2A.
+    // fetch: canvas_y = TY*16 = 16 → vpos = 15.
+    // FG starts at hblank_cyc==545. BG must also run (its linebuf irrelevant here).
+    {
+        const int FG_BANK0  = 2;
+        const int FG_BANK1  = 3;
+        const int FG_TX     = 4;
+        const int FG_TY     = 1;
+        const int FG_VPOS   = 15;    // canvas_y=16 → fetch_py=0, fetch_ty=1
+        const int FG_FETCH_PY = 0;
+        const int FG_TILE_CODE = 0x00A0;
+        const int FG_COLOR  = 0x2A;
+        const int FG_ATTR   = 0x002A;  // color=0x2A, no flip
+
+        reset();
+
+        // ctrl[0]: fg_bank0=FG_BANK0=2, fg_bank1=FG_BANK1=3
+        // ctrl[0][11:8]=bank0=2, ctrl[0][15:12]=bank1=3 → value = (3<<12)|(2<<8) = 0x3200
+        cpu_write(0x0C000, (FG_BANK1 << 12) | (FG_BANK0 << 8), 0x3);
+
+        // FG tile code at bank0_base=(FG_BANK0<<12)=0x2000, idx=FG_TY*64+FG_TX=68
+        int fg_code_addr = (FG_BANK0 << 12) + FG_TY * 64 + FG_TX;
+        cpu_write(fg_code_addr, FG_TILE_CODE, 0x3);
+
+        // FG attr at bank1_base=FG_BANK1<<12=0x3000
+        int fg_attr_addr = (FG_BANK1 << 12) + FG_TY * 64 + FG_TX;
+        cpu_write(fg_attr_addr, FG_ATTR, 0x3);
+
+        // FG scroll at scroll_ram[0x000..0x001] = 0.
+        // Also zero BG scroll to prevent BG rendering from cross-test state.
+        const int SCROLL_BASE_CPU = 0x09C00;
+        cpu_write(SCROLL_BASE_CPU + 0x000, 0x0000, 0x3);
+        cpu_write(SCROLL_BASE_CPU + 0x001, 0x0000, 0x3);
+        cpu_write(SCROLL_BASE_CPU + 0x200, 0x0000, 0x3);
+        cpu_write(SCROLL_BASE_CPU + 0x201, 0x0000, 0x3);
+
+        tick(); tick();
+
+        dut->vpos     = (uint8_t)FG_VPOS;
+        dut->hblank_n = 1; dut->vblank_n = 1; dut->cpu_cs = 0;
+        tick(); tick();
+
+        // FG starts at cycle 545; drive for 800 total
+        dut->hblank_n = 0;
+        for (int i = 0; i < 800; i++) tick();
+        dut->hblank_n = 1;
+        tick(); tick();
+
+        int fg_errors = 0;
+        for (int px = 0; px < 16; px++) {
+            int hpos_val = FG_TX * 16 + px;
+            dut->hpos = (uint16_t)hpos_val;
+            dut->clk = 0; dut->eval();
+            uint16_t got = dut->pixel_out & 0x3FF;
+            uint16_t exp = bg_expected_pixel(hpos_val, FG_TILE_CODE, FG_COLOR,
+                                             false, false, FG_FETCH_PY);
+            if (got == exp) {
+                ++pass;
+            } else {
+                ++fail; ++fg_errors;
+                printf("FAIL [fg px=%d hpos=%d] got=0x%03X exp=0x%03X\n",
+                       px, hpos_val, got, exp);
+            }
+        }
+        if (fg_errors == 0) printf("  FG render test: 16/16 pixels OK\n");
     }
 
     printf("\n%s: %d/%d tests passed\n", (fail==0)?"PASS":"FAIL", pass, pass+fail);

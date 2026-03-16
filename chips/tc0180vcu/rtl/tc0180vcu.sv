@@ -151,10 +151,20 @@ logic [14:0] tx_vram_rd_addr;
 logic [15:0] tx_vram_q;
 assign tx_vram_q = vram[tx_vram_rd_addr];
 
+// BG/FG video read ports: async combinational reads (third + fourth ports)
+logic [14:0] bg_vram_rd_addr;
+logic [15:0] bg_vram_q;
+assign bg_vram_q = vram[bg_vram_rd_addr];
+
+logic [14:0] fg_vram_rd_addr;
+logic [15:0] fg_vram_q;
+assign fg_vram_q = vram[fg_vram_rd_addr];
+
 `else
 
 // Quartus: infer dual-port M10K via altsyncram (UNREGISTERED output → 1-cycle read via cpu_dout reg)
 // Port A: CPU read/write  Port B: TX video async read
+// Note: BG/FG share port B via mux (Quartus synthesis only supports 2 ports per M10K).
 logic [15:0] vram_dout;
 logic [14:0] tx_vram_rd_addr;
 logic [15:0] tx_vram_q;
@@ -183,6 +193,17 @@ altsyncram #(
     .wren_b    (1'b0),
     .q_b       (tx_vram_q)
 );
+
+// For Quartus: BG/FG VRAM reads are muxed onto port B (time-multiplexed with TX).
+// Since TX finishes first (320 cycles) and BG/FG run after, there is no conflict.
+// Mux: when BG or FG is actively reading, override port B address.
+// (Stub for now — Quartus gate target not yet active for BG/FG.)
+logic [14:0] bg_vram_rd_addr;
+logic [15:0] bg_vram_q;
+logic [14:0] fg_vram_rd_addr;
+logic [15:0] fg_vram_q;
+assign bg_vram_q = 16'b0;  // stub
+assign fg_vram_q = 16'b0;  // stub
 
 `endif
 
@@ -243,6 +264,15 @@ always_ff @(posedge clk) begin
 end
 // Direct array read in cpu_dout block (1-cycle latency)
 
+// Async read ports for FG and BG submodules
+logic [ 9:0] fg_scroll_rd_addr;
+logic [15:0] fg_scroll_q;
+assign fg_scroll_q = scroll_ram[fg_scroll_rd_addr];
+
+logic [ 9:0] bg_scroll_rd_addr;
+logic [15:0] bg_scroll_q;
+assign bg_scroll_q = scroll_ram[bg_scroll_rd_addr];
+
 `else
 
 logic [15:0] scroll_dout;
@@ -262,6 +292,14 @@ altsyncram #(
     .byteena_a (cpu_be),
     .q_a       (scroll_dout)
 );
+
+// Stub scroll ports for Quartus
+logic [ 9:0] fg_scroll_rd_addr;
+logic [15:0] fg_scroll_q;
+logic [ 9:0] bg_scroll_rd_addr;
+logic [15:0] bg_scroll_q;
+assign fg_scroll_q = 16'b0;
+assign bg_scroll_q = 16'b0;
 
 `endif
 
@@ -407,10 +445,7 @@ end
 // =============================================================================
 // TX Tilemap Render Module
 // =============================================================================
-// Instantiate the TX line-buffer render engine.
-// Pre-fetches the NEXT scanline's TX pixels during HBLANK.
-// =============================================================================
-logic [7:0] tx_pixel_w;
+logic [ 7:0] tx_pixel_w;
 logic [22:0] tx_gfx_addr;
 logic        tx_gfx_rd;
 
@@ -431,23 +466,161 @@ tc0180vcu_tx u_tx (
     .tx_pixel     (tx_pixel_w)
 );
 
-// GFX ROM: TX has exclusive access; BG/FG/sprite mux will extend this later
-assign gfx_addr = tx_gfx_addr;
-assign gfx_rd   = tx_gfx_rd;
+// =============================================================================
+// BG/FG Tilemap Render Modules
+// =============================================================================
+// Start sequencing: TX runs first (320 cycles), then BG, then FG.
+// We detect TX going idle and pulse bg_start; detect BG idle and pulse fg_start.
+//
+// TX FSM is in TX_IDLE (3'd0) when not running.
+// We use a registered "tx_was_busy" flag: set when TX leaves IDLE, clear when
+// TX returns to IDLE (after 320 cycles). BG_start = falling edge of tx_was_busy.
+//
+// Since we cannot read TX's internal state directly, we track via hblank_fall
+// and a cycle counter: TX takes 320 cycles (64 tiles × 5 states); BG takes
+// up to 220 cycles (22 tiles × 10 states + 3 scroll-init = 223 cycles);
+// FG takes same.
+//
+// Approach: pulse bg_start 321 cycles after hblank_fall; pulse fg_start 321+224
+// cycles after hblank_fall. A 10-bit counter is sufficient.
+// =============================================================================
+
+// HBLANK falling edge detect (also used in TX, but we need it here for sequencing)
+logic hblank_n_r;
+always_ff @(posedge clk) begin
+    if (!rst_n) hblank_n_r <= 1'b1;
+    else        hblank_n_r <= hblank_n;
+end
+logic hblank_fall;
+assign hblank_fall = ~hblank_n & hblank_n_r;
+
+// Sequencing counter: counts cycles since hblank_fall
+// Stops at 700 (well past all three layer completions)
+logic [9:0] hblank_cyc;
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        hblank_cyc <= 10'b0;
+    end else if (hblank_fall) begin
+        hblank_cyc <= 10'd1;
+    end else if (hblank_cyc != 10'b0 && hblank_cyc < 10'd700) begin
+        hblank_cyc <= hblank_cyc + 10'd1;
+    end else if (hblank_n) begin
+        hblank_cyc <= 10'b0;
+    end
+end
+
+// TX finishes at cycle 320 (64 tiles × 5 states).
+// Pulse bg_start at cycle 321.
+// BG finishes at cycle 321+223 = 544.
+// Pulse fg_start at cycle 545.
+logic bg_start;
+logic fg_start;
+assign bg_start = (hblank_cyc == 10'd321);
+assign fg_start = (hblank_cyc == 10'd545);
+
+// BG instance (PLANE=1)
+logic [22:0] bg_gfx_addr;
+logic        bg_gfx_rd;
+logic [ 9:0] bg_pixel_w;
+
+tc0180vcu_bg #(.PLANE(1)) u_bg (
+    .clk           (clk),
+    .rst_n         (rst_n),
+    .hblank_n      (hblank_n),
+    .vpos          (vpos),
+    .hpos          (hpos),
+    .start         (bg_start),
+    .vram_rd_addr  (bg_vram_rd_addr),
+    .vram_q        (bg_vram_q),
+    .scroll_rd_addr(bg_scroll_rd_addr),
+    .scroll_q      (bg_scroll_q),
+    .bank0         (bg_bank0),
+    .bank1         (bg_bank1),
+    .gfx_addr      (bg_gfx_addr),
+    .gfx_data      (gfx_data),
+    .gfx_rd        (bg_gfx_rd),
+    .layer_pixel   (bg_pixel_w)
+);
+
+// FG instance (PLANE=0)
+logic [22:0] fg_gfx_addr;
+logic        fg_gfx_rd;
+logic [ 9:0] fg_pixel_w;
+
+tc0180vcu_bg #(.PLANE(0)) u_fg (
+    .clk           (clk),
+    .rst_n         (rst_n),
+    .hblank_n      (hblank_n),
+    .vpos          (vpos),
+    .hpos          (hpos),
+    .start         (fg_start),
+    .vram_rd_addr  (fg_vram_rd_addr),
+    .vram_q        (fg_vram_q),
+    .scroll_rd_addr(fg_scroll_rd_addr),
+    .scroll_q      (fg_scroll_q),
+    .bank0         (fg_bank0),
+    .bank1         (fg_bank1),
+    .gfx_addr      (fg_gfx_addr),
+    .gfx_data      (gfx_data),
+    .gfx_rd        (fg_gfx_rd),
+    .layer_pixel   (fg_pixel_w)
+);
 
 // =============================================================================
-// Pixel Output
-// TX only for now; compositor will layer BG/FG/sprites in a later phase.
-// pixel_out[12:0] = {5'b0, color[3:0], pixel_index[3:0]}
+// GFX ROM Arbitration
+// TX has priority (runs first), then BG, then FG.
+// Since they are time-sequenced, only one will have gfx_rd=1 at a time.
+// Priority mux: TX > BG > FG.
 // =============================================================================
-assign pixel_out   = {5'b0, tx_pixel_w};
+always_comb begin
+    if (tx_gfx_rd) begin
+        gfx_addr = tx_gfx_addr;
+        gfx_rd   = 1'b1;
+    end else if (bg_gfx_rd) begin
+        gfx_addr = bg_gfx_addr;
+        gfx_rd   = 1'b1;
+    end else if (fg_gfx_rd) begin
+        gfx_addr = fg_gfx_addr;
+        gfx_rd   = 1'b1;
+    end else begin
+        gfx_addr = 23'b0;
+        gfx_rd   = 1'b0;
+    end
+end
+
+// =============================================================================
+// Pixel Output — Layer Compositor
+// Priority (both modes, no sprites yet):
+//   TX > FG > BG (highest to lowest; 0 = transparent)
+// pixel_out[12:0]:
+//   TX:    {5'b0, color[3:0], pixel_idx[3:0]}  (8-bit from tx_pixel_w)
+//   FG/BG: {3'b0, color[5:0], pixel_idx[3:0]}  (10-bit from fg/bg_pixel_w)
+// =============================================================================
+logic [3:0]  tx_pix_idx;
+logic [3:0]  fg_pix_idx;
+logic [3:0]  bg_pix_idx;
+assign tx_pix_idx = tx_pixel_w[3:0];
+assign fg_pix_idx = fg_pixel_w[3:0];
+assign bg_pix_idx = bg_pixel_w[3:0];
+
+always_comb begin
+    if (tx_pix_idx != 4'b0) begin
+        pixel_out = {5'b0, tx_pixel_w};
+    end else if (fg_pix_idx != 4'b0) begin
+        pixel_out = {3'b0, fg_pixel_w};
+    end else if (bg_pix_idx != 4'b0) begin
+        pixel_out = {3'b0, bg_pixel_w};
+    end else begin
+        pixel_out = 13'b0;
+    end
+end
+
 assign pixel_valid = hblank_n & vblank_n;
 
 // Suppress unused warnings for signals pending later compositor
 /* verilator lint_off UNUSED */
 logic _unused;
 assign _unused = ^{screen_flip, sprite_priority, fb_no_erase,
-                   fg_bank0, fg_bank1, bg_bank0, bg_bank1,
                    fg_lpb_ctrl, bg_lpb_ctrl,
                    display_page, fb_page_reg,
                    vblank_rise,
