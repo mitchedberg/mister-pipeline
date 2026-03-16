@@ -1,0 +1,98 @@
+name: Quartus Synthesis Gates
+
+on:
+  push:
+    paths:
+      - 'chips/**/*.sv'
+      - 'test_modules/**/*.sv'
+  pull_request:
+    paths:
+      - 'chips/**/*.sv'
+
+jobs:
+  quartus-synthesis:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Quartus
+        uses: actions/cache@v4
+        id: cache-quartus
+        with:
+          path: ~/intelFPGA_lite
+          key: quartus-lite-23.1
+
+      - name: Install Quartus Lite 23.1
+        if: steps.cache-quartus.outputs.cache-hit != 'true'
+        run: |
+          wget -q "https://downloads.intel.com/akdlm/software/acdsinst/23.1std/991/ib_installers/QuartusLiteSetup-23.1std.0.991-linux.run"
+          chmod +x QuartusLiteSetup-23.1std.0.991-linux.run
+          ./QuartusLiteSetup-23.1std.0.991-linux.run --mode unattended --accept_eula 1 --installdir ~/intelFPGA_lite
+          echo "$HOME/intelFPGA_lite/quartus/bin" >> $GITHUB_PATH
+
+      - name: Install Verilator + Yosys
+        run: sudo apt-get install -y verilator yosys
+
+      - name: Find changed SV files
+        id: changed
+        run: |
+          FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.sv$' | tr '\n' ' ')
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+
+      - name: Gate 2.5 - Lint (all changed files)
+        run: |
+          for f in ${{ steps.changed.outputs.files }}; do
+            echo "Linting $f..."
+            verilator --lint-only -Wall "$f" || exit 1
+          done
+
+      - name: Gate 3a - Yosys structural synthesis
+        run: |
+          for f in ${{ steps.changed.outputs.files }}; do
+            echo "Yosys check: $f..."
+            yosys -p "read_verilog -sv $f; synth; check" || exit 1
+          done
+
+      - name: Gate 3b - Quartus map (Cyclone V)
+        run: |
+          for f in ${{ steps.changed.outputs.files }}; do
+            MODULE=$(basename "$f" .sv)
+            mkdir -p /tmp/quartus_work/$MODULE
+            cd /tmp/quartus_work/$MODULE
+            cat > ${MODULE}.qpf << EOF
+          PROJECT_REVISION = "${MODULE}"
+          EOF
+            cat > ${MODULE}.qsf << EOF
+          set_global_assignment -name FAMILY "Cyclone V"
+          set_global_assignment -name DEVICE 5CSEBA6U23I7
+          set_global_assignment -name TOP_LEVEL_ENTITY ${MODULE}
+          set_global_assignment -name SYSTEMVERILOG_FILE $GITHUB_WORKSPACE/$f
+          EOF
+            quartus_map ${MODULE} --read_settings_files=on || exit 1
+            # Check for latch warnings
+            if grep -q "Inferred latch" ${MODULE}.map.rpt 2>/dev/null; then
+              echo "FAIL: Quartus inferred latches in $f"
+              grep "Inferred latch" ${MODULE}.map.rpt
+              exit 1
+            fi
+            echo "PASS: $f"
+          done
+
+      - name: Gate 3c - Quartus CDC analysis
+        run: |
+          for f in ${{ steps.changed.outputs.files }}; do
+            MODULE=$(basename "$f" .sv)
+            cd /tmp/quartus_work/$MODULE 2>/dev/null || continue
+            quartus_sta $MODULE --do_report_timing 2>/dev/null || true
+            # Report CDC crossings but don't fail — informational at this stage
+            echo "CDC report for $MODULE:"
+            grep -i "clock domain crossing\|cdc" ${MODULE}.sta.rpt 2>/dev/null || echo "No CDC report available"
+          done
+
+      - name: Upload synthesis reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthesis-reports
+          path: /tmp/quartus_work/**/*.rpt
