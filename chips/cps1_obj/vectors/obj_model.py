@@ -158,12 +158,41 @@ class CPS1OBJModel:
         # Reset line buffers
         self._linebuf = [[TRANSPARENT] * 512 for _ in range(262)]
 
+        # Apply 16-slot-per-scanline cap (matches RTL SIB hardware behavior).
+        # The SIB processes sprites ascending; each sprite entry consumes ONE
+        # slot on every scanline its tile rows cover. Max 16 slots per scanline.
+        # Only the first 16 (lowest-index = highest-priority) sprites per
+        # scanline are rendered; later ones are silently dropped.
+        MAX_SLOTS = 16
+        sl_count = [0] * 262  # slots used per scanline
+
+        # Build per-scanline allowed-sprite sets (ascending = priority order)
+        allowed = [set() for _ in range(262)]
+        for spr in sprites:
+            raw_y  = spr['raw_y']
+            ny     = spr['ny']
+            idx    = spr['idx']
+            # Compute effective Y (flip_screen applied)
+            eff_y = ((240 - raw_y) & 0x1FF) if self.flip_screen else raw_y
+            # Collect all unique scanlines covered by this sprite entry
+            covered = set()
+            for tile_row in range(ny + 1):
+                tile_y = (eff_y + tile_row * 16) & 0x1FF
+                for vsub in range(16):
+                    sl = (tile_y + vsub) & 0x1FF
+                    if sl < 262:
+                        covered.add(sl)
+            # Allocate one slot per covered scanline (ascending sprite order)
+            for sl in covered:
+                if sl_count[sl] < MAX_SLOTS:
+                    allowed[sl].add(idx)
+                    sl_count[sl] += 1
+
         # Render: iterate from last valid entry DOWN to 0 (reverse order).
         # Each write OVERWRITES — so entry 0, written last, ends up on top.
-        # This matches MAME's model (backward scan, last write wins).
-        # (jotego uses forward scan + first-wins; both give same priority.)
+        # Skip rendering on any scanline where the sprite was cap-dropped.
         for spr in reversed(sprites):
-            self._render_sprite(spr)
+            self._render_sprite(spr, allowed)
 
     # -----------------------------------------------------------------------
     # Public: get rendered line
@@ -175,7 +204,7 @@ class CPS1OBJModel:
     # -----------------------------------------------------------------------
     # Internal: render one sprite entry across all scanlines
     # -----------------------------------------------------------------------
-    def _render_sprite(self, spr):
+    def _render_sprite(self, spr, allowed=None):
         raw_x  = spr['raw_x']
         raw_y  = spr['raw_y']
         code   = spr['code']
@@ -228,6 +257,10 @@ class CPS1OBJModel:
                     scanline = (tile_y + vsub) & 0x1FF
                     if scanline >= 262:
                         continue  # beyond display frame
+
+                    # Respect 16-slot-per-scanline cap: skip if not allowed
+                    if allowed is not None and spr['idx'] not in allowed[scanline]:
+                        continue
 
                     # Effective vsub for ROM fetch (FLIPY inverts sub-row)
                     if flipy:

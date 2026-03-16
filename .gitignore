@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Verilator build output
+obj_dir/
+
+# MAME session files
+chips/cps1_obj/tier2/mame_dump.log
+chips/cps1_obj/tier2/cfg/
+
+# OS
+.DS_Store
