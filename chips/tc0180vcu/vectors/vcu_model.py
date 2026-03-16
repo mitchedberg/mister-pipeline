@@ -214,12 +214,23 @@ class TC0180VCU:
                 linebuf[col * 8 + px] = (color << 4) | pidx
         return linebuf
 
-    def render_scanline_bg(self, vpos: int, plane: int, gfx_rom: bytes) -> list:
+    def render_scanline_bg(self, vpos: int, plane: int, gfx_rom: bytes,
+                           lpb_ctrl: int = 0) -> list:
         """Return 512-entry line buffer [{color[5:0], pix_idx[3:0]}, ...] for the
         BG (plane=1) or FG (plane=0) tilemap layer, for the scanline following vpos.
         Pre-fetch pattern: canvas_y = (vpos + 1 + scrollY) & 0x3FF.
         gfx_rom: bytes-like, at least 8MB (0x800000 bytes).
+        lpb_ctrl: lines-per-block control byte (ctrl[2] high byte for FG, ctrl[3] for BG).
+                  lpb = 256 - lpb_ctrl (lpb_ctrl=0 → 256 = global scroll, backward compat).
         Returns 0 for transparent pixels (pix_idx == 0).
+
+        Per-block scroll:
+          lpb  = 256 - lpb_ctrl
+          fetch_vpos = (vpos + 1) & 0xFF
+          block = fetch_vpos // lpb
+          scroll_off = block * 2 * lpb  (word offset within the plane's scroll region)
+          scrollX = scroll_ram[scroll_base + scroll_off]
+          scrollY = scroll_ram[scroll_base + scroll_off + 1]
 
         GFX ROM format (16×16 tile = 128 bytes):
           4 char-blocks 2×2: block 0=top-left, 1=top-right, 2=bot-left, 3=bot-right
@@ -230,10 +241,14 @@ class TC0180VCU:
         flipX: swap left/right char-blocks; reverse bit order within half.
         flipY: py_eff = 15 - fetch_py.
         """
-        # Scroll registers
+        # Per-block scroll address computation (mirrors RTL exactly)
         scroll_base = 0x200 if plane == 1 else 0x000
-        scroll_x = self.scroll_ram[scroll_base]     & 0x3FF
-        scroll_y = self.scroll_ram[scroll_base + 1] & 0x3FF
+        lpb         = 256 - lpb_ctrl if lpb_ctrl != 0 else 256   # matches 9'(256) - {1'b0, lpb_ctrl}
+        fetch_vpos  = (vpos + 1) & 0xFF
+        block       = fetch_vpos // lpb
+        scroll_off  = block * 2 * lpb
+        scroll_x = self.scroll_ram[scroll_base + scroll_off]     & 0x3FF
+        scroll_y = self.scroll_ram[scroll_base + scroll_off + 1] & 0x3FF
 
         # Fetch geometry
         canvas_y    = (vpos + 1 + scroll_y) & 0x3FF

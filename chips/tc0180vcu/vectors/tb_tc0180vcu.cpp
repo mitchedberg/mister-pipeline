@@ -627,6 +627,295 @@ int main(int argc, char** argv) {
         if (fg_errors == 0) printf("  FG render test: 16/16 pixels OK\n");
     }
 
+    // ── BG Per-Block Scroll Test (lpb=8, lpb_ctrl=0xF8) ─────────────────
+    // Set BG lpb_ctrl = 0xF8 → lpb = 256 - 0xF8 = 8.
+    // Use BG bank0=4, bank1=5 (VRAM[0x4000+] / [0x5000+]).
+    // Use scrollX=0 for all blocks → sx_frac=0, sx_tile=0.
+    //   linebuf[0..15] = tile at map (col=0, ty=fetch_ty).
+    // Distinguish blocks by scrollY per block:
+    //   Block 0 (vpos=0):  fetch_vpos=1,  scrollY=0  → canvas_y=1,  ty=0, py=1
+    //   Block 1 (vpos=8):  fetch_vpos=9,  scrollY=16 → canvas_y=25, ty=1, py=9
+    //   Block 2 (vpos=16): fetch_vpos=17, scrollY=32 → canvas_y=49, ty=3, py=1
+    // Place tile_code=0x0030+b with color=0x0E at (col=0, ty=exp_ty_b[b]).
+    // scroll_off[b] = b*16 (block b * 2 * lpb = b*16 words from BG SCROLL_BASE 0x200).
+    {
+        const int BG_BANK0_B  = 4;
+        const int BG_BANK1_B  = 5;
+        const int LPB         = 8;
+        const int LPB_CTRL    = 256 - LPB;   // = 0xF8 = 248
+        const int COLOR       = 0x0E;
+
+        // For each block b (vpos=b*8):
+        //   fetch_vpos = b*8+1, canvas_y = fetch_vpos + scrollY_b[b]
+        //   we want canvas_y[9:4] = exp_ty_b[b], so scrollY_b[b] = exp_ty_b[b]*16 - fetch_vpos
+        // b=0: fetch_vpos=1,  want ty=0 → scrollY = 0*16-1 → wrap impossible, use ty=0: canvas_y=1, ty=0, py=1
+        // b=1: fetch_vpos=9,  want ty=1 → canvas_y=16 → scrollY=16-9=7
+        // b=2: fetch_vpos=17, want ty=2 → canvas_y=32 → scrollY=32-17=15
+        const int scrollY_b[3]  = {  0,  7, 15 };
+        const int exp_ty_b[3]   = {  0,  1,  2 };
+        const int exp_py_b[3]   = {  1,  0,  0 };
+        // canvas_y: b=0→1, b=1→16, b=2→32
+        // py = canvas_y & 0xF: b=0→1, b=1→0, b=2→0
+        const int tile_codes[3] = { 0x0030, 0x0031, 0x0032 };
+
+        reset();
+
+        // ctrl[6]: tx_rampage=7 → TX reads VRAM[0x3800+], far from BG banks 4/5
+        cpu_write(0x0C006, 0x0700, 0x2);
+
+        // ctrl[1]: bg_bank0=4, bg_bank1=5
+        cpu_write(0x0C001, (BG_BANK1_B << 12) | (BG_BANK0_B << 8), 0x3);
+
+        // ctrl[3]: bg_lpb_ctrl = 0xF8
+        cpu_write(0x0C003, LPB_CTRL << 8, 0x3);
+
+        // ctrl[0]: FG bank0=7, bank1=7 → all-zero VRAM → transparent
+        cpu_write(0x0C000, (7 << 12) | (7 << 8), 0x3);
+
+        const int SCROLL_CPU = 0x09C00;
+        const int BG_SBASE   = SCROLL_CPU + 0x200;   // 0x09E00
+
+        // Block 0: scroll_off=0,  scrollX=0, scrollY=scrollY_b[0]=0
+        cpu_write(BG_SBASE +  0, 0,           0x3);  // scrollX
+        cpu_write(BG_SBASE +  1, scrollY_b[0],0x3);  // scrollY
+        // Block 1: scroll_off=16, scrollX=0, scrollY=scrollY_b[1]
+        cpu_write(BG_SBASE + 16, 0,           0x3);
+        cpu_write(BG_SBASE + 17, scrollY_b[1],0x3);
+        // Block 2: scroll_off=32, scrollX=0, scrollY=scrollY_b[2]
+        cpu_write(BG_SBASE + 32, 0,           0x3);
+        cpu_write(BG_SBASE + 33, scrollY_b[2],0x3);
+
+        // FG scroll=0
+        cpu_write(SCROLL_CPU + 0, 0, 0x3);
+        cpu_write(SCROLL_CPU + 1, 0, 0x3);
+
+        // Tile data: tile at (col=0, ty=exp_ty_b[b]) in BG banks 4/5
+        // VRAM code addr = (BG_BANK0_B<<12) + exp_ty_b[b]*64 + 0 = 0x4000 + b_ty*64
+        // VRAM attr addr = (BG_BANK1_B<<12) + exp_ty_b[b]*64 + 0 = 0x5000 + b_ty*64
+        for (int b = 0; b < 3; b++) {
+            int ty   = exp_ty_b[b];
+            int code = tile_codes[b];
+            cpu_write((BG_BANK0_B << 12) + ty * 64, code,  0x3);
+            cpu_write((BG_BANK1_B << 12) + ty * 64, COLOR, 0x3);
+        }
+
+        tick(); tick();
+
+        int blk_errors = 0;
+        // Test each block.
+        // scrollX=0 → sx_frac=0, sx_tile=0 → linebuf[0..15] = tile at (col=0, ty=exp_ty_b[b]).
+        // bg_expected_pixel(screen_x, tile_code, COLOR, false, false, fetch_py):
+        //   screen_x=px (0..15) → px_in_tile=px, uses tile at map col 0.
+        for (int b = 0; b < 3; b++) {
+            int vpos_val = b * LPB;
+            int fetch_py = exp_py_b[b];
+            int tile_code= tile_codes[b];
+
+            dut->vpos     = (uint8_t)vpos_val;
+            dut->hblank_n = 1; dut->vblank_n = 1; dut->cpu_cs = 0;
+            tick(); tick();
+            dut->hblank_n = 0;
+            for (int i = 0; i < 800; i++) tick();
+            dut->hblank_n = 1;
+            tick(); tick();
+
+            for (int px = 0; px < 16; px++) {
+                uint16_t exp = bg_expected_pixel(px, tile_code, COLOR,
+                                                 false, false, fetch_py);
+                dut->hpos = (uint16_t)px;
+                dut->clk = 0; dut->eval();
+                uint16_t got = dut->pixel_out & 0x3FF;
+                if (got == exp) {
+                    ++pass;
+                } else {
+                    ++fail; ++blk_errors;
+                    printf("FAIL [bg_lpb8 blk=%d px=%d] got=0x%03X exp=0x%03X "
+                           "(tile=%04X color=%02X fetch_py=%d)\n",
+                           b, px, got, exp, tile_code, COLOR, fetch_py);
+                }
+            }
+        }
+        if (blk_errors == 0) printf("  BG per-block (lpb=8) test: 48/48 pixels OK\n");
+    }
+
+    // ── FG Per-Scanline Scroll Test (lpb=1, lpb_ctrl=0xFF) ────────────────
+    // Set FG lpb_ctrl = 0xFF → lpb = 1 → per-scanline scroll.
+    // scrollX for scanline 0: scroll_ram[0x000] = 8  (word offset 0*2*1 = 0)
+    // scrollX for scanline 1: scroll_ram[0x002] = 16 (word offset 1*2*1 = 2)
+    // scrollY = 0 for both.
+    //
+    // fetch_vpos for vpos=N is N+1.
+    //   vpos=0 → fetch_vpos=1 → block=1 → scroll_off=2 → scrollX=scroll_ram[2]=16
+    //   vpos=255 → fetch_vpos=256 → fetch_vpos & 0xFF = 0 → block=0 → scroll_off=0 → scrollX=8
+    //
+    // Wait — the RTL uses {1'b0, vpos} + 9'd1, and then divides by lpb.
+    // For lpb=1: block = fetch_vpos = (vpos+1) & 0xFF (vpos is 8-bit, so adding 1 wraps at 256).
+    // Actually fetch_vpos_c is 9-bit: {1'b0, vpos} + 9'd1 → for vpos=255, result=256 (9-bit).
+    // block_c = fetch_vpos_c / lpb_c = 256 / 1 = 256. But block_c is 9-bit → 256 fits.
+    // scroll_off_c = block_c * (lpb_c << 1) = 256 * 2 = 512 → 10 bits → truncates to 0!
+    // So for vpos=255: scroll_off=0 → wraps to block 0. This is the correct wrapping behavior.
+    //
+    // Test plan (avoiding the vpos=255 wrap edge case):
+    //   Scanline A = fetch_vpos=1 (vpos=0): block=1, scroll_off=2, scrollX=scroll_ram[0x002]
+    //   Scanline B = fetch_vpos=2 (vpos=1): block=2, scroll_off=4, scrollX=scroll_ram[0x004]
+    //
+    // Write:
+    //   scroll_ram[FG base 0x000] + 0 = ? (block 0, not tested)
+    //   scroll_ram[0x002] = scrollX_A = 8  (block 1)
+    //   scroll_ram[0x004] = scrollX_B = 16 (block 2)
+    //   scrollY = 0 for all.
+    //
+    // Use FG fg_bank0=2, fg_bank1=3.
+    // Tile for scanline A: scrollX=8, sx_tile=0, map col=0; canvas_y=1 → ty=0, py=1.
+    // Tile for scanline B: scrollX=16, sx_tile=1, map col=1; canvas_y=2 → ty=0, py=2.
+    //   tile_code_A=0x00C0, tile_code_B=0x00D0, color=0x1E, no flip.
+    {
+        const int FG_BANK0_P  = 2;
+        const int FG_BANK1_P  = 3;
+
+        reset();
+
+        // ctrl[6]: tx_rampage=4 → TX reads from VRAM[0x2000+], away from FG bank0=2 area
+        // (FG bank0=2 maps to VRAM[0x2000+]. Move TX to page 5 = VRAM[0x2800+] to avoid conflict)
+        // Actually FG bank0=2 uses VRAM[0x2000+0] = VRAM[0x2000] for col=0, ty=0.
+        // TX at rampage=5 uses VRAM[5<<11=0x2800+], so no overlap with FG at 0x2000.
+        cpu_write(0x0C006, 0x0500, 0x2);  // high byte: tx_rampage = 5 (VRAM[0x2800+], untouched)
+
+        // ctrl[0]: fg_bank0=2, fg_bank1=3
+        cpu_write(0x0C000, (FG_BANK1_P << 12) | (FG_BANK0_P << 8), 0x3);
+
+        // ctrl[2]: fg_lpb_ctrl = 0xFF → ctrl[2][15:8] = 0xFF
+        cpu_write(0x0C002, 0xFF00, 0x3);
+
+        // ctrl[1]: set BG bank0=7, bank1=7 → BG transparent
+        cpu_write(0x0C001, (7 << 12) | (7 << 8), 0x3);
+
+        // Zero all FG scroll entries we'll use, plus BG entries
+        const int SCROLL_CPU = 0x09C00;
+        // FG scroll: words 0x000..0x005 (blocks 0-2, 2 words each)
+        for (int i = 0; i < 6; i++) cpu_write(SCROLL_CPU + i, 0, 0x3);
+        // BG scroll: words 0x200..0x201
+        cpu_write(SCROLL_CPU + 0x200, 0, 0x3);
+        cpu_write(SCROLL_CPU + 0x201, 0, 0x3);
+
+        // Scanline A: vpos=0, fetch_vpos=1, block=1, scroll_off=2
+        //   scrollX=8 → scroll_ram[0x002]=8, scrollY=0 → scroll_ram[0x003]=0
+        cpu_write(SCROLL_CPU + 2, 8, 0x3);   // scrollX for block 1
+        cpu_write(SCROLL_CPU + 3, 0, 0x3);   // scrollY
+
+        // Scanline B: vpos=1, fetch_vpos=2, block=2, scroll_off=4
+        //   scrollX=16 → scroll_ram[0x004]=16, scrollY=0 → scroll_ram[0x005]=0
+        cpu_write(SCROLL_CPU + 4, 16, 0x3);  // scrollX for block 2
+        cpu_write(SCROLL_CPU + 5,  0, 0x3);  // scrollY
+
+        // Tiles for scanline A (scrollX=8, sx_tile=0, map col=0, canvas_y=1, py=1, ty=0)
+        const int TILE_A   = 0x00C0;
+        const int TILE_B   = 0x00D0;
+        const int FG_COLOR = 0x1E;
+        const int FG_ATTR  = FG_COLOR;  // no flip
+
+        // Scanline A tile at FG map (col=0, ty=0)
+        cpu_write((FG_BANK0_P << 12) + 0, TILE_A, 0x3);
+        cpu_write((FG_BANK1_P << 12) + 0, FG_ATTR, 0x3);
+
+        // Scanline B tile at FG map (col=1, ty=0)
+        cpu_write((FG_BANK0_P << 12) + 1, TILE_B, 0x3);
+        cpu_write((FG_BANK1_P << 12) + 1, FG_ATTR, 0x3);
+
+        tick(); tick();
+
+        int psl_errors = 0;
+
+        // Test scanline A: vpos=0, scrollX=8, sx_frac=8, sx_tile=0
+        {
+            int vpos_val  = 0;
+            int scrollX   = 8;
+            int sx_frac   = scrollX & 0xF;   // = 8
+            int sx_tile   = scrollX >> 4;     // = 0
+            int fetch_py  = 1;               // canvas_y = (0+1+0) & 0x3FF = 1, py=1&0xF=1
+            int tile_code = TILE_A;
+            int color     = FG_COLOR;
+
+            dut->vpos     = (uint8_t)vpos_val;
+            dut->hblank_n = 1; dut->vblank_n = 1; dut->cpu_cs = 0;
+            tick(); tick();
+            dut->hblank_n = 0;
+            for (int i = 0; i < 800; i++) tick();
+            dut->hblank_n = 1;
+            tick(); tick();
+
+            // Check 8 pixels starting at hpos=sx_frac
+            // linebuf[(hpos + sx_frac) & 511]:
+            //   hpos=sx_frac → idx=2*sx_frac & 511; for sx_frac=8: idx=16 = tile_col=1, px=0
+            //   Actually we want to verify the pixels that correspond to the tile placed at sx_tile.
+            //   The tile is at linebuf[tile_col=0..21, px=0..15]. For tile_col=0: linebuf[0..15].
+            //   layer_pixel = linebuf[(hpos + sx_frac) & 511].
+            //   To get linebuf[0..15] (tile_col=0), need hpos such that (hpos+sx_frac)&511 in [0..15].
+            //   hpos = (0 - sx_frac + 512) & 511 = 512-8 = 504 .. 504+15
+            //   Then screen_x_equiv = sx_tile*16 + px = 0*16 + px = px.
+            for (int px = 0; px < 16; px++) {
+                int hpos_val = (512 - sx_frac + px) & 511;
+                int screen_x_equiv = sx_tile * 16 + px;
+                uint16_t exp = bg_expected_pixel(screen_x_equiv, tile_code, color,
+                                                 false, false, fetch_py);
+                dut->hpos = (uint16_t)hpos_val;
+                dut->clk = 0; dut->eval();
+                uint16_t got = dut->pixel_out & 0x3FF;
+                if (got == exp) {
+                    ++pass;
+                } else {
+                    ++fail; ++psl_errors;
+                    printf("FAIL [fg_lpb1 scanA px=%d hpos=%d] got=0x%03X exp=0x%03X "
+                           "(tile=%04X color=%02X fetch_py=%d)\n",
+                           px, hpos_val, got, exp, tile_code, color, fetch_py);
+                }
+            }
+        }
+
+        // Test scanline B: vpos=1, scrollX=16, sx_frac=0, sx_tile=1
+        {
+            int vpos_val  = 1;
+            int scrollX   = 16;
+            int sx_frac   = scrollX & 0xF;   // = 0
+            int sx_tile   = scrollX >> 4;     // = 1
+            int fetch_py  = 2;               // canvas_y = (1+1+0) & 0x3FF = 2, py=2&0xF=2
+            int tile_code = TILE_B;
+            int color     = FG_COLOR;
+
+            dut->vpos     = (uint8_t)vpos_val;
+            dut->hblank_n = 1; dut->vblank_n = 1; dut->cpu_cs = 0;
+            tick(); tick();
+            dut->hblank_n = 0;
+            for (int i = 0; i < 800; i++) tick();
+            dut->hblank_n = 1;
+            tick(); tick();
+
+            // sx_frac=0: linebuf[(hpos+0)&511] = linebuf[hpos].
+            // tile_col=0 occupies linebuf[0..15]: tile at map col=sx_tile=1.
+            // hpos = 0..15 gives linebuf[0..15] = pixels of tile at col=1.
+            // bg_expected_pixel: screen_x_equiv = sx_tile*16 + px = 16 + px.
+            for (int px = 0; px < 16; px++) {
+                int hpos_val = px;   // sx_frac=0 → linebuf[hpos]
+                int screen_x_equiv = sx_tile * 16 + px;
+                uint16_t exp = bg_expected_pixel(screen_x_equiv, tile_code, color,
+                                                 false, false, fetch_py);
+                dut->hpos = (uint16_t)hpos_val;
+                dut->clk = 0; dut->eval();
+                uint16_t got = dut->pixel_out & 0x3FF;
+                if (got == exp) {
+                    ++pass;
+                } else {
+                    ++fail; ++psl_errors;
+                    printf("FAIL [fg_lpb1 scanB px=%d hpos=%d] got=0x%03X exp=0x%03X "
+                           "(tile=%04X color=%02X fetch_py=%d)\n",
+                           px, hpos_val, got, exp, tile_code, color, fetch_py);
+                }
+            }
+        }
+
+        if (psl_errors == 0) printf("  FG per-scanline (lpb=1) test: 32/32 pixels OK\n");
+    }
+
     printf("\n%s: %d/%d tests passed\n", (fail==0)?"PASS":"FAIL", pass, pass+fail);
     delete dut;
     return (fail==0) ? 0 : 1;

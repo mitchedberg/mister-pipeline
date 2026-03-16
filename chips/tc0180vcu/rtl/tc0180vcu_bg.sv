@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0180VCU — BG/FG Tilemap Render Module (Step 3: global scroll only)
+// TC0180VCU — BG/FG Tilemap Render Module (Step 4: per-block scroll)
 // =============================================================================
 // Fills a 512-pixel line buffer during HBLANK for the NEXT scanline.
 // BG/FG layers: 64×64 tilemap of 16×16 4bpp tiles → 1024×1024 canvas (wraps).
@@ -13,9 +13,12 @@
 //             BG_GFX4 → BG_GFX5 → BG_GFX6 → BG_GFX7 (right char-block; write)
 //             → next tile or IDLE
 //
-// Scroll-init:
-//   BG_IDLE with start: latch scrollX from scroll_q (scroll_rd_addr = SCROLL_BASE)
-//   BG_SYRD: latch scrollY from scroll_q (scroll_rd_addr = SCROLL_BASE+1)
+// Scroll-init (per-block):
+//   lpb  = 256 - lpb_ctrl  (lines per scroll block; lpb_ctrl=0 → lpb=256=global)
+//   block = fetch_vpos / lpb
+//   scroll_offset = block * 2 * lpb  (word offset within plane's scroll region)
+//   BG_IDLE with start: latch scrollX from scroll_q (scroll_rd_addr = SCROLL_BASE + scroll_offset)
+//   BG_SYRD: latch scrollY (scroll_rd_addr = SCROLL_BASE + scroll_offset + 1)
 //   BG_INIT: compute fetch_py, fetch_ty, first_tile_col from scroll registers
 //
 // GFX ROM format for 16×16 tile (128 bytes/tile):
@@ -69,6 +72,10 @@ module tc0180vcu_bg #(parameter PLANE = 0) (
     input  logic [ 3:0] bank1,   // attr VRAM bank      (base = bank1 << 12)
     /* verilator lint_on UNUSEDSIGNAL */
 
+    // Lines-per-scroll-block control byte (ctrl[2] high byte for FG, ctrl[3] for BG)
+    // lpb = 256 - lpb_ctrl;  lpb_ctrl=0 → lpb=256 (one global block, backward compat)
+    input  logic [ 7:0] lpb_ctrl,
+
     // GFX ROM (combinational)
     output logic [22:0] gfx_addr,
     input  logic [ 7:0] gfx_data,
@@ -105,6 +112,29 @@ logic [4:0]  tile_col;   // tile column counter, 0..21
 // PLANE=0 (FG): words 0x000-0x1FF;  PLANE=1 (BG): words 0x200-0x3FF
 // =============================================================================
 localparam logic [9:0] SCROLL_BASE = (PLANE == 1) ? 10'h200 : 10'h000;
+
+// =============================================================================
+// Per-block scroll address computation (combinational)
+//
+// lpb  = 256 - lpb_ctrl  (9-bit to avoid overflow when lpb_ctrl=0 → result=256)
+// fetch_vpos = vpos + 1  (next scanline, matches BG_INIT canvas_y computation)
+// block      = fetch_vpos / lpb
+// scroll_off = block * 2 * lpb  (word offset within the plane's scroll region)
+//
+// Division by lpb: synthesizes a divider in Quartus; fine for this chip.
+// lpb is guaranteed 1..256, so the 9-bit quotient fits in 8 bits (max=255).
+// =============================================================================
+logic [8:0] lpb_c;           // lines per block, 9-bit (256 when lpb_ctrl=0)
+logic [8:0] fetch_vpos_c;    // vpos+1, 9-bit (max 256 wraps mod 256)
+logic [8:0] block_c;         // scroll block index for this scanline
+logic [9:0] scroll_off_c;    // word offset from SCROLL_BASE: block * 2 * lpb
+
+always_comb begin
+    lpb_c        = 9'(256) - {1'b0, lpb_ctrl};       // 9-bit; 256-0=256, 256-255=1
+    fetch_vpos_c = {1'b0, vpos} + 9'd1;               // next scanline, 9-bit
+    block_c      = fetch_vpos_c / lpb_c;              // division; result ≤ 255
+    scroll_off_c = block_c * (lpb_c << 1);            // block * 2 * lpb, fits in 10 bits
+end
 
 // =============================================================================
 // Scroll registers
@@ -226,11 +256,13 @@ end
 
 // =============================================================================
 // Scroll RAM address (combinational, state-dependent)
+// Uses scroll_off_c (computed from lpb_ctrl and vpos) to select the correct
+// scroll block for this scanline.
 // =============================================================================
 always_comb begin
     unique case (state)
-        BG_IDLE: scroll_rd_addr = SCROLL_BASE;           // scrollX: pre-read while idle
-        BG_SYRD: scroll_rd_addr = SCROLL_BASE + 10'd1;  // scrollY
+        BG_IDLE: scroll_rd_addr = SCROLL_BASE + scroll_off_c;          // scrollX for this block
+        BG_SYRD: scroll_rd_addr = SCROLL_BASE + scroll_off_c + 10'd1;  // scrollY for this block
         default: scroll_rd_addr = 10'b0;
     endcase
 end

@@ -536,6 +536,7 @@ tc0180vcu_bg #(.PLANE(1)) u_bg (
     .scroll_q      (bg_scroll_q),
     .bank0         (bg_bank0),
     .bank1         (bg_bank1),
+    .lpb_ctrl      (bg_lpb_ctrl),
     .gfx_addr      (bg_gfx_addr),
     .gfx_data      (gfx_data),
     .gfx_rd        (bg_gfx_rd),
@@ -560,6 +561,7 @@ tc0180vcu_bg #(.PLANE(0)) u_fg (
     .scroll_q      (fg_scroll_q),
     .bank0         (fg_bank0),
     .bank1         (fg_bank1),
+    .lpb_ctrl      (fg_lpb_ctrl),
     .gfx_addr      (fg_gfx_addr),
     .gfx_data      (gfx_data),
     .gfx_rd        (fg_gfx_rd),
@@ -621,7 +623,6 @@ assign pixel_valid = hblank_n & vblank_n;
 /* verilator lint_off UNUSED */
 logic _unused;
 assign _unused = ^{screen_flip, sprite_priority, fb_no_erase,
-                   fg_lpb_ctrl, bg_lpb_ctrl,
                    display_page, fb_page_reg,
                    vblank_rise,
                    video_ctrl[5], video_ctrl[2:1]};
