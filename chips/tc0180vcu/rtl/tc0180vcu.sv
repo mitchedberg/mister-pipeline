@@ -146,10 +146,18 @@ always_ff @(posedge clk) begin
 end
 // No intermediate vram_dout register — cpu_dout reads directly from array (1-cycle latency)
 
+// TX video read port: async combinational read (second port, no clock)
+logic [14:0] tx_vram_rd_addr;
+logic [15:0] tx_vram_q;
+assign tx_vram_q = vram[tx_vram_rd_addr];
+
 `else
 
 // Quartus: infer dual-port M10K via altsyncram (UNREGISTERED output → 1-cycle read via cpu_dout reg)
+// Port A: CPU read/write  Port B: TX video async read
 logic [15:0] vram_dout;
+logic [14:0] tx_vram_rd_addr;
+logic [15:0] tx_vram_q;
 altsyncram #(
     .operation_mode         ("BIDIR_DUAL_PORT"),
     .width_a                (16),
@@ -170,10 +178,10 @@ altsyncram #(
     .wren_a    (sel_vram && cpu_we),
     .byteena_a (cpu_be),
     .q_a       (vram_dout),
-    .address_b (15'b0),
+    .address_b (tx_vram_rd_addr),
     .data_b    (16'b0),
     .wren_b    (1'b0),
-    .q_b       ()
+    .q_b       (tx_vram_q)
 );
 
 `endif
@@ -397,54 +405,52 @@ always_ff @(posedge clk) begin
 end
 
 // =============================================================================
-// Tilemap Pixel Generator — TX Layer (simplest, no scroll)
-// Produces a 4-bit palette entry for the current pixel position.
-// TX layer: 64×32 tiles × 8×8px = 512×256 px canvas.
+// TX Tilemap Render Module
 // =============================================================================
-// TX tile address: vram word = tx_rambank + (ty*64 + tx)
-//   where tx = hpos[5:3] (column within tx grid), ty = vpos[4:3] ... wait:
-//   TX grid is 64×32 tiles of 8×8px, covering 512×256 screen.
-//   tx_col = hpos[8:3] (0..63), tx_row = vpos[7:3] (0..31)
-// TX tile address: tx_rampage<<11 + row*64 + col
-// Max value: 15<<11 + 31*64 + 63 = 0x7800 + 0x800 - 1 = 0x7FFF → fits 15 bits
-logic [14:0] tx_tile_addr;
-logic [ 5:0] tx_col;
-logic [ 4:0] tx_row;
-logic [ 2:0] tx_px, tx_py;
-assign tx_col = hpos[8:3];
-assign tx_row = vpos[7:3];
-assign tx_px  = hpos[2:0];
-assign tx_py  = vpos[2:0];
-// tx_rampage[3:0] << 11 | tx_row[4:0] << 6 | tx_col[5:0] — exact 15-bit concatenation
-assign tx_tile_addr = {tx_rampage, tx_row, tx_col};
+// Instantiate the TX line-buffer render engine.
+// Pre-fetches the NEXT scanline's TX pixels during HBLANK.
+// =============================================================================
+logic [7:0] tx_pixel_w;
+logic [22:0] tx_gfx_addr;
+logic        tx_gfx_rd;
 
-// Note: Full tile rendering requires a GFX ROM fetch pipeline.
-// The GFX ROM address generation and pixel output are stubs until
-// the full render pipeline (section2_behavior.md §6) is implemented.
+tc0180vcu_tx u_tx (
+    .clk          (clk),
+    .rst_n        (rst_n),
+    .hblank_n     (hblank_n),
+    .vpos         (vpos),
+    .hpos         (hpos),
+    .vram_rd_addr (tx_vram_rd_addr),
+    .vram_q       (tx_vram_q),
+    .tx_tilebank0 (tx_tilebank0),
+    .tx_tilebank1 (tx_tilebank1),
+    .tx_rampage   (tx_rampage),
+    .gfx_addr     (tx_gfx_addr),
+    .gfx_data     (gfx_data),
+    .gfx_rd       (tx_gfx_rd),
+    .tx_pixel     (tx_pixel_w)
+);
+
+// GFX ROM: TX has exclusive access; BG/FG/sprite mux will extend this later
+assign gfx_addr = tx_gfx_addr;
+assign gfx_rd   = tx_gfx_rd;
 
 // =============================================================================
-// GFX ROM Interface — stub (full implementation: separate pipeline stage)
+// Pixel Output
+// TX only for now; compositor will layer BG/FG/sprites in a later phase.
+// pixel_out[12:0] = {5'b0, color[3:0], pixel_index[3:0]}
 // =============================================================================
-assign gfx_addr = 23'b0;
-assign gfx_rd   = 1'b0;
-
-// =============================================================================
-// Pixel Output — stub (full implementation: tile fetch + compositor)
-// =============================================================================
-assign pixel_out   = 13'b0;
+assign pixel_out   = {5'b0, tx_pixel_w};
 assign pixel_valid = hblank_n & vblank_n;
 
-// Suppress unused warnings for signals reserved for full render pipeline
+// Suppress unused warnings for signals pending later compositor
 /* verilator lint_off UNUSED */
 logic _unused;
 assign _unused = ^{screen_flip, sprite_priority, fb_no_erase,
                    fg_bank0, fg_bank1, bg_bank0, bg_bank1,
                    fg_lpb_ctrl, bg_lpb_ctrl,
-                   tx_tilebank0, tx_tilebank1,
-                   tx_tile_addr, tx_px, tx_py,
                    display_page, fb_page_reg,
                    vblank_rise,
-                   gfx_data,
                    video_ctrl[5], video_ctrl[2:1]};
 /* verilator lint_on UNUSED */
 

@@ -179,6 +179,41 @@ class TC0180VCU:
 
     NUM_SPRITES = 408
 
+    # ── TX render ───────────────────────────────────────────────────────────
+
+    def tx_render_line(self, vpos: int, gfx_rom: bytes) -> list:
+        """Return 512-byte line buffer {color[3:0], pixel_idx[3:0]} for the
+        scanline following vpos (pre-fetch pattern: fills during HBLANK).
+        gfx_rom: bytes-like, at least 8MB (0x800000 bytes).
+        """
+        fetch_vpos = (vpos + 1) & 0xFF
+        fetch_py   = fetch_vpos & 0x7
+        fetch_row  = (fetch_vpos >> 3) & 0x1F
+        tx_base    = self.tx_rampage << 11
+
+        linebuf = [0] * 512
+        for col in range(64):
+            vram_idx  = tx_base + fetch_row * 64 + col
+            word      = self.vram[vram_idx]
+            color     = (word >> 12) & 0xF
+            bank_sel  = (word >> 11) & 0x1
+            tile_idx  = word & 0x7FF
+            bank      = self.tx_bank1 if bank_sel else self.tx_bank0
+            gfx_code  = (bank << 11) | tile_idx
+            gfx_base  = gfx_code * 32 + fetch_py * 2
+            b0 = gfx_rom[gfx_base + 0]   # plane 0
+            b1 = gfx_rom[gfx_base + 1]   # plane 1
+            b2 = gfx_rom[gfx_base + 16]  # plane 2
+            b3 = gfx_rom[gfx_base + 17]  # plane 3
+            for px in range(8):
+                bit = 7 - px
+                pidx = (((b3 >> bit) & 1) << 3 |
+                        ((b2 >> bit) & 1) << 2 |
+                        ((b1 >> bit) & 1) << 1 |
+                        ((b0 >> bit) & 1))
+                linebuf[col * 8 + px] = (color << 4) | pidx
+        return linebuf
+
     def sprite(self, idx: int) -> dict:
         """Return sprite dict for sprite index (0 = highest priority)."""
         base  = idx * 8
