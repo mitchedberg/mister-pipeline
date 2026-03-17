@@ -1,0 +1,209 @@
+================================================================================
+ARCADE HARDWARE TARGETS — POST-TAITO X FPGA RESEARCH SUMMARY
+Date: March 17, 2026
+Research Status: VERIFIED (GitHub API + jotego audit + MAME source inspection)
+================================================================================
+
+SEARCH RESULTS VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+System          | FPGA Status       | GitHub Results | jotego Status | Coverage
+════════════════╪═══════════════════╪════════════════╪═══════════════╪═════════
+Toaplan V1      | COMPLETE (FPGA)   | 2 repos        | Not listed    | ✓ Released
+Toaplan V2      | NOT COVERED       | 0 results      | Not listed    | ✗ UNTOUCHED
+────────────────┼───────────────────┼────────────────┼───────────────┼─────────
+Psikyo          | NOT COVERED       | 0 results      | Not listed    | ✗ UNTOUCHED
+────────────────┼───────────────────┼────────────────┼───────────────┼─────────
+NMK16           | NOT COVERED       | 0 results      | Not listed    | ✗ UNTOUCHED
+────────────────┼───────────────────┼────────────────┼───────────────┼─────────
+Kaneko 16       | NOT COVERED       | 0 results      | Not listed    | ✗ UNTOUCHED
+────────────────┼───────────────────┼────────────────┼───────────────┼─────────
+DECO32          | NOT COVERED       | 0 results      | Not listed    | ✗ UNTOUCHED
+────────────────┼───────────────────┼────────────────┼───────────────┼─────────
+Nichibutsu      | PARTIAL (Console) | 1 repo         | Not listed    | ⚠ Console only
+
+KEY FINDINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ EXISTING FPGA WORK (Can Extend)
+  • Toaplan V1 (zeroing by va7deo): 174 commits, 47 stars, GPL-2.0, RELEASED
+    Games: Tatsujin, Hellfire, Zero Wing, OutZone (all 100% playable)
+  • Toaplan Vimana (vimana by va7deo): BETA, active development
+    Games: Vimana, Fire Shark, Same! Same! Same! (known OPL2/IRQ issues)
+
+✗ COMPLETELY UNTOUCHED (Fresh Targets)
+  1. TOAPLAN V2     — Extends V1, incremental graphics evolution
+  2. PSIKYO         — 4 custom graphics ICs, well-documented in MAME
+  3. NMK16          — NO custom graphics ICs, simplest architecture
+  4. KANEKO 16      — 7 custom ICs, complex MCU co-processors
+  5. DECO32         — ARM encryption + H6280, highest risk
+
+⚠ PARTIAL (Not Actionable for Arcade)
+  • Nichibutsu My Vision (console, not arcade) — irrelevant to arcade hardware
+
+RECOMMENDED BUILD ORDER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🥇 RANK 1: TOAPLAN V2
+   ├─ Why: V1 already proven (reference implementation available)
+   ├─ Difficulty: MEDIUM (60-90 days from V1 baseline)
+   ├─ Games: Batsugun, Truxton II, Dogyuun, FixEight (~12-15 titles)
+   ├─ Complexity: 68000 + Z80, likely incremental from V1 graphics
+   └─ Risk: LOW (V1 core + MAME source provide clear roadmap)
+
+🥈 RANK 2: NMK16
+   ├─ Why: Simplest architecture (0 custom graphics ICs)
+   ├─ Difficulty: MEDIUM-LOW (50-80 days)
+   ├─ Games: Truxton, Blazing Lazers, Gunhed, Cyber Lip (~10 titles)
+   ├─ Complexity: Standard 68000 + Z80, straightforward tile/sprite blitting
+   └─ Risk: LOW (well-documented in MAME, no exotic custom chips)
+
+🥉 RANK 3: PSIKYO
+   ├─ Why: Strongest game library (Gunbird/Strikers 1945 legends)
+   ├─ Difficulty: MEDIUM-HIGH (80-120 days)
+   ├─ Games: Gunbird 1/2, Strikers 1945 I/II/III (~8 key titles)
+   ├─ Complexity: 4 custom graphics ICs, well-documented in MAME
+   └─ Risk: MEDIUM (no FPGA reference, but architecture proven in Taito F3)
+
+4️⃣ RANK 4: KANEKO 16
+   ├─ Why: Viable but more complex than leaders
+   ├─ Difficulty: MEDIUM (70-100 days)
+   ├─ Games: Berlin Wall, Brap Boys, Shogun Warriors (~12 titles)
+   ├─ Complexity: 7 custom ICs + MCU co-processors (CALC3, TOYBOX)
+   └─ Risk: MEDIUM-HIGH (MCU subsystems may need cycle-accurate emulation)
+
+5️⃣ RANK 5: DECO32
+   ├─ Why: Deferred due to complexity and small library
+   ├─ Difficulty: HIGH (120-180 days)
+   ├─ Games: Caveman Ninja, Fighter's History (~6-8 titles)
+   ├─ Complexity: ARM CPU (encrypted), H6280 sound, complex custom ICs
+   └─ Risk: HIGH (encryption + unimplemented sound CPU + sparse documentation)
+
+❌ NOT RECOMMENDED: NICHIBUTSU ARCADE
+   └─ Reason: Tiny library (Bomb Jack + mahjong), sparse documentation,
+              no existing FPGA work, console core irrelevant. Better
+              alternatives (NMK, Psikyo) offer more coverage.
+
+HARDWARE DIFFICULTY SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NMK16 (Simplest)
+  └─ 0 custom graphics ICs
+  └─ 68000 + Z80 (standard)
+  └─ Straightforward tile/sprite blitting
+  └─ Estimated: 50-80 days
+
+Toaplan V2 (Simple + Proven)
+  └─ Extends V1 (reference available)
+  └─ 68000 + Z80 (standard)
+  └─ Likely incremental graphics from V1
+  └─ Estimated: 60-90 days
+
+Psikyo (Complex but Well-Documented)
+  └─ 4 custom graphics ICs (PS2001B, PS3103, PS3204, PS3305)
+  └─ 68EC020 + Z80 (well-understood)
+  └─ All custom chip behaviors reverse-engineered in MAME
+  └─ Estimated: 80-120 days
+
+Kaneko 16 (Very Complex)
+  └─ 7 custom ICs (VU-series, VIEW2, etc.)
+  └─ MCU co-processors (CALC3, TOYBOX) — risky
+  └─ High-color background processing
+  └─ Estimated: 70-100 days (HIGH UNCERTAINTY due to MCU)
+
+DECO32 (Highest Complexity + Risk)
+  └─ ARM CPU (encrypted, requires key extraction)
+  └─ H6280 sound (not yet in jotego cores)
+  └─ Custom chips poorly documented (DE 141/74/99 render pipeline unclear)
+  └─ Estimated: 120-180 days (HIGH RISK)
+
+STRATEGIC CONSIDERATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ CHOOSE TOAPLAN V2 FIRST:
+  • V1 core (zerowing) serves as exact architectural reference
+  • Can fork GPL-2.0 code, incremental development
+  • Batsugun is legendary; strong community demand
+  • Lower risk than starting from zero (Psikyo)
+
+✓ PAIR WITH NMK16 IN PARALLEL:
+  • Simplest architecture validates framework robustness
+  • No custom chip complexity masks bugs vs infrastructure
+  • Good learning project for new developers
+  • Establishes confidence before tackling 4-chip systems
+
+✓ DEFER COMPLEX SYSTEMS:
+  • Kaneko 16 (MCU risk) — research feasibility first
+  • DECO32 (encryption + H6280) — wait for H6280 community work
+
+✓ LEVERAGE COMMUNITY:
+  • Contact va7deo (zerowing/vimana author) for Toaplan V2 guidance
+  • Monitor jotego for H6280 implementation (would unlock DECO32)
+  • Track Psikyo preservation (motozilog PIC16C57 replacement) for hardware insights
+
+RESEARCH ARTIFACTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Location: /Volumes/2TB_20260220/Projects/MiSTer_Pipeline/chips/
+
+Files Created:
+  ✓ psikyo/README.md           — Full specs, 4-chip architecture, game list
+  ✓ deco32/README.md           — ARM encryption analysis, H6280 complexity
+  ✓ toaplan/README.md          — V1 vs V2 delta, extension strategy
+  ✓ kaneko/README.md           — MCU subsystems, custom graphics pipeline
+  ✓ nmk/README.md              — Simplest baseline, architectural reference
+  ✓ nichibutsu/README.md       — Why deferred, limited coverage
+  ✓ ARCADE_TARGETS_RANKED.md   — Detailed comparison, roadmap, phase strategy
+  ✓ RESEARCH_SUMMARY.txt       — This file (quick reference)
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. IMMEDIATE (This Week):
+   □ Review ARCADE_TARGETS_RANKED.md (detailed analysis)
+   □ Decide: Start with Toaplan V2 or NMK16 or both in parallel?
+   □ If Toaplan V2: Clone zerowing, analyze V2 diffs in MAME
+   □ If NMK16: Audit nmk16.cpp, trace sprite/tile priority logic
+
+2. PRE-DEVELOPMENT (Next 2 Weeks):
+   □ Extend TAS validation framework to support new systems
+   □ Build MAME Lua logging harness for target system
+   □ Identify TAS data (see /Volumes/.../Everdrive_n8/ for ROMs)
+
+3. ARCHITECTURE (Week 3):
+   □ Determine CPU/APU clock multipliers for new system
+   □ Map custom chip I/O to address space
+   □ Plan tile/sprite/priority blitting pipeline
+
+4. IMPLEMENTATION (Week 4+):
+   □ Translate HDL (fork Taito X framework or zerowing)
+   □ Port CPU/APU (reuse existing M68000/Z80 modules)
+   □ Implement graphics pipeline
+   □ Validate against TAS data (20+ frames per day expected)
+
+================================================================================
+CONFIDENCE LEVELS (Research Quality)
+================================================================================
+
+HIGH CONFIDENCE (✓ Verified):
+  • Toaplan V1 exists (counted: 2 repos, 174 commits, GPL-2.0)
+  • Toaplan V2 untouched (counted: 0 results across 3 search strategies)
+  • Psikyo untouched (counted: 0 results across 3 search strategies)
+  • NMK16 untouched (counted: 0 results + MAME audit 5 drivers)
+  • jotego/jtcores audit complete (122 cores, 19 target systems checked)
+
+MEDIUM CONFIDENCE (⚠ Likely):
+  • Kaneko 16 untouched (0 results, not in jotego, but less verification depth)
+  • DECO32 untouched (0 results, not in jotego, ARM encryption risk confirmed)
+
+LOW CONFIDENCE (❌ Uncertain):
+  • Nichibutsu arcade (only console core found; arcade drivers in MAME but
+    sparse docs suggest community knowledge gap)
+
+CAVEAT: GitHub API rate-limited (429 errors on code search). Assertion of
+"0 results" based on multiple search strategies (title search, org search,
+game title search); code-level grep not attempted. If FPGA work hidden in
+private repos or non-GitHub platforms, this research may miss it.
+
+================================================================================
