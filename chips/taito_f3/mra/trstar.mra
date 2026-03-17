@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<misterromdescription>
+  <name>Twin Stars</name>
+  <setname>trstar</setname>
+  <rbf>taito_f3</rbf>
+  <mameversion>0230</mameversion>
+  <year>1992</year>
+  <manufacturer>Taito</manufacturer>
+  <category>Arcade</category>
+  <buttons names="Button1,Button2,Button3,Start,Coin" default="A,B,X,Y,Start,Select"/>
+  <rom index="0" zip="trstar.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="trstar.01" crc="00000000" offset="0x0000000" length="0x00300000"/>
+    <part name="trstar.03" crc="00000000" offset="0x0200000" length="0x00300000"/>
+    <part name="trstar.05" crc="00000000" offset="0x0A00000" length="0x00300000"/>
+    <part name="trstar.07" crc="00000000" offset="0x0E00000" length="0x00100000"/>
+    <part name="trstar.08" crc="00000000" offset="0x1200000" length="0x00100000"/>
+    <part name="trstar.09" crc="00000000" offset="0x1400000" length="0x00100000"/>
+    <part name="trstar.10" crc="00000000" offset="0x1600000" length="0x00200000"/>
+    <part name="trstar.11" crc="00000000" offset="0x1800000" length="0x00400000"/>
+    <part name="trstar.12" crc="00000000" offset="0x1C00000" length="0x00080000"/>
+    <part name="trstar.13" crc="00000000" offset="0x1C80000" length="0x00080000"/>
+    <part name="trstar.14" crc="00000000" offset="0x1D00000" length="0x00040000"/>
+  </rom>
+</misterromdescription>
