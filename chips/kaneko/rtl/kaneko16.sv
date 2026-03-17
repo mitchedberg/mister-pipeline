@@ -5,6 +5,19 @@
 /* verilator lint_off UNUSEDPARAM */
 `default_nettype none
 
+// Sprite descriptor struct definition
+typedef struct packed {
+    logic [8:0]  y;
+    logic [15:0] tile_num;
+    logic [8:0]  x;
+    logic [3:0]  palette;
+    logic        flip_x;
+    logic        flip_y;
+    logic [3:0]  prio;
+    logic [3:0]  size;
+    logic        valid;
+} kaneko16_sprite_t;
+
 module kaneko16 #(
     // ROM/RAM address space configuration
     parameter ADDR_WIDTH = 21,           // 24-bit address bus from 68000 (A[23:1] due to 16-bit word alignment)
@@ -69,7 +82,13 @@ module kaneko16 #(
     output logic [7:0]                  mcu_status,     // MCU status byte
     output logic [7:0]                  mcu_command,    // MCU command
     output logic [7:0]                  mcu_param1,     // MCU parameter 1
-    output logic [7:0]                  mcu_param2      // MCU parameter 2
+    output logic [7:0]                  mcu_param2,     // MCU parameter 2
+
+    // Gate 2: Sprite scanner outputs
+    output kaneko16_sprite_t            display_list [0:255],
+    output logic [7:0]                  display_list_count,
+    output logic                        display_list_ready,
+    output logic                        irq_vblank
 );
 
     // ========================================================================
@@ -505,6 +524,157 @@ module kaneko16 #(
 
     assign vblank_irq = 1'b0;  // Would be driven by video timing
     assign hblank_irq = 1'b0;  // Would be driven by video timing
+
+    // ========================================================================
+    // Gate 2: Sprite Scanner FSM (VU-001/VU-002)
+    // ========================================================================
+
+    // Sprite scanner state machine
+    typedef enum logic [1:0] {
+        SPRITE_IDLE = 2'b00,
+        SPRITE_SCAN = 2'b01,
+        SPRITE_DONE = 2'b10
+    } sprite_fsm_state_t;
+
+    sprite_fsm_state_t sprite_state, sprite_state_next;
+    logic [7:0] sprite_index;
+    logic [7:0] display_list_ptr;
+    logic [8:0] scan_counter;  // Counts 0-256 for detecting end of scan
+    kaneko16_sprite_t display_list_shadow [0:255];
+    logic [7:0] display_list_count_shadow;
+    logic display_list_ready_shadow;
+
+    // Extract sprite descriptor fields from RAM words
+    // Each sprite: 8 words (16 bytes), stored as 16-bit words in sprite_ram
+    // Word 0: Y position [8:0]
+    // Word 1: tile number [15:0]
+    // Word 2: X position [8:0]
+    // Word 3: attributes (palette [3:0], flip_x, flip_y, priority [3:0], size [3:0])
+    // Words 4-7: reserved
+
+    wire [12:0] sprite_addr_base = {sprite_index, 3'b000};
+    wire [8:0] sprite_y = sprite_ram_mem[sprite_addr_base][8:0];
+    wire [15:0] sprite_tile = sprite_ram_mem[sprite_addr_base + 13'b1][15:0];
+    wire [8:0] sprite_x = sprite_ram_mem[sprite_addr_base + 13'b10][8:0];
+    wire [3:0] sprite_palette = sprite_ram_mem[sprite_addr_base + 13'b11][3:0];
+    wire sprite_flip_x = sprite_ram_mem[sprite_addr_base + 13'b11][4];
+    wire sprite_flip_y = sprite_ram_mem[sprite_addr_base + 13'b11][5];
+    wire [3:0] sprite_priority = sprite_ram_mem[sprite_addr_base + 13'b11][9:6];
+    wire [3:0] sprite_size = sprite_ram_mem[sprite_addr_base + 13'b11][13:10];
+
+    // Detect VBlank rising edge
+    logic vsync_n_prev, vblank_rising;
+    assign vblank_rising = ~vsync_n && vsync_n_prev;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            vsync_n_prev <= 1'b1;
+        end else begin
+            vsync_n_prev <= vsync_n;
+        end
+    end
+
+    // Sprite scanner FSM
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            sprite_state <= SPRITE_IDLE;
+            sprite_index <= 8'h00;
+            display_list_ptr <= 8'h00;
+            display_list_count_shadow <= 8'h00;
+            display_list_ready_shadow <= 1'b0;
+            for (int i = 0; i < 256; i++) begin
+                display_list_shadow[i].y <= 9'h1FF;
+                display_list_shadow[i].tile_num <= 16'h0000;
+                display_list_shadow[i].x <= 9'h000;
+                display_list_shadow[i].palette <= 4'h0;
+                display_list_shadow[i].flip_x <= 1'b0;
+                display_list_shadow[i].flip_y <= 1'b0;
+                display_list_shadow[i].prio <= 4'h0;
+                display_list_shadow[i].size <= 4'h0;
+                display_list_shadow[i].valid <= 1'b0;
+            end
+        end else begin
+            case (sprite_state_next)
+                SPRITE_IDLE: begin
+                    // Nothing to do
+                end
+
+                SPRITE_SCAN: begin
+                    if (sprite_state == SPRITE_IDLE) begin
+                        // Just entering SCAN state - initialize
+                        sprite_index <= 8'h00;
+                        display_list_ptr <= 8'h00;
+                        display_list_count_shadow <= 8'h00;
+                        display_list_ready_shadow <= 1'b0;
+                        scan_counter <= 9'h000;
+                    end else begin
+                        // In SCAN state - process one sprite
+                        if (sprite_y != 9'h1FF) begin
+                            if (display_list_ptr <= 8'd255) begin
+                                display_list_shadow[display_list_ptr[7:0]].y <= sprite_y;
+                                display_list_shadow[display_list_ptr[7:0]].tile_num <= sprite_tile;
+                                display_list_shadow[display_list_ptr[7:0]].x <= sprite_x;
+                                display_list_shadow[display_list_ptr[7:0]].palette <= sprite_palette;
+                                display_list_shadow[display_list_ptr[7:0]].flip_x <= sprite_flip_x;
+                                display_list_shadow[display_list_ptr[7:0]].flip_y <= sprite_flip_y;
+                                display_list_shadow[display_list_ptr[7:0]].prio <= sprite_priority;
+                                display_list_shadow[display_list_ptr[7:0]].size <= sprite_size;
+                                display_list_shadow[display_list_ptr[7:0]].valid <= 1'b1;
+                                display_list_ptr <= display_list_ptr + 1'b1;
+                            end
+                        end
+                        sprite_index <= sprite_index + 1'b1;
+                        scan_counter <= scan_counter + 1'b1;
+                    end
+                end
+
+                SPRITE_DONE: begin
+                    display_list_count_shadow <= display_list_ptr;
+                    display_list_ready_shadow <= 1'b1;
+                end
+
+                default: begin
+                    // No operation
+                end
+            endcase
+
+            sprite_state <= sprite_state_next;
+        end
+    end
+
+    // FSM state transition logic
+    always_comb begin
+        sprite_state_next = sprite_state;
+
+        case (sprite_state)
+            SPRITE_IDLE: begin
+                if (vblank_rising) begin
+                    sprite_state_next = SPRITE_SCAN;
+                end
+            end
+
+            SPRITE_SCAN: begin
+                // Transition to DONE after scanning all 256 sprites
+                if (scan_counter == 9'd256) begin
+                    sprite_state_next = SPRITE_DONE;
+                end
+            end
+
+            SPRITE_DONE: begin
+                sprite_state_next = SPRITE_IDLE;
+            end
+
+            default: begin
+                sprite_state_next = SPRITE_IDLE;
+            end
+        endcase
+    end
+
+    // Output assignments
+    assign display_list = display_list_shadow;
+    assign display_list_count = display_list_count_shadow;
+    assign display_list_ready = display_list_ready_shadow;
+    assign irq_vblank = vblank_rising;
 
     // ========================================================================
     // Unused Signal Lint Suppression
