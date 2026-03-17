@@ -66,32 +66,20 @@ module taito_f3 (
     output logic        snd_dtack_n,    // DTACK to sound CPU
     output logic        snd_reset_n,    // sound CPU reset (from main CPU writes)
 
-    // ── GFX ROM Streams (4 independent, toggle-handshake) ─────────────────────
-    // TC0630FDP exposes byte-address read strobes internally (gfx_lo_rd/gfx_hi_rd).
-    // These are bridged to SDRAM arbiter toggle-handshake ports here.
-    // spr_lo  → sprite low 4bpp planes
-    // spr_hi  → sprite high 2bpp planes
-    // tile_lo → tilemap low 4bpp planes
-    // tile_hi → tilemap high 2bpp planes
-    output logic [26:0] gfx_slo_addr,   // SDRAM word address (sprites lo)
-    input  logic [31:0] gfx_slo_data,   // SDRAM read data
-    output logic        gfx_slo_req,    // toggle-handshake request
-    input  logic        gfx_slo_ack,    // toggle-handshake acknowledge
+    // ── GFX ROM Streams (2 SDRAM ports, arbitrated by taito_f3_gfx_arbiter) ────
+    // taito_f3_gfx_arbiter time-multiplexes 4 internal GFX streams onto these
+    // 2 SDRAM ports using toggle-handshake:
+    //   Port A: spr_lo (sprite low 4bpp)  + til_lo (tilemap low 4bpp)
+    //   Port B: spr_hi (sprite high 2bpp) + til_hi (tilemap high 2bpp)
+    output logic [26:0] gfx_a_addr,     // SDRAM word address — port A
+    input  logic [15:0] gfx_a_data,     // SDRAM read data   — port A (16-bit)
+    output logic        gfx_a_req,      // toggle-handshake request — port A
+    input  logic        gfx_a_ack,      // toggle-handshake ack     — port A
 
-    output logic [26:0] gfx_shi_addr,   // SDRAM word address (sprites hi)
-    input  logic [31:0] gfx_shi_data,   // SDRAM read data
-    output logic        gfx_shi_req,
-    input  logic        gfx_shi_ack,
-
-    output logic [26:0] gfx_tlo_addr,   // SDRAM word address (tilemap lo)
-    input  logic [31:0] gfx_tlo_data,   // SDRAM read data
-    output logic        gfx_tlo_req,
-    input  logic        gfx_tlo_ack,
-
-    output logic [26:0] gfx_thi_addr,   // SDRAM word address (tilemap hi)
-    input  logic [31:0] gfx_thi_data,   // SDRAM read data
-    output logic        gfx_thi_req,
-    input  logic        gfx_thi_ack,
+    output logic [26:0] gfx_b_addr,     // SDRAM word address — port B
+    input  logic [15:0] gfx_b_data,     // SDRAM read data   — port B (16-bit)
+    output logic        gfx_b_req,      // toggle-handshake request — port B
+    input  logic        gfx_b_ack,      // toggle-handshake ack     — port B
 
     // ── SDRAM (program ROM + sound ROM) ───────────────────────────────────────
     output logic [26:0] sdr_addr,
@@ -121,10 +109,8 @@ module taito_f3 (
 // =============================================================================
 // SDRAM base addresses (fixed F3 layout)
 // =============================================================================
-localparam logic [26:0] GFX_SPR_LO_BASE  = 27'h0200000;  // 2MB: sprites lo 4bpp
-localparam logic [26:0] GFX_SPR_HI_BASE  = 27'h0A00000;  // 8MB+: sprites hi 2bpp
-localparam logic [26:0] GFX_TILE_LO_BASE = 27'h0E00000;  // tilemap lo
-localparam logic [26:0] GFX_TILE_HI_BASE = 27'h1200000;  // tilemap hi
+// GFX ROM base addresses are now managed by taito_f3_gfx_arbiter parameters
+// (see instantiation below).  Program ROM base kept here for the CPU bridge.
 localparam logic [26:0] PROG_ROM_BASE    = 27'h0000000;  // 68EC020 program ROM
 
 // =============================================================================
@@ -387,99 +373,129 @@ tc0630fdp u_fdp (
 );
 
 // =============================================================================
-// GFX ROM SDRAM Bridge (FDP byte-address → toggle-handshake)
+// GFX ROM Arbiter (taito_f3_gfx_arbiter)
 // =============================================================================
-// The FDP exposes TWO byte-address read strobes:
-//   gfx_lo_rd + gfx_lo_addr[24:0] → sprite lo 4bpp planes
-//   gfx_hi_rd + gfx_hi_addr[24:0] → sprite hi 2bpp (also used for tiles hi)
+// Multiplexes 4 GFX ROM streams from TC0630FDP onto 2 SDRAM ports.
+//   Port A: spr_lo (sprite low 4bpp, priority) + til_lo (tilemap low 4bpp)
+//   Port B: spr_hi (sprite high 2bpp, priority) + til_hi (tilemap high 2bpp)
 //
-// NOTE: The current TC0630FDP stub has only gfx_lo and gfx_hi ports, shared
-// for both sprites and tilemap.  Full 4-stream arbitration will be needed when
-// the sprite/tile engines are active.  For now:
-//   gfx_lo → spr_lo stream (GFX_SPR_LO_BASE)
-//   gfx_hi → spr_hi stream (GFX_SPR_HI_BASE)
-//   tile streams (gfx_tlo, gfx_thi): driven from GFX_TILE_LO_BASE / GFX_TILE_HI_BASE
-//   (stub: no current FDP port for separate tile ROM — tile lo/hi held inactive)
+// TC0630FDP currently exposes only two byte-address strobe ports (gfx_lo / gfx_hi).
+// These are mapped to spr_lo and spr_hi respectively.  The til_lo and til_hi
+// streams are stubbed inactive (req held low) until TC0630FDP gains separate
+// tilemap GFX ROM ports.
 //
-// Each bridge: detect rising edge of rd strobe → compute SDRAM word addr →
-// toggle req → wait for ack → present byte from 32-bit SDRAM word.
+// The arbiter uses level-sensitive req/ack internally.  The FDP's gfx_lo_rd /
+// gfx_hi_rd read-strobes are converted to level-sensitive requests here using
+// registered edge-detect, then passed to the arbiter.
+//
+// Arbiter SDRAM ports are 16-bit wide.  The FDP presents 25-bit byte addresses;
+// we pass addr[24:1] (24-bit, word-granular) as the 24-bit lower portion of the
+// 25-bit stream address (byte LSB is handled by the arbiter / caller).
 
-// ── GFX Lo (sprites lo 4bpp) ────────────────────────────────────────────────
-logic       slo_rd_r;
-logic       slo_pending;
-logic [1:0] slo_byte_sel;  // which byte of 32-bit SDRAM word
+// ── FDP gfx_lo_rd → level-sensitive spr_lo_req ──────────────────────────────
+logic        slo_rd_r;
+logic        slo_req_level;
+logic [22:0] slo_req_addr;
+logic [15:0] slo_arb_data;
+logic        slo_arb_ack;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
-        gfx_slo_req  <= 1'b0;
-        slo_pending  <= 1'b0;
         slo_rd_r     <= 1'b0;
-        gfx_slo_addr <= 27'b0;
-        slo_byte_sel <= 2'b0;
+        slo_req_level <= 1'b0;
+        slo_req_addr  <= 23'b0;
     end else begin
         slo_rd_r <= fdp_gfx_lo_rd;
-        if (fdp_gfx_lo_rd && !slo_rd_r && !slo_pending) begin
-            // Rising edge of gfx_lo_rd: issue new request
-            gfx_slo_addr <= GFX_SPR_LO_BASE + {4'b0, fdp_gfx_lo_addr[24:2]};  // 32-bit word addr
-            slo_byte_sel <= fdp_gfx_lo_addr[1:0];
-            slo_pending  <= 1'b1;
-            gfx_slo_req  <= ~gfx_slo_req;   // toggle to request
-        end else if (slo_pending && (gfx_slo_req == gfx_slo_ack)) begin
-            slo_pending <= 1'b0;
+        if (fdp_gfx_lo_rd && !slo_rd_r) begin
+            // Rising edge: latch address and assert level request
+            slo_req_addr  <= fdp_gfx_lo_addr[23:1];
+            slo_req_level <= 1'b1;
+        end else if (slo_arb_ack) begin
+            slo_req_level <= 1'b0;
         end
     end
 end
 
-// Select byte from 32-bit SDRAM word (big-endian: byte 0 = bits[31:24])
-always_comb begin
-    case (slo_byte_sel)
-        2'b00: fdp_gfx_lo_data = gfx_slo_data[31:24];
-        2'b01: fdp_gfx_lo_data = gfx_slo_data[23:16];
-        2'b10: fdp_gfx_lo_data = gfx_slo_data[15:8];
-        2'b11: fdp_gfx_lo_data = gfx_slo_data[7:0];
-    endcase
-end
+// Return byte to FDP: select from 16-bit arbiter word using addr LSB
+assign fdp_gfx_lo_data = fdp_gfx_lo_addr[0] ? slo_arb_data[7:0] : slo_arb_data[15:8];
 
-// ── GFX Hi (sprites hi 2bpp) ─────────────────────────────────────────────────
-logic       shi_rd_r;
-logic       shi_pending;
-logic [1:0] shi_byte_sel;
+// ── FDP gfx_hi_rd → level-sensitive spr_hi_req ──────────────────────────────
+logic        shi_rd_r;
+logic        shi_req_level;
+logic [21:0] shi_req_addr;
+logic [15:0] shi_arb_data;
+logic        shi_arb_ack;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
-        gfx_shi_req  <= 1'b0;
-        shi_pending  <= 1'b0;
-        shi_rd_r     <= 1'b0;
-        gfx_shi_addr <= 27'b0;
-        shi_byte_sel <= 2'b0;
+        shi_rd_r      <= 1'b0;
+        shi_req_level <= 1'b0;
+        shi_req_addr  <= 22'b0;
     end else begin
         shi_rd_r <= fdp_gfx_hi_rd;
-        if (fdp_gfx_hi_rd && !shi_rd_r && !shi_pending) begin
-            gfx_shi_addr <= GFX_SPR_HI_BASE + {4'b0, fdp_gfx_hi_addr[24:2]};
-            shi_byte_sel <= fdp_gfx_hi_addr[1:0];
-            shi_pending  <= 1'b1;
-            gfx_shi_req  <= ~gfx_shi_req;
-        end else if (shi_pending && (gfx_shi_req == gfx_shi_ack)) begin
-            shi_pending <= 1'b0;
+        if (fdp_gfx_hi_rd && !shi_rd_r) begin
+            shi_req_addr  <= fdp_gfx_hi_addr[22:1];
+            shi_req_level <= 1'b1;
+        end else if (shi_arb_ack) begin
+            shi_req_level <= 1'b0;
         end
     end
 end
 
-always_comb begin
-    case (shi_byte_sel)
-        2'b00: fdp_gfx_hi_data = gfx_shi_data[31:24];
-        2'b01: fdp_gfx_hi_data = gfx_shi_data[23:16];
-        2'b10: fdp_gfx_hi_data = gfx_shi_data[15:8];
-        2'b11: fdp_gfx_hi_data = gfx_shi_data[7:0];
-    endcase
-end
+assign fdp_gfx_hi_data = fdp_gfx_hi_addr[0] ? shi_arb_data[7:0] : shi_arb_data[15:8];
 
-// ── Tile Lo / Hi — stub (no FDP port yet; hold inactive) ────────────────────
-// These will be activated when TC0630FDP tilemap engine gets separate GFX ROM ports.
-assign gfx_tlo_addr = GFX_TILE_LO_BASE;
-assign gfx_tlo_req  = 1'b0;
-assign gfx_thi_addr = GFX_TILE_HI_BASE;
-assign gfx_thi_req  = 1'b0;
+// ── Arbiter instantiation ────────────────────────────────────────────────────
+// SDRAM base addresses in 16-bit word space (integration_plan.md §4):
+//   sprites lo  @ byte 0x0200000 → word 0x0100000
+//   sprites hi  @ byte 0x0A00000 → word 0x0500000
+//   tilemap lo  @ byte 0x0E00000 → word 0x0700000
+//   tilemap hi  @ byte 0x1200000 → word 0x0900000
+taito_f3_gfx_arbiter #(
+    .SPR_LO_BASE  (27'h0100000),
+    .SPR_HI_BASE  (27'h0500000),
+    .TILE_LO_BASE (27'h0700000),
+    .TILE_HI_BASE (27'h0900000)
+) u_gfx_arb (
+    .clk          (clk_sys),
+    .reset_n      (reset_n),
+
+    // spr_lo: from FDP gfx_lo bridge
+    .spr_lo_addr  (slo_req_addr),
+    .spr_lo_req   (slo_req_level),
+    .spr_lo_data  (slo_arb_data),
+    .spr_lo_ack   (slo_arb_ack),
+
+    // spr_hi: from FDP gfx_hi bridge
+    .spr_hi_addr  (shi_req_addr),
+    .spr_hi_req   (shi_req_level),
+    .spr_hi_data  (shi_arb_data),
+    .spr_hi_ack   (shi_arb_ack),
+
+    // til_lo / til_hi: stub — inactive until TC0630FDP gains tilemap GFX ROM ports
+    /* verilator lint_off PINCONNECTEMPTY */
+    .til_lo_addr  (22'b0),
+    .til_lo_req   (1'b0),
+    .til_lo_data  (),
+    .til_lo_ack   (),
+
+    .til_hi_addr  (21'b0),
+    .til_hi_req   (1'b0),
+    .til_hi_data  (),
+    .til_hi_ack   (),
+    /* verilator lint_on PINCONNECTEMPTY */
+
+    // SDRAM port A (sprites lo + tilemap lo)
+    .sdram_a_addr (gfx_a_addr),
+    .sdram_a_req  (gfx_a_req),
+    .sdram_a_data (gfx_a_data),
+    .sdram_a_ack  (gfx_a_ack),
+
+    // SDRAM port B (sprites hi + tilemap hi)
+    .sdram_b_addr (gfx_b_addr),
+    .sdram_b_req  (gfx_b_req),
+    .sdram_b_data (gfx_b_data),
+    .sdram_b_ack  (gfx_b_ack)
+);
 
 // Palette stub (pal_data fed back to FDP; FDA handles palette internally)
 assign fdp_pal_data = 16'hFFFF;
@@ -805,7 +821,7 @@ assign vblank  = fdp_vblank;
 // =============================================================================
 /* verilator lint_off UNUSED */
 logic _unused;
-assign _unused = ^{clk_pix, gfx_tlo_data, gfx_thi_data, gfx_tlo_ack, gfx_thi_ack,
+assign _unused = ^{clk_pix,
                    fdp_rgb_out, fdp_pixel_valid, fdp_hpos, fdp_vpos,
                    fdp_pal_addr, fdp_pal_rd, fdp_pixel_valid_d,
                    cpu_reset_n_out, fio_eeprom_di, fio_eeprom_clk, fio_eeprom_cs,
