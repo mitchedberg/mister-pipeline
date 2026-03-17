@@ -1,5 +1,5 @@
 """
-TC0630FDP behavioral model — Python reference implementation (Steps 1–15).
+TC0630FDP behavioral model — Python reference implementation (Steps 1–16).
 
 Step 1 scope:
   - Display control register bank (16 × 16-bit registers)
@@ -117,6 +117,26 @@ Step 14 scope (added):
       mode 10 → Reverse blend B using B_src/B_dst coefficients.
       mode 00/11 → Opaque: output src color directly.
 
+Step 16 scope (added):
+  - Pivot RAM (16384 × 32-bit words = 64KB):
+      CPU-writable column-major 8×8 4bpp tile map (64×32 tiles = 512×256 canvas).
+  - write_pivot_ram(addr, data): write one 32-bit word to Pivot RAM.
+  - _line_pivot_ctrl(scan): returns (enable, bank, blend) from §9.4 sb_word upper byte.
+      sb_word[13]=enable, sb_word[14]=bank_select, sb_word[8]=blend_select.
+  - render_pivot_scanline(vpos): returns 320-entry list of 8-bit {color, pen} values.
+      color=always 0. pen==0 → transparent.
+      Column-major tile addressing: tile_idx = col*32 + row (64×32 map).
+      Bank select: bank=1 adds 32 to tile column index (wraps mod 64).
+      Scroll: xscroll_int=pixel_xscroll[15:6], yscroll_int=pixel_yscroll[15:7].
+      canvas_y = (vpos+1 + yscroll_int) & 0xFF; canvas_x = screen_col + xscroll_int.
+      Charlayout nibble decode (same as text layer §11.2):
+        pvt_q = pivot_ram[tile_idx*8 + py] (32-bit word for pixel row py)
+        px0→q[23:20], px1→q[19:16], px2→q[31:28], px3→q[27:24]
+        px4→q[7:4],   px5→q[3:0],   px6→q[15:12], px7→q[11:8]
+  - composite_scanline() and _composite_with_blend() updated to include pivot layer
+    at fixed priority 8 (between sprite and text in the rolling arbitration).
+  - blend_scanline() unchanged (pivot uses same blend infrastructure as sprite/PF).
+
 Step 15 scope (added):
   - _line_mosaic(scan): returns (mosaic_rate[3:0], pf_en4[3:0], spr_en) from §9.6
       mo_word at byte 0x6400–0x65FF → word 0x3200 + (scan & 0xFF).
@@ -222,27 +242,30 @@ class TaitoF3Model:
     SPR_RAM_WORDS   = 32768   # 32K × 16-bit words = 64KB Sprite RAM (step 8)
     SPR_COUNT       = 256     # Step 8: scan only first 256 entries
     PAL_RAM_WORDS   = 8192    # 8K × 16-bit words palette RAM (step 13)
+    PIVOT_RAM_WORDS = 16384   # 16K × 32-bit words = 64KB Pivot RAM (step 16)
 
     def __init__(self):
-        self.ctrl     = [0] * 16          # 16 × 16-bit display control registers
-        self.text_ram = [0] * self.TEXT_RAM_WORDS   # step 2
-        self.char_ram = [0] * self.CHAR_RAM_BYTES   # step 2 (bytes)
-        self.pf_ram   = [[0] * self.PF_RAM_WORDS for _ in range(4)]  # step 3
-        self.gfx_rom  = [0] * self.GFX_ROM_WORDS   # step 3 (32-bit words)
-        self.line_ram = [0] * self.LINE_RAM_WORDS   # step 5 (16-bit words)
-        self.spr_ram  = [0] * self.SPR_RAM_WORDS    # step 8 (16-bit words)
-        self.pal_ram  = [0] * self.PAL_RAM_WORDS    # step 13 (16-bit words)
+        self.ctrl      = [0] * 16          # 16 × 16-bit display control registers
+        self.text_ram  = [0] * self.TEXT_RAM_WORDS   # step 2
+        self.char_ram  = [0] * self.CHAR_RAM_BYTES   # step 2 (bytes)
+        self.pf_ram    = [[0] * self.PF_RAM_WORDS for _ in range(4)]  # step 3
+        self.gfx_rom   = [0] * self.GFX_ROM_WORDS   # step 3 (32-bit words)
+        self.line_ram  = [0] * self.LINE_RAM_WORDS   # step 5 (16-bit words)
+        self.spr_ram   = [0] * self.SPR_RAM_WORDS    # step 8 (16-bit words)
+        self.pal_ram   = [0] * self.PAL_RAM_WORDS    # step 13 (16-bit words)
+        self.pivot_ram = [0] * self.PIVOT_RAM_WORDS  # step 16 (32-bit words)
         self._rst()
 
     def _rst(self):
         """Reset all state (mirrors async_rst_n behaviour)."""
-        self.ctrl     = [0] * 16
-        self.text_ram = [0] * self.TEXT_RAM_WORDS
-        self.char_ram = [0] * self.CHAR_RAM_BYTES
-        self.pf_ram   = [[0] * self.PF_RAM_WORDS for _ in range(4)]
-        self.gfx_rom  = [0] * self.GFX_ROM_WORDS
-        self.line_ram = [0] * self.LINE_RAM_WORDS
-        self.spr_ram  = [0] * self.SPR_RAM_WORDS
+        self.ctrl      = [0] * 16
+        self.text_ram  = [0] * self.TEXT_RAM_WORDS
+        self.char_ram  = [0] * self.CHAR_RAM_BYTES
+        self.pf_ram    = [[0] * self.PF_RAM_WORDS for _ in range(4)]
+        self.gfx_rom   = [0] * self.GFX_ROM_WORDS
+        self.line_ram  = [0] * self.LINE_RAM_WORDS
+        self.spr_ram   = [0] * self.SPR_RAM_WORDS
+        self.pivot_ram = [0] * self.PIVOT_RAM_WORDS
 
     # ── Address decode ──────────────────────────────────────────────────────
 
@@ -1147,6 +1170,93 @@ class TaitoF3Model:
         off      = grid_sum % sr
         return scol - off
 
+    def write_pivot_ram(self, addr: int, data: int) -> None:
+        """Write one 32-bit word to Pivot RAM (Step 16).
+
+        addr: 14-bit 32-bit word address (0..16383)
+        data: 32-bit charlayout pixel row value
+        """
+        addr &= 0x3FFF
+        self.pivot_ram[addr] = data & 0xFFFFFFFF
+
+    def _line_pivot_ctrl(self, scan: int) -> tuple:
+        """Return (enable, bank, blend) for the pivot layer for scanline scan (Step 16).
+
+        section1 §9.4 sb_word at byte 0x6000–0x61FF → word 0x3000 + (scan & 0xFF):
+          sb_word[13] = bit[5] of upper byte = ls_pivot_en   (1=layer enabled)
+          sb_word[14] = bit[6] of upper byte = ls_pivot_bank (0=bank0, 1=bank1)
+          sb_word[ 8] = bit[0] of upper byte = ls_pivot_blend (0=opaque, 1=blend A)
+        """
+        scan8 = scan & 0xFF
+        sb_word = self.line_ram[0x3000 + scan8]
+        enable = bool((sb_word >> 13) & 1)
+        bank   = bool((sb_word >> 14) & 1)
+        blend  = bool((sb_word >>  8) & 1)
+        return enable, bank, blend
+
+    def render_pivot_scanline(self, vpos: int) -> list:
+        """Render pivot/pixel layer for the scanline AFTER vpos (Step 16).
+
+        Returns 320-entry list of 8-bit values {color[3:0], pen[3:0]}.
+        color is always 0 (per MAME pivot_tile_info). pen==0 → transparent.
+
+        Canvas: 64×32 column-major tile map of 8×8 4bpp tiles.
+        tile_idx(col, row) = col*32 + row  (column-major, TILEMAP_SCAN_COLS)
+
+        Scroll:
+          xscroll_int = pixel_xscroll[15:6]  (10-bit)
+          yscroll_int = pixel_yscroll[15:7]   (9-bit)
+          canvas_y = (vpos+1 + yscroll_int) & 0xFF  (8-bit, 256-line wrap)
+          canvas_x for screen col c = (c + xscroll_int) & 0x1FF  (9-bit, 512px wrap)
+
+        Charlayout nibble decode (§11.2 pivotlayout, same as §11.1 charlayout):
+          pvt_q = pivot_ram[{tile_idx[10:0], py[2:0]}]  (14-bit 32-bit word address)
+          px0→q[23:20], px1→q[19:16], px2→q[31:28], px3→q[27:24]
+          px4→q[7:4],   px5→q[3:0],   px6→q[15:12], px7→q[11:8]
+        """
+        render_scan = vpos + 1
+        if render_scan < V_START or render_scan >= V_END:
+            return [0] * 320
+
+        enable, bank, _blend = self._line_pivot_ctrl(render_scan)
+        if not enable:
+            return [0] * 320
+
+        xscroll_int = (self.pixel_xscroll >> 6) & 0x3FF   # 10-bit
+        yscroll_int = (self.pixel_yscroll >> 7) & 0x1FF   # 9-bit
+        canvas_y    = (render_scan + yscroll_int) & 0xFF  # 8-bit wrap (256-line canvas)
+        fetch_py    = canvas_y & 0x7                       # row within tile (0..7)
+        fetch_row   = (canvas_y >> 3) & 0x1F              # tile row in map (0..31)
+        bank_off    = 32 if bank else 0
+
+        # Charlayout nibble decode lookup table
+        # px_idx → (shift in 32-bit pvt_q word, which nibble index)
+        # Pixel X within tile → bit position in pvt_q
+        # pvt_q = {b3, b2, b1, b0}  (bytes in MSB-first 32-bit word)
+        # px0→q[23:20], px1→q[19:16], px2→q[31:28], px3→q[27:24],
+        # px4→q[7:4],   px5→q[3:0],   px6→q[15:12], px7→q[11:8]
+        PX_SHIFTS = [20, 16, 28, 24, 4, 0, 12, 8]
+
+        result = [0] * 320
+        for col in range(320):
+            canvas_x   = (col + xscroll_int) & 0x1FF   # 9-bit wrap (512px wide canvas)
+            tile_col   = (canvas_x >> 3) & 0x3F        # tile column (mod 64)
+            pix_x      = canvas_x & 0x7                 # pixel within tile column
+            # Apply bank: bank adds 32 to tile column index (wraps mod 64)
+            map_col    = (tile_col + bank_off) & 0x3F
+            tile_idx   = (map_col << 5) | fetch_row    # column-major: col*32+row (11-bit)
+            pvt_addr   = (tile_idx << 3) | fetch_py    # 14-bit 32-bit word address
+            if pvt_addr < self.PIVOT_RAM_WORDS:
+                pvt_q = self.pivot_ram[pvt_addr]
+            else:
+                pvt_q = 0
+            shift = PX_SHIFTS[pix_x]
+            pen   = (pvt_q >> shift) & 0xF
+            # color is always 0 per MAME pivot_tile_info
+            result[col] = pen   # {color[3:0]=0, pen[3:0]} = pen & 0xF
+
+        return result
+
     def write_pal_ram(self, addr: int, data: int) -> None:
         """Write one 16-bit color word to palette RAM (Step 13)."""
         if 0 <= addr < self.PAL_RAM_WORDS:
@@ -1203,22 +1313,19 @@ class TaitoF3Model:
 
     def composite_scanline(self, vpos: int,
                            spr_linebuf: list = None) -> list:
-        """Composite all 6 layers for the scanline AFTER vpos.
+        """Composite all 7 layers for the scanline AFTER vpos (Step 16: +pivot).
 
         Returns 320-entry list of 13-bit composited pixels:
           {palette[8:0], pen[3:0]}
           pen==0 means all transparent (background).
 
-        Compositing rules (Step 13 — with clip planes and alpha blend):
+        Compositing rules (Step 16 — with clip planes and alpha blend):
           0. Clip evaluation: layers outside their clip windows are blanked (pen→0).
           1. Text layer always wins if pen != 0 (no clip for text; always opaque).
-          2. Among PF and sprite layers, higher numeric priority wins.
-          3. Equal priority: sprite wins over PF.
+          2. Among PF, sprite, and pivot layers: higher numeric priority wins.
+          3. Equal priority: sprite >= PF (sprite wins tie); pivot at fixed priority 8.
           4. pen == 0: transparent, layer skipped.
-          5. Blend mode 01: if layer wins over an existing pixel (strictly >),
-             record src=winner, dst=previous winner; set blend flag.
-             Sprite uses >= so same-priority blend layers: first fires, second skips.
-          6. colmix_pixel_out = src palette index (13-bit); blend info tracked separately.
+          5. colmix_pixel_out = src palette index (13-bit).
 
         Parameters:
           vpos        : current scanline (renders vpos+1)
@@ -1260,6 +1367,9 @@ class TaitoF3Model:
         else:
             spr_buf = spr_linebuf
 
+        # Step 16: pivot layer (8-bit: {color[3:0]=0, pen[3:0]})
+        pvt_buf = self.render_pivot_scanline(vpos)
+
         # ── Per-scanline priority, clip, and blend values ─────────────────────
         pf_prio  = [self._line_pf_prio(n, render_scan) for n in range(4)]
         spr_prio = [self._line_spr_prio(g, render_scan) for g in range(4)]
@@ -1267,6 +1377,7 @@ class TaitoF3Model:
         # Blend modes
         pf_bmode  = [self._line_pf_blend(n, render_scan) for n in range(4)]
         spr_bmode = [self._line_spr_blend(g, render_scan) for g in range(4)]
+        _pvt_en, _pvt_bank, pvt_blend = self._line_pivot_ctrl(render_scan)
 
         # Clip plane boundaries for this scanline
         clip_left  = []
@@ -1297,8 +1408,6 @@ class TaitoF3Model:
 
             win_prio   = -1    # -1 = no winner yet
             win_val    = 0     # 13-bit: {palette[8:0], pen[3:0]}
-            # dst_pal tracks the palette index of the blend destination (for blend_scanline)
-            # Not included in colmix_pixel_out but needed by blend_scanline.
 
             # PF layers — evaluate clip then priority, with blend mode tracking
             for n in range(4):
@@ -1313,22 +1422,17 @@ class TaitoF3Model:
                 if not visible:
                     continue   # clipped — treat as transparent
                 prio = pf_prio[n]
-                bmode = pf_bmode[n]
                 if win_prio < 0:
-                    # First opaque pixel: becomes winner unconditionally
                     win_prio = prio
                     win_val  = px
                 elif prio > win_prio:
-                    # Strictly higher priority wins
                     win_prio = prio
                     win_val  = px
-                # Equal or lower priority: skip (blend mode 01 fires only on strict >)
 
             # Sprite layer (wins on tie >= over PF) — evaluate clip then priority
             spr_px = spr_buf[col]
             spr_pen = spr_px & 0xF
             if spr_pen != 0:
-                # Clip evaluation for sprite
                 spr_visible = self._eval_clip(spr_en, spr_inv, spr_sense, sx,
                                               clip_left, clip_right)
                 if spr_visible:
@@ -1337,15 +1441,23 @@ class TaitoF3Model:
                     spr_palette = (spr_px >> 4) & 0x3F
                     if win_prio < 0 or prio >= win_prio:
                         win_prio = prio
-                        # Convert spr 12-bit to 13-bit palette format
                         win_val = (spr_palette << 4) | spr_pen
+
+            # Pivot layer — fixed priority 8, no clip planes, opaque or blend A
+            pvt_px  = pvt_buf[col]
+            pvt_pen = pvt_px & 0xF
+            if pvt_pen != 0:
+                pvt_prio = 8
+                if win_prio < 0 or pvt_prio > win_prio:
+                    win_prio = pvt_prio
+                    # color always 0: {4'b0, pen} = pen (palette 0, pen=pvt_pen)
+                    win_val  = pvt_pen   # {pal9=0, pen=pvt_pen}
 
             # Text layer (always top, no clip, always opaque)
             txt_px = text_buf[col]
             txt_pen = txt_px & 0xF
             if txt_pen != 0:
                 txt_color = (txt_px >> 4) & 0x1F
-                # Text stores color[4:0] in palette[4:0]; bits[8:5] = 0
                 win_val = (txt_color << 4) | txt_pen
 
             result[col] = win_val & 0x1FFF
@@ -1388,11 +1500,15 @@ class TaitoF3Model:
 
         spr_buf = spr_linebuf if spr_linebuf is not None else [0] * 320
 
+        # Step 16: pivot layer
+        pvt_buf = self.render_pivot_scanline(vpos)
+
         # ── Per-scanline values ───────────────────────────────────────────────
         pf_prio   = [self._line_pf_prio(n, render_scan) for n in range(4)]
         spr_prio  = [self._line_spr_prio(g, render_scan) for g in range(4)]
         pf_bmode  = [self._line_pf_blend(n, render_scan) for n in range(4)]
         spr_bmode = [self._line_spr_blend(g, render_scan) for g in range(4)]
+        _pvt_en, _pvt_bank, pvt_blend = self._line_pivot_ctrl(render_scan)
 
         clip_left, clip_right = [], []
         for p in range(4):
@@ -1467,6 +1583,21 @@ class TaitoF3Model:
                             dst_pal    = 0
                             blend_mode = 0
                         cur_prio = prio; cur_pal = pal9; cur_pen = spr_pen
+
+            # Pivot layer — fixed priority 8, color always 0, opaque or blend A
+            pvt_px  = pvt_buf[col]
+            pvt_pen = pvt_px & 0xF
+            if pvt_pen != 0:
+                pvt_prio = 8
+                pvt_pal9 = 0   # color always 0
+                if cur_prio < 0 or pvt_prio > cur_prio:
+                    if pvt_blend and cur_pen != 0:
+                        dst_pal    = cur_pal
+                        blend_mode = 0b01   # blend A
+                    else:
+                        dst_pal    = 0
+                        blend_mode = 0
+                    cur_prio = pvt_prio; cur_pal = pvt_pal9; cur_pen = pvt_pen
 
             # Text layer: always wins, always opaque (clears blend)
             txt_px  = text_buf[col]

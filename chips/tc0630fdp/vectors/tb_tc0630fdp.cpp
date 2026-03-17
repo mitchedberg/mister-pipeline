@@ -1,5 +1,5 @@
 // =============================================================================
-// Gate 5 (Steps 1–13): Verilator testbench for tc0630fdp.sv
+// Gate 5 (Steps 1–16): Verilator testbench for tc0630fdp.sv
 //
 // Reads one or more vector files (jsonl). Each line is a JSON object with "op":
 //
@@ -160,9 +160,23 @@ static void do_reset() {
     dut->pal_wr_en   = 0;
     dut->pal_wr_addr = 0;
     dut->pal_wr_data = 0;
+    dut->pvt_wr_en   = 0;
+    dut->pvt_wr_addr = 0;
+    dut->pvt_wr_data = 0;
     for (int i = 0; i < 4; i++) tick();
     dut->async_rst_n = 1;
     for (int i = 0; i < 2; i++) tick();
+}
+
+// Write one 32-bit word to Pivot RAM via the dedicated write port.
+// word_addr: 14-bit 32-bit-word address (0..16383).
+static void pvt_write(int word_addr, uint32_t data) {
+    dut->pvt_wr_en   = 1;
+    dut->pvt_wr_addr = (uint32_t)(word_addr & 0x3FFF);
+    dut->pvt_wr_data = data;
+    tick();
+    dut->pvt_wr_en   = 0;
+    tick();
 }
 
 // Write one 16-bit word to palette RAM via the dedicated write port.
@@ -598,6 +612,55 @@ static void check_bg_pixel(int target_vpos, int screen_col, int plane,
 }
 
 // ---------------------------------------------------------------------------
+// Step 16: check_pivot_pixel
+//
+// Pivot FSM runs during HBLANK: 2 cycles/tile × 40 tiles = 80 cycles.
+// Strategy (same as check_text_pixel — both use hblank_rise):
+//   1. Advance to hpos==H_END, vpos==target_vpos (HBLANK start).
+//   2. Clock 90 cycles for pivot FSM to complete (80 tiles + margin).
+//   3. Advance to hpos=H_START+screen_col, vpos=target_vpos+1.
+//   4. Sample pivot_pixel_out (8-bit: {color[3:0], pen[3:0]}).
+//   5. Compare to exp_pixel.
+// ---------------------------------------------------------------------------
+static void check_pivot_pixel(int target_vpos, int screen_col,
+                               int exp_pixel, const std::string& note) {
+    int limit = 2 * H_TOTAL * V_TOTAL;
+
+    // Step 1: advance to HBLANK start of target_vpos
+    int found = 0;
+    for (int i = 0; i < limit; i++) {
+        if ((int)dut->hpos == H_END && (int)dut->vpos == target_vpos) {
+            found = 1;
+            break;
+        }
+        tick();
+    }
+    if (!found) {
+        printf("FAIL %s: could not reach hpos=%d vpos=%d\n",
+               note.c_str(), H_END, target_vpos);
+        g_fail++;
+        return;
+    }
+
+    // Step 2: wait for pivot FSM to complete (80 cycles + margin)
+    for (int i = 0; i < 90; i++) tick();
+
+    // Step 3: advance to active display of vpos+1 at screen_col
+    int disp_vpos = (target_vpos + 1) % V_TOTAL;
+    int disp_hpos = H_START + screen_col;
+
+    for (int i = 0; i < limit; i++) {
+        if ((int)dut->hpos == disp_hpos && (int)dut->vpos == disp_vpos)
+            break;
+        tick();
+    }
+
+    dut->eval();
+    int got = (int)dut->pivot_pixel_out & 0xFF;
+    check(got == (exp_pixel & 0xFF), note, got, exp_pixel & 0xFF);
+}
+
+// ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
 int main(int argc, char** argv) {
@@ -626,6 +689,9 @@ int main(int argc, char** argv) {
     dut->pal_wr_en   = 0;
     dut->pal_wr_addr = 0;
     dut->pal_wr_data = 0;
+    dut->pvt_wr_en   = 0;
+    dut->pvt_wr_addr = 0;
+    dut->pvt_wr_data = 0;
     for (int i = 0; i < 4; i++) tick();
     dut->async_rst_n = 1;
     for (int i = 0; i < 4; i++) tick();
@@ -824,6 +890,36 @@ int main(int argc, char** argv) {
                 dut->eval();
                 int got = (int)dut->blend_rgb_out & 0xFFFFFF;
                 check(got == (exp_rgb & 0xFFFFFF), note, got, exp_rgb & 0xFFFFFF);
+
+            // ── Step 16 ops ─────────────────────────────────────────────────
+            // write_pivot: write one 32-bit word to Pivot RAM.
+            // "pvt_addr": 14-bit 32-bit word address (0..16383).
+            // "pvt_data": 32-bit word (charlayout pixel row).
+            } else if (op == "write_pivot") {
+                pvt_write(jint(line, "pvt_addr"), (uint32_t)jint(line, "pvt_data"));
+
+            // write_pivot_line: CPU write to Pivot RAM via Line RAM address decode.
+            // "addr" is the chip-window word address (0x18000–0x1FFFF).
+            } else if (op == "write_pivot_line") {
+                cpu_write(jint(line, "addr"), jint(line, "data"), jint(line, "be", 3));
+
+            // check_pivot_pixel: sample pivot_pixel_out at given screen position.
+            // "vpos": target scanline (HBLANK triggers FSM for vpos+1).
+            // "screen_col": column 0..319 within active display.
+            // "exp_pixel": expected 8-bit value {color[3:0], pen[3:0]}.
+            } else if (op == "check_pivot_pixel") {
+                check_pivot_pixel(jint(line, "vpos"),
+                                  jint(line, "screen_col"),
+                                  jint(line, "exp_pixel"),
+                                  note);
+
+            // check_colmix_with_pivot: same as check_colmix_pixel but documents
+            // pivot layer participation — uses the same check_colmix_pixel path.
+            } else if (op == "check_colmix_with_pivot") {
+                check_colmix_pixel(jint(line, "vpos"),
+                                   jint(line, "screen_col"),
+                                   jint(line, "exp_pixel"),
+                                   note);
 
             } else {
                 fprintf(stderr, "Unknown op: %s\n", op.c_str());

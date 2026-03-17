@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Line RAM Parser  (Step 15: +mosaic effect)
+// TC0630FDP — Line RAM Parser  (Step 16: +pivot layer control)
 // =============================================================================
 // The Line RAM is 64 KB (32768 × 16-bit words) that provides per-scanline
 // override of virtually every display parameter.  This module:
@@ -217,7 +217,16 @@ module tc0630fdp_lineram (
     // ls_spr_mosaic_en: sprite layer mosaic enable
     output logic [ 3:0] ls_mosaic_rate,
     output logic [ 3:0] ls_pf_mosaic_en,
-    output logic        ls_spr_mosaic_en
+    output logic        ls_spr_mosaic_en,
+
+    // ── Step 16: Pivot layer control outputs ─────────────────────────────────
+    // From §9.4 sb_word upper byte (bits[15:8]):
+    //   sb_word[13] = bit[5] of upper byte = ls_pivot_en   (1=layer enabled)
+    //   sb_word[14] = bit[6] of upper byte = ls_pivot_bank (0=bank0, 1=bank1)
+    //   sb_word[ 8] = bit[0] of upper byte = ls_pivot_blend (0=opaque, 1=blend A)
+    output logic        ls_pivot_en,
+    output logic        ls_pivot_bank,
+    output logic        ls_pivot_blend
 );
 
 // =============================================================================
@@ -327,10 +336,12 @@ logic [15:0] ab_word;  // alpha blend word: bits[11:8]=A_src, bits[3:0]=A_dst
 /* verilator lint_on UNUSEDSIGNAL */
 assign ab_word       = line_ram[15'h3100 + {7'b0, next_scan}];
 
-// Step 13: Pivot/sprite blend control §9.4  byte 0x6000 → word 0x3000
-// bits[7:0] = blend mode per group (2 bits each); bits[15:8] reserved for Step 14
+// Step 13/16: Pivot/sprite blend control §9.4  byte 0x6000 → word 0x3000
+// bits[7:0]  = sprite blend mode per group (2 bits each)
+// bits[15:8] = pivot/pixel control: bit[5]=enable, bit[6]=bank, bit[0]=blend_select
+// bits[15,12:9] are reserved/unused in hardware
 /* verilator lint_off UNUSEDSIGNAL */
-logic [15:0] sb_word;  // sprite blend word: bits[7:0] = blend mode per group
+logic [15:0] sb_word;  // pivot/sprite blend word
 /* verilator lint_on UNUSEDSIGNAL */
 assign sb_word       = line_ram[15'h3000 + {7'b0, next_scan}];
 
@@ -389,6 +400,10 @@ always_ff @(posedge clk) begin
         ls_mosaic_rate    <= 4'b0;
         ls_pf_mosaic_en   <= 4'b0;
         ls_spr_mosaic_en  <= 1'b0;
+        // Step 16: pivot defaults (disabled)
+        ls_pivot_en       <= 1'b0;
+        ls_pivot_bank     <= 1'b0;
+        ls_pivot_blend    <= 1'b0;
     end else if (hblank_fall) begin
         for (int n = 0; n < 4; n++) begin
             // Rowscroll: enable bit n of en_row_word[3:0]
@@ -486,6 +501,12 @@ always_ff @(posedge clk) begin
         ls_mosaic_rate   <= mo_word[11:8];
         ls_pf_mosaic_en  <= mo_word[3:0];
         ls_spr_mosaic_en <= mo_word[8];
+
+        // ── Step 16: Pivot layer control from §9.4 sb_word upper byte ─────────
+        // sb_word[13]=bit5 of upper byte=enable, sb_word[14]=bit6=bank, sb_word[8]=bit0=blend
+        ls_pivot_en    <= sb_word[13];
+        ls_pivot_bank  <= sb_word[14];
+        ls_pivot_blend <= sb_word[8];
     end
 end
 

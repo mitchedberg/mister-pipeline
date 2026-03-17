@@ -6,7 +6,8 @@ RTL        := $(CHIP_DIR)/rtl/tc0630fdp.sv \
               $(CHIP_DIR)/rtl/tc0630fdp_lineram.sv \
               $(CHIP_DIR)/rtl/tc0630fdp_sprite_scan.sv \
               $(CHIP_DIR)/rtl/tc0630fdp_sprite_render.sv \
-              $(CHIP_DIR)/rtl/tc0630fdp_colmix.sv
+              $(CHIP_DIR)/rtl/tc0630fdp_colmix.sv \
+              $(CHIP_DIR)/rtl/tc0630fdp_pivot.sv
 TB         := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))tb_tc0630fdp.cpp)
 VEC_DIR    := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 OBJ_DIR    := $(VEC_DIR)/obj_dir
@@ -27,6 +28,7 @@ VEC12      := $(VEC_DIR)/step12_vectors.jsonl
 VEC13      := $(VEC_DIR)/step13_vectors.jsonl
 VEC14      := $(VEC_DIR)/step14_vectors.jsonl
 VEC15      := $(VEC_DIR)/step15_vectors.jsonl
+VEC16      := $(VEC_DIR)/step16_vectors.jsonl
 SIM_BIN    := $(OBJ_DIR)/Vtc0630fdp
 
 .PHONY: all vectors build run clean test
@@ -34,7 +36,7 @@ all: vectors build run
 
 test: all
 
-vectors: $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14) $(VEC15)
+vectors: $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14) $(VEC15) $(VEC16)
 
 $(VEC1): $(VEC_DIR)/generate_vectors.py $(VEC_DIR)/fdp_model.py
 	cd $(VEC_DIR) && $(PYTHON) generate_vectors.py
@@ -81,15 +83,18 @@ $(VEC14): $(VEC_DIR)/generate_step14_vectors.py $(VEC_DIR)/fdp_model.py
 $(VEC15): $(VEC_DIR)/generate_step15_vectors.py $(VEC_DIR)/fdp_model.py
 	cd $(VEC_DIR) && $(PYTHON) generate_step15_vectors.py
 
+$(VEC16): $(VEC_DIR)/generate_step16_vectors.py $(VEC_DIR)/fdp_model.py
+	cd $(VEC_DIR) && $(PYTHON) generate_step16_vectors.py
+
 build: $(SIM_BIN)
 $(SIM_BIN): $(TB) $(RTL)
 	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR) -Wall --top-module tc0630fdp \
 	    $(RTL) \
 	    $(TB) --build -CFLAGS "-O2 -std=c++17" 2>&1
 
-run: $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14) $(VEC15)
-	cd $(VEC_DIR) && $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14) $(VEC15)
+run: $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14) $(VEC15) $(VEC16)
+	cd $(VEC_DIR) && $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14) $(VEC15) $(VEC16)
 
 clean:
 	rm -rf $(OBJ_DIR)
-	rm -f $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14) $(VEC15)
+	rm -f $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14) $(VEC15) $(VEC16)

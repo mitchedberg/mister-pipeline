@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Layer Compositor / Color Mixer (Step 14: +Alpha Blend Mode B)
+// TC0630FDP — Layer Compositor / Color Mixer (Step 16: +Pivot Layer)
 // =============================================================================
 // Implements a 6-layer priority mux with per-layer clip plane evaluation and
 // alpha blending (Normal Mode A and Reverse Mode B).
@@ -73,6 +73,11 @@ module tc0630fdp_colmix (
 
     // Sprite: {prio_group[1:0], palette[5:0], pen[3:0]}.  pen==0 → transparent.
     input  logic [11:0] spr_pixel,
+
+    // Pivot: {color[3:0], pen[3:0]}.  pen==0 → transparent.  color always 4'b0.
+    // Fixed priority: 8 (0–15 range; beats PF at prio<8, loses to sprite at prio>=8).
+    input  logic [ 7:0] pivot_pixel,
+    input  logic        ls_pivot_blend,   // 0=opaque, 1=blend A
 
     // ── Per-scanline priority values ──────────────────────────────────────────
     input  logic [ 3:0] ls_pf_prio  [0:3],
@@ -267,6 +272,9 @@ logic [8:0]  w3_dst;  logic [1:0] w3_bmode;
 // after sprite
 logic [4:0]  w4_prio; logic [8:0] w4_pal; logic [3:0] w4_pen;
 logic [8:0]  w4_dst;  logic [1:0] w4_bmode;
+// after pivot (Step 16)
+logic [4:0]  w4p_prio; logic [8:0] w4p_pal; logic [3:0] w4p_pen;
+logic [8:0]  w4p_dst;  logic [1:0] w4p_bmode;
 // final (after text)
 logic [4:0]  win_prio;
 logic [8:0]  win_pal;
@@ -366,6 +374,35 @@ always_comb begin
     end
 end
 
+// Pivot — fixed priority 8, opaque or blend A based on ls_pivot_blend
+// palette for pivot: {4'b0, color[3:0]} = {4'b0, pivot_pixel[7:4]} = 9'h000 (color always 0)
+// (color is always 0 per MAME pivot_tile_info)
+logic [3:0] pvt_pen_w;
+logic [8:0] pvt_pal9_w;
+assign pvt_pen_w  = pivot_pixel[3:0];
+assign pvt_pal9_w = {5'b0, pivot_pixel[7:4]};
+
+always_comb begin
+    if (pvt_pen_w != 4'd0 && (w4_pen == 4'd0 || 5'd8 > w4_prio)) begin
+        w4p_prio  = 5'd8;
+        w4p_pal   = pvt_pal9_w;
+        w4p_pen   = pvt_pen_w;
+        if (ls_pivot_blend && w4_pen != 4'd0) begin
+            w4p_dst   = w4_pal;
+            w4p_bmode = 2'b01;  // blend A
+        end else begin
+            w4p_dst   = 9'b0;
+            w4p_bmode = 2'b00;
+        end
+    end else begin
+        w4p_prio  = w4_prio;
+        w4p_pal   = w4_pal;
+        w4p_pen   = w4_pen;
+        w4p_dst   = w4_dst;
+        w4p_bmode = w4_bmode;
+    end
+end
+
 // Text — always opaque, always wins
 always_comb begin
     if (text_pen_w != 4'd0) begin
@@ -375,11 +412,11 @@ always_comb begin
         win_dst   = 9'b0;
         win_bmode = 2'b00;
     end else begin
-        win_prio  = w4_prio;
-        win_pal   = w4_pal;
-        win_pen   = w4_pen;
-        win_dst   = w4_dst;
-        win_bmode = w4_bmode;
+        win_prio  = w4p_prio;
+        win_pal   = w4p_pal;
+        win_pen   = w4p_pen;
+        win_dst   = w4p_dst;
+        win_bmode = w4p_bmode;
     end
 end
 

@@ -1,0 +1,110 @@
+{"op": "reset", "note": "step16 reset"}
+{"op": "write_pivot", "pvt_addr": 0, "pvt_data": 1431655765, "note": "tile(0,0) py=0 all-pens=5"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 0, "note": "test1: basic pivot enable, col=0 pen=5"}
+{"op": "write_pivot", "pvt_addr": 0, "pvt_data": 873625686, "note": "tile(0,0) py=0 distinct pixels 1-8"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 0, "note": "test2: px0 in tile row"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 1, "exp_pixel": 0, "note": "test2: px1 in tile row"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 2, "exp_pixel": 0, "note": "test2: px2 in tile row"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 3, "exp_pixel": 0, "note": "test2: px3 in tile row"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 4, "exp_pixel": 0, "note": "test2: px4 in tile row"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 5, "exp_pixel": 0, "note": "test2: px5 in tile row"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 6, "exp_pixel": 0, "note": "test2: px6 in tile row"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 7, "exp_pixel": 0, "note": "test2: px7 in tile row"}
+{"op": "write_pivot", "pvt_addr": 0, "pvt_data": 872577110, "note": "tile(0,0) py=0 px0=transparent"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 0, "note": "test3: pen=0 \u2192 transparent (pivot_pixel==0)"}
+{"op": "write_pivot", "pvt_addr": 0, "pvt_data": 873625686, "note": "restore tile(0,0) py=0"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "write_pivot", "pvt_addr": 810, "pvt_data": 2882382797, "note": "tile(3,5) py=2 pattern=0xABCDABCD"}
+{"op": "write_line", "addr": 77866, "data": 8192, "be": 3, "note": "pivot ctrl scan=42 en=True bank=False blend=False"}
+{"op": "check_pivot_pixel", "vpos": 41, "screen_col": 24, "exp_pixel": 12, "note": "test4: col-major tile(3,5) py=2"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "write_pivot", "pvt_addr": 256, "pvt_data": 2004318071, "note": "tile(1,0) py=0 all-pens=7"}
+{"op": "write", "addr": 12, "data": 512, "be": 3, "note": "pixel_xscroll=8"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 0, "note": "test5: xscroll=8 shifts tile(1,0) to screen_col=0"}
+{"op": "write", "addr": 12, "data": 0, "be": 3, "note": "reset pixel_xscroll"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "write_pivot", "pvt_addr": 8, "pvt_data": 2576980377, "note": "tile(0,1) py=0 all-pens=9"}
+{"op": "write", "addr": 13, "data": 27264, "be": 3, "note": "pixel_yscroll yscroll_int=213"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 9, "note": "test6: yscroll routes to tile(0,1) py=0"}
+{"op": "write", "addr": 13, "data": 0, "be": 3, "note": "reset pixel_yscroll"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "write_pivot", "pvt_addr": 0, "pvt_data": 2863311530, "note": "tile(0,0) py=0 all-pens=0xA (bank0 col=0)"}
+{"op": "write_pivot", "pvt_addr": 8192, "pvt_data": 3149642683, "note": "tile(32,0) py=0 all-pens=0xB (bank1 col=0)"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 0, "note": "test7: bank=0 reads tile(0,0) pen=0xA"}
+{"op": "write_line", "addr": 77875, "data": 24576, "be": 3, "note": "pivot ctrl scan=51 en=True bank=True blend=False"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 0, "note": "test8: bank=1 reads tile(32,0) pen=0xB"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 256, "exp_pixel": 0, "note": "test9: bank=1 col=32 wraps to tile(0,0) pen=0xA"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "write_line", "addr": 77875, "data": 0, "be": 3, "note": "pivot ctrl scan=51 en=False bank=False blend=False"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 0, "note": "test10: pivot disabled \u2192 pen=0"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 0, "note": "test11: pivot re-enabled \u2192 pen=0xA"}
+{"op": "write_pivot", "pvt_addr": 0, "pvt_data": 305419896, "note": "tile(0,0) py=0 nibble test 0x12345678"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 0, "note": "test12: px0\u2192q[23:20]=3"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 2, "exp_pixel": 0, "note": "test13: px2\u2192q[31:28]=1"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 4, "exp_pixel": 0, "note": "test14: px4\u2192q[7:4]=7"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 6, "exp_pixel": 0, "note": "test15: px6\u2192q[15:12]=5"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 1, "exp_pixel": 0, "note": "test16: py=0 px1\u2192q[19:16]=4"}
+{"op": "write_pivot", "pvt_addr": 31, "pvt_data": 4275878552, "note": "tile(0,3) py=7 pattern=0xFEDCBA98"}
+{"op": "write_line", "addr": 77855, "data": 8192, "be": 3, "note": "pivot ctrl scan=31 en=True bank=False blend=False"}
+{"op": "check_pivot_pixel", "vpos": 30, "screen_col": 0, "exp_pixel": 13, "note": "test17: py=7 tile(0,3) px0\u2192q[23:20]"}
+{"op": "write_pivot", "pvt_addr": 248, "pvt_data": 3233857728, "note": "tile(0,31) py=0 all-pens=0xC (row boundary)"}
+{"op": "write_line", "addr": 78072, "data": 8192, "be": 3, "note": "pivot ctrl scan=248 en=True bank=False blend=False"}
+{"op": "check_pivot_pixel", "vpos": 247, "screen_col": 0, "exp_pixel": 12, "note": "test18: tile_row=31 boundary (canvas_y=248)"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "write_pivot", "pvt_addr": 51, "pvt_data": 1431655765, "note": "tile(0,?) py=? pivot pen=5"}
+{"op": "write_line", "addr": 67379, "data": 1, "be": 3, "note": "pf_prio_en plane=0"}
+{"op": "write_line", "addr": 88115, "data": 7, "be": 3, "note": "pf_prio plane=0 prio=7"}
+{"op": "write_gfx", "gfx_addr": 6, "gfx_data": 858993459, "note": "PF1 gfx tile 0, all pen=3"}
+{"op": "write_pf", "addr": 16768, "data": 0, "be": 3, "note": "PF1 tile attr: palette=0"}
+{"op": "write_pf", "addr": 16769, "data": 0, "be": 3, "note": "PF1 tile code: tile 0"}
+{"op": "check_colmix_with_pivot", "vpos": 50, "screen_col": 0, "exp_pixel": 5, "note": "test19: pivot prio=8 beats PF prio=7"}
+{"op": "write_line", "addr": 67379, "data": 1, "be": 3, "note": "pf_prio_en plane=0"}
+{"op": "write_line", "addr": 88115, "data": 9, "be": 3, "note": "pf_prio plane=0 prio=9"}
+{"op": "check_colmix_with_pivot", "vpos": 50, "screen_col": 4, "exp_pixel": 3, "note": "test20: PF prio=9 beats pivot prio=8"}
+{"op": "write_line", "addr": 67379, "data": 1, "be": 3, "note": "pf_prio_en plane=0"}
+{"op": "write_line", "addr": 88115, "data": 7, "be": 3, "note": "pf_prio plane=0 prio=7"}
+{"op": "check_colmix_with_pivot", "vpos": 50, "screen_col": 0, "exp_pixel": 5, "note": "test21: pivot in colmix output (prio=8 vs PF prio=7)"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "write_pivot", "pvt_addr": 51, "pvt_data": 4008636142, "note": "tile for leftmost pixel, all pen=0xE"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 14, "note": "test22: pivot pixel at screen col=0"}
+{"op": "write_pivot", "pvt_addr": 10035, "pvt_data": 3722304989, "note": "tile(39,?) py=? all pen=0xD"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 319, "exp_pixel": 13, "note": "test23: pivot pixel at screen col=319"}
+{"op": "write", "addr": 12, "data": 0, "be": 3, "note": "reset xscroll"}
+{"op": "write_pivot", "pvt_addr": 16179, "pvt_data": 1717986918, "note": "tile(63,?) pen=6"}
+{"op": "write_pivot", "pvt_addr": 51, "pvt_data": 2004318071, "note": "tile(0,?) pen=7"}
+{"op": "write", "addr": 12, "data": 32256, "be": 3, "note": "xscroll_int=504 for wrap test"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 6, "note": "test24: tile col=63 (xscroll=504)"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 8, "exp_pixel": 7, "note": "test24b: canvas_x=512 wraps to col=0 pen=7"}
+{"op": "write", "addr": 12, "data": 0, "be": 3, "note": "reset xscroll"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "write_pivot", "pvt_addr": 51, "pvt_data": 2863311530, "note": "tile(col=0) all pen=0xa"}
+{"op": "write_pivot", "pvt_addr": 307, "pvt_data": 3149642683, "note": "tile(col=1) all pen=0xb"}
+{"op": "write_pivot", "pvt_addr": 563, "pvt_data": 3435973836, "note": "tile(col=2) all pen=0xc"}
+{"op": "write_pivot", "pvt_addr": 819, "pvt_data": 3722304989, "note": "tile(col=3) all pen=0xd"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 10, "note": "test25: col=0 pen=0xa"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 8, "exp_pixel": 11, "note": "test25: col=1 pen=0xb"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 16, "exp_pixel": 12, "note": "test25: col=2 pen=0xc"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 24, "exp_pixel": 13, "note": "test25: col=3 pen=0xd"}
+{"op": "write_line", "addr": 77875, "data": 8448, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=True"}
+{"op": "write_pivot", "pvt_addr": 51, "pvt_data": 1431655765, "note": "pivot tile pen=5 for blend test"}
+{"op": "write_line", "addr": 67379, "data": 1, "be": 3, "note": "pf_prio_en plane=0"}
+{"op": "write_line", "addr": 88115, "data": 7, "be": 3, "note": "pf_prio plane=0 prio=7"}
+{"op": "write_gfx", "gfx_addr": 6, "gfx_data": 858993459, "note": "PF1 gfx tile 0 pen=3"}
+{"op": "write_pf", "addr": 16768, "data": 0, "be": 3, "note": "PF1 tile attr"}
+{"op": "write_pf", "addr": 16769, "data": 0, "be": 3, "note": "PF1 tile code"}
+{"op": "check_colmix_with_pivot", "vpos": 50, "screen_col": 0, "exp_pixel": 5, "note": "test26: pivot blend=1 over PF, colmix src=pivot"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "write_pivot", "pvt_addr": 51, "pvt_data": 572662306, "note": "tile(0,?,?) all pen=2 zero scroll"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 2, "note": "test27: zero scroll, canvas(0,0)\u2192tile(0,0) pen=2"}
+{"op": "reset", "note": "test28: formula verify (no RTL check needed \u2014 model assertion passed)"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "test28: tile idx formula ok"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "write_pivot", "pvt_addr": 9, "pvt_data": 4008636142, "note": "tile(0,1) py=1 for canvas_y wrap pen=0xE"}
+{"op": "write", "addr": 13, "data": 27392, "be": 3, "note": "pixel_yscroll yscroll_int=214 for wrap test"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 14, "note": "test29: canvas_y 8-bit wrap, pen=0xE"}
+{"op": "write", "addr": 13, "data": 0, "be": 3, "note": "reset yscroll"}
+{"op": "write_line", "addr": 77875, "data": 8192, "be": 3, "note": "pivot ctrl scan=51 en=True bank=False blend=False"}
+{"op": "write_pivot", "pvt_addr": 51, "pvt_data": 5242880, "note": "tile(0,?) px0=5 rest=0 for format test"}
+{"op": "check_pivot_pixel", "vpos": 50, "screen_col": 0, "exp_pixel": 5, "note": "test30: pivot_pixel format {color=0, pen=5} = 0x05"}

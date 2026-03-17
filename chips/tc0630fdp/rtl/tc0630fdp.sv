@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Taito F3 Display Processor (Step 15: +Mosaic Effect)
+// TC0630FDP — Taito F3 Display Processor (Step 16: +Pivot Layer)
 // =============================================================================
 // Integrates all video functions for Taito F3 arcade hardware (1992–1997):
 //   · 4 scrolling tilemap layers (PF1–PF4), 16×16 tiles, 4bpp  ← STEP 3 ✓
@@ -137,7 +137,20 @@ module tc0630fdp (
 
     // ── Step 13: Blended RGB Output ─────────────────────────────────────
     // 24-bit blended RGB; valid 1 cycle after colmix_pixel_out.
-    output logic [23:0] blend_rgb_out
+    output logic [23:0] blend_rgb_out,
+
+    // ── Pivot RAM Write Port (Step 16 testbench) ─────────────────────────
+    // Testbench writes pivot RAM entries via this dedicated port.
+    // pvt_wr_addr: 14-bit 32-bit-word address into pivot RAM (0..16383)
+    // pvt_wr_data: 32-bit write data (one row of 8 pixels, charlayout format)
+    // pvt_wr_en:   write enable (active high, registered on posedge clk)
+    input  logic [13:0] pvt_wr_addr,
+    input  logic [31:0] pvt_wr_data,
+    input  logic        pvt_wr_en,
+
+    // ── Pivot Pixel Output (Step 16) ────────────────────────────────────
+    // {color[3:0], pen[3:0]}.  pen==0 → transparent.  color always 0.
+    output logic [ 7:0] pivot_pixel_out
 );
 
 // =============================================================================
@@ -247,6 +260,7 @@ logic cs_char;
 logic cs_pf   [0:3];   // PF1=0, PF2=1, PF3=2, PF4=3
 logic cs_line;          // Line RAM (Step 5)
 logic cs_spr;           // Sprite RAM (Step 8): chip word addr 0x20000–0x27FFF
+logic cs_pivot;         // Pivot RAM (Step 16): chip word addr 0x18000–0x1FFFF
 
 always_comb begin
     cs_ctrl  = 1'b0;
@@ -254,18 +268,23 @@ always_comb begin
     cs_char  = 1'b0;
     cs_line  = 1'b0;
     cs_spr   = 1'b0;
+    cs_pivot = 1'b0;
     for (int p = 0; p < 4; p++) cs_pf[p] = 1'b0;
     if (cpu_cs) begin
         // Decode priority (highest first):
         //   Sprite RAM: 0x20000–0x27FFF  → cpu_addr[18:16] == 3'b100
+        //   Pivot RAM:  0x18000–0x1FFFF  → cpu_addr[18:16] == 3'b011
         //   Line RAM:   0x10000–0x17FFF  → cpu_addr[18:16] == 3'b010
         //   PF/Text/Char/Ctrl: lower addresses
         // Note: cpu_addr is [18:1] (bit 1 = LSB), so cpu_addr[18:16] checks
         //       integer bits 17:15 (Verilator shifts [N] → bit N-1).
         //       3'b100 → bits17:15=4 → addresses 0x20000–0x27FFF.
+        //       3'b011 → bits17:15=3 → addresses 0x18000–0x1FFFF.
         //       3'b010 → bits17:15=2 → addresses 0x10000–0x17FFF.
         if (cpu_addr[18:16] == 3'b100) begin
             cs_spr = 1'b1;  // Sprite RAM: word addr 0x20000–0x27FFF (32K words)
+        end else if (cpu_addr[18:16] == 3'b011) begin
+            cs_pivot = 1'b1;  // Pivot RAM: word addr 0x18000–0x1FFFF (32K words)
         end else if (cpu_addr[18:16] == 3'b010) begin
             cs_line = 1'b1; // Line RAM: 0x10000–0x17FFF
         end else begin
@@ -494,6 +513,61 @@ logic [15:0] scan_spr_data;
 assign scan_spr_data = spr_ram[scan_spr_addr];
 
 // =============================================================================
+// Pivot RAM (16384 × 32-bit = 64KB) — Step 16
+// CPU byte addr 0x630000–0x63FFFF → chip word addr 0x18000–0x1FFFF (16-bit words).
+// CPU interface: 16-bit words via cs_pivot; cpu_addr[14:1] selects 16-bit word within
+//   the 32KB half (cpu_addr[15:1] with bit15=0 or 1 selects upper/lower 16-bit half).
+// Engine read port: 32-bit word at pvt_rd_addr[13:0] = {tile_idx[10:0], py[2:0]}.
+//   Mapping: cpu_addr[15:1] = {pvt_rd_addr[13:0], 1'b0} or {pvt_rd_addr[13:0], 1'b1}
+//   for upper/lower 16-bit halves of each 32-bit word.
+//   We store as 32-bit words directly: pvt_word_addr = cpu_addr[14:2] (13 bits, 0..8191).
+//   Each 32-bit word holds one tile pixel row.
+// Testbench write port: pvt_wr_addr[13:0] = 32-bit word address (14 bits, 0..16383).
+// =============================================================================
+logic [31:0] pivot_ram [0:16383];
+
+// CPU write port (16-bit halfword writes into 32-bit array)
+// cpu_addr[15:2] = 14-bit 32-bit word index (0..16383)
+// cpu_addr[1]    = half select: 0=lower 16 bits [15:0], 1=upper 16 bits [31:16]
+logic [13:0] pvt_cpu_waddr;
+logic        pvt_cpu_half;
+assign pvt_cpu_waddr = cpu_addr[15:2];  // 14-bit 32-bit word address
+assign pvt_cpu_half  = cpu_addr[1];     // 0=lower half, 1=upper half
+
+always_ff @(posedge clk) begin
+    if (cs_pivot && !cpu_rw) begin
+        if (!pvt_cpu_half) begin
+            // Lower half: write to bits[15:0]
+            if (cpu_be[1]) pivot_ram[pvt_cpu_waddr][15:8] <= cpu_din[15:8];
+            if (cpu_be[0]) pivot_ram[pvt_cpu_waddr][ 7:0] <= cpu_din[ 7:0];
+        end else begin
+            // Upper half: write to bits[31:16]
+            if (cpu_be[1]) pivot_ram[pvt_cpu_waddr][31:24] <= cpu_din[15:8];
+            if (cpu_be[0]) pivot_ram[pvt_cpu_waddr][23:16] <= cpu_din[ 7:0];
+        end
+    end
+    // Testbench direct write port (32-bit word)
+    if (pvt_wr_en) pivot_ram[pvt_wr_addr] <= pvt_wr_data;
+end
+
+logic [15:0] pvt_cpu_rdata;
+always_ff @(posedge clk) begin
+    if (!rst_n)
+        pvt_cpu_rdata <= 16'b0;
+    else if (cs_pivot && cpu_rw) begin
+        if (!pvt_cpu_half)
+            pvt_cpu_rdata <= pivot_ram[pvt_cpu_waddr][15:0];
+        else
+            pvt_cpu_rdata <= pivot_ram[pvt_cpu_waddr][31:16];
+    end
+end
+
+// Engine async read port (32-bit)
+logic [13:0] pvt_engine_rd_addr;
+logic [31:0] pvt_engine_q;
+assign pvt_engine_q = pivot_ram[pvt_engine_rd_addr];
+
+// =============================================================================
 // Sprite count BRAM (232 × 7-bit) — Step 8
 // Holds the number of sprites on each screen scanline (0..64).
 // 7-bit to hold values 0..64 (max 64 sprites per scanline).
@@ -592,6 +666,7 @@ logic [15:0] line_cpu_dout;   // from tc0630fdp_lineram
 always_comb begin
     unique case (1'b1)
         cs_spr:    cpu_dout = spr_cpu_rdata;
+        cs_pivot:  cpu_dout = pvt_cpu_rdata;
         cs_line:   cpu_dout = line_cpu_dout;
         cs_ctrl:   cpu_dout = ctrl_rdata;
         cs_text:   cpu_dout = text_cpu_rdata;
@@ -650,6 +725,10 @@ logic [ 3:0] ls_b_dst;
 logic [ 3:0] ls_mosaic_rate;
 logic [ 3:0] ls_pf_mosaic_en;
 logic        ls_spr_mosaic_en;
+// Step 16: pivot layer control
+logic        ls_pivot_en;
+logic        ls_pivot_bank;
+logic        ls_pivot_blend;
 
 tc0630fdp_lineram u_lineram (
     .clk            (clk),
@@ -689,7 +768,11 @@ tc0630fdp_lineram u_lineram (
     // Step 15: mosaic
     .ls_mosaic_rate   (ls_mosaic_rate),
     .ls_pf_mosaic_en  (ls_pf_mosaic_en),
-    .ls_spr_mosaic_en (ls_spr_mosaic_en)
+    .ls_spr_mosaic_en (ls_spr_mosaic_en),
+    // Step 16: pivot layer control
+    .ls_pivot_en      (ls_pivot_en),
+    .ls_pivot_bank    (ls_pivot_bank),
+    .ls_pivot_blend   (ls_pivot_blend)
 );
 
 // =============================================================================
@@ -783,6 +866,25 @@ tc0630fdp_sprite_render u_sprite_render (
 );
 
 // =============================================================================
+// tc0630fdp_pivot — Pivot/Pixel layer engine (Step 16)
+// =============================================================================
+tc0630fdp_pivot u_pivot (
+    .clk            (clk),
+    .rst_n          (rst_n),
+    .hblank         (hblank),
+    .vpos           (vpos),
+    .ls_pivot_en    (ls_pivot_en),
+    .ls_pivot_bank  (ls_pivot_bank),
+    .ls_pivot_blend (ls_pivot_blend),
+    .pixel_xscroll  (pixel_xscroll),
+    .pixel_yscroll  (pixel_yscroll),
+    .pvt_rd_addr    (pvt_engine_rd_addr),
+    .pvt_q          (pvt_engine_q),
+    .hpos           (hpos),
+    .pivot_pixel    (pivot_pixel_out)
+);
+
+// =============================================================================
 // Palette RAM (8192 × 16-bit) — Step 13
 // Two async read ports for colmix (src + dst), one testbench write port.
 // Format: bits[15:12]=R(4), bits[11:8]=G(4), bits[7:4]=B(4), bits[3:0]=don't care.
@@ -823,6 +925,9 @@ tc0630fdp_colmix u_colmix (
     .text_pixel        (text_pixel_out),
     .bg_pixel          (bg_pixel_out),
     .spr_pixel         (spr_pixel_out),
+    // Step 16: pivot layer
+    .pivot_pixel       (pivot_pixel_out),
+    .ls_pivot_blend    (ls_pivot_blend),
     .ls_pf_prio        (ls_pf_prio),
     .ls_spr_prio       (ls_spr_prio),
     .ls_clip_left      (ls_clip_left),
@@ -870,7 +975,6 @@ logic _unused;
 assign _unused = ^{gfx_lo_data,
                    gfx_hi_data,
                    pal_data,
-                   pixel_xscroll, pixel_yscroll,
                    bg_gfx_rd[0], bg_gfx_rd[1], bg_gfx_rd[2], bg_gfx_rd[3],
                    scan_scount_rd_data};
 /* verilator lint_on UNUSED */
