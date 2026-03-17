@@ -1,0 +1,1920 @@
+{"op": "reset"}
+{"op": "ctrl_write", "addr": 0, "data": 0, "be": 1}
+{"op": "ctrl_write", "addr": 1, "data": 64, "be": 1}
+{"op": "load_gfx_word", "addr": 64, "data": 30583}
+{"op": "load_gfx_word", "addr": 65, "data": 30583}
+{"op": "load_gfx_word", "addr": 66, "data": 30583}
+{"op": "load_gfx_word", "addr": 67, "data": 30583}
+{"op": "load_gfx_word", "addr": 68, "data": 30583}
+{"op": "load_gfx_word", "addr": 69, "data": 30583}
+{"op": "load_gfx_word", "addr": 70, "data": 30583}
+{"op": "load_gfx_word", "addr": 71, "data": 30583}
+{"op": "load_gfx_word", "addr": 72, "data": 30583}
+{"op": "load_gfx_word", "addr": 73, "data": 30583}
+{"op": "load_gfx_word", "addr": 74, "data": 30583}
+{"op": "load_gfx_word", "addr": 75, "data": 30583}
+{"op": "load_gfx_word", "addr": 76, "data": 30583}
+{"op": "load_gfx_word", "addr": 77, "data": 30583}
+{"op": "load_gfx_word", "addr": 78, "data": 30583}
+{"op": "load_gfx_word", "addr": 79, "data": 30583}
+{"op": "load_gfx_word", "addr": 80, "data": 30583}
+{"op": "load_gfx_word", "addr": 81, "data": 30583}
+{"op": "load_gfx_word", "addr": 82, "data": 30583}
+{"op": "load_gfx_word", "addr": 83, "data": 30583}
+{"op": "load_gfx_word", "addr": 84, "data": 30583}
+{"op": "load_gfx_word", "addr": 85, "data": 30583}
+{"op": "load_gfx_word", "addr": 86, "data": 30583}
+{"op": "load_gfx_word", "addr": 87, "data": 30583}
+{"op": "load_gfx_word", "addr": 88, "data": 30583}
+{"op": "load_gfx_word", "addr": 89, "data": 30583}
+{"op": "load_gfx_word", "addr": 90, "data": 30583}
+{"op": "load_gfx_word", "addr": 91, "data": 30583}
+{"op": "load_gfx_word", "addr": 92, "data": 30583}
+{"op": "load_gfx_word", "addr": 93, "data": 30583}
+{"op": "load_gfx_word", "addr": 94, "data": 30583}
+{"op": "load_gfx_word", "addr": 95, "data": 30583}
+{"op": "load_gfx_word", "addr": 96, "data": 30583}
+{"op": "load_gfx_word", "addr": 97, "data": 30583}
+{"op": "load_gfx_word", "addr": 98, "data": 30583}
+{"op": "load_gfx_word", "addr": 99, "data": 30583}
+{"op": "load_gfx_word", "addr": 100, "data": 30583}
+{"op": "load_gfx_word", "addr": 101, "data": 30583}
+{"op": "load_gfx_word", "addr": 102, "data": 30583}
+{"op": "load_gfx_word", "addr": 103, "data": 30583}
+{"op": "load_gfx_word", "addr": 104, "data": 30583}
+{"op": "load_gfx_word", "addr": 105, "data": 30583}
+{"op": "load_gfx_word", "addr": 106, "data": 30583}
+{"op": "load_gfx_word", "addr": 107, "data": 30583}
+{"op": "load_gfx_word", "addr": 108, "data": 30583}
+{"op": "load_gfx_word", "addr": 109, "data": 30583}
+{"op": "load_gfx_word", "addr": 110, "data": 30583}
+{"op": "load_gfx_word", "addr": 111, "data": 30583}
+{"op": "load_gfx_word", "addr": 112, "data": 30583}
+{"op": "load_gfx_word", "addr": 113, "data": 30583}
+{"op": "load_gfx_word", "addr": 114, "data": 30583}
+{"op": "load_gfx_word", "addr": 115, "data": 30583}
+{"op": "load_gfx_word", "addr": 116, "data": 30583}
+{"op": "load_gfx_word", "addr": 117, "data": 30583}
+{"op": "load_gfx_word", "addr": 118, "data": 30583}
+{"op": "load_gfx_word", "addr": 119, "data": 30583}
+{"op": "load_gfx_word", "addr": 120, "data": 30583}
+{"op": "load_gfx_word", "addr": 121, "data": 30583}
+{"op": "load_gfx_word", "addr": 122, "data": 30583}
+{"op": "load_gfx_word", "addr": 123, "data": 30583}
+{"op": "load_gfx_word", "addr": 124, "data": 30583}
+{"op": "load_gfx_word", "addr": 125, "data": 30583}
+{"op": "load_gfx_word", "addr": 126, "data": 30583}
+{"op": "load_gfx_word", "addr": 127, "data": 30583}
+{"op": "load_gfx_word", "addr": 128, "data": 4660}
+{"op": "load_gfx_word", "addr": 129, "data": 22136}
+{"op": "load_gfx_word", "addr": 130, "data": 39612}
+{"op": "load_gfx_word", "addr": 131, "data": 57073}
+{"op": "load_gfx_word", "addr": 132, "data": 4660}
+{"op": "load_gfx_word", "addr": 133, "data": 22136}
+{"op": "load_gfx_word", "addr": 134, "data": 39612}
+{"op": "load_gfx_word", "addr": 135, "data": 57073}
+{"op": "load_gfx_word", "addr": 136, "data": 4660}
+{"op": "load_gfx_word", "addr": 137, "data": 22136}
+{"op": "load_gfx_word", "addr": 138, "data": 39612}
+{"op": "load_gfx_word", "addr": 139, "data": 57073}
+{"op": "load_gfx_word", "addr": 140, "data": 4660}
+{"op": "load_gfx_word", "addr": 141, "data": 22136}
+{"op": "load_gfx_word", "addr": 142, "data": 39612}
+{"op": "load_gfx_word", "addr": 143, "data": 57073}
+{"op": "load_gfx_word", "addr": 144, "data": 4660}
+{"op": "load_gfx_word", "addr": 145, "data": 22136}
+{"op": "load_gfx_word", "addr": 146, "data": 39612}
+{"op": "load_gfx_word", "addr": 147, "data": 57073}
+{"op": "load_gfx_word", "addr": 148, "data": 4660}
+{"op": "load_gfx_word", "addr": 149, "data": 22136}
+{"op": "load_gfx_word", "addr": 150, "data": 39612}
+{"op": "load_gfx_word", "addr": 151, "data": 57073}
+{"op": "load_gfx_word", "addr": 152, "data": 4660}
+{"op": "load_gfx_word", "addr": 153, "data": 22136}
+{"op": "load_gfx_word", "addr": 154, "data": 39612}
+{"op": "load_gfx_word", "addr": 155, "data": 57073}
+{"op": "load_gfx_word", "addr": 156, "data": 4660}
+{"op": "load_gfx_word", "addr": 157, "data": 22136}
+{"op": "load_gfx_word", "addr": 158, "data": 39612}
+{"op": "load_gfx_word", "addr": 159, "data": 57073}
+{"op": "load_gfx_word", "addr": 160, "data": 4660}
+{"op": "load_gfx_word", "addr": 161, "data": 22136}
+{"op": "load_gfx_word", "addr": 162, "data": 39612}
+{"op": "load_gfx_word", "addr": 163, "data": 57073}
+{"op": "load_gfx_word", "addr": 164, "data": 4660}
+{"op": "load_gfx_word", "addr": 165, "data": 22136}
+{"op": "load_gfx_word", "addr": 166, "data": 39612}
+{"op": "load_gfx_word", "addr": 167, "data": 57073}
+{"op": "load_gfx_word", "addr": 168, "data": 4660}
+{"op": "load_gfx_word", "addr": 169, "data": 22136}
+{"op": "load_gfx_word", "addr": 170, "data": 39612}
+{"op": "load_gfx_word", "addr": 171, "data": 57073}
+{"op": "load_gfx_word", "addr": 172, "data": 4660}
+{"op": "load_gfx_word", "addr": 173, "data": 22136}
+{"op": "load_gfx_word", "addr": 174, "data": 39612}
+{"op": "load_gfx_word", "addr": 175, "data": 57073}
+{"op": "load_gfx_word", "addr": 176, "data": 4660}
+{"op": "load_gfx_word", "addr": 177, "data": 22136}
+{"op": "load_gfx_word", "addr": 178, "data": 39612}
+{"op": "load_gfx_word", "addr": 179, "data": 57073}
+{"op": "load_gfx_word", "addr": 180, "data": 4660}
+{"op": "load_gfx_word", "addr": 181, "data": 22136}
+{"op": "load_gfx_word", "addr": 182, "data": 39612}
+{"op": "load_gfx_word", "addr": 183, "data": 57073}
+{"op": "load_gfx_word", "addr": 184, "data": 4660}
+{"op": "load_gfx_word", "addr": 185, "data": 22136}
+{"op": "load_gfx_word", "addr": 186, "data": 39612}
+{"op": "load_gfx_word", "addr": 187, "data": 57073}
+{"op": "load_gfx_word", "addr": 188, "data": 4660}
+{"op": "load_gfx_word", "addr": 189, "data": 22136}
+{"op": "load_gfx_word", "addr": 190, "data": 39612}
+{"op": "load_gfx_word", "addr": 191, "data": 57073}
+{"op": "load_gfx_word", "addr": 192, "data": 4369}
+{"op": "load_gfx_word", "addr": 193, "data": 4369}
+{"op": "load_gfx_word", "addr": 194, "data": 4369}
+{"op": "load_gfx_word", "addr": 195, "data": 4369}
+{"op": "load_gfx_word", "addr": 196, "data": 8738}
+{"op": "load_gfx_word", "addr": 197, "data": 8738}
+{"op": "load_gfx_word", "addr": 198, "data": 8738}
+{"op": "load_gfx_word", "addr": 199, "data": 8738}
+{"op": "load_gfx_word", "addr": 200, "data": 13107}
+{"op": "load_gfx_word", "addr": 201, "data": 13107}
+{"op": "load_gfx_word", "addr": 202, "data": 13107}
+{"op": "load_gfx_word", "addr": 203, "data": 13107}
+{"op": "load_gfx_word", "addr": 204, "data": 17476}
+{"op": "load_gfx_word", "addr": 205, "data": 17476}
+{"op": "load_gfx_word", "addr": 206, "data": 17476}
+{"op": "load_gfx_word", "addr": 207, "data": 17476}
+{"op": "load_gfx_word", "addr": 208, "data": 21845}
+{"op": "load_gfx_word", "addr": 209, "data": 21845}
+{"op": "load_gfx_word", "addr": 210, "data": 21845}
+{"op": "load_gfx_word", "addr": 211, "data": 21845}
+{"op": "load_gfx_word", "addr": 212, "data": 26214}
+{"op": "load_gfx_word", "addr": 213, "data": 26214}
+{"op": "load_gfx_word", "addr": 214, "data": 26214}
+{"op": "load_gfx_word", "addr": 215, "data": 26214}
+{"op": "load_gfx_word", "addr": 216, "data": 30583}
+{"op": "load_gfx_word", "addr": 217, "data": 30583}
+{"op": "load_gfx_word", "addr": 218, "data": 30583}
+{"op": "load_gfx_word", "addr": 219, "data": 30583}
+{"op": "load_gfx_word", "addr": 220, "data": 34952}
+{"op": "load_gfx_word", "addr": 221, "data": 34952}
+{"op": "load_gfx_word", "addr": 222, "data": 34952}
+{"op": "load_gfx_word", "addr": 223, "data": 34952}
+{"op": "load_gfx_word", "addr": 224, "data": 39321}
+{"op": "load_gfx_word", "addr": 225, "data": 39321}
+{"op": "load_gfx_word", "addr": 226, "data": 39321}
+{"op": "load_gfx_word", "addr": 227, "data": 39321}
+{"op": "load_gfx_word", "addr": 228, "data": 43690}
+{"op": "load_gfx_word", "addr": 229, "data": 43690}
+{"op": "load_gfx_word", "addr": 230, "data": 43690}
+{"op": "load_gfx_word", "addr": 231, "data": 43690}
+{"op": "load_gfx_word", "addr": 232, "data": 48059}
+{"op": "load_gfx_word", "addr": 233, "data": 48059}
+{"op": "load_gfx_word", "addr": 234, "data": 48059}
+{"op": "load_gfx_word", "addr": 235, "data": 48059}
+{"op": "load_gfx_word", "addr": 236, "data": 52428}
+{"op": "load_gfx_word", "addr": 237, "data": 52428}
+{"op": "load_gfx_word", "addr": 238, "data": 52428}
+{"op": "load_gfx_word", "addr": 239, "data": 52428}
+{"op": "load_gfx_word", "addr": 240, "data": 56797}
+{"op": "load_gfx_word", "addr": 241, "data": 56797}
+{"op": "load_gfx_word", "addr": 242, "data": 56797}
+{"op": "load_gfx_word", "addr": 243, "data": 56797}
+{"op": "load_gfx_word", "addr": 244, "data": 61166}
+{"op": "load_gfx_word", "addr": 245, "data": 61166}
+{"op": "load_gfx_word", "addr": 246, "data": 61166}
+{"op": "load_gfx_word", "addr": 247, "data": 61166}
+{"op": "load_gfx_word", "addr": 248, "data": 65535}
+{"op": "load_gfx_word", "addr": 249, "data": 65535}
+{"op": "load_gfx_word", "addr": 250, "data": 65535}
+{"op": "load_gfx_word", "addr": 251, "data": 65535}
+{"op": "load_gfx_word", "addr": 252, "data": 0}
+{"op": "load_gfx_word", "addr": 253, "data": 0}
+{"op": "load_gfx_word", "addr": 254, "data": 0}
+{"op": "load_gfx_word", "addr": 255, "data": 0}
+{"op": "load_gfx_word", "addr": 256, "data": 48059}
+{"op": "load_gfx_word", "addr": 257, "data": 48059}
+{"op": "load_gfx_word", "addr": 258, "data": 48059}
+{"op": "load_gfx_word", "addr": 259, "data": 48059}
+{"op": "load_gfx_word", "addr": 260, "data": 48059}
+{"op": "load_gfx_word", "addr": 261, "data": 48059}
+{"op": "load_gfx_word", "addr": 262, "data": 48059}
+{"op": "load_gfx_word", "addr": 263, "data": 48059}
+{"op": "load_gfx_word", "addr": 264, "data": 48059}
+{"op": "load_gfx_word", "addr": 265, "data": 48059}
+{"op": "load_gfx_word", "addr": 266, "data": 48059}
+{"op": "load_gfx_word", "addr": 267, "data": 48059}
+{"op": "load_gfx_word", "addr": 268, "data": 48059}
+{"op": "load_gfx_word", "addr": 269, "data": 48059}
+{"op": "load_gfx_word", "addr": 270, "data": 48059}
+{"op": "load_gfx_word", "addr": 271, "data": 48059}
+{"op": "load_gfx_word", "addr": 272, "data": 48059}
+{"op": "load_gfx_word", "addr": 273, "data": 48059}
+{"op": "load_gfx_word", "addr": 274, "data": 48059}
+{"op": "load_gfx_word", "addr": 275, "data": 48059}
+{"op": "load_gfx_word", "addr": 276, "data": 48059}
+{"op": "load_gfx_word", "addr": 277, "data": 48059}
+{"op": "load_gfx_word", "addr": 278, "data": 48059}
+{"op": "load_gfx_word", "addr": 279, "data": 48059}
+{"op": "load_gfx_word", "addr": 280, "data": 48059}
+{"op": "load_gfx_word", "addr": 281, "data": 48059}
+{"op": "load_gfx_word", "addr": 282, "data": 48059}
+{"op": "load_gfx_word", "addr": 283, "data": 48059}
+{"op": "load_gfx_word", "addr": 284, "data": 48059}
+{"op": "load_gfx_word", "addr": 285, "data": 48059}
+{"op": "load_gfx_word", "addr": 286, "data": 48059}
+{"op": "load_gfx_word", "addr": 287, "data": 48059}
+{"op": "load_gfx_word", "addr": 288, "data": 48059}
+{"op": "load_gfx_word", "addr": 289, "data": 48059}
+{"op": "load_gfx_word", "addr": 290, "data": 48059}
+{"op": "load_gfx_word", "addr": 291, "data": 48059}
+{"op": "load_gfx_word", "addr": 292, "data": 48059}
+{"op": "load_gfx_word", "addr": 293, "data": 48059}
+{"op": "load_gfx_word", "addr": 294, "data": 48059}
+{"op": "load_gfx_word", "addr": 295, "data": 48059}
+{"op": "load_gfx_word", "addr": 296, "data": 48059}
+{"op": "load_gfx_word", "addr": 297, "data": 48059}
+{"op": "load_gfx_word", "addr": 298, "data": 48059}
+{"op": "load_gfx_word", "addr": 299, "data": 48059}
+{"op": "load_gfx_word", "addr": 300, "data": 48059}
+{"op": "load_gfx_word", "addr": 301, "data": 48059}
+{"op": "load_gfx_word", "addr": 302, "data": 48059}
+{"op": "load_gfx_word", "addr": 303, "data": 48059}
+{"op": "load_gfx_word", "addr": 304, "data": 48059}
+{"op": "load_gfx_word", "addr": 305, "data": 48059}
+{"op": "load_gfx_word", "addr": 306, "data": 48059}
+{"op": "load_gfx_word", "addr": 307, "data": 48059}
+{"op": "load_gfx_word", "addr": 308, "data": 48059}
+{"op": "load_gfx_word", "addr": 309, "data": 48059}
+{"op": "load_gfx_word", "addr": 310, "data": 48059}
+{"op": "load_gfx_word", "addr": 311, "data": 48059}
+{"op": "load_gfx_word", "addr": 312, "data": 48059}
+{"op": "load_gfx_word", "addr": 313, "data": 48059}
+{"op": "load_gfx_word", "addr": 314, "data": 48059}
+{"op": "load_gfx_word", "addr": 315, "data": 48059}
+{"op": "load_gfx_word", "addr": 316, "data": 48059}
+{"op": "load_gfx_word", "addr": 317, "data": 48059}
+{"op": "load_gfx_word", "addr": 318, "data": 48059}
+{"op": "load_gfx_word", "addr": 319, "data": 48059}
+{"op": "cram_write", "addr": 0, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 1, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 513, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 2, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 514, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 1, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 3, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 515, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 1, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 4, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 516, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 2, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 5, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 517, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 2, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 6, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 518, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 3, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 7, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 519, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 3, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 8, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 520, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 4, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 9, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 521, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 4, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 10, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 522, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 5, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 11, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 523, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 5, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 12, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 524, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 6, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 13, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 525, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 6, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 14, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 526, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 7, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 15, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 527, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 7, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 16, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 528, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 8, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 17, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 529, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 8, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 18, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 530, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 9, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 19, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 531, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 9, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 20, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 532, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 10, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 21, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 533, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 10, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 22, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 534, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 11, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 23, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 535, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 11, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 24, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 536, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 12, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 25, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 537, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 12, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 26, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 538, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 13, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 27, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 539, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 13, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 28, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 540, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 14, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 29, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 541, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 14, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 30, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 542, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 15, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 31, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 543, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 15, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 32, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 544, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 16, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 33, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 545, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 16, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 34, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 546, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 17, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 35, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 547, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 17, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 36, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 548, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 18, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 37, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 549, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 18, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 38, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 550, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 19, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 39, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 551, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 19, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 40, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 552, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 20, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 41, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 553, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 20, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 42, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 554, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 21, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 43, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 555, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 21, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 44, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 556, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 22, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 45, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 557, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 22, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 46, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 558, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 23, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 47, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 559, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 23, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 48, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 560, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 24, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 49, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 561, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 24, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 50, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 562, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 25, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 51, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 563, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 25, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 52, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 564, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 26, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 53, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 565, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 26, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 54, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 566, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 27, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 55, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 567, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 27, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 56, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 568, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 28, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 57, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 569, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 28, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 58, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 570, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 29, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 59, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 571, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 29, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 60, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 572, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 30, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 61, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 573, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 30, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 62, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 574, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 31, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 63, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 575, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 31, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 64, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 576, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 32, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 65, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 577, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 32, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 66, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 578, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 33, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 67, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 579, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 33, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 68, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 580, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 34, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 69, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 581, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 34, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 70, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 582, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 35, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 71, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 583, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 35, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 72, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 584, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 36, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 73, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 585, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 36, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 74, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 586, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 37, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 75, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 587, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 37, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 76, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 588, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 38, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 77, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 589, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 38, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 78, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 590, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 39, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 79, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 591, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 39, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 80, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 592, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 40, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 81, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 593, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 40, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 82, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 594, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 41, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 83, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 595, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 41, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 84, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 596, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 42, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 85, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 597, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 42, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 86, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 598, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 43, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 87, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 599, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 43, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 88, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 600, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 44, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 89, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 601, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 44, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 90, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 602, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 45, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 91, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 603, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 45, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 92, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 604, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 46, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 93, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 605, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 46, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 94, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 606, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 47, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 95, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 607, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 47, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 96, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 608, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 48, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 97, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 609, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 48, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 98, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 610, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 49, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 99, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 611, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 49, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 100, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 612, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 50, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 101, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 613, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 50, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 102, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 614, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 51, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 103, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 615, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 51, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 104, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 616, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 52, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 105, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 617, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 52, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 106, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 618, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 53, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 107, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 619, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 53, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 108, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 620, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 54, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 109, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 621, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 54, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 110, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 622, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 55, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 111, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 623, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 55, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 112, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 624, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 56, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 113, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 625, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 56, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 114, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 626, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 57, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 115, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 627, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 57, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 116, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 628, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 58, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 117, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 629, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 58, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 118, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 630, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 59, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 119, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 631, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 59, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 120, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 632, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 60, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 121, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 633, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 60, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 122, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 634, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 61, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 123, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 635, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 61, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 124, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 636, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 62, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 125, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 637, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 62, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 126, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 638, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 63, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 127, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 639, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 63, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 128, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 640, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 64, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 129, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 641, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 64, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 130, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 642, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 65, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 131, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 643, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 65, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 132, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 644, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 66, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 133, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 645, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 66, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 134, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 646, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 67, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 135, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 647, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 67, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 136, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 648, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 68, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 137, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 649, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 68, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 138, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 650, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 69, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 139, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 651, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 69, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 140, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 652, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 70, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 141, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 653, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 70, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 142, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 654, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 71, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 143, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 655, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 71, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 144, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 656, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 72, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 145, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 657, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 72, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 146, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 658, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 73, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 147, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 659, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 73, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 148, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 660, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 74, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 149, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 661, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 74, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 150, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 662, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 75, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 151, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 663, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 75, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 152, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 664, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 76, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 153, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 665, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 76, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 154, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 666, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 77, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 155, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 667, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 77, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 156, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 668, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 78, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 157, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 669, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 78, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 158, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 670, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 79, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 159, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 671, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 79, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 160, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 672, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 80, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 161, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 673, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 80, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 162, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 674, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 81, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 163, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 675, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 81, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 164, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 676, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 82, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 165, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 677, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 82, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 166, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 678, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 83, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 167, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 679, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 83, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 168, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 680, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 84, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 169, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 681, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 84, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 170, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 682, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 85, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 171, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 683, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 85, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 172, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 684, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 86, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 173, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 685, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 86, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 174, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 686, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 87, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 175, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 687, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 87, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 176, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 688, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 88, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 177, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 689, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 88, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 178, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 690, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 89, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 179, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 691, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 89, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 180, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 692, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 90, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 181, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 693, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 90, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 182, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 694, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 91, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 183, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 695, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 91, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 184, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 696, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 92, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 185, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 697, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 92, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 186, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 698, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 93, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 187, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 699, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 93, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 188, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 700, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 94, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 189, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 701, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 94, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 190, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 702, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 95, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 191, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 703, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 95, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 192, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 704, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 96, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 193, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 705, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 96, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 194, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 706, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 97, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 195, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 707, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 97, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 196, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 708, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 98, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 197, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 709, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 98, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 198, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 710, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 99, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 199, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 711, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 99, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 200, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 712, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 100, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 201, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 713, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 100, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 202, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 714, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 101, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 203, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 715, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 101, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 204, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 716, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 102, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 205, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 717, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 102, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 206, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 718, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 103, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 207, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 719, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 103, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 208, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 720, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 104, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 209, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 721, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 104, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 210, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 722, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 105, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 211, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 723, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 105, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 212, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 724, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 106, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 213, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 725, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 106, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 214, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 726, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 107, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 215, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 727, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 107, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 216, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 728, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 108, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 217, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 729, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 108, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 218, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 730, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 109, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 219, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 731, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 109, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 220, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 732, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 110, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 221, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 733, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 110, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 222, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 734, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 111, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 223, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 735, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 111, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 224, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 736, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 112, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 225, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 737, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 112, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 226, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 738, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 113, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 227, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 739, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 113, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 228, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 740, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 114, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 229, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 741, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 114, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 230, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 742, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 115, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 231, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 743, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 115, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 232, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 744, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 116, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 233, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 745, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 116, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 234, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 746, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 117, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 235, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 747, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 117, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 236, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 748, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 118, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 237, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 749, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 118, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 238, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 750, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 119, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 239, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 751, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 119, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 240, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 752, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 120, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 241, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 753, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 120, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 242, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 754, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 121, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 243, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 755, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 121, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 244, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 756, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 122, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 245, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 757, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 122, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 246, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 758, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 123, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 247, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 759, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 123, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 248, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 760, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 124, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 249, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 761, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 124, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 250, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 762, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 125, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 251, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 763, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 125, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 252, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 764, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 126, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 253, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 765, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 126, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 254, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 766, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 127, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 255, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 767, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 127, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 256, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 768, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 128, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 257, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 769, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 128, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 258, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 770, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 129, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 259, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 771, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 129, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 260, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 772, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 130, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 261, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 773, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 130, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 262, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 774, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 131, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 263, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 775, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 131, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 264, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 776, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 132, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 265, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 777, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 132, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 266, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 778, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 133, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 267, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 779, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 133, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 268, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 780, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 134, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 269, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 781, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 134, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 270, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 782, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 135, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 271, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 783, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 135, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 272, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 784, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 136, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 273, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 785, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 136, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 274, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 786, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 137, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 275, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 787, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 137, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 276, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 788, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 138, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 277, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 789, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 138, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 278, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 790, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 139, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 279, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 791, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 139, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 280, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 792, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 140, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 281, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 793, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 140, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 282, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 794, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 141, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 283, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 795, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 141, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 284, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 796, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 142, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 285, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 797, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 142, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 286, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 798, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 143, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 287, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 799, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 143, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 288, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 800, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 144, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 289, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 801, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 144, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 290, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 802, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 145, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 291, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 803, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 145, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 292, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 804, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 146, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 293, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 805, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 146, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 294, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 806, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 147, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 295, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 807, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 147, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 296, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 808, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 148, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 297, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 809, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 148, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 298, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 810, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 149, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 299, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 811, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 149, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 300, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 812, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 150, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 301, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 813, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 150, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 302, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 814, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 151, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 303, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 815, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 151, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 304, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 816, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 152, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 305, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 817, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 152, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 306, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 818, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 153, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 307, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 819, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 153, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 308, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 820, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 154, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 309, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 821, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 154, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 310, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 822, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 155, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 311, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 823, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 155, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 312, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 824, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 156, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 313, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 825, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 156, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 314, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 826, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 157, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 315, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 827, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 157, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 316, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 828, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 158, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 317, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 829, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 158, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 318, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 830, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 159, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 319, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 831, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 159, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 320, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 832, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 160, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 321, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 833, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 160, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 322, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 834, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 161, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 323, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 835, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 161, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 324, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 836, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 162, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 325, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 837, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 162, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 326, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 838, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 163, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 327, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 839, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 163, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 328, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 840, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 164, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 329, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 841, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 164, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 330, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 842, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 165, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 331, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 843, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 165, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 332, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 844, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 166, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 333, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 845, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 166, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 334, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 846, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 167, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 335, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 847, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 167, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 336, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 848, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 168, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 337, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 849, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 168, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 338, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 850, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 169, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 339, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 851, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 169, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 340, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 852, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 170, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 341, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 853, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 170, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 342, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 854, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 171, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 343, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 855, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 171, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 344, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 856, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 172, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 345, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 857, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 172, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 346, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 858, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 173, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 347, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 859, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 173, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 348, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 860, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 174, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 349, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 861, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 174, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 350, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 862, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 175, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 351, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 863, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 175, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 352, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 864, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 176, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 353, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 865, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 176, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 354, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 866, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 177, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 355, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 867, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 177, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 356, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 868, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 178, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 357, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 869, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 178, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 358, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 870, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 179, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 359, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 871, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 179, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 360, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 872, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 180, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 361, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 873, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 180, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 362, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 874, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 181, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 363, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 875, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 181, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 364, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 876, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 182, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 365, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 877, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 182, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 366, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 878, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 183, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 367, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 879, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 183, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 368, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 880, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 184, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 369, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 881, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 184, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 370, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 882, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 185, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 371, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 883, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 185, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 372, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 884, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 186, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 373, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 885, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 186, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 374, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 886, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 187, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 375, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 887, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 187, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 376, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 888, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 188, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 377, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 889, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 188, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 378, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 890, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 189, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 379, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 891, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 189, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 380, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 892, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 190, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 381, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 893, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 190, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 382, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 894, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 191, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 383, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 895, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 191, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 384, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 896, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 192, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 385, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 897, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 192, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 386, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 898, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 193, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 387, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 899, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 193, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 388, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 900, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 194, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 389, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 901, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 194, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 390, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 902, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 195, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 391, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 903, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 195, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 392, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 904, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 196, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 393, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 905, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 196, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 394, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 906, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 197, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 395, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 907, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 197, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 396, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 908, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 198, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 397, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 909, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 198, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 398, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 910, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 199, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 399, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 911, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 199, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 400, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 912, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 200, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 401, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 913, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 200, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 402, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 914, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 201, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 403, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 915, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 201, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 404, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 916, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 202, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 405, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 917, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 202, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 406, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 918, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 203, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 407, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 919, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 203, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 408, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 920, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 204, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 409, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 921, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 204, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 410, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 922, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 205, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 411, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 923, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 205, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 412, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 924, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 206, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 413, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 925, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 206, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 414, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 926, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 207, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 415, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 927, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 207, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 416, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 928, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 208, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 417, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 929, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 208, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 418, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 930, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 209, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 419, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 931, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 209, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 420, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 932, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 210, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 421, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 933, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 210, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 422, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 934, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 211, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 423, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 935, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 211, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 424, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 936, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 212, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 425, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 937, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 212, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 426, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 938, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 213, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 427, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 939, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 213, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 428, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 940, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 214, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 429, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 941, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 214, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 430, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 942, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 215, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 431, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 943, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 215, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 432, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 944, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 216, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 433, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 945, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 216, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 434, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 946, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 217, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 435, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 947, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 217, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 436, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 948, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 218, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 437, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 949, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 218, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 438, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 950, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 219, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 439, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 951, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 219, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 440, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 952, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 220, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 441, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 953, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 220, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 442, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 954, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 221, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 443, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 955, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 221, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 444, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 956, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 222, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 445, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 957, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 222, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 446, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 958, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 223, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 447, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 959, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 223, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 448, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 960, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 224, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 449, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 961, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 224, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 450, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 962, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 225, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 451, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 963, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 225, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 452, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 964, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 226, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 453, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 965, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 226, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 454, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 966, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 227, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 455, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 967, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 227, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 456, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 968, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 228, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 457, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 969, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 228, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 458, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 970, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 229, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 459, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 971, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 229, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 460, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 972, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 230, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 461, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 973, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 230, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 462, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 974, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 231, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 463, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 975, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 231, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 464, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 976, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 232, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 465, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 977, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 232, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 466, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 978, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 233, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 467, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 979, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 233, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 468, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 980, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 234, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 469, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 981, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 234, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 470, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 982, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 235, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 471, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 983, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 235, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 472, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 984, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 236, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 473, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 985, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 236, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 474, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 986, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 237, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 475, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 987, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 237, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 476, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 988, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 238, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 477, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 989, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 238, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 478, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 990, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 239, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 479, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 991, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 239, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 480, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 992, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 240, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 481, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 993, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 240, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 482, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 994, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 241, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 483, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 995, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 241, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 484, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 996, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 242, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 485, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 997, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 242, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 486, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 998, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 243, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 487, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 999, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 243, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 488, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1000, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 244, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 489, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1001, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 244, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 490, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1002, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 245, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 491, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1003, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 245, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 492, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1004, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 246, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 493, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1005, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 246, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 494, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1006, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 247, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 495, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1007, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 247, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 496, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1008, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 248, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 497, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1009, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 248, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 498, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1010, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 249, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 499, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1011, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 249, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 500, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1012, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 250, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 501, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1013, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 250, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 502, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1014, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 251, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 503, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1015, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 251, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 504, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1016, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 252, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 505, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1017, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 252, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 506, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1018, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 253, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 507, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1019, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 253, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 508, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1020, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 254, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 509, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1021, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 254, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 510, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1022, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 255, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 511, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 1023, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 255, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 0, "data": 1, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 14386, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 158, "be": 1}
+{"op": "run_frame"}
+{"op": "check_pixel", "x": 50, "y": 100, "exp_color": 7, "exp_valid": 1}
+{"op": "check_pixel", "x": 65, "y": 115, "exp_color": 7, "exp_valid": 1}
+{"op": "check_pixel", "x": 66, "y": 100, "exp_color": 0, "exp_valid": 0}
+{"op": "check_pixel", "x": 50, "y": 99, "exp_color": 0, "exp_valid": 0}
+{"op": "cram_write", "addr": 0, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 0, "data": 32770, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 2128, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 198, "be": 1}
+{"op": "run_frame"}
+{"op": "check_pixel", "x": 80, "y": 60, "exp_color": 1, "exp_valid": 1}
+{"op": "check_pixel", "x": 81, "y": 60, "exp_color": 1, "exp_valid": 1}
+{"op": "cram_write", "addr": 0, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 0, "data": 16387, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 4216, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 178, "be": 1}
+{"op": "run_frame"}
+{"op": "check_pixel", "x": 120, "y": 80, "exp_color": 0, "exp_valid": 0}
+{"op": "check_pixel", "x": 120, "y": 81, "exp_color": 2, "exp_valid": 1}
+{"op": "cram_write", "addr": 0, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 1, "data": 4, "be": 3}
+{"op": "cram_write", "addr": 513, "data": 22688, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 35328, "be": 2}
+{"op": "cram_write", "addr": 0, "data": 1, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 14496, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 138, "be": 1}
+{"op": "run_frame"}
+{"op": "check_pixel", "x": 160, "y": 120, "exp_color": 7, "exp_valid": 1}
+{"op": "cram_write", "addr": 0, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 1, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 513, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 65280, "be": 2}
+{"op": "cram_write", "addr": 0, "data": 1, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 10744, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 118, "be": 1}
+{"op": "cram_write", "addr": 0, "data": 1, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 10744, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 118, "be": 1}
+{"op": "run_frame"}
+{"op": "check_pixel", "x": 0, "y": 140, "exp_color": 5, "exp_valid": 1}
+{"op": "check_pixel", "x": 7, "y": 140, "exp_color": 5, "exp_valid": 1}
+{"op": "load_gfx_word", "addr": 320, "data": 0}
+{"op": "load_gfx_word", "addr": 321, "data": 0}
+{"op": "load_gfx_word", "addr": 322, "data": 26214}
+{"op": "load_gfx_word", "addr": 323, "data": 26214}
+{"op": "load_gfx_word", "addr": 324, "data": 0}
+{"op": "load_gfx_word", "addr": 325, "data": 0}
+{"op": "load_gfx_word", "addr": 326, "data": 26214}
+{"op": "load_gfx_word", "addr": 327, "data": 26214}
+{"op": "load_gfx_word", "addr": 328, "data": 0}
+{"op": "load_gfx_word", "addr": 329, "data": 0}
+{"op": "load_gfx_word", "addr": 330, "data": 26214}
+{"op": "load_gfx_word", "addr": 331, "data": 26214}
+{"op": "load_gfx_word", "addr": 332, "data": 0}
+{"op": "load_gfx_word", "addr": 333, "data": 0}
+{"op": "load_gfx_word", "addr": 334, "data": 26214}
+{"op": "load_gfx_word", "addr": 335, "data": 26214}
+{"op": "load_gfx_word", "addr": 336, "data": 0}
+{"op": "load_gfx_word", "addr": 337, "data": 0}
+{"op": "load_gfx_word", "addr": 338, "data": 26214}
+{"op": "load_gfx_word", "addr": 339, "data": 26214}
+{"op": "load_gfx_word", "addr": 340, "data": 0}
+{"op": "load_gfx_word", "addr": 341, "data": 0}
+{"op": "load_gfx_word", "addr": 342, "data": 26214}
+{"op": "load_gfx_word", "addr": 343, "data": 26214}
+{"op": "load_gfx_word", "addr": 344, "data": 0}
+{"op": "load_gfx_word", "addr": 345, "data": 0}
+{"op": "load_gfx_word", "addr": 346, "data": 26214}
+{"op": "load_gfx_word", "addr": 347, "data": 26214}
+{"op": "load_gfx_word", "addr": 348, "data": 0}
+{"op": "load_gfx_word", "addr": 349, "data": 0}
+{"op": "load_gfx_word", "addr": 350, "data": 26214}
+{"op": "load_gfx_word", "addr": 351, "data": 26214}
+{"op": "load_gfx_word", "addr": 352, "data": 0}
+{"op": "load_gfx_word", "addr": 353, "data": 0}
+{"op": "load_gfx_word", "addr": 354, "data": 26214}
+{"op": "load_gfx_word", "addr": 355, "data": 26214}
+{"op": "load_gfx_word", "addr": 356, "data": 0}
+{"op": "load_gfx_word", "addr": 357, "data": 0}
+{"op": "load_gfx_word", "addr": 358, "data": 26214}
+{"op": "load_gfx_word", "addr": 359, "data": 26214}
+{"op": "load_gfx_word", "addr": 360, "data": 0}
+{"op": "load_gfx_word", "addr": 361, "data": 0}
+{"op": "load_gfx_word", "addr": 362, "data": 26214}
+{"op": "load_gfx_word", "addr": 363, "data": 26214}
+{"op": "load_gfx_word", "addr": 364, "data": 0}
+{"op": "load_gfx_word", "addr": 365, "data": 0}
+{"op": "load_gfx_word", "addr": 366, "data": 26214}
+{"op": "load_gfx_word", "addr": 367, "data": 26214}
+{"op": "load_gfx_word", "addr": 368, "data": 0}
+{"op": "load_gfx_word", "addr": 369, "data": 0}
+{"op": "load_gfx_word", "addr": 370, "data": 26214}
+{"op": "load_gfx_word", "addr": 371, "data": 26214}
+{"op": "load_gfx_word", "addr": 372, "data": 0}
+{"op": "load_gfx_word", "addr": 373, "data": 0}
+{"op": "load_gfx_word", "addr": 374, "data": 26214}
+{"op": "load_gfx_word", "addr": 375, "data": 26214}
+{"op": "load_gfx_word", "addr": 376, "data": 0}
+{"op": "load_gfx_word", "addr": 377, "data": 0}
+{"op": "load_gfx_word", "addr": 378, "data": 26214}
+{"op": "load_gfx_word", "addr": 379, "data": 26214}
+{"op": "load_gfx_word", "addr": 380, "data": 0}
+{"op": "load_gfx_word", "addr": 381, "data": 0}
+{"op": "load_gfx_word", "addr": 382, "data": 26214}
+{"op": "load_gfx_word", "addr": 383, "data": 26214}
+{"op": "cram_write", "addr": 0, "data": 0, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 0, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 255, "be": 1}
+{"op": "cram_write", "addr": 0, "data": 5, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 12488, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 208, "be": 1}
+{"op": "run_frame"}
+{"op": "check_pixel", "x": 200, "y": 50, "exp_color": 0, "exp_valid": 0}
+{"op": "check_pixel", "x": 208, "y": 50, "exp_color": 6, "exp_valid": 1}

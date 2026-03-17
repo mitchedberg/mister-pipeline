@@ -9,7 +9,8 @@ PYTHON     := python3
 
 VEC1       := $(VEC_DIR)/gate1_vectors.jsonl
 VEC4       := $(VEC_DIR)/gate4_vectors.jsonl
-ALL_VECS   := $(VEC1) $(VEC4)
+VEC5       := $(VEC_DIR)/gate5_vectors.jsonl
+ALL_VECS   := $(VEC1) $(VEC4) $(VEC5)
 SIM_BIN    := $(OBJ_DIR)/Vx1_001a
 
 .PHONY: all vectors build run clean test
@@ -20,6 +21,7 @@ test: all
 
 vectors: $(ALL_VECS)
 
+$(VEC5): $(VEC1)  # gate5 is generated together with gate1/gate4
 $(ALL_VECS): $(VEC_DIR)/generate_vectors.py $(VEC_DIR)/x1001a_model.py
 	cd $(VEC_DIR) && $(PYTHON) generate_vectors.py
 
