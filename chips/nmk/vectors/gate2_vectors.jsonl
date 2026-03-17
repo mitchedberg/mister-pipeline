@@ -1,0 +1,94 @@
+{"id": 1, "name": "Sprite 0 write Y = 0x0000", "addr": 1245184, "din": 0, "operation": "WRITE", "vsync_n": 1}
+{"id": 2, "name": "Sprite 0 write X = 0x0050", "addr": 1245186, "din": 80, "operation": "WRITE", "vsync_n": 1}
+{"id": 3, "name": "Sprite 0 write TILE = 0x0100", "addr": 1245188, "din": 256, "operation": "WRITE", "vsync_n": 1}
+{"id": 4, "name": "Sprite 0 write ATTR = 0x0000", "addr": 1245190, "din": 0, "operation": "WRITE", "vsync_n": 1}
+{"id": 5, "name": "Sprite 1 write Y = 0x0010", "addr": 1245192, "din": 16, "operation": "WRITE", "vsync_n": 1}
+{"id": 6, "name": "Sprite 1 write X = 0x0060", "addr": 1245194, "din": 96, "operation": "WRITE", "vsync_n": 1}
+{"id": 7, "name": "Sprite 1 write TILE = 0x0101", "addr": 1245196, "din": 257, "operation": "WRITE", "vsync_n": 1}
+{"id": 8, "name": "Sprite 1 write ATTR = 0x4400", "addr": 1245198, "din": 17408, "operation": "WRITE", "vsync_n": 1}
+{"id": 9, "name": "Sprite 2 write Y = 0x0020", "addr": 1245200, "din": 32, "operation": "WRITE", "vsync_n": 1}
+{"id": 10, "name": "Sprite 2 write X = 0x0070", "addr": 1245202, "din": 112, "operation": "WRITE", "vsync_n": 1}
+{"id": 11, "name": "Sprite 2 write TILE = 0x0102", "addr": 1245204, "din": 258, "operation": "WRITE", "vsync_n": 1}
+{"id": 12, "name": "Sprite 2 write ATTR = 0x8800", "addr": 1245206, "din": 34816, "operation": "WRITE", "vsync_n": 1}
+{"id": 13, "name": "Sprite 3 write Y = 0x01FF", "addr": 1245208, "din": 511, "operation": "WRITE", "vsync_n": 1}
+{"id": 14, "name": "Sprite 3 write X = 0x0000", "addr": 1245210, "din": 0, "operation": "WRITE", "vsync_n": 1}
+{"id": 15, "name": "Sprite 3 write TILE = 0x0000", "addr": 1245212, "din": 0, "operation": "WRITE", "vsync_n": 1}
+{"id": 16, "name": "Sprite 3 write ATTR = 0x0000", "addr": 1245214, "din": 0, "operation": "WRITE", "vsync_n": 1}
+{"id": 17, "name": "Sprite 4 write Y = 0x0030", "addr": 1245216, "din": 48, "operation": "WRITE", "vsync_n": 1}
+{"id": 18, "name": "Sprite 4 write X = 0x0080", "addr": 1245218, "din": 128, "operation": "WRITE", "vsync_n": 1}
+{"id": 19, "name": "Sprite 4 write TILE = 0x0103", "addr": 1245220, "din": 259, "operation": "WRITE", "vsync_n": 1}
+{"id": 20, "name": "Sprite 4 write ATTR = 0xC400", "addr": 1245222, "din": 50176, "operation": "WRITE", "vsync_n": 1}
+{"id": 21, "name": "Sprite 10 write Y = 0x0040", "addr": 1245264, "din": 64, "operation": "WRITE", "vsync_n": 1}
+{"id": 22, "name": "Sprite 10 write X = 0x0090", "addr": 1245266, "din": 144, "operation": "WRITE", "vsync_n": 1}
+{"id": 23, "name": "Sprite 10 write TILE = 0x010A", "addr": 1245268, "din": 266, "operation": "WRITE", "vsync_n": 1}
+{"id": 24, "name": "Sprite 10 write ATTR = 0x0050", "addr": 1245270, "din": 80, "operation": "WRITE", "vsync_n": 1}
+{"id": 25, "name": "Sprite 20 write Y = 0x0050", "addr": 1245344, "din": 80, "operation": "WRITE", "vsync_n": 1}
+{"id": 26, "name": "Sprite 20 write X = 0x00A0", "addr": 1245346, "din": 160, "operation": "WRITE", "vsync_n": 1}
+{"id": 27, "name": "Sprite 20 write TILE = 0x0114", "addr": 1245348, "din": 276, "operation": "WRITE", "vsync_n": 1}
+{"id": 28, "name": "Sprite 20 write ATTR = 0x1066", "addr": 1245350, "din": 4198, "operation": "WRITE", "vsync_n": 1}
+{"id": 29, "name": "Sprite 50 write Y = 0x0060", "addr": 1245584, "din": 96, "operation": "WRITE", "vsync_n": 1}
+{"id": 30, "name": "Sprite 50 write X = 0x00B0", "addr": 1245586, "din": 176, "operation": "WRITE", "vsync_n": 1}
+{"id": 31, "name": "Sprite 50 write TILE = 0x0132", "addr": 1245588, "din": 306, "operation": "WRITE", "vsync_n": 1}
+{"id": 32, "name": "Sprite 50 write ATTR = 0x2077", "addr": 1245590, "din": 8311, "operation": "WRITE", "vsync_n": 1}
+{"id": 33, "name": "Sprite 100 write Y = 0x0070", "addr": 1245984, "din": 112, "operation": "WRITE", "vsync_n": 1}
+{"id": 34, "name": "Sprite 100 write X = 0x00C0", "addr": 1245986, "din": 192, "operation": "WRITE", "vsync_n": 1}
+{"id": 35, "name": "Sprite 100 write TILE = 0x0164", "addr": 1245988, "din": 356, "operation": "WRITE", "vsync_n": 1}
+{"id": 36, "name": "Sprite 100 write ATTR = 0x3088", "addr": 1245990, "din": 12424, "operation": "WRITE", "vsync_n": 1}
+{"id": 37, "name": "Sprite 255 write Y = 0x0080", "addr": 1247224, "din": 128, "operation": "WRITE", "vsync_n": 1}
+{"id": 38, "name": "Sprite 255 write X = 0x00D0", "addr": 1247226, "din": 208, "operation": "WRITE", "vsync_n": 1}
+{"id": 39, "name": "Sprite 255 write TILE = 0x01FF", "addr": 1247228, "din": 511, "operation": "WRITE", "vsync_n": 1}
+{"id": 40, "name": "Sprite 255 write ATTR = 0x4099", "addr": 1247230, "din": 16537, "operation": "WRITE", "vsync_n": 1}
+{"id": 41, "name": "Sprite 0 read Y verify", "addr": 1245184, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 0}
+{"id": 42, "name": "Sprite 0 read X verify", "addr": 1245186, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 80}
+{"id": 43, "name": "Sprite 0 read TILE verify", "addr": 1245188, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 256}
+{"id": 44, "name": "Sprite 0 read ATTR verify", "addr": 1245190, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 0}
+{"id": 45, "name": "Sprite 1 read Y verify", "addr": 1245192, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 16}
+{"id": 46, "name": "Sprite 1 read X verify", "addr": 1245194, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 96}
+{"id": 47, "name": "Sprite 1 read TILE verify", "addr": 1245196, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 257}
+{"id": 48, "name": "Sprite 1 read ATTR verify", "addr": 1245198, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 17408}
+{"id": 49, "name": "Sprite 2 read Y verify", "addr": 1245200, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 32}
+{"id": 50, "name": "Sprite 2 read X verify", "addr": 1245202, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 112}
+{"id": 51, "name": "Sprite 2 read TILE verify", "addr": 1245204, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 258}
+{"id": 52, "name": "Sprite 2 read ATTR verify", "addr": 1245206, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 34816}
+{"id": 53, "name": "Sprite 3 read Y verify", "addr": 1245208, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 511}
+{"id": 54, "name": "Sprite 3 read X verify", "addr": 1245210, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 0}
+{"id": 55, "name": "Sprite 3 read TILE verify", "addr": 1245212, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 0}
+{"id": 56, "name": "Sprite 3 read ATTR verify", "addr": 1245214, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 0}
+{"id": 57, "name": "Sprite 4 read Y verify", "addr": 1245216, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 48}
+{"id": 58, "name": "Sprite 4 read X verify", "addr": 1245218, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 128}
+{"id": 59, "name": "Sprite 4 read TILE verify", "addr": 1245220, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 259}
+{"id": 60, "name": "Sprite 4 read ATTR verify", "addr": 1245222, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 50176}
+{"id": 61, "name": "Sprite 10 read Y verify", "addr": 1245264, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 64}
+{"id": 62, "name": "Sprite 10 read X verify", "addr": 1245266, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 144}
+{"id": 63, "name": "Sprite 10 read TILE verify", "addr": 1245268, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 266}
+{"id": 64, "name": "Sprite 10 read ATTR verify", "addr": 1245270, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 80}
+{"id": 65, "name": "Sprite 20 read Y verify", "addr": 1245344, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 80}
+{"id": 66, "name": "Sprite 20 read X verify", "addr": 1245346, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 160}
+{"id": 67, "name": "Sprite 20 read TILE verify", "addr": 1245348, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 276}
+{"id": 68, "name": "Sprite 20 read ATTR verify", "addr": 1245350, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 4198}
+{"id": 69, "name": "Sprite 50 read Y verify", "addr": 1245584, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 96}
+{"id": 70, "name": "Sprite 50 read X verify", "addr": 1245586, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 176}
+{"id": 71, "name": "Sprite 50 read TILE verify", "addr": 1245588, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 306}
+{"id": 72, "name": "Sprite 50 read ATTR verify", "addr": 1245590, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 8311}
+{"id": 73, "name": "Sprite 100 read Y verify", "addr": 1245984, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 112}
+{"id": 74, "name": "Sprite 100 read X verify", "addr": 1245986, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 192}
+{"id": 75, "name": "Sprite 100 read TILE verify", "addr": 1245988, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 356}
+{"id": 76, "name": "Sprite 100 read ATTR verify", "addr": 1245990, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 12424}
+{"id": 77, "name": "Sprite 255 read Y verify", "addr": 1247224, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 128}
+{"id": 78, "name": "Sprite 255 read X verify", "addr": 1247226, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 208}
+{"id": 79, "name": "Sprite 255 read TILE verify", "addr": 1247228, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 511}
+{"id": 80, "name": "Sprite 255 read ATTR verify", "addr": 1247230, "din": 0, "operation": "READ", "vsync_n": 1, "expected_dout": 16537}
+{"id": 81, "name": "VBLANK rising edge (vsync_n: 1->0)", "addr": 0, "din": 0, "operation": "NOP", "vsync_n": 0}
+{"id": 82, "name": "Sprite scanner FSM processes (display_list_ready pulse)", "addr": 0, "din": 0, "operation": "NOP", "vsync_n": 0}
+{"id": 83, "name": "VBLANK falling edge (vsync_n: 0->1)", "addr": 0, "din": 0, "operation": "NOP", "vsync_n": 1}
+{"id": 84, "name": "Edge case: all sprites hidden", "addr": 0, "din": 0, "operation": "NOP", "vsync_n": 1}
+{"id": 85, "name": "Edge case: Y position at 9-bit boundary (0x0100)", "addr": 1245184, "din": 256, "operation": "WRITE", "vsync_n": 1}
+{"id": 86, "name": "Edge case: X position at 9-bit boundary (0x01FF)", "addr": 1245186, "din": 511, "operation": "WRITE", "vsync_n": 1}
+{"id": 87, "name": "Tile code at 12-bit max (0x0FFF)", "addr": 1245188, "din": 4095, "operation": "WRITE", "vsync_n": 1}
+{"id": 88, "name": "Attributes with flip_x, flip_y, size, palette all set", "addr": 1245190, "din": 65535, "operation": "WRITE", "vsync_n": 1}
+{"id": 89, "name": "Consecutive sprite 0 Y position", "addr": 1245184, "din": 0, "operation": "WRITE", "vsync_n": 1}
+{"id": 90, "name": "Consecutive sprite 1 Y position", "addr": 1245192, "din": 16, "operation": "WRITE", "vsync_n": 1}
+{"id": 91, "name": "Consecutive sprite 2 Y position", "addr": 1245200, "din": 32, "operation": "WRITE", "vsync_n": 1}
+{"id": 92, "name": "Consecutive sprite 3 Y position", "addr": 1245208, "din": 48, "operation": "WRITE", "vsync_n": 1}
+{"id": 93, "name": "Consecutive sprite 4 Y position", "addr": 1245216, "din": 64, "operation": "WRITE", "vsync_n": 1}
+{"id": 94, "name": "Consecutive sprite 5 Y position", "addr": 1245224, "din": 80, "operation": "WRITE", "vsync_n": 1}

@@ -1,40 +1,62 @@
-# NMK16 Gate 1 Test Makefile
-# Targets: all, vectors, build, run, test, clean
+# NMK16 Test Makefile
+# Targets: gate1, gate2, all, clean
 
 VERILATOR ?= verilator
 OBJ_DIR := obj
+OBJ_DIR_G1 := obj_gate1
+OBJ_DIR_G2 := obj_gate2
 RTL := ../rtl/nmk16.sv
-TB := tb_gate1.cpp
-EXE := $(OBJ_DIR)/Vnmk16
 
-.PHONY: all vectors build run test clean
+.PHONY: gate1 gate2 all clean
 
-all: vectors build test
-
-vectors: gate1_vectors.jsonl
+# Gate 1 targets
+gate1: gate1_vectors.jsonl gate1_build gate1_test
 
 gate1_vectors.jsonl: generate_gate1.py gate1_model.py
 	python3 generate_gate1.py
 
-build: $(EXE)
+gate1_build: $(OBJ_DIR_G1)/Vnmk16
 
-$(EXE): $(RTL) $(TB) | $(OBJ_DIR)
-	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR) -Wall --top-module nmk16 \
+$(OBJ_DIR_G1)/Vnmk16: $(RTL) tb_gate1.cpp | $(OBJ_DIR_G1)
+	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR_G1) -Wall --top-module nmk16 \
 		-Wno-MODMISSING \
 		-O0 -fno-dfg -fno-dfg-peephole \
-		$(RTL) $(TB) --build -CFLAGS "-O2 -std=c++17" 2>&1
+		$(RTL) tb_gate1.cpp --build -CFLAGS "-O2 -std=c++17" 2>&1
 
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+gate1_test: gate1_build gate1_vectors.jsonl
+	cd $(OBJ_DIR_G1) && ./Vnmk16 2>&1 | tee gate1_test.log
+	@grep -q "Failed: 0" $(OBJ_DIR_G1)/gate1_test.log && echo "✓ Gate 1: All tests passed" || (echo "✗ Gate 1: Some tests failed" && exit 1)
 
-run: build gate1_vectors.jsonl
-	cd $(OBJ_DIR) && ./Vnmk16
+$(OBJ_DIR_G1):
+	mkdir -p $(OBJ_DIR_G1)
 
-test: build gate1_vectors.jsonl
-	cd $(OBJ_DIR) && ./Vnmk16 2>&1 | tee test_output.log
-	@grep -q "Failed: 0" $(OBJ_DIR)/test_output.log && echo "✓ All tests passed" || (echo "✗ Some tests failed" && exit 1)
+# Gate 2 targets
+gate2: gate2_vectors.jsonl gate2_build gate2_test
+
+gate2_vectors.jsonl: generate_gate2.py gate2_model.py
+	python3 generate_gate2.py
+
+gate2_build: $(OBJ_DIR_G2)/Vnmk16
+
+$(OBJ_DIR_G2)/Vnmk16: $(RTL) tb_gate2.cpp | $(OBJ_DIR_G2)
+	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR_G2) -Wall --top-module nmk16 \
+		-Wno-MODMISSING \
+		-O0 -fno-dfg -fno-dfg-peephole \
+		$(RTL) tb_gate2.cpp --build -CFLAGS "-O2 -std=c++17" 2>&1
+
+gate2_test: gate2_build gate2_vectors.jsonl
+	cd $(OBJ_DIR_G2) && ./Vnmk16 2>&1 | tee gate2_test.log
+	@grep -q "Failed: 0" $(OBJ_DIR_G2)/gate2_test.log && echo "✓ Gate 2: All tests passed" || (echo "✗ Gate 2: Some tests failed" && exit 1)
+
+$(OBJ_DIR_G2):
+	mkdir -p $(OBJ_DIR_G2)
+
+# Combined targets
+all: gate1 gate2
+	@echo ""
+	@echo "=== ALL GATES PASSED ==="
 
 clean:
-	rm -rf $(OBJ_DIR) gate1_vectors.jsonl *.log
+	rm -rf $(OBJ_DIR_G1) $(OBJ_DIR_G2) gate1_vectors.jsonl gate2_vectors.jsonl *.log
 
 .SILENT: clean
