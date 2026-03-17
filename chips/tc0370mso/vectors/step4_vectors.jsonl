@@ -1,0 +1,30 @@
+{"op": "zero_spr_ram"}
+{"op": "zero_caches"}
+{"op": "spr_write", "addr": 2044, "data": 15952, "be": 3}
+{"op": "spr_write", "addr": 2045, "data": 287, "be": 3}
+{"op": "spr_write", "addr": 2046, "data": 100, "be": 3}
+{"op": "spr_write", "addr": 2047, "data": 3, "be": 3}
+{"op": "set_stym_word", "addr": 96, "data": 2}
+{"op": "set_obj_tile", "code": 2, "rows": [[85, 85, 170, 170, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+{"op": "run_vblank", "y_offs": 7, "label": "step4_half_zoom"}
+{"op": "check_pixel", "x": 100, "vpos": 119, "exp_valid": 1, "exp_pix": 33, "exp_priority": 0}
+{"op": "check_pixel", "x": 101, "vpos": 119, "exp_valid": 1, "exp_pix": 33, "exp_priority": 0}
+{"op": "check_pixel", "x": 102, "vpos": 119, "exp_valid": 1, "exp_pix": 33, "exp_priority": 0}
+{"op": "check_pixel", "x": 103, "vpos": 119, "exp_valid": 1, "exp_pix": 33, "exp_priority": 0}
+{"op": "check_pixel", "x": 104, "vpos": 119, "exp_valid": 1, "exp_pix": 33, "exp_priority": 0}
+{"op": "check_pixel", "x": 105, "vpos": 119, "exp_valid": 1, "exp_pix": 33, "exp_priority": 0}
+{"op": "check_pixel", "x": 106, "vpos": 119, "exp_valid": 1, "exp_pix": 33, "exp_priority": 0}
+{"op": "check_pixel", "x": 107, "vpos": 119, "exp_valid": 1, "exp_pix": 33, "exp_priority": 0}
+{"op": "zero_spr_ram"}
+{"op": "zero_caches"}
+{"op": "spr_write", "addr": 2044, "data": 7720, "be": 3}
+{"op": "spr_write", "addr": 2045, "data": 32911, "be": 3}
+{"op": "spr_write", "addr": 2046, "data": 60, "be": 3}
+{"op": "spr_write", "addr": 2047, "data": 5, "be": 3}
+{"op": "set_stym_word", "addr": 160, "data": 3}
+{"op": "set_obj_tile", "code": 3, "rows": [[255, 255, 255, 255, 255, 255, 255, 255], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+{"op": "run_vblank", "y_offs": 7, "label": "step4_quarter_zoom"}
+{"op": "check_pixel", "x": 60, "vpos": 95, "exp_valid": 1, "exp_pix": 31, "exp_priority": 1}
+{"op": "check_pixel", "x": 61, "vpos": 95, "exp_valid": 1, "exp_pix": 31, "exp_priority": 1}
+{"op": "check_pixel", "x": 62, "vpos": 95, "exp_valid": 1, "exp_pix": 31, "exp_priority": 1}
+{"op": "check_pixel", "x": 63, "vpos": 95, "exp_valid": 1, "exp_pix": 31, "exp_priority": 1}

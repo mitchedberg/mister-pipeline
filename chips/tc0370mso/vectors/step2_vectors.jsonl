@@ -1,0 +1,14 @@
+{"op": "zero_spr_ram"}
+{"op": "spr_write", "addr": 2044, "data": 32336, "be": 3}
+{"op": "spr_write", "addr": 2045, "data": 703, "be": 3}
+{"op": "spr_write", "addr": 2046, "data": 100, "be": 3}
+{"op": "spr_write", "addr": 2047, "data": 1, "be": 3}
+{"op": "spr_write", "addr": 0, "data": 0, "be": 3}
+{"op": "spr_write", "addr": 1, "data": 0, "be": 3}
+{"op": "spr_write", "addr": 2, "data": 0, "be": 3}
+{"op": "spr_write", "addr": 3, "data": 0, "be": 3}
+{"op": "spr_write", "addr": 64, "data": 16504, "be": 3}
+{"op": "spr_write", "addr": 65, "data": 33168, "be": 3}
+{"op": "spr_write", "addr": 66, "data": 49202, "be": 3}
+{"op": "spr_write", "addr": 67, "data": 2, "be": 3}
+{"op": "run_scan", "label": "step2_basic_entries", "check_decode": [{"entry_idx": 511, "exp_zoomy_raw": 63, "exp_y_raw": 80, "exp_priority": 0, "exp_color": 5, "exp_zoomx_raw": 63, "exp_flipy": 0, "exp_flipx": 0, "exp_x_raw": 100, "exp_tilenum": 1}, {"entry_idx": 16, "exp_zoomy_raw": 32, "exp_y_raw": 120, "exp_priority": 1, "exp_color": 3, "exp_zoomx_raw": 16, "exp_flipy": 1, "exp_flipx": 1, "exp_x_raw": 50, "exp_tilenum": 2}]}

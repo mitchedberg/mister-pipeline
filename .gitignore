@@ -4,6 +4,7 @@ __pycache__/
 
 # Verilator build output
 obj_dir/
+obj_dir_asan/
 
 # MAME session files
 chips/cps1_obj/tier2/mame_dump.log

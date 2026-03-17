@@ -1,0 +1,45 @@
+{"op": "zero_spr_ram"}
+{"op": "zero_caches"}
+{"op": "spr_write", "addr": 2044, "data": 32356, "be": 3}
+{"op": "spr_write", "addr": 0, "data": 32356, "be": 3}
+{"op": "spr_write", "addr": 2040, "data": 32306, "be": 3}
+{"op": "spr_write", "addr": 2036, "data": 32326, "be": 3}
+{"op": "spr_write", "addr": 2045, "data": 191, "be": 3}
+{"op": "spr_write", "addr": 1, "data": 319, "be": 3}
+{"op": "spr_write", "addr": 2041, "data": 447, "be": 3}
+{"op": "spr_write", "addr": 2037, "data": 575, "be": 3}
+{"op": "spr_write", "addr": 2046, "data": 150, "be": 3}
+{"op": "spr_write", "addr": 2, "data": 150, "be": 3}
+{"op": "spr_write", "addr": 2042, "data": 16394, "be": 3}
+{"op": "spr_write", "addr": 2038, "data": 482, "be": 3}
+{"op": "spr_write", "addr": 2047, "data": 10, "be": 3}
+{"op": "spr_write", "addr": 3, "data": 11, "be": 3}
+{"op": "spr_write", "addr": 2043, "data": 12, "be": 3}
+{"op": "spr_write", "addr": 2039, "data": 13, "be": 3}
+{"op": "set_stym_word", "addr": 320, "data": 10}
+{"op": "set_stym_word", "addr": 352, "data": 11}
+{"op": "set_stym_word", "addr": 384, "data": 12}
+{"op": "set_stym_word", "addr": 416, "data": 13}
+{"op": "set_obj_tile", "code": 10, "rows": [[255, 255, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+{"op": "set_obj_tile", "code": 11, "rows": [[0, 0, 255, 255, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+{"op": "set_obj_tile", "code": 12, "rows": [[255, 0, 255, 0, 0, 255, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+{"op": "set_obj_tile", "code": 13, "rows": [[255, 255, 0, 0, 255, 255, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+{"op": "run_vblank", "y_offs": 7, "label": "step6_multi_sprite"}
+{"op": "check_pixel", "x": 150, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 151, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 152, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 153, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 154, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 155, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 156, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 157, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 158, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 159, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 160, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 161, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 162, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 163, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 164, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 165, "vpos": 107, "exp_valid": 1, "exp_pix": 34, "exp_priority": 0}
+{"op": "check_pixel", "x": 0, "vpos": 200, "exp_valid": 0, "exp_pix": 0, "exp_priority": 0}
+{"op": "check_pixel", "x": 319, "vpos": 200, "exp_valid": 0, "exp_pix": 0, "exp_priority": 0}

@@ -1,0 +1,25 @@
+{"op": "zero_spr_ram"}
+{"op": "zero_caches"}
+{"op": "spr_write", "addr": 2044, "data": 32306, "be": 3}
+{"op": "spr_write", "addr": 2045, "data": 34111, "be": 3}
+{"op": "spr_write", "addr": 2046, "data": 200, "be": 3}
+{"op": "spr_write", "addr": 2047, "data": 7, "be": 3}
+{"op": "set_stym_word", "addr": 224, "data": 4}
+{"op": "set_obj_tile", "code": 4, "rows": [[0, 255, 0, 0, 0, 255, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+{"op": "run_vblank", "y_offs": 7, "label": "step5_priority_transparent"}
+{"op": "check_pixel", "x": 200, "vpos": 57, "exp_valid": 0, "exp_pix": 0, "exp_priority": 0}
+{"op": "check_pixel", "x": 201, "vpos": 57, "exp_valid": 0, "exp_pix": 0, "exp_priority": 0}
+{"op": "check_pixel", "x": 202, "vpos": 57, "exp_valid": 0, "exp_pix": 0, "exp_priority": 0}
+{"op": "check_pixel", "x": 203, "vpos": 57, "exp_valid": 0, "exp_pix": 0, "exp_priority": 0}
+{"op": "check_pixel", "x": 204, "vpos": 57, "exp_valid": 0, "exp_pix": 0, "exp_priority": 0}
+{"op": "check_pixel", "x": 205, "vpos": 57, "exp_valid": 0, "exp_pix": 0, "exp_priority": 0}
+{"op": "check_pixel", "x": 206, "vpos": 57, "exp_valid": 0, "exp_pix": 0, "exp_priority": 0}
+{"op": "check_pixel", "x": 207, "vpos": 57, "exp_valid": 0, "exp_pix": 0, "exp_priority": 0}
+{"op": "check_pixel", "x": 208, "vpos": 57, "exp_valid": 1, "exp_pix": 165, "exp_priority": 1}
+{"op": "check_pixel", "x": 209, "vpos": 57, "exp_valid": 1, "exp_pix": 165, "exp_priority": 1}
+{"op": "check_pixel", "x": 210, "vpos": 57, "exp_valid": 1, "exp_pix": 165, "exp_priority": 1}
+{"op": "check_pixel", "x": 211, "vpos": 57, "exp_valid": 1, "exp_pix": 165, "exp_priority": 1}
+{"op": "check_pixel", "x": 212, "vpos": 57, "exp_valid": 1, "exp_pix": 165, "exp_priority": 1}
+{"op": "check_pixel", "x": 213, "vpos": 57, "exp_valid": 1, "exp_pix": 165, "exp_priority": 1}
+{"op": "check_pixel", "x": 214, "vpos": 57, "exp_valid": 1, "exp_pix": 165, "exp_priority": 1}
+{"op": "check_pixel", "x": 215, "vpos": 57, "exp_valid": 1, "exp_pix": 165, "exp_priority": 1}

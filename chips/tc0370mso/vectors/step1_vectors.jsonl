@@ -1,0 +1,13 @@
+{"op": "zero_spr_ram"}
+{"op": "spr_write", "addr": 0, "data": 48879, "be": 3}
+{"op": "spr_read", "addr": 0, "exp": 48879}
+{"op": "spr_write", "addr": 1, "data": 4660, "be": 3}
+{"op": "spr_read", "addr": 1, "exp": 4660}
+{"op": "spr_write", "addr": 2, "data": 65280, "be": 2}
+{"op": "spr_read", "addr": 2, "exp": 65280}
+{"op": "spr_write", "addr": 2, "data": 171, "be": 1}
+{"op": "spr_read", "addr": 2, "exp": 65451}
+{"op": "spr_write", "addr": 8191, "data": 42405, "be": 3}
+{"op": "spr_read", "addr": 8191, "exp": 42405}
+{"op": "spr_write", "addr": 256, "data": 23130, "be": 3}
+{"op": "int_rd", "addr": 256, "exp": 23130}
