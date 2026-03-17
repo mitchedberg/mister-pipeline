@@ -32,11 +32,12 @@ jobs:
         if: steps.cache-quartus.outputs.cache-hit != 'true'
         run: |
           # Quartus 17.0.2 is the standard for MiSTer/Cyclone V
-          # Download from Intel/Altera archives
-          wget -q "https://downloads.intel.com/akdlm/software/acdsinst/17.0std/602/ib_installers/QuartusLiteSetup-17.0.2.602-linux.run"
-          chmod +x QuartusLiteSetup-17.0.2.602-linux.run
-          # Install to home directory (no sudo required)
-          ./QuartusLiteSetup-17.0.2.602-linux.run --mode unattended --accept_eula 1 --installdir ~/intelFPGA_lite
+          # Download tar archive from Intel (8.7GB, ~30min on fast connection)
+          echo "Downloading Quartus Lite 17.0.2 (8.7GB)..."
+          wget --timeout=300 -q "https://downloads.intel.com/akdlm/software/acdsinst/17.0std.2/602/ib_tar/Quartus-lite-17.0.2.602-linux.tar"
+          echo "Extracting to ~/intelFPGA_lite..."
+          mkdir -p ~/intelFPGA_lite
+          tar -xf Quartus-lite-17.0.2.602-linux.tar -C ~/intelFPGA_lite --strip-components=1
 
       - name: Run Quartus synthesis
         run: |
