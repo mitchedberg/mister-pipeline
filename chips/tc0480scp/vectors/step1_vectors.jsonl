@@ -1,0 +1,103 @@
+{"op": "reset", "note": "power-on reset"}
+{"op": "write", "addr": 0, "data": 16, "be": 3, "note": "BG0_XSCROLL write 0x0010"}
+{"op": "check_bgscrollx", "layer": 0, "exp": 65520, "note": "BG0 bgscrollx stagger check: expect 0xFFF0 (=-(0x0010+0))"}
+{"op": "write", "addr": 1, "data": 16, "be": 3, "note": "BG1_XSCROLL write 0x0010"}
+{"op": "check_bgscrollx", "layer": 1, "exp": 65516, "note": "BG1 bgscrollx stagger check: expect 0xFFEC (=-(0x0010+4))"}
+{"op": "write", "addr": 2, "data": 16, "be": 3, "note": "BG2_XSCROLL write 0x0010"}
+{"op": "check_bgscrollx", "layer": 2, "exp": 65512, "note": "BG2 bgscrollx stagger check: expect 0xFFE8 (=-(0x0010+8))"}
+{"op": "write", "addr": 3, "data": 16, "be": 3, "note": "BG3_XSCROLL write 0x0010"}
+{"op": "check_bgscrollx", "layer": 3, "exp": 65508, "note": "BG3 bgscrollx stagger check: expect 0xFFE4 (=-(0x0010+12))"}
+{"op": "write", "addr": 4, "data": 32, "be": 3, "note": "BG0_YSCROLL write 0x0020"}
+{"op": "check_bgscrolly", "layer": 0, "exp": 32, "note": "BG0 bgscrolly pass-through: expect 0x0020"}
+{"op": "write", "addr": 5, "data": 33, "be": 3, "note": "BG1_YSCROLL write 0x0021"}
+{"op": "check_bgscrolly", "layer": 1, "exp": 33, "note": "BG1 bgscrolly pass-through: expect 0x0021"}
+{"op": "write", "addr": 6, "data": 34, "be": 3, "note": "BG2_YSCROLL write 0x0022"}
+{"op": "check_bgscrolly", "layer": 2, "exp": 34, "note": "BG2 bgscrolly pass-through: expect 0x0022"}
+{"op": "write", "addr": 7, "data": 35, "be": 3, "note": "BG3_YSCROLL write 0x0023"}
+{"op": "check_bgscrolly", "layer": 3, "exp": 35, "note": "BG3 bgscrolly pass-through: expect 0x0023"}
+{"op": "write", "addr": 15, "data": 128, "be": 3, "note": "LAYER_CTRL=0x0080: dblwidth=1"}
+{"op": "check_dblwidth", "exp": 1, "note": "dblwidth=1 after writing 0x0080"}
+{"op": "check_flipscreen", "exp": 0, "note": "flipscreen=0 after writing 0x0080"}
+{"op": "write", "addr": 15, "data": 64, "be": 3, "note": "LAYER_CTRL=0x0040: flipscreen=1"}
+{"op": "check_dblwidth", "exp": 0, "note": "dblwidth=0 after writing 0x0040"}
+{"op": "check_flipscreen", "exp": 1, "note": "flipscreen=1 after writing 0x0040"}
+{"op": "check_bgscrollx", "layer": 0, "exp": 16, "note": "BG0 bgscrollx (flipscreen=1): expect 0x0010 (positive)"}
+{"op": "check_bgscrollx", "layer": 1, "exp": 20, "note": "BG1 bgscrollx (flipscreen=1): expect 0x0014 (positive)"}
+{"op": "check_bgscrollx", "layer": 2, "exp": 24, "note": "BG2 bgscrollx (flipscreen=1): expect 0x0018 (positive)"}
+{"op": "check_bgscrollx", "layer": 3, "exp": 28, "note": "BG3 bgscrollx (flipscreen=1): expect 0x001C (positive)"}
+{"op": "check_bgscrolly", "layer": 0, "exp": 65504, "note": "BG0 bgscrolly (flipscreen=1): expect 0xFFE0 (negated)"}
+{"op": "check_bgscrolly", "layer": 1, "exp": 65503, "note": "BG1 bgscrolly (flipscreen=1): expect 0xFFDF (negated)"}
+{"op": "check_bgscrolly", "layer": 2, "exp": 65502, "note": "BG2 bgscrolly (flipscreen=1): expect 0xFFDE (negated)"}
+{"op": "check_bgscrolly", "layer": 3, "exp": 65501, "note": "BG3 bgscrolly (flipscreen=1): expect 0xFFDD (negated)"}
+{"op": "write", "addr": 15, "data": 0, "be": 3, "note": "LAYER_CTRL=0x0000: clear all flags"}
+{"op": "write", "addr": 15, "data": 0, "be": 3, "note": "LAYER_CTRL priority_order=0"}
+{"op": "check_bg_priority", "exp": 291, "note": "bg_priority idx=0: expect 0x0123"}
+{"op": "write", "addr": 15, "data": 4, "be": 3, "note": "LAYER_CTRL priority_order=1"}
+{"op": "check_bg_priority", "exp": 4656, "note": "bg_priority idx=1: expect 0x1230"}
+{"op": "write", "addr": 15, "data": 8, "be": 3, "note": "LAYER_CTRL priority_order=2"}
+{"op": "check_bg_priority", "exp": 8961, "note": "bg_priority idx=2: expect 0x2301"}
+{"op": "write", "addr": 15, "data": 12, "be": 3, "note": "LAYER_CTRL priority_order=3"}
+{"op": "check_bg_priority", "exp": 12306, "note": "bg_priority idx=3: expect 0x3012"}
+{"op": "write", "addr": 15, "data": 16, "be": 3, "note": "LAYER_CTRL priority_order=4"}
+{"op": "check_bg_priority", "exp": 12816, "note": "bg_priority idx=4: expect 0x3210"}
+{"op": "write", "addr": 15, "data": 20, "be": 3, "note": "LAYER_CTRL priority_order=5"}
+{"op": "check_bg_priority", "exp": 8451, "note": "bg_priority idx=5: expect 0x2103"}
+{"op": "write", "addr": 15, "data": 24, "be": 3, "note": "LAYER_CTRL priority_order=6"}
+{"op": "check_bg_priority", "exp": 4146, "note": "bg_priority idx=6: expect 0x1032"}
+{"op": "write", "addr": 15, "data": 28, "be": 3, "note": "LAYER_CTRL priority_order=7"}
+{"op": "check_bg_priority", "exp": 801, "note": "bg_priority idx=7: expect 0x0321"}
+{"op": "write", "addr": 15, "data": 1, "be": 3, "note": "LAYER_CTRL=0x0001: rowzoom_en[2]=1"}
+{"op": "check_rowzoom_en", "layer": 2, "exp": 1, "note": "rowzoom_en[2]=1"}
+{"op": "check_rowzoom_en", "layer": 3, "exp": 0, "note": "rowzoom_en[3]=0 (bit1 clear)"}
+{"op": "write", "addr": 15, "data": 2, "be": 3, "note": "LAYER_CTRL=0x0002: rowzoom_en[3]=1"}
+{"op": "check_rowzoom_en", "layer": 2, "exp": 0, "note": "rowzoom_en[2]=0 after bit0 clear"}
+{"op": "check_rowzoom_en", "layer": 3, "exp": 1, "note": "rowzoom_en[3]=1"}
+{"op": "write", "addr": 15, "data": 3, "be": 3, "note": "LAYER_CTRL=0x0003: rowzoom_en[2]=1, rowzoom_en[3]=1"}
+{"op": "check_rowzoom_en", "layer": 2, "exp": 1, "note": "rowzoom_en[2]=1 (both set)"}
+{"op": "check_rowzoom_en", "layer": 3, "exp": 1, "note": "rowzoom_en[3]=1 (both set)"}
+{"op": "write", "addr": 15, "data": 0, "be": 3, "note": "LAYER_CTRL=0x0000: reset for timing tests"}
+{"op": "timing_frame", "exp_pv": 76800, "note": "timing: pixel_active count = 76800 (320\u00d7240)"}
+{"op": "timing_check", "hpos": 0, "vpos": 16, "exp_hblank": 0, "exp_vblank": 0, "exp_pixel_active": 1, "note": "timing: hpos=0 vpos=16 \u2192 active"}
+{"op": "timing_check", "hpos": 0, "vpos": 15, "exp_hblank": 0, "exp_vblank": 1, "exp_pixel_active": 0, "note": "timing: hpos=0 vpos=15 \u2192 vblank (not yet active)"}
+{"op": "timing_check", "hpos": 320, "vpos": 16, "exp_hblank": 1, "exp_vblank": 0, "exp_pixel_active": 0, "note": "timing: hpos=320 vpos=16 \u2192 hblank start"}
+{"op": "timing_check", "hpos": 319, "vpos": 16, "exp_hblank": 0, "exp_vblank": 0, "exp_pixel_active": 1, "note": "timing: hpos=319 vpos=16 \u2192 last active pixel of row"}
+{"op": "timing_check", "hpos": 320, "vpos": 16, "exp_hblank": 1, "exp_vblank": 0, "exp_pixel_active": 0, "note": "timing: hpos=320 vpos=16 \u2192 hblank asserted"}
+{"op": "write", "addr": 8, "data": 32832, "be": 3, "note": "BG0_ZOOM write 0x8040"}
+{"op": "read", "addr": 8, "exp_dout": 32832, "note": "BG0_ZOOM readback 0x8040"}
+{"op": "write", "addr": 9, "data": 128, "be": 3, "note": "BG1_ZOOM write 0x0080"}
+{"op": "read", "addr": 9, "exp_dout": 128, "note": "BG1_ZOOM readback 0x0080"}
+{"op": "write", "addr": 10, "data": 65407, "be": 3, "note": "BG2_ZOOM write 0xFF7F"}
+{"op": "read", "addr": 10, "exp_dout": 65407, "note": "BG2_ZOOM readback 0xFF7F"}
+{"op": "write", "addr": 11, "data": 4660, "be": 3, "note": "BG3_ZOOM write 0x1234"}
+{"op": "read", "addr": 11, "exp_dout": 4660, "note": "BG3_ZOOM readback 0x1234"}
+{"op": "write", "addr": 16, "data": 48658, "be": 3, "note": "BG0_DX write (low byte=0x12)"}
+{"op": "check_bg_dx", "layer": 0, "exp": 18, "note": "BG0 bg_dx=0x12"}
+{"op": "write", "addr": 20, "data": 48811, "be": 3, "note": "BG0_DY write (low byte=0xAB)"}
+{"op": "check_bg_dy", "layer": 0, "exp": 171, "note": "BG0 bg_dy=0xAB"}
+{"op": "write", "addr": 17, "data": 48692, "be": 3, "note": "BG1_DX write (low byte=0x34)"}
+{"op": "check_bg_dx", "layer": 1, "exp": 52, "note": "BG1 bg_dx=0x34"}
+{"op": "write", "addr": 21, "data": 48845, "be": 3, "note": "BG1_DY write (low byte=0xCD)"}
+{"op": "check_bg_dy", "layer": 1, "exp": 205, "note": "BG1 bg_dy=0xCD"}
+{"op": "write", "addr": 18, "data": 48726, "be": 3, "note": "BG2_DX write (low byte=0x56)"}
+{"op": "check_bg_dx", "layer": 2, "exp": 86, "note": "BG2 bg_dx=0x56"}
+{"op": "write", "addr": 22, "data": 48879, "be": 3, "note": "BG2_DY write (low byte=0xEF)"}
+{"op": "check_bg_dy", "layer": 2, "exp": 239, "note": "BG2 bg_dy=0xEF"}
+{"op": "write", "addr": 19, "data": 48760, "be": 3, "note": "BG3_DX write (low byte=0x78)"}
+{"op": "check_bg_dx", "layer": 3, "exp": 120, "note": "BG3 bg_dx=0x78"}
+{"op": "write", "addr": 23, "data": 48641, "be": 3, "note": "BG3_DY write (low byte=0x01)"}
+{"op": "check_bg_dy", "layer": 3, "exp": 1, "note": "BG3 bg_dy=0x01"}
+{"op": "write", "addr": 12, "data": 256, "be": 3, "note": "TEXT_XSCROLL write 0x0100"}
+{"op": "read", "addr": 12, "exp_dout": 256, "note": "TEXT_XSCROLL readback"}
+{"op": "write", "addr": 13, "data": 512, "be": 3, "note": "TEXT_YSCROLL write 0x0200"}
+{"op": "read", "addr": 13, "exp_dout": 512, "note": "TEXT_YSCROLL readback"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "BG0_XSCROLL clear to 0"}
+{"op": "write", "addr": 0, "data": 171, "be": 1, "note": "BG0_XSCROLL write low byte 0xAB only (be=1)"}
+{"op": "read", "addr": 0, "exp_dout": 171, "note": "BG0_XSCROLL readback after low-byte-only write: expect 0x00AB"}
+{"op": "write", "addr": 0, "data": 52480, "be": 2, "note": "BG0_XSCROLL write high byte 0xCD only (be=2)"}
+{"op": "read", "addr": 0, "exp_dout": 52651, "note": "BG0_XSCROLL readback after high-byte-only write: expect 0xCDAB"}
+{"op": "reset", "note": "reset before register-zero check"}
+{"op": "read", "addr": 0, "exp_dout": 0, "note": "ctrl[0]=0 after reset"}
+{"op": "read", "addr": 15, "exp_dout": 0, "note": "ctrl[15]=0 after reset"}
+{"op": "read", "addr": 23, "exp_dout": 0, "note": "ctrl[23]=0 after reset"}
+{"op": "write", "addr": 14, "data": 57005, "be": 3, "note": "ctrl[14] (unused) write 0xDEAD"}
+{"op": "read", "addr": 14, "exp_dout": 57005, "note": "ctrl[14] (unused) readback 0xDEAD"}
