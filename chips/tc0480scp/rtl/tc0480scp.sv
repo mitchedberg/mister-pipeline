@@ -4,6 +4,9 @@
 // =============================================================================
 // Step 1: Video timing + control register bank.
 // Step 2: 64KB dual-port VRAM (tc0480scp_vram) wired in.
+// Step 3: FG0 text layer (tc0480scp_textlayer) + compositor stub
+//         (tc0480scp_colmix) wired in. pixel_out = text layer only.
+// Step 4: BG0+BG1 tile engines (tc0480scp_bg) wired in.
 //
 // Video timing (pixel-clock domain):
 //   Source clock: 26.686 MHz / 4 = 6.6715 MHz (pixel clock)
@@ -15,9 +18,18 @@
 //   V active: lines 16–255   (240 lines)
 //   V blank : lines 0–15 and 256–261
 //
-// CPU interface (68000 bus, 16-bit):
-//   Control registers: cpu_cs_ctrl  → word addresses 0–23 (byte 0x00–0x2F)
-//   VRAM (Step 2):     cpu_cs_vram  → word addresses 0x0000–0x7FFF (byte 0x0000–0xFFFF)
+// VRAM port arbitration:
+//   Port A: CPU read/write.
+//   Port B (tf port): text layer map reads, BG0–BG3 tile attribute/code reads.
+//   Port C (sc port): text layer gfx reads, BG0–BG3 VRAM read requests.
+//   Since text layer map reads (TL_MAP) and text layer gfx reads (TL_GFX0/GFX1)
+//   never happen simultaneously, the same port serves both via the text layer.
+//   BG engines get the same port; arbitration added in Step 9.
+//
+// GFX ROM interface:
+//   The tc0480scp_bg modules output gfx_addr/gfx_rd.
+//   Testbench drives gfx_data combinationally (as async ROM).
+//   In Steps 3–4, gfx_addr is driven from BG0/BG1 directly.
 //
 // MAME source: src/mame/taito/tc0480scp.cpp (Nicola Salmoria)
 //              src/mame/taito/taito_z.cpp (David Graves)
@@ -29,17 +41,14 @@ module tc0480scp (
     input  logic        async_rst_n,
 
     // ── CPU Interface — Control Registers ─────────────────────────────────
-    // 0x30 byte window, word addresses 0–23.
-    input  logic        cpu_cs,         // chip select (active high)
-    input  logic        cpu_we,         // write enable (active high)
-    input  logic [ 4:0] cpu_addr,       // word address within ctrl window (0..23)
-    input  logic [15:0] cpu_din,        // write data
-    input  logic [ 1:0] cpu_be,         // byte enables: bit1=upper, bit0=lower
-    output logic [15:0] cpu_dout,       // read data
+    input  logic        cpu_cs,
+    input  logic        cpu_we,
+    input  logic [ 4:0] cpu_addr,       // word address 0–23
+    input  logic [15:0] cpu_din,
+    input  logic [ 1:0] cpu_be,
+    output logic [15:0] cpu_dout,
 
     // ── CPU Interface — VRAM (Step 2) ─────────────────────────────────────
-    // 64KB window (byte 0x0000–0xFFFF = word 0x0000–0x7FFF).
-    // vram_addr[14:0] is the 16-bit word address (= byte_addr >> 1).
     input  logic         vram_cs,
     input  logic         vram_we,
     input  logic  [14:0] vram_addr,
@@ -48,39 +57,38 @@ module tc0480scp (
     output logic  [15:0] vram_dout,
 
     // ── Video Timing Outputs ───────────────────────────────────────────────
-    output logic        hblank,         // horizontal blank (active high)
-    output logic        vblank,         // vertical blank   (active high)
-    output logic        hsync,          // horizontal sync  (active high)
-    output logic        vsync,          // vertical sync    (active high)
-    output logic [ 9:0] hpos,           // pixel counter 0..423
-    output logic [ 8:0] vpos,           // line counter  0..261
-    output logic        pixel_active,   // high during visible area (0–319, 16–255)
-    output logic        hblank_fall,    // one-cycle pulse at start of HBLANK (hpos==320)
-    output logic        vblank_fall,    // one-cycle pulse at start of VBLANK (vpos==256)
+    output logic        hblank,
+    output logic        vblank,
+    output logic        hsync,
+    output logic        vsync,
+    output logic [ 9:0] hpos,
+    output logic [ 8:0] vpos,
+    output logic        pixel_active,
+    output logic        hblank_fall,
+    output logic        vblank_fall,
 
-    // ── Decoded Register Outputs (for submodules added in later steps) ─────
-    output logic [15:0] bgscrollx [0:3],    // BG0–BG3 effective X scroll
-    output logic [15:0] bgscrolly [0:3],    // BG0–BG3 Y scroll
-    output logic [15:0] bgzoom    [0:3],    // BG0–BG3 zoom word (raw)
-    output logic [ 7:0] bg_dx     [0:3],    // BG0–BG3 sub-pixel X
-    output logic [ 7:0] bg_dy     [0:3],    // BG0–BG3 sub-pixel Y
-    output logic [15:0] text_scrollx,       // FG0 X scroll
-    output logic [15:0] text_scrolly,       // FG0 Y scroll
-    output logic        dblwidth,           // LAYER_CTRL bit[7]: double-width tilemap
-    output logic        flipscreen,         // LAYER_CTRL bit[6]: screen flip
-    output logic [ 2:0] priority_order,     // LAYER_CTRL bits[4:2]
-    output logic        rowzoom_en  [2:3],  // LAYER_CTRL bit[0]=BG2, bit[1]=BG3
-    output logic [15:0] bg_priority,        // decoded 4-nibble priority word
+    // ── Decoded Register Outputs ───────────────────────────────────────────
+    output logic [15:0] bgscrollx [0:3],
+    output logic [15:0] bgscrolly [0:3],
+    output logic [15:0] bgzoom    [0:3],
+    output logic [ 7:0] bg_dx     [0:3],
+    output logic [ 7:0] bg_dy     [0:3],
+    output logic [15:0] text_scrollx,
+    output logic [15:0] text_scrolly,
+    output logic        dblwidth,
+    output logic        flipscreen,
+    output logic [ 2:0] priority_order,
+    output logic        rowzoom_en  [2:3],
+    output logic [15:0] bg_priority,
 
-    // ── GFX ROM interface (Steps 4+; shared by all BG engines) ───────────
-    // GFX ROM is combinational. Testbench drives gfx_data based on gfx_addr.
-    output logic [20:0] gfx_addr,          // 21-bit word address into GFX ROM
-    input  logic [31:0] gfx_data,          // 32-bit GFX ROM data
-    output logic        gfx_rd,            // read strobe (for SDRAM interface)
+    // ── GFX ROM interface (Steps 4+) ──────────────────────────────────────
+    output logic [20:0] gfx_addr,
+    input  logic [31:0] gfx_data,
+    output logic        gfx_rd,
 
-    // ── Pixel Output (rendering added in later steps) ─────────────────────
-    output logic [15:0] pixel_out,          // 16-bit palette index → TC0360PRI
-    output logic        pixel_valid_out     // asserted during active display
+    // ── Pixel Output ──────────────────────────────────────────────────────
+    output logic [15:0] pixel_out,
+    output logic        pixel_valid_out
 );
 
 // =============================================================================
@@ -186,7 +194,7 @@ always_comb begin
         cpu_dout = ctrl[cpu_addr];
 end
 
-// ── LAYER_CTRL (word 15) decode ───────────────────────────────────────────
+// ── LAYER_CTRL decode ─────────────────────────────────────────────────────
 assign dblwidth       = ctrl[15][7];
 assign flipscreen     = ctrl[15][6];
 assign priority_order = ctrl[15][4:2];
@@ -239,16 +247,72 @@ assign text_scrollx = ctrl[12];
 assign text_scrolly = ctrl[13];
 
 // =============================================================================
-// VRAM (Step 2) — tc0480scp_vram instance
+// VRAM — internal wiring signals
 // =============================================================================
-// Tile-fetch and scroll-read ports are tied off (no BG/text engines yet).
-// They will be connected in Steps 3 and 4.
+// Port B (tf port) arbitration:
+//   Exclusively used by BG engines (BG0 > BG1 priority).
+//   Text layer does NOT use the tf port to avoid contention.
+//
+// Port C (sc port) arbitration:
+//   Used by the text layer for BOTH map reads (TL_MAP) and gfx reads
+//   (TL_GFX0/TL_GFX1). These never overlap within the text FSM.
+//   In Step 9+ the sc port will also serve BG scroll/colscroll reads.
 
-/* verilator lint_off UNUSED */
-logic [15:0] vram_tf_data_nc;
-logic [15:0] vram_sc_data_nc;
-/* verilator lint_on UNUSED */
+// Text layer VRAM connections
+logic [14:0] text_map_addr;
+logic        text_map_rd;
+logic [15:0] text_map_q;
+logic [14:0] text_gfx_addr;
+logic        text_gfx_rd;
+logic [15:0] text_gfx_q;
 
+// BG engine VRAM connections (Step 4)
+logic [14:0] bg_vram_addr [0:1];
+logic        bg_vram_rd   [0:1];
+logic [15:0] bg_vram_q    [0:1];
+
+// VRAM port B (tf): BG0 > BG1 only
+logic [14:0] tf_addr_mux;
+logic        tf_rd_mux;
+logic [15:0] tf_data_vram;
+
+always_comb begin
+    if (bg_vram_rd[0]) begin
+        tf_addr_mux = bg_vram_addr[0];
+        tf_rd_mux   = 1'b1;
+    end else begin
+        tf_addr_mux = bg_vram_addr[1];
+        tf_rd_mux   = bg_vram_rd[1];
+    end
+end
+
+assign bg_vram_q[0] = tf_data_vram;
+assign bg_vram_q[1] = tf_data_vram;
+
+// VRAM port C (sc): text layer map reads OR gfx reads (never simultaneous)
+// text_map_rd and text_gfx_rd are mutually exclusive by FSM design:
+//   TL_MAP drives text_map_rd; TL_GFX0/GFX1 drive text_gfx_rd.
+logic [14:0] sc_addr_mux;
+logic        sc_rd_mux;
+logic [15:0] sc_data_vram;
+
+always_comb begin
+    if (text_map_rd) begin
+        sc_addr_mux = text_map_addr;
+        sc_rd_mux   = 1'b1;
+    end else begin
+        sc_addr_mux = text_gfx_addr;
+        sc_rd_mux   = text_gfx_rd;
+    end
+end
+
+// Both text_map_q and text_gfx_q come from the sc port result (broadcast)
+assign text_map_q  = sc_data_vram;
+assign text_gfx_q  = sc_data_vram;
+
+// =============================================================================
+// VRAM instance
+// =============================================================================
 tc0480scp_vram u_vram (
     .clk      (clk),
     .rst_n    (rst_n),
@@ -261,32 +325,170 @@ tc0480scp_vram u_vram (
     .cpu_be   (vram_be),
     .cpu_dout (vram_dout),
 
-    // Tile-fetch port (unused this step)
-    .tf_rd    (1'b0),
-    .tf_addr  (15'b0),
-    .tf_data  (vram_tf_data_nc),
+    // Tile-fetch port (text map + BG tile reads)
+    .tf_rd    (tf_rd_mux),
+    .tf_addr  (tf_addr_mux),
+    .tf_data  (tf_data_vram),
 
-    // Scroll-read port (unused this step)
-    .sc_rd    (1'b0),
-    .sc_addr  (15'b0),
-    .sc_data  (vram_sc_data_nc)
+    // Scroll-read port (text gfx reads; BG scroll reads added later)
+    .sc_rd    (sc_rd_mux),
+    .sc_addr  (sc_addr_mux),
+    .sc_data  (sc_data_vram)
 );
 
 // =============================================================================
-// GFX ROM (tied off — wired to BG engines in Step 4)
+// Text Layer (Step 3)
 // =============================================================================
-assign gfx_addr = 21'b0;
-assign gfx_rd   = 1'b0;
+logic [ 9:0] text_pixel_raw;   // {color[5:0], pen[3:0]}
 
-/* verilator lint_off UNUSED */
-logic _unused_gfx;
-assign _unused_gfx = ^gfx_data;
-/* verilator lint_on UNUSED */
+tc0480scp_textlayer u_text (
+    .clk            (clk),
+    .rst_n          (rst_n),
+    .hblank         (hblank),
+    .hpos           (hpos),
+    .vpos           (vpos),
+    .text_scrollx   (text_scrollx),
+    .text_scrolly   (text_scrolly),
+    // VRAM map port (tf port)
+    .vram_map_addr  (text_map_addr),
+    .vram_map_rd    (text_map_rd),
+    .vram_map_q     (text_map_q),
+    // VRAM gfx port (sc port)
+    .vram_gfx_addr  (text_gfx_addr),
+    .vram_gfx_rd    (text_gfx_rd),
+    .vram_gfx_q     (text_gfx_q),
+    // Output
+    .text_pixel     (text_pixel_raw)
+);
 
 // =============================================================================
-// Pixel output (rendering added in later steps)
+// BG Engines (Step 4) — BG0 and BG1
 // =============================================================================
-assign pixel_out       = 16'h0000;
-assign pixel_valid_out = pixel_active;
+// Each BG engine uses the tf VRAM port.  To avoid port contention, engines
+// are staggered by 1 cycle each: BG0 fires first, BG1 fires 1 cycle later.
+// In BG_CODE (VRAM read) BG0 occupies the port; in BG_GFX0/GFX1 BG0 does
+// not use the VRAM port, so BG1 can use it.  The stagger is achieved by
+// registering the hblank signal one extra time before feeding it to BG1.
+// This adds only 1 cycle of hblank budget but ensures no simultaneous reads.
+//
+// Hblank pipeline for stagger:
+//   hblank_bg[0] = hblank (direct output — one registered stage inside each engine)
+//   hblank_bg[1] = hblank delayed 1 extra cycle
+// =============================================================================
+logic [11:0] bg_pixel_raw [0:3];   // {color[7:0], pen[3:0]}
+logic        bg_valid_raw  [0:3];
+logic [20:0] bg_gfx_addr  [0:1];
+logic        bg_gfx_rd    [0:1];
+
+// BG1 needs a 2-cycle stagger relative to BG0 to avoid both VRAM and GFX ROM
+// port conflicts.  Each BG engine has an internal 2-FF hblank_rise detector, so
+// a 2-cycle delay on the input hblank shifts hblank_rise by exactly 2 cycles.
+//
+// VRAM accesses per tile (offset from hblank_rise): 0,1, 4,5, 8,9, ...  (pairs)
+// GFX ROM accesses per tile:                        2,3, 6,7, 10,11, ... (pairs)
+// With 2-cycle stagger BG1 VRAM lands on 2,3,6,7,... and GFX on 4,5,8,9,...
+// — no overlap with BG0 at any cycle.
+logic hblank_bg1_r;   // hblank delayed 1 cycle
+logic hblank_bg1;     // hblank delayed 2 cycles for BG1 stagger
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        hblank_bg1_r <= 1'b0;
+        hblank_bg1   <= 1'b0;
+    end else begin
+        hblank_bg1_r <= hblank;
+        hblank_bg1   <= hblank_bg1_r;
+    end
+end
+
+// BG2 and BG3 tied off for now
+assign bg_pixel_raw[2] = 12'b0;
+assign bg_valid_raw[2] = 1'b1;
+assign bg_pixel_raw[3] = 12'b0;
+assign bg_valid_raw[3] = 1'b1;
+
+// BG0 — fires on hblank (undelayed)
+tc0480scp_bg #(.LAYER(0)) u_bg0 (
+    .clk        (clk),
+    .rst_n      (rst_n),
+    .hblank     (hblank),
+    .hpos       (hpos),
+    .vpos       (vpos),
+    .bgscrollx  (bgscrollx[0]),
+    .bgscrolly  (bgscrolly[0]),
+    .dblwidth   (dblwidth),
+    .vram_addr  (bg_vram_addr[0]),
+    .vram_rd    (bg_vram_rd[0]),
+    .vram_q     (bg_vram_q[0]),
+    .gfx_addr   (bg_gfx_addr[0]),
+    .gfx_data   (gfx_data),
+    .gfx_rd     (bg_gfx_rd[0]),
+    .bg_pixel   (bg_pixel_raw[0]),
+    .bg_valid   (bg_valid_raw[0])
+);
+
+// BG1 — fires on hblank delayed 1 cycle, ensuring no VRAM port conflict with BG0
+tc0480scp_bg #(.LAYER(1)) u_bg1 (
+    .clk        (clk),
+    .rst_n      (rst_n),
+    .hblank     (hblank_bg1),
+    .hpos       (hpos),
+    .vpos       (vpos),
+    .bgscrollx  (bgscrollx[1]),
+    .bgscrolly  (bgscrolly[1]),
+    .dblwidth   (dblwidth),
+    .vram_addr  (bg_vram_addr[1]),
+    .vram_rd    (bg_vram_rd[1]),
+    .vram_q     (bg_vram_q[1]),
+    .gfx_addr   (bg_gfx_addr[1]),
+    .gfx_data   (gfx_data),
+    .gfx_rd     (bg_gfx_rd[1]),
+    .bg_pixel   (bg_pixel_raw[1]),
+    .bg_valid   (bg_valid_raw[1])
+);
+
+// GFX ROM arbitration: BG0 has priority over BG1 (they run on different tiles)
+always_comb begin
+    if (bg_gfx_rd[0]) begin
+        gfx_addr = bg_gfx_addr[0];
+        gfx_rd   = 1'b1;
+    end else begin
+        gfx_addr = bg_gfx_addr[1];
+        gfx_rd   = bg_gfx_rd[1];
+    end
+end
+
+// =============================================================================
+// Color Compositor (tc0480scp_colmix)
+// =============================================================================
+// Expand layer pixel formats for colmix:
+//   BG:   {color[7:0], pen[3:0]} → bg_color[7:0], bg_pen[3:0]
+//   Text: {color[5:0], pen[3:0]} → text_color[5:0], text_pen[3:0]
+
+logic [ 3:0] colmix_bg_pixel [0:3];
+logic [ 7:0] colmix_bg_color [0:3];
+logic        colmix_bg_valid [0:3];
+
+always_comb begin
+    for (int n = 0; n < 4; n++) begin
+        colmix_bg_pixel[n] = bg_pixel_raw[n][3:0];
+        colmix_bg_color[n] = bg_pixel_raw[n][11:4];
+        colmix_bg_valid[n] = bg_valid_raw[n];
+    end
+end
+
+tc0480scp_colmix u_colmix (
+    .clk            (clk),
+    .rst_n          (rst_n),
+    .pixel_active   (pixel_active),
+    .bg_pixel       (colmix_bg_pixel),
+    .bg_color       (colmix_bg_color),
+    .bg_valid       (colmix_bg_valid),
+    .bg_priority    (bg_priority),
+    .text_pen       (text_pixel_raw[3:0]),
+    .text_color     (text_pixel_raw[9:4]),
+    .text_valid     (1'b1),
+    .pixel_out      (pixel_out),
+    .pixel_valid_out(pixel_valid_out)
+);
 
 endmodule

@@ -465,9 +465,16 @@ def gen_step3():
     rec(op="write", addr=12, data=0x0000, be=3, note="TEXT_XSCROLL=0 (restore)")
 
     # ── Test 7: Text scroll Y=8 shifts tiles ─────────────────────────────
+    # Clear tile 0 gfx so tile_idx=0 is transparent (it was set solid in test 1).
+    # When the map entry for tile(0,1) = 0x0000 → tile_idx=0, it must give pen=0.
+    rec(op="vram_zero", base=0x7000, count=16,
+        note="zero tile0 gfx data so tile_idx=0 → transparent")
+    for i in range(16):
+        m.write_ram(0x7000 + i, 0x0000)
+
     m.write_ctrl(13, 0x0008)
     rec(op="write", addr=13, data=0x0008, be=3, note="TEXT_YSCROLL=8 (shift up 1 tile)")
-    # screen_y=0 → canvas_y=0+8=8 → tile row=1 → tile at map(0,1)=untouched → transparent
+    # screen_y=0 → canvas_y=0+8=8 → tile row=1 → tile at map(0,1)=untouched(=tile_idx=0) → transparent
     rec(op="check_pixel", screen_x=0, screen_y=0, exp=0x0000,
         note="Y scroll=8: screen_y=0 → canvas_y=8 → tile(0,1)=untouched → transparent")
     # screen_y=232 → canvas_y=232+8=240 → tile row=30 → untouched → transparent (should be visible)
@@ -590,8 +597,9 @@ def gen_step4():
         m.write_ram(word_base + 1, code)
 
     # ── Test 1: Solid tile at BG0 (0,0), pen=7, color=0x5A ───────────────
-    make_bg_gfx_solid(tile_code=0, pen=7, color_byte=0x5A)
-    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x5A, tile_code=0)
+    # Use tile_code=10 so that tile_code=0 (from zeroed VRAM) stays transparent.
+    make_bg_gfx_solid(tile_code=10, pen=7, color_byte=0x5A)
+    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x5A, tile_code=10)
 
     expected = (0x5A << 4) | 7  # = 0x5A7
     rec(op="check_pixel", screen_x=0, screen_y=0, exp=expected,
@@ -603,19 +611,13 @@ def gen_step4():
 
     # ── Test 2: BG0_XSCROLL=16 → tiles shift left 16 pixels ──────────────
     # After scrolling by 16, screen_x=0 should show tile (1,0) not tile (0,0)
-    # Tile (1,0) is empty (pen=0) → transparent → output=0
+    # Tile (1,0) is empty (tile_code=0, pen=0) → transparent → output=0
     m.write_ctrl(0, 0x0010)  # raw scroll 16; bgscrollx[0] = -(16 + 0) = -16 = 0xFFF0
     rec(op="write", addr=0, data=0x0010, be=3, note="BG0_XSCROLL=0x0010 (raw=16)")
     rec(op="check_pixel", screen_x=0, screen_y=0, exp=0x0000,
         note="BG0 scroll=16: screen_x=0 → canvas_x=16 → tile(1,0)=empty → 0")
-    # screen_x=0-16 mod512 = 496 → off screen. Tile(0,0) not visible.
-    # screen_x=16-16=0... wait: canvas_x = screen_x + bgscrollx applied inside engine.
-    # In model: canvas_x = (screen_x + bgscrollx) & mask
     # bgscrollx = (-0x10) & 0xFFFF = 0xFFF0 = 65520
-    # canvas_x at screen_x=0: (0 + 65520) & 0x1FF = 65520 & 511 = 65520 mod 512 = 65520 - 128*512 = 65520-65536 = -16 → 496
-    # tile col = 496/16 = 31
-    # That's tile(31,0) which is empty → transparent
-    # Let's verify: screen_x=16: canvas_x=(16+65520)&511 = 65536&511 = 0 → tile(0,0) = solid!
+    # canvas_x at screen_x=16: (16 + 65520) & 0x1FF = 65536 & 511 = 0 → tile(0,0) = solid!
     rec(op="check_pixel", screen_x=16, screen_y=0, exp=expected,
         note=f"BG0 scroll=16: screen_x=16 → canvas_x=0 → tile(0,0) solid: expect 0x{expected:04X}")
 
@@ -627,89 +629,78 @@ def gen_step4():
     m.write_ctrl(4, 0x0010)  # raw yscroll=16; bgscrolly[0]=16
     rec(op="write", addr=4, data=0x0010, be=3, note="BG0_YSCROLL=0x0010 (raw=16)")
     # screen_y=0: canvas_y = (0 + 16) & 0x1FF = 16 → tile row=1, not row=0
-    # tile(0,1) is empty → transparent
+    # tile(0,1) is empty (tile_code=0) → transparent
     rec(op="check_pixel", screen_x=0, screen_y=0, exp=0x0000,
         note="BG0 yscroll=16: screen_y=0 → canvas_y=16 → tile(0,1)=empty → 0")
-    # screen_y=16: canvas_y=(16+16)&0x1FF=32 → tile row 2 → tile(0,2)=empty → 0
-    # screen_y back at 0-16 = -16 → 496 (row 31): We need screen_y where canvas_y=0
-    # canvas_y=0 when screen_y+16=0 mod512 → screen_y = 512-16=496 → off screen (max 239)
-    # So tile(0,0) is not visible. Let's just leave yscroll=16 confirmed.
     m.write_ctrl(4, 0x0000)
     rec(op="write", addr=4, data=0x0000, be=3, note="BG0_YSCROLL=0 (restore)")
 
     # ── Test 4: FlipX tile at BG0 (0,0) ──────────────────────────────────
-    # Tile 1: column gradient pens 1..8 then 0..0 for 16px (using row_pattern per column)
-    # Actually simpler: define a tile with pens 1,0,0,...,0 in px0 and 2 in px8
-    # For a clean test: tile with px0=1, px1=2, px8=3, px9=4, rest=0
-    # Use solid approaches: make a tile where left half (px0-7) = pen 5, right half (px8-15)=pen 6
-    # Then with flipX: left half → pen 6, right half → pen 5
-    # Solid left/right different:
-    # Left word: all nibbles = 5
+    # Tile 11: left half (px0-7) = pen 5, right half (px8-15) = pen 6
+    # flipX: right becomes left
     solid_left  = sum(5 << (28 - 4*i) for i in range(8))
     solid_right = sum(6 << (28 - 4*i) for i in range(8))
-    base_t1 = 1 * 32  # tile code 1
+    base_t11 = 11 * 32  # tile code 11
     for row in range(16):
-        waddr_l = base_t1 + row * 2
-        waddr_r = base_t1 + row * 2 + 1
+        waddr_l = base_t11 + row * 2
+        waddr_r = base_t11 + row * 2 + 1
         rec(op="gfx_rom_write", word_addr=waddr_l,
             data_hi=(solid_left >> 16) & 0xFFFF, data_lo=solid_left & 0xFFFF,
-            note=f"tile1 row{row} left: pen=5")
+            note=f"tile11 row{row} left: pen=5")
         rec(op="gfx_rom_write", word_addr=waddr_r,
             data_hi=(solid_right >> 16) & 0xFFFF, data_lo=solid_right & 0xFFFF,
-            note=f"tile1 row{row} right: pen=6")
+            note=f"tile11 row{row} right: pen=6")
         m.write_gfx_rom_word(waddr_l, solid_left)
         m.write_gfx_rom_word(waddr_r, solid_right)
 
-    # Write tile1 at (0,0) WITHOUT flipX: px0-7 should be pen=5
-    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x01, tile_code=1, flipx=0, flipy=0)
+    # Write tile11 at (0,0) WITHOUT flipX: px0-7 should be pen=5
+    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x01, tile_code=11, flipx=0, flipy=0)
     rec(op="check_pixel", screen_x=0, screen_y=0, exp=(0x01 << 4) | 5,
-        note="BG0 tile1 noflip: px0=pen=5, expect 0x15")
+        note="BG0 tile11 noflip: px0=pen=5, expect 0x15")
     rec(op="check_pixel", screen_x=8, screen_y=0, exp=(0x01 << 4) | 6,
-        note="BG0 tile1 noflip: px8=pen=6, expect 0x16")
+        note="BG0 tile11 noflip: px8=pen=6, expect 0x16")
 
     # With flipX: right becomes left
-    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x01, tile_code=1, flipx=1, flipy=0)
+    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x01, tile_code=11, flipx=1, flipy=0)
     rec(op="check_pixel", screen_x=0, screen_y=0, exp=(0x01 << 4) | 6,
-        note="BG0 tile1 flipX: px0=pen=6, expect 0x16")
+        note="BG0 tile11 flipX: px0=pen=6, expect 0x16")
     rec(op="check_pixel", screen_x=8, screen_y=0, exp=(0x01 << 4) | 5,
-        note="BG0 tile1 flipX: px8=pen=5, expect 0x15")
+        note="BG0 tile11 flipX: px8=pen=5, expect 0x15")
 
     # ── Test 5: FlipY tile at BG0 (0,0) ──────────────────────────────────
-    # Tile 2: row 0 = pen 3, rows 1-15 = pen 4, all pixels
-    row_pens_t2 = [3] + [4]*15
-    make_bg_gfx_row_pattern(tile_code=2, row_pens=row_pens_t2)
+    # Tile 12: row 0 = pen 3, rows 1-15 = pen 4, all pixels
+    row_pens_t12 = [3] + [4]*15
+    make_bg_gfx_row_pattern(tile_code=12, row_pens=row_pens_t12)
 
-    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x02, tile_code=2, flipx=0, flipy=0)
+    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x02, tile_code=12, flipx=0, flipy=0)
     rec(op="check_pixel", screen_x=0, screen_y=0, exp=(0x02 << 4) | 3,
-        note="BG0 tile2 noflipY: screen_y=0 → tile_row=0 → pen=3, expect 0x23")
+        note="BG0 tile12 noflipY: screen_y=0 → tile_row=0 → pen=3, expect 0x23")
 
-    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x02, tile_code=2, flipx=0, flipy=1)
+    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x02, tile_code=12, flipx=0, flipy=1)
     rec(op="check_pixel", screen_x=0, screen_y=0, exp=(0x02 << 4) | 4,
-        note="BG0 tile2 flipY: screen_y=0 → tile_row=15 → pen=4, expect 0x24")
+        note="BG0 tile12 flipY: screen_y=0 → tile_row=15 → pen=4, expect 0x24")
     rec(op="check_pixel", screen_x=0, screen_y=15, exp=(0x02 << 4) | 3,
-        note="BG0 tile2 flipY: screen_y=15 → tile_row=0 → pen=3, expect 0x23")
+        note="BG0 tile12 flipY: screen_y=15 → tile_row=0 → pen=3, expect 0x23")
 
     # ── Test 6: BG layer transparency (BG0 transparent, BG1 shows through) ─
-    # Write a different solid tile to BG1 at (0,0)
-    make_bg_gfx_solid(tile_code=3, pen=9, color_byte=0x0A)
-    write_bg_map_tile(layer=1, tile_x=0, tile_y=0, color=0x0A, tile_code=3)
-    # BG0 at (0,0): use transparent tile (tile 0xFF: all pen=0)
-    # Zero tile code 0xFF GFX ROM
-    base_transparent = 0xFF * 32
-    for row in range(16):
-        for half in range(2):
-            waddr = base_transparent + row * 2 + half
-            rec(op="gfx_rom_write", word_addr=waddr,
-                data_hi=0, data_lo=0, note=f"clear tile 0xFF row{row} half{half}")
-            m.write_gfx_rom_word(waddr, 0)
-
-    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x00, tile_code=0xFF)
+    # BG1 tile (0,0) at screen position: BG1 has stagger=4 pixels applied to bgscrollx.
+    # With BG1_XSCROLL raw=0: bgscrollx[1] = -(0+4) = -4, run_xoff=12, map_tx starts at 31.
+    # Tile col 0 (map_tx=31) covers screen_x -12..3 (only 0..3 visible).
+    # Tile col 1 (map_tx=0) covers screen_x 4..19.
+    # So BG1 tile (0,0) renders at screen_x 4..19.
+    #
+    # Write BG1 solid tile at map position (0,0): visible at screen_x=4..19.
+    make_bg_gfx_solid(tile_code=13, pen=9, color_byte=0x0A)
+    write_bg_map_tile(layer=1, tile_x=0, tile_y=0, color=0x0A, tile_code=13)
+    # BG0 at (0,0): use transparent tile (tile_code=0, zero-initialized GFX ROM → pen=0)
+    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x00, tile_code=0)
     exp_bg1 = (0x0A << 4) | 9
-    rec(op="check_pixel", screen_x=0, screen_y=0, exp=exp_bg1,
-        note=f"BG0 transparent (pen=0), BG1 shows through: expect 0x{exp_bg1:04X}")
+    # Check at screen_x=4 where BG1 tile(0,0) renders
+    rec(op="check_pixel", screen_x=4, screen_y=0, exp=exp_bg1,
+        note=f"BG0 transparent (pen=0), BG1 shows through at screen_x=4: expect 0x{exp_bg1:04X}")
 
-    # Restore BG0 solid tile (tile0)
-    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x5A, tile_code=0)
+    # Restore BG0 solid tile (tile10)
+    write_bg_map_tile(layer=0, tile_x=0, tile_y=0, color=0x5A, tile_code=10)
     exp_bg0 = (0x5A << 4) | 7
     rec(op="check_pixel", screen_x=0, screen_y=0, exp=exp_bg0,
         note=f"BG0 opaque again: expect 0x{exp_bg0:04X}")
