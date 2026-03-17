@@ -1,5 +1,5 @@
 """
-TC0630FDP behavioral model — Python reference implementation (Steps 1–9).
+TC0630FDP behavioral model — Python reference implementation (Steps 1–10).
 
 Step 1 scope:
   - Display control register bank (16 × 16-bit registers)
@@ -47,6 +47,23 @@ Step 9 scope (added):
       For output row dst_row:
         src_row = (dst_row * scale_y) >> 8  (with flipY applied after)
   - Zoom fields passed from scan_sprites() in sprite descriptors.
+
+Step 10 scope (added):
+  - Block group state machine in scan_sprites():
+      When block_ctrl (w4[15:8]) != 0 and not already in_block:
+        Record anchor sx, sy, x_zoom, y_zoom, x_num=w4[15:12], y_num=w4[11:8].
+        Set in_block=True, x_no=0, y_no=0.
+      When in_block (anchor + all continuation entries):
+        Override sx, sy, x_zoom, y_zoom from anchor.
+        scale = 0x100 - anchor_x_zoom
+        sx = anchor_sx + ((x_no * scale * 16) >> 8)
+        sy = anchor_sy + ((y_no * scale * 16) >> 8)
+        After each entry: y_no++; if y_no > y_num: y_no=0, x_no++.
+        If x_no > x_num: in_block=False.
+  - Jump mechanism in scan_sprites():
+      When w6[15] == 1: jump to index w6[9:0]; cancel in_block.
+      Next iteration starts at jump target index instead of idx+1.
+  - write_sprite_entry() extended with block_ctrl and jump_target parameters.
 
 Step 7 scope (added):
   - _line_colscroll(plane, scan): returns 9-bit column scroll offset (§9.2 bits[8:0])
@@ -293,18 +310,24 @@ class TaitoF3Model:
 
     def write_sprite_entry(self, idx: int, tile_code: int, sx: int, sy: int,
                            color: int, flipx: bool = False, flipy: bool = False,
-                           x_zoom: int = 0x00, y_zoom: int = 0x00) -> None:
+                           x_zoom: int = 0x00, y_zoom: int = 0x00,
+                           block_ctrl: int = 0x00, jump_target: int = -1) -> None:
         """Write a complete sprite entry to Sprite RAM.
 
-        idx       : sprite entry index (0–255 for Step 9)
-        tile_code : 17-bit tile code
-        sx        : screen X (signed 12-bit, left edge of tile)
-        sy        : screen Y (signed 12-bit, top edge of tile)
-        color     : 8-bit color byte: [7:6]=priority_group, [5:0]=palette
-        flipx     : horizontal flip
-        flipy     : vertical flip
-        x_zoom    : 8-bit X zoom (0x00=full, 0x80=half, 0xFF≈zero-size; Step 9)
-        y_zoom    : 8-bit Y zoom (0x00=full, 0x80=half; Step 9)
+        idx         : sprite entry index (0–255 for Step 9/10)
+        tile_code   : 17-bit tile code
+        sx          : screen X (signed 12-bit, left edge of tile)
+        sy          : screen Y (signed 12-bit, top edge of tile)
+        color       : 8-bit color byte: [7:6]=priority_group, [5:0]=palette
+        flipx       : horizontal flip
+        flipy       : vertical flip
+        x_zoom      : 8-bit X zoom (0x00=full, 0x80=half, 0xFF≈zero-size)
+        y_zoom      : 8-bit Y zoom (0x00=full, 0x80=half)
+        block_ctrl  : 8-bit block control byte (Step 10):
+                      [7:4]=x_num (columns-1), [3:0]=y_num (rows-1).
+                      Non-zero means this is a block anchor.
+                      Stored in w4[15:8].
+        jump_target : if >= 0, set word 6 jump bit and target index (Step 10).
         """
         idx &= 0xFF
         base = idx * 8
@@ -315,20 +338,27 @@ class TaitoF3Model:
         sx_12 = sx & 0xFFF
         sy_12 = sy & 0xFFF
 
-        # word 1: [15:8]=y_zoom, [7:0]=x_zoom  (Step 9)
+        # word 1: [15:8]=y_zoom, [7:0]=x_zoom
         w1 = ((y_zoom & 0xFF) << 8) | (x_zoom & 0xFF)
 
-        # word 4: [10]=flipY, [9]=flipX, [7:0]=color
+        # word 4: [15:8]=block_ctrl, [10]=flipY, [9]=flipX, [7:0]=color
         w4 = (color & 0xFF)
         if flipx: w4 |= (1 << 9)
         if flipy: w4 |= (1 << 10)
+        w4 |= ((block_ctrl & 0xFF) << 8)   # Step 10: block_ctrl in upper byte
+
+        # word 6: [15]=jump_bit, [9:0]=jump_target  (Step 10)
+        w6 = 0
+        if jump_target >= 0:
+            w6 = 0x8000 | (jump_target & 0x3FF)
 
         self.spr_ram[base + 0] = tile_lo
-        self.spr_ram[base + 1] = w1       # Step 9: zoom word
+        self.spr_ram[base + 1] = w1
         self.spr_ram[base + 2] = sx_12
         self.spr_ram[base + 3] = sy_12
         self.spr_ram[base + 4] = w4
         self.spr_ram[base + 5] = tile_hi
+        self.spr_ram[base + 6] = w6
 
     def scan_sprites(self) -> list:
         """Walk sprite entries 0..SPR_COUNT-1, build per-scanline active-sprite lists.
@@ -339,60 +369,125 @@ class TaitoF3Model:
                                    x_zoom, y_zoom.
         Matches RTL scanner logic: V_START=24, V_END=256, MAX_SLOT=63, SPR_COUNT=256.
 
-        Step 9: zoom fields extracted from word 1. Scanner uses unzoomed height (16)
-        for scanline range — renderer handles early termination via zoom.
+        Step 9: zoom fields extracted from word 1.
+        Step 10: block group state machine + jump mechanism.
+          - block_ctrl = w4[15:8]; x_num=block_ctrl>>4, y_num=block_ctrl&0xF
+          - When block_ctrl != 0 and not in_block: start new block (anchor).
+          - When in_block: override sx/sy/zoom from anchor using grid formula.
+          - word 6 jump: w6[15]=1 → jump to w6[9:0], cancel in_block.
         """
         slist = [[] for _ in range(V_END - V_START)]  # 232 entries
 
-        for idx in range(self.SPR_COUNT):
+        # Step 10: block group state
+        in_block     = False
+        block_x_num  = 0
+        block_y_num  = 0
+        block_x_no   = 0
+        block_y_no   = 0
+        anchor_sx    = 0
+        anchor_sy    = 0
+        anchor_xzoom = 0
+        anchor_yzoom = 0
+
+        idx = 0
+        while idx < self.SPR_COUNT:
             base = idx * 8
             w0 = self.spr_ram[base + 0]
-            w1 = self.spr_ram[base + 1]   # Step 9: zoom word
+            w1 = self.spr_ram[base + 1]
             w2 = self.spr_ram[base + 2]
             w3 = self.spr_ram[base + 3]
             w4 = self.spr_ram[base + 4]
             w5 = self.spr_ram[base + 5]
+            w6 = self.spr_ram[base + 6]
 
-            tile_lo   = w0
-            y_zoom    = (w1 >> 8) & 0xFF   # Step 9
-            x_zoom    = w1 & 0xFF           # Step 9
-            sx_raw    = w2 & 0xFFF
-            sy_raw    = w3 & 0xFFF
-            flipy     = bool(w4 & (1 << 10))
-            flipx     = bool(w4 & (1 << 9))
-            color     = w4 & 0xFF
-            tile_hi   = w5 & 0x1
-            tile_code = (tile_hi << 16) | tile_lo
-            palette   = color & 0x3F
-            prio      = (color >> 6) & 0x3
+            # Step 10: jump check (word 6 bit 15)
+            jump_bit    = (w6 >> 15) & 1
+            jump_target = w6 & 0x3FF
+
+            tile_lo     = w0
+            y_zoom      = (w1 >> 8) & 0xFF
+            x_zoom      = w1 & 0xFF
+            sx_raw      = w2 & 0xFFF
+            sy_raw      = w3 & 0xFFF
+            block_ctrl  = (w4 >> 8) & 0xFF   # Step 10: upper byte of word 4
+            flipy       = bool(w4 & (1 << 10))
+            flipx       = bool(w4 & (1 << 9))
+            color       = w4 & 0xFF
+            tile_hi     = w5 & 0x1
+            tile_code   = (tile_hi << 16) | tile_lo
+            palette     = color & 0x3F
+            prio        = (color >> 6) & 0x3
 
             # Sign-extend 12-bit to signed int
             sx = sx_raw if sx_raw < 0x800 else sx_raw - 0x1000
             sy = sy_raw if sy_raw < 0x800 else sy_raw - 0x1000
 
+            # Step 10: block anchor detection
+            if block_ctrl != 0 and not in_block:
+                in_block     = True
+                block_x_num  = (block_ctrl >> 4) & 0xF
+                block_y_num  = block_ctrl & 0xF
+                block_x_no   = 0
+                block_y_no   = 0
+                anchor_sx    = sx
+                anchor_sy    = sy
+                anchor_xzoom = x_zoom
+                anchor_yzoom = y_zoom
+
+            # Step 10: block continuation — override position and zoom
+            if in_block:
+                scale = 0x100 - anchor_xzoom
+                # sx = anchor_sx + ((x_no * scale * 16) >> 8)
+                # equivalent: x_no * scale >> 4  (since *16 / 256 = / 16)
+                sx = anchor_sx + ((block_x_no * scale * 16) >> 8)
+                sy = anchor_sy + ((block_y_no * scale * 16) >> 8)
+                x_zoom = anchor_xzoom
+                y_zoom = anchor_yzoom
+
+            # Emit this sprite
             # Scanner uses unzoomed range [sy, sy+15] (conservative, matches RTL).
-            # The renderer will compute actual zoomed height and skip invalid rows.
             sy_top = max(V_START, sy)
             sy_bot = min(V_END - 1, sy + 15)
 
-            if sy_top > sy_bot:
-                continue   # sprite entirely off screen
+            if sy_top <= sy_bot:
+                for scan in range(sy_top, sy_bot + 1):
+                    scan_idx = scan - V_START
+                    if len(slist[scan_idx]) >= 64:
+                        continue  # slot full
+                    slist[scan_idx].append({
+                        'tile_code': tile_code,
+                        'sx':        sx,
+                        'sy':        sy,
+                        'palette':   palette,
+                        'prio':      prio,
+                        'flipx':     flipx,
+                        'flipy':     flipy,
+                        'x_zoom':    x_zoom,
+                        'y_zoom':    y_zoom,
+                    })
 
-            for scan in range(sy_top, sy_bot + 1):
-                scan_idx = scan - V_START
-                if len(slist[scan_idx]) >= 64:
-                    continue  # slot full
-                slist[scan_idx].append({
-                    'tile_code': tile_code,
-                    'sx':        sx,
-                    'sy':        sy,
-                    'palette':   palette,
-                    'prio':      prio,
-                    'flipx':     flipx,
-                    'flipy':     flipy,
-                    'x_zoom':    x_zoom,   # Step 9
-                    'y_zoom':    y_zoom,   # Step 9
-                })
+            # Step 10: jump mechanism (checked AFTER emitting current sprite)
+            if jump_bit:
+                in_block = False   # cancel block on jump
+                if jump_target < self.SPR_COUNT:
+                    idx = jump_target
+                    continue   # don't do idx += 1 below
+                else:
+                    break      # jump target out of range: stop
+
+            # Step 10: advance block grid state
+            if in_block:
+                if block_y_no >= block_y_num:
+                    block_y_no = 0
+                    if block_x_no >= block_x_num:
+                        in_block = False
+                        block_x_no = 0
+                    else:
+                        block_x_no += 1
+                else:
+                    block_y_no += 1
+
+            idx += 1
 
         return slist
 
