@@ -916,6 +916,16 @@ end
 // =============================================================================
 // tc0630fdp_colmix — Layer Compositor (Step 14: +Alpha Blend Mode B)
 // =============================================================================
+// TC0650FDA blend interface wires (new outputs from colmix)
+/* verilator lint_off UNUSED */
+logic [12:0] colmix_src_pal;
+logic [12:0] colmix_dst_pal;
+logic [ 3:0] colmix_src_blend;
+logic [ 3:0] colmix_dst_blend;
+logic        colmix_do_blend;
+logic        colmix_pixel_valid_out;
+/* verilator lint_on UNUSED */
+
 tc0630fdp_colmix u_colmix (
     .clk               (clk),
     .rst_n             (rst_n),
@@ -951,9 +961,16 @@ tc0630fdp_colmix u_colmix (
     .pal_addr_dst      (colmix_pal_addr_dst),
     .pal_rdata_src     (colmix_pal_rdata_src),
     .pal_rdata_dst     (colmix_pal_rdata_dst),
-    // outputs
+    // existing outputs
     .colmix_pixel_out  (colmix_pixel_out),
-    .blend_rgb_out     (blend_rgb_out)
+    .blend_rgb_out     (blend_rgb_out),
+    // TC0650FDA blend interface outputs
+    .src_pal           (colmix_src_pal),
+    .dst_pal           (colmix_dst_pal),
+    .src_blend         (colmix_src_blend),
+    .dst_blend         (colmix_dst_blend),
+    .do_blend          (colmix_do_blend),
+    .pixel_valid_out   (colmix_pixel_valid_out)
 );
 
 // =============================================================================

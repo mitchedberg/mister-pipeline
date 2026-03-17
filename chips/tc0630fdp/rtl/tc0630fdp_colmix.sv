@@ -116,7 +116,18 @@ module tc0630fdp_colmix (
     output logic [12:0] colmix_pixel_out,
     // ── Step 13: Blended RGB output ───────────────────────────────────────────
     // Registered 1 cycle after colmix_pixel_out.
-    output logic [23:0] blend_rgb_out
+    output logic [23:0] blend_rgb_out,
+
+    // ── TC0650FDA blend interface ─────────────────────────────────────────────
+    // Registered 1 cycle after the combinational priority outputs (same timing as
+    // colmix_pixel_out).  TC0650FDA uses these to perform its own palette lookup
+    // and alpha-blend MAC instead of relying on blend_rgb_out.
+    output logic [12:0] src_pal,        // source palette index (winner of priority)
+    output logic [12:0] dst_pal,        // destination palette index (previous frame's pixel at same column)
+    output logic [ 3:0] src_blend,      // src alpha coefficient (0–8)
+    output logic [ 3:0] dst_blend,      // dst alpha coefficient (0–8)
+    output logic        do_blend,       // 1 = alpha blend this pixel, 0 = opaque
+    output logic        pixel_valid_out // pixel on active display (registered to match src_pal timing)
 );
 
 // ── Screen X coordinate ──────────────────────────────────────────────────────
@@ -573,6 +584,78 @@ always_ff @(posedge clk) begin
             end
         endcase
     end
+end
+
+// =============================================================================
+// TC0650FDA blend interface outputs
+// =============================================================================
+// Per-column destination palette buffer: stores the src_pal output for each
+// active display column so that the next frame can use it as dst_pal (the
+// previously rendered pixel at the same screen position).
+logic [12:0] dst_pal_buf [0:319];
+
+// Registered column index (tracks screen_x_9 one cycle after the combinational
+// priority outputs — matches the registered src_pal timing).
+logic [8:0] screen_col_r;
+
+// Combinational blend coefficient and do_blend signals (derived from win_bmode
+// and the A/B coefficient inputs, same logic as the blend pipeline above).
+logic [3:0] win_src_coeff;
+logic [3:0] win_dst_coeff;
+logic       win_do_blend_c;
+
+always_comb begin
+    win_do_blend_c = (win_bmode == 2'b01) || (win_bmode == 2'b10);
+    unique case (win_bmode)
+        2'b01: begin
+            // Normal blend A
+            win_src_coeff = ls_a_src;
+            win_dst_coeff = ls_a_dst;
+        end
+        2'b10: begin
+            // Reverse blend B
+            win_src_coeff = ls_b_src;
+            win_dst_coeff = ls_b_dst;
+        end
+        default: begin
+            // Opaque (00 or 11): full src, zero dst
+            win_src_coeff = 4'd8;
+            win_dst_coeff = 4'd0;
+        end
+    endcase
+end
+
+// Register all TC0650FDA outputs on posedge clk (1 cycle after combinational
+// priority resolution, same pipeline stage as colmix_pixel_out).
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        src_pal         <= 13'b0;
+        dst_pal         <= 13'b0;
+        src_blend       <= 4'd8;
+        dst_blend       <= 4'd0;
+        do_blend        <= 1'b0;
+        pixel_valid_out <= 1'b0;
+        screen_col_r    <= 9'b0;
+    end else begin
+        // src_pal: winning palette index (same as pal_addr_src)
+        src_pal         <= {win_pal, win_pen};
+        // dst_pal: previous frame's rendered palette index at this column
+        dst_pal         <= (screen_x_9 < 9'd320) ? dst_pal_buf[screen_x_9] : 13'b0;
+        src_blend       <= win_src_coeff;
+        dst_blend       <= win_dst_coeff;
+        do_blend        <= win_do_blend_c;
+        pixel_valid_out <= pixel_valid;
+        screen_col_r    <= screen_x_9;
+    end
+end
+
+// Update dst_pal_buf with the just-registered src_pal value for use next frame.
+// The write uses screen_col_r (the column registered alongside src_pal) so the
+// write address matches the registered output.  Only write during active display
+// (pixel_valid_out guards against writing stale data during blanking).
+always_ff @(posedge clk) begin
+    if (pixel_valid_out && screen_col_r < 9'd320)
+        dst_pal_buf[screen_col_r] <= src_pal;
 end
 
 // ── Suppress unused-signal warnings ──────────────────────────────────────────
