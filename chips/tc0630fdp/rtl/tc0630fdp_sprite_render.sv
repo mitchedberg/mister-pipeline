@@ -1,21 +1,22 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Sprite Renderer  (Step 8: simple sprites, no zoom)
+// TC0630FDP — Sprite Renderer  (Step 9: +zoom accumulator)
 // =============================================================================
 // Ping-pong line buffer renderer: during HBLANK for scanline N, renders the
 // sprite list for scanline N+1 into the back buffer; during active scan N+1,
 // pixel output comes from the front buffer.
 //
-// Sprite list descriptor (64-bit):
-//   [63:47] tile_code[16:0]
-//   [46:35] sx[11:0]   (signed; screen X of tile left edge)
-//   [34:23] sy[11:0]   (signed; screen Y of tile top edge)
-//   [22:17] palette[5:0]
-//   [16:15] priority[1:0]
-//   [14]    flipY
-//   [13]    flipX
-//   [12:5]  y_zoom[7:0]  (Step 8: 0)
-//   [4:0]   x_zoom[4:0]  (Step 8: 0)
+// 72-bit sprite list descriptor:
+//   [71:55] tile_code[16:0]
+//   [54:43] sx[11:0]   (signed; screen X of tile left edge)
+//   [42:31] sy[11:0]   (signed; screen Y of tile top edge)
+//   [30:25] palette[5:0]
+//   [24:23] priority[1:0]
+//   [22]    flipY
+//   [21]    flipX
+//   [20:13] y_zoom[7:0]  (0x00=full size, 0x80=half, 0xFF=invisible)
+//   [12:5]  x_zoom[7:0]  (0x00=full size, 0x80=half, 0xFF=invisible)
+//   [4:0]   (unused, zero)
 //
 // Line buffer entry: 12-bit {priority[1:0], palette[5:0], pen[3:0]}
 //   pen==0 → transparent (do not overwrite)
@@ -27,15 +28,26 @@
 //   flipX: reverse nibble order within 8px half
 //   flipY: row = 15 - row
 //
+// Zoom (Step 9, §8.1 + section2_behavior §3.3):
+//   scale_x = 0x100 - x_zoom   (0x100 = 1:1, 0x80 = half, 0x00 → full scale)
+//   scale_y = 0x100 - y_zoom
+//   Rendered width  = (16 * scale_x) >> 8  (max 16, min 0)
+//   Rendered height = (16 * scale_y) >> 8
+//   Source pixel mapping (fixed-point accumulator):
+//     For output column dst_x (0..rendered_width-1):
+//       src_x = (dst_x * (0x100 - x_zoom)) >> 8   (integer part = source pixel 0..15)
+//     For output row dst_row (0..rendered_height-1):
+//       src_row = (dst_row * (0x100 - y_zoom)) >> 8 (integer, then apply flipY)
+//
 // BRAM latency: synchronous (addr on cycle N → data on cycle N+1).
 //
-// Render FSM per sprite (7 cycles):
-//   ADDR  : drive slist address
-//   LATCH : slist data valid; latch entry fields
-//   ISSUE : issue gfx_left addr (now r_tile/r_sy valid)
-//   GFX_L : gfx_data = left word; latch it; issue right addr
-//   GFX_R : gfx_data = right word; write 16 pixels to linebuf
-//   NEXT  : advance slot; loop
+// Render FSM per sprite:
+//   S_IDLE  : idle
+//   S_CNT   : wait for scount BRAM (1 cycle)
+//   S_ADDR  : drive slist addr, wait 1 cycle
+//   S_LATCH : latch entry; compute src_row; issue gfx_left addr
+//   S_GFX_L : gfx left data arrives; latch it; issue gfx_right addr
+//   S_GFX_R : gfx right data arrives; write zoomed pixels; advance
 // =============================================================================
 
 module tc0630fdp_sprite_render (
@@ -51,7 +63,7 @@ module tc0630fdp_sprite_render (
     input  logic [ 6:0] scount_rd_data,
 
     output logic [13:0] slist_rd_addr,
-    input  logic [63:0] slist_rd_data,
+    input  logic [71:0] slist_rd_data,
 
     output logic [21:0] gfx_addr,
     input  logic [31:0] gfx_data,
@@ -72,8 +84,6 @@ logic back_buf;
 logic front_buf;
 
 // Pre-active edge: fires one cycle before H_START (hpos == H_START-1 = 45).
-// Swapping here ensures the new front buffer is valid at the very first active
-// pixel (hpos == H_START == 46, screen column 0).
 logic hblank_end;
 assign hblank_end = (hpos == 10'(H_START - 1));
 
@@ -89,11 +99,11 @@ end
 // ---------------------------------------------------------------------------
 typedef enum logic [2:0] {
     S_IDLE   = 3'd0,
-    S_CNT    = 3'd1,   // wait for scount BRAM (1 cycle after addr)
-    S_ADDR   = 3'd2,   // drive slist addr, wait 1 cycle
-    S_LATCH  = 3'd3,   // latch slist entry; issue gfx_left addr
-    S_GFX_L  = 3'd4,   // latch gfx_left; issue gfx_right addr
-    S_GFX_R  = 3'd5,   // gfx_right arrives; write pixels
+    S_CNT    = 3'd1,
+    S_ADDR   = 3'd2,
+    S_LATCH  = 3'd3,
+    S_GFX_L  = 3'd4,
+    S_GFX_R  = 3'd5,
     S_NEXT   = 3'd6
 } state_t;
 
@@ -110,6 +120,9 @@ logic [11:0] r_sy;
 logic [ 5:0] r_palette;
 logic [ 1:0] r_prio;
 logic        r_flipy, r_flipx;
+logic [ 7:0] r_x_zoom;   // Step 9: x_zoom byte
+logic [ 7:0] r_y_zoom;   // Step 9: y_zoom byte
+logic [ 4:0] r_dst_row;  // Step 9: registered dst_row for this sprite/scanline
 logic [31:0] gfx_left_r;
 
 // Registered slist address (scan + slot portions stored separately)
@@ -118,16 +131,63 @@ logic [ 5:0] addr_slot;
 assign slist_rd_addr = {addr_scan, addr_slot};
 
 // ---------------------------------------------------------------------------
-// Tile row (uses r_sy latched in S_LATCH)
+// Zoom: rendered dimensions and source row computation
+//
+// Step 9 zoom formula (section2 §3.3):
+//   scale_x = 0x100 - x_zoom  (8-bit; 0x100 → handled as 9-bit)
+//   rendered_width  = (16 * scale_x) >> 8 = 16 - (16 * x_zoom) >> 8
+//   scale_y = 0x100 - y_zoom
+//   rendered_height = (16 * scale_y) >> 8
+//
+// Source row selection:
+//   dst_row = render_scan - abs_sy (0..rendered_height-1)
+//   src_row = (dst_row * scale_y) >> 8  (integer tile row 0..15)
+//   with flipY: src_row = 15 - src_row
+//
+// Source column selection (per-pixel):
+//   src_x = (dst_x * scale_x) >> 8  (integer pixel 0..15)
 // ---------------------------------------------------------------------------
-// abs_scan = render_scan + V_START; tile_row = (abs_scan - r_sy) & 0xF
-logic [4:0] abs_scan_5;   // lower 5 bits sufficient for row computation
-logic [3:0] tile_row;
-logic [3:0] fetch_row;
-assign abs_scan_5 = {1'b0, render_scan[3:0]} + 5'(V_START & 5'h1F);
-assign tile_row   = abs_scan_5[3:0] - r_sy[3:0];
-assign fetch_row  = r_flipy ? (4'd15 - tile_row) : tile_row;
 
+// Compute scale values (9-bit to handle 0x100 case for no-zoom)
+logic [8:0] scale_x;   // 0x100 - x_zoom  (0x100 = full, 0x80 = half, 0x00 → 0 pixels)
+logic [8:0] scale_y;
+assign scale_x = 9'h100 - {1'b0, r_x_zoom};
+assign scale_y = 9'h100 - {1'b0, r_y_zoom};
+
+// Rendered width = (16 * scale_x) >> 8 = scale_x >> 4 (5-bit max 16)
+logic [4:0] render_w;
+assign render_w = scale_x[8:4];  // bits [8:4] = (scale_x * 16) >> 8
+
+// Rendered height = scale_y >> 4 (5-bit max 16)
+logic [4:0] render_h;
+assign render_h = scale_y[8:4];
+
+// ---------------------------------------------------------------------------
+// Source row: dst_row_val = (render_scan + V_START) - abs(sy)
+// abs_sy = sign-extended sy (12→13 bit)
+// dst_row = (abs_scan - r_sy) masked to rendered_height range
+// src_row = (dst_row * scale_y) >> 8
+// ---------------------------------------------------------------------------
+// abs_scan = render_scan + V_START (9-bit)
+logic [8:0] abs_scan;
+assign abs_scan = {1'b0, render_scan} + 9'(V_START);
+
+// dst_row = abs_scan - sy (integer part; valid sprites have sy in screen range so
+// abs_scan[7:0] - r_sy[7:0] gives a result in 0..15, never wrapping for valid entries)
+logic [7:0] dst_row_full;
+assign dst_row_full = abs_scan[7:0] - r_sy[7:0];
+
+// src_row = (dst_row * scale_y) >> 8 : dst_row is 4-bit (0..15), scale_y 9-bit.
+// Product is 13-bit max (15*256=3840); must widen operands before multiply to avoid
+// truncation.  Cast to 13-bit explicitly so Verilator allocates the correct result width.
+logic [4:0] src_row_zoom;
+assign src_row_zoom = 5'((13'(dst_row_full[3:0]) * 13'(scale_y)) >> 8);
+
+// fetch_row with flipY
+logic [3:0] fetch_row;
+assign fetch_row = r_flipy ? (4'd15 - src_row_zoom[3:0]) : src_row_zoom[3:0];
+
+// GFX addresses
 logic [21:0] gfx_left_addr;
 logic [21:0] gfx_right_addr;
 assign gfx_left_addr  = 22'(22'(r_tile) * 22'd32 + {18'd0, fetch_row, 1'b0});
@@ -148,17 +208,35 @@ function automatic logic [3:0] decode_pen(
     decode_pen = 4'((word >> sh) & 32'hF);
 endfunction
 
-// Precomputed pixel info for the write loop
-logic signed [12:0] px_scol [0:15];
-logic [3:0]         px_pen  [0:15];
+// ---------------------------------------------------------------------------
+// Zoomed pixel write loop
+//
+// For each output column dst_x in 0..render_w-1:
+//   src_x = (dst_x * scale_x) >> 8  → integer 0..15
+//   screen_col = sx + dst_x
+//   pen = gfx_pixel(src_x, with flipX)
+//
+// We implement this as a combinational array (precomputed for all 16 possible
+// dst_x values 0..15) and conditionally write those where dst_x < render_w.
+// ---------------------------------------------------------------------------
+
+// Precomputed src_x for each dst_x (0..15) using zoom accumulator
+logic [3:0] src_x_of [0:15];   // src_x[dst_x]
+logic [3:0] pen_of   [0:15];   // pen[dst_x]
+logic signed [12:0] scol_of [0:15];
 
 always_comb begin
-    for (int px = 0; px < 16; px++) begin
-        px_scol[px] = $signed({{1{r_sx[11]}}, r_sx}) + 13'(px);
-        if (px < 8)
-            px_pen[px] = decode_pen(gfx_left_r, 3'(px),     r_flipx);
-        else
-            px_pen[px] = decode_pen(gfx_data,   3'(px & 7), r_flipx);
+    for (int dst_x = 0; dst_x < 16; dst_x++) begin
+        // src_x = (dst_x * scale_x) >> 8  (4-bit integer result; 13-bit product max 15*256)
+        src_x_of[dst_x] = 4'((13'(dst_x) * 13'(scale_x)) >> 8);
+        scol_of[dst_x]  = $signed({{1{r_sx[11]}}, r_sx}) + 13'(dst_x);
+
+        // Decode pen from appropriate half-word using src_x
+        if (src_x_of[dst_x] < 4'd8) begin
+            pen_of[dst_x] = decode_pen(gfx_left_r,  src_x_of[dst_x][2:0], r_flipx);
+        end else begin
+            pen_of[dst_x] = decode_pen(gfx_data,    src_x_of[dst_x][2:0], r_flipx);
+        end
     end
 end
 
@@ -184,6 +262,9 @@ always_ff @(posedge clk) begin
         r_prio         <= 2'd0;
         r_flipy        <= 1'b0;
         r_flipx        <= 1'b0;
+        r_x_zoom       <= 8'd0;
+        r_y_zoom       <= 8'd0;
+        r_dst_row      <= 5'd0;
         gfx_left_r     <= 32'd0;
         for (int i = 0; i < 320; i++) begin
             lbuf[0][i] <= 12'd0;
@@ -192,15 +273,12 @@ always_ff @(posedge clk) begin
     end else if (hblank_end) begin
         // End of HBLANK: swap front/back so the just-rendered back becomes
         // the new front, visible during the upcoming active display.
-        // New back (old front) is cleared and ready for the next render.
         front_buf <= back_buf;
         back_buf  <= front_buf;
         for (int i = 0; i < 320; i++)
             lbuf[front_buf][i] <= 12'd0;   // clear old front = new back
     end else if (hblank_fall) begin
         // Start of HBLANK: begin rendering sprite list for (vpos+1).
-        // Back buffer is currently free (cleared at previous hblank_end).
-        // Render scan: (vpos+1) - V_START (index 0..231 into slist/scount).
         render_scan    <= vpos[7:0] - 8'(V_START) + 8'd1;
         scount_rd_addr <= vpos[7:0] - 8'(V_START) + 8'd1;
         state          <= S_CNT;
@@ -216,7 +294,6 @@ always_ff @(posedge clk) begin
                 if (scount_rd_data == 7'd0) begin
                     state <= S_IDLE;
                 end else begin
-                    // Drive slist[render_scan][0] address
                     addr_scan <= render_scan;
                     addr_slot <= 6'd0;
                     state     <= S_ADDR;
@@ -228,65 +305,52 @@ always_ff @(posedge clk) begin
                 state <= S_LATCH;
             end
 
-            // Latch slist entry fields
+            // Latch slist entry fields (72-bit descriptor)
             S_LATCH: begin
-                r_tile    <= slist_rd_data[63:47];
-                r_sx      <= slist_rd_data[46:35];
-                r_sy      <= slist_rd_data[34:23];
-                r_palette <= slist_rd_data[22:17];
-                r_prio    <= slist_rd_data[16:15];
-                r_flipy   <= slist_rd_data[14];
-                r_flipx   <= slist_rd_data[13];
-                // NOTE: gfx_left_addr uses r_tile/r_sy which update at this edge.
-                // Must wait until next cycle before r_tile/r_sy are stable.
-                // S_GFX_L will issue the left address using now-valid registers.
+                r_tile    <= slist_rd_data[71:55];
+                r_sx      <= slist_rd_data[54:43];
+                r_sy      <= slist_rd_data[42:31];
+                r_palette <= slist_rd_data[30:25];
+                r_prio    <= slist_rd_data[24:23];
+                r_flipy   <= slist_rd_data[22];
+                r_flipx   <= slist_rd_data[21];
+                r_y_zoom  <= slist_rd_data[20:13];   // Step 9
+                r_x_zoom  <= slist_rd_data[12:5];    // Step 9
                 state     <= S_GFX_L;
             end
 
-            // Issue GFX left read (r_tile, r_sy now stable from S_LATCH edge)
+            // Issue GFX left read (r_tile, r_sy, zoom regs now stable)
+            // Also register dst_row and render_h for this sprite/scanline.
             S_GFX_L: begin
-                gfx_addr <= gfx_left_addr;
-                state    <= S_GFX_R;
+                gfx_addr    <= gfx_left_addr;
+                r_dst_row   <= {1'b0, dst_row_full[3:0]};
+                state       <= S_GFX_R;
             end
 
-            // Issue GFX right read; wait for left data
-            // Actually: gfx_left_addr was issued in S_GFX_L, so gfx_data is
-            // the LEFT data now. Latch it and issue right.
-            // Wait — that means we need an extra state. Let me restructure:
-            // S_GFX_L: issue left addr → S_WAIT_L: latch left data, issue right addr
-            //          → S_GFX_R: latch right data, write pixels
-            // But I only have S_GFX_L and S_GFX_R in the enum. Add a state.
-            // For now: use S_GFX_R as the state where left data arrives.
-            // In S_GFX_L: issued left addr. S_GFX_R: gfx_data = left data.
-            //   Latch left, issue right.
-            // Then need one more state for right data → write.
-            // Rename: S_GFX_L = issue left addr (1 cycle)
-            //         S_GFX_R = latch left, issue right (1 cycle)
-            //         S_WRITE  = latch right, write pixels (not in enum yet)
-            // Must fix enum. But I want to avoid re-enumerating.
-            // Simpler approach: make S_GFX_R both latch left AND issue right.
-            // Then we go back to S_NEXT after one more cycle (S_IDLE?) for right.
-            // Actually, just rename states logically:
-            // (This comment block is getting long; see clean implementation below)
+            // Latch left data, issue right
             S_GFX_R: begin
-                // gfx_data = left half data (addr issued in S_GFX_L last cycle)
                 gfx_left_r <= gfx_data;
                 gfx_addr   <= gfx_right_addr;
                 state      <= S_NEXT;
             end
 
-            // gfx_data = right half data; write pixels
+            // Right data arrives; write zoomed pixels to line buffer
             S_NEXT: begin
-                // Write 16 pixels to back line buffer
-                for (int px = 0; px < 16; px++) begin
-                    if (px_scol[px] >= 13'sd0 &&
-                        px_scol[px] < 13'sd320 &&
-                        px_pen[px]  != 4'd0) begin
-                        lbuf[back_buf][px_scol[px][8:0]] <=
-                            {r_prio, r_palette, px_pen[px]};
+                // Guard: only write pixels when scanline falls within rendered height.
+                // render_w/render_h are combinational from r_x_zoom/r_y_zoom (stable here).
+                if (r_dst_row < render_h) begin
+                    for (int dst_x = 0; dst_x < 16; dst_x++) begin
+                        if (5'(dst_x) < render_w) begin
+                            if (scol_of[dst_x] >= 13'sd0 &&
+                                scol_of[dst_x] <  13'sd320 &&
+                                pen_of[dst_x]  != 4'd0) begin
+                                lbuf[back_buf][scol_of[dst_x][8:0]] <=
+                                    {r_prio, r_palette, pen_of[dst_x]};
+                            end
+                        end
                     end
                 end
-                // Advance
+                // Advance to next sprite slot
                 if (7'(spr_slot) + 7'd1 >= spr_count) begin
                     state <= S_IDLE;
                 end else begin
@@ -303,12 +367,13 @@ end
 
 /* verilator lint_off UNUSED */
 logic _unused;
-assign _unused = ^{tile_row,
-                   hblank,
+assign _unused = ^{hblank,
                    vpos[8],
-                   slist_rd_data[12:0],
-                   r_sy[11:4],
-                   abs_scan_5[4]};
+                   slist_rd_data[4:0],
+                   dst_row_full[7:4],
+                   r_sy[11:8],
+                   src_row_zoom[4],
+                   abs_scan[8]};
 /* verilator lint_on UNUSED */
 
 endmodule

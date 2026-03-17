@@ -1,0 +1,626 @@
+{"op": "reset", "note": "reset for zoom=0x00 full-size baseline"}
+{"op": "write_gfx", "gfx_addr": 32, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=0 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 33, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=0 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 34, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=1 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 35, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=1 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 36, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=2 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 37, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=2 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 38, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=3 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 39, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=3 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 40, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=4 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 41, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=4 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 42, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 43, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 44, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=6 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 45, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=6 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 46, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=7 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 47, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=7 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 48, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=8 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 49, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=8 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 50, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=9 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 51, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=9 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 52, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=10 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 53, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=10 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 54, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=11 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 55, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=11 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 56, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=12 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 57, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=12 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 58, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=13 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 59, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=13 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 60, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=14 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 61, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=14 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 62, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=15 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 63, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=15 pen=0x5"}
+{"op": "write_sprite", "addr": 131072, "data": 1, "be": 3, "note": "spr[0] zoom=0 (full size) word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "spr[0] zoom=0 (full size) word1=zoom y=0x00 x=0x00"}
+{"op": "write_sprite", "addr": 131074, "data": 100, "be": 3, "note": "spr[0] zoom=0 (full size) word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 60, "be": 3, "note": "spr[0] zoom=0 (full size) word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 7, "be": 3, "note": "spr[0] zoom=0 (full size) word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] zoom=0 (full size) word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 100, "exp_pixel": 117, "note": "zoom0 full col+0 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 101, "exp_pixel": 117, "note": "zoom0 full col+1 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 102, "exp_pixel": 117, "note": "zoom0 full col+2 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 103, "exp_pixel": 117, "note": "zoom0 full col+3 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 104, "exp_pixel": 117, "note": "zoom0 full col+4 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 105, "exp_pixel": 117, "note": "zoom0 full col+5 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 106, "exp_pixel": 117, "note": "zoom0 full col+6 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 107, "exp_pixel": 117, "note": "zoom0 full col+7 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 108, "exp_pixel": 117, "note": "zoom0 full col+8 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 109, "exp_pixel": 117, "note": "zoom0 full col+9 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 110, "exp_pixel": 117, "note": "zoom0 full col+10 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 111, "exp_pixel": 117, "note": "zoom0 full col+11 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 112, "exp_pixel": 117, "note": "zoom0 full col+12 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 113, "exp_pixel": 117, "note": "zoom0 full col+13 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 114, "exp_pixel": 117, "note": "zoom0 full col+14 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 115, "exp_pixel": 117, "note": "zoom0 full col+15 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 99, "exp_pixel": 0, "note": "zoom0 outside col=99 exp=0x000 (transparent)"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 116, "exp_pixel": 0, "note": "zoom0 outside col=116 exp=0x000 (transparent)"}
+{"op": "reset", "note": "reset for x_zoom=0x80 half-width test"}
+{"op": "write_gfx", "gfx_addr": 64, "gfx_data": 19088743, "note": "gfx gradient tile=2 row=0"}
+{"op": "write_gfx", "gfx_addr": 65, "gfx_data": 2309737967, "note": "gfx gradient tile=2 row=0"}
+{"op": "write_gfx", "gfx_addr": 66, "gfx_data": 286331153, "note": "gfx solid tile=2 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 67, "gfx_data": 286331153, "note": "gfx solid tile=2 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 68, "gfx_data": 286331153, "note": "gfx solid tile=2 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 69, "gfx_data": 286331153, "note": "gfx solid tile=2 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 70, "gfx_data": 286331153, "note": "gfx solid tile=2 row=3 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 71, "gfx_data": 286331153, "note": "gfx solid tile=2 row=3 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 72, "gfx_data": 286331153, "note": "gfx solid tile=2 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 73, "gfx_data": 286331153, "note": "gfx solid tile=2 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 74, "gfx_data": 286331153, "note": "gfx solid tile=2 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 75, "gfx_data": 286331153, "note": "gfx solid tile=2 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 76, "gfx_data": 286331153, "note": "gfx solid tile=2 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 77, "gfx_data": 286331153, "note": "gfx solid tile=2 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 78, "gfx_data": 286331153, "note": "gfx solid tile=2 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 79, "gfx_data": 286331153, "note": "gfx solid tile=2 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 80, "gfx_data": 286331153, "note": "gfx solid tile=2 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 81, "gfx_data": 286331153, "note": "gfx solid tile=2 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 82, "gfx_data": 286331153, "note": "gfx solid tile=2 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 83, "gfx_data": 286331153, "note": "gfx solid tile=2 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 84, "gfx_data": 286331153, "note": "gfx solid tile=2 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 85, "gfx_data": 286331153, "note": "gfx solid tile=2 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 86, "gfx_data": 286331153, "note": "gfx solid tile=2 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 87, "gfx_data": 286331153, "note": "gfx solid tile=2 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 88, "gfx_data": 286331153, "note": "gfx solid tile=2 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 89, "gfx_data": 286331153, "note": "gfx solid tile=2 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 90, "gfx_data": 286331153, "note": "gfx solid tile=2 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 91, "gfx_data": 286331153, "note": "gfx solid tile=2 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 92, "gfx_data": 286331153, "note": "gfx solid tile=2 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 93, "gfx_data": 286331153, "note": "gfx solid tile=2 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 94, "gfx_data": 286331153, "note": "gfx solid tile=2 row=15 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 95, "gfx_data": 286331153, "note": "gfx solid tile=2 row=15 pen=0x1"}
+{"op": "write_sprite", "addr": 131072, "data": 2, "be": 3, "note": "spr[0] x_zoom=0x80 half-width word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 128, "be": 3, "note": "spr[0] x_zoom=0x80 half-width word1=zoom y=0x00 x=0x80"}
+{"op": "write_sprite", "addr": 131074, "data": 80, "be": 3, "note": "spr[0] x_zoom=0x80 half-width word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 70, "be": 3, "note": "spr[0] x_zoom=0x80 half-width word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 10, "be": 3, "note": "spr[0] x_zoom=0x80 half-width word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] x_zoom=0x80 half-width word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 80, "exp_pixel": 0, "note": "x_zoom80 col+0 exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 81, "exp_pixel": 0, "note": "x_zoom80 col+1 exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 82, "exp_pixel": 161, "note": "x_zoom80 col+2 exp=0x0a1"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 83, "exp_pixel": 161, "note": "x_zoom80 col+3 exp=0x0a1"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 84, "exp_pixel": 162, "note": "x_zoom80 col+4 exp=0x0a2"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 85, "exp_pixel": 162, "note": "x_zoom80 col+5 exp=0x0a2"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 86, "exp_pixel": 163, "note": "x_zoom80 col+6 exp=0x0a3"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 87, "exp_pixel": 163, "note": "x_zoom80 col+7 exp=0x0a3"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 88, "exp_pixel": 0, "note": "x_zoom80 col+8 (should be transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 89, "exp_pixel": 0, "note": "x_zoom80 col+9 (should be transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 90, "exp_pixel": 0, "note": "x_zoom80 col+10 (should be transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 91, "exp_pixel": 0, "note": "x_zoom80 col+11 (should be transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 92, "exp_pixel": 0, "note": "x_zoom80 col+12 (should be transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 93, "exp_pixel": 0, "note": "x_zoom80 col+13 (should be transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 94, "exp_pixel": 0, "note": "x_zoom80 col+14 (should be transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 95, "exp_pixel": 0, "note": "x_zoom80 col+15 (should be transparent) exp=0x000"}
+{"op": "reset", "note": "reset for x_zoom=0xFF zero-width test"}
+{"op": "write_gfx", "gfx_addr": 96, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=0 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 97, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=0 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 98, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=1 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 99, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=1 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 100, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=2 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 101, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=2 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 102, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=3 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 103, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=3 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 104, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=4 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 105, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=4 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 106, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=5 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 107, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=5 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 108, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=6 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 109, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=6 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 110, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 111, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 112, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=8 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 113, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=8 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 114, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=9 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 115, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=9 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 116, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=10 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 117, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=10 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 118, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=11 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 119, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=11 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 120, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=12 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 121, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=12 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 122, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=13 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 123, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=13 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 124, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=14 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 125, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=14 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 126, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=15 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 127, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=15 pen=0x7"}
+{"op": "write_sprite", "addr": 131072, "data": 3, "be": 3, "note": "spr[0] x_zoom=0xFF (invisible) word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 255, "be": 3, "note": "spr[0] x_zoom=0xFF (invisible) word1=zoom y=0x00 x=0xff"}
+{"op": "write_sprite", "addr": 131074, "data": 100, "be": 3, "note": "spr[0] x_zoom=0xFF (invisible) word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 80, "be": 3, "note": "spr[0] x_zoom=0xFF (invisible) word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 21, "be": 3, "note": "spr[0] x_zoom=0xFF (invisible) word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] x_zoom=0xFF (invisible) word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 100, "exp_pixel": 0, "note": "x_zoom_FF col+0 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 101, "exp_pixel": 0, "note": "x_zoom_FF col+1 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 102, "exp_pixel": 0, "note": "x_zoom_FF col+2 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 103, "exp_pixel": 0, "note": "x_zoom_FF col+3 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 104, "exp_pixel": 0, "note": "x_zoom_FF col+4 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 105, "exp_pixel": 0, "note": "x_zoom_FF col+5 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 106, "exp_pixel": 0, "note": "x_zoom_FF col+6 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 107, "exp_pixel": 0, "note": "x_zoom_FF col+7 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 108, "exp_pixel": 0, "note": "x_zoom_FF col+8 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 109, "exp_pixel": 0, "note": "x_zoom_FF col+9 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 110, "exp_pixel": 0, "note": "x_zoom_FF col+10 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 111, "exp_pixel": 0, "note": "x_zoom_FF col+11 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 112, "exp_pixel": 0, "note": "x_zoom_FF col+12 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 113, "exp_pixel": 0, "note": "x_zoom_FF col+13 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 114, "exp_pixel": 0, "note": "x_zoom_FF col+14 (all transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 115, "exp_pixel": 0, "note": "x_zoom_FF col+15 (all transparent) exp=0x000"}
+{"op": "reset", "note": "reset for y_zoom=0x80 half-height test"}
+{"op": "write_gfx", "gfx_addr": 128, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=0 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 129, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=0 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 130, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=1 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 131, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=1 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 132, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=2 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 133, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=2 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 134, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=3 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 135, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=3 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 136, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=4 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 137, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=4 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 138, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=5 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 139, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=5 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 140, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=6 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 141, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=6 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 142, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=7 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 143, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=7 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 144, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=8 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 145, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=8 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 146, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=9 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 147, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=9 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 148, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=10 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 149, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=10 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 150, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=11 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 151, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=11 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 152, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=12 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 153, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=12 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 154, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=13 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 155, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=13 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 156, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=14 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 157, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=14 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 158, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=15 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 159, "gfx_data": 3149642683, "note": "gfx solid tile=4 row=15 pen=0xb"}
+{"op": "write_sprite", "addr": 131072, "data": 4, "be": 3, "note": "spr[0] y_zoom=0x80 half-height word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 32768, "be": 3, "note": "spr[0] y_zoom=0x80 half-height word1=zoom y=0x80 x=0x00"}
+{"op": "write_sprite", "addr": 131074, "data": 120, "be": 3, "note": "spr[0] y_zoom=0x80 half-height word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 90, "be": 3, "note": "spr[0] y_zoom=0x80 half-height word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 31, "be": 3, "note": "spr[0] y_zoom=0x80 half-height word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] y_zoom=0x80 half-height word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 89, "screen_col": 120, "exp_pixel": 507, "note": "y_zoom80 row+0 visible exp=0x1fb"}
+{"op": "check_sprite_pixel", "vpos": 90, "screen_col": 120, "exp_pixel": 507, "note": "y_zoom80 row+1 visible exp=0x1fb"}
+{"op": "check_sprite_pixel", "vpos": 91, "screen_col": 120, "exp_pixel": 507, "note": "y_zoom80 row+2 visible exp=0x1fb"}
+{"op": "check_sprite_pixel", "vpos": 92, "screen_col": 120, "exp_pixel": 507, "note": "y_zoom80 row+3 visible exp=0x1fb"}
+{"op": "check_sprite_pixel", "vpos": 93, "screen_col": 120, "exp_pixel": 507, "note": "y_zoom80 row+4 visible exp=0x1fb"}
+{"op": "check_sprite_pixel", "vpos": 94, "screen_col": 120, "exp_pixel": 507, "note": "y_zoom80 row+5 visible exp=0x1fb"}
+{"op": "check_sprite_pixel", "vpos": 95, "screen_col": 120, "exp_pixel": 507, "note": "y_zoom80 row+6 visible exp=0x1fb"}
+{"op": "check_sprite_pixel", "vpos": 96, "screen_col": 120, "exp_pixel": 507, "note": "y_zoom80 row+7 visible exp=0x1fb"}
+{"op": "check_sprite_pixel", "vpos": 97, "screen_col": 120, "exp_pixel": 0, "note": "y_zoom80 row+8 should_be_transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 98, "screen_col": 120, "exp_pixel": 0, "note": "y_zoom80 row+9 should_be_transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 99, "screen_col": 120, "exp_pixel": 0, "note": "y_zoom80 row+10 should_be_transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 100, "screen_col": 120, "exp_pixel": 0, "note": "y_zoom80 row+11 should_be_transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 101, "screen_col": 120, "exp_pixel": 0, "note": "y_zoom80 row+12 should_be_transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 102, "screen_col": 120, "exp_pixel": 0, "note": "y_zoom80 row+13 should_be_transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 103, "screen_col": 120, "exp_pixel": 0, "note": "y_zoom80 row+14 should_be_transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 104, "screen_col": 120, "exp_pixel": 0, "note": "y_zoom80 row+15 should_be_transparent exp=0x000"}
+{"op": "reset", "note": "reset for y_zoom=0x00 full-height test"}
+{"op": "write_gfx", "gfx_addr": 160, "gfx_data": 858993459, "note": "gfx solid tile=5 row=0 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 161, "gfx_data": 858993459, "note": "gfx solid tile=5 row=0 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 162, "gfx_data": 286331153, "note": "gfx solid tile=5 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 163, "gfx_data": 286331153, "note": "gfx solid tile=5 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 164, "gfx_data": 286331153, "note": "gfx solid tile=5 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 165, "gfx_data": 286331153, "note": "gfx solid tile=5 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 166, "gfx_data": 286331153, "note": "gfx solid tile=5 row=3 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 167, "gfx_data": 286331153, "note": "gfx solid tile=5 row=3 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 168, "gfx_data": 286331153, "note": "gfx solid tile=5 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 169, "gfx_data": 286331153, "note": "gfx solid tile=5 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 170, "gfx_data": 286331153, "note": "gfx solid tile=5 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 171, "gfx_data": 286331153, "note": "gfx solid tile=5 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 172, "gfx_data": 286331153, "note": "gfx solid tile=5 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 173, "gfx_data": 286331153, "note": "gfx solid tile=5 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 174, "gfx_data": 286331153, "note": "gfx solid tile=5 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 175, "gfx_data": 286331153, "note": "gfx solid tile=5 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 176, "gfx_data": 286331153, "note": "gfx solid tile=5 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 177, "gfx_data": 286331153, "note": "gfx solid tile=5 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 178, "gfx_data": 286331153, "note": "gfx solid tile=5 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 179, "gfx_data": 286331153, "note": "gfx solid tile=5 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 180, "gfx_data": 286331153, "note": "gfx solid tile=5 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 181, "gfx_data": 286331153, "note": "gfx solid tile=5 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 182, "gfx_data": 286331153, "note": "gfx solid tile=5 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 183, "gfx_data": 286331153, "note": "gfx solid tile=5 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 184, "gfx_data": 286331153, "note": "gfx solid tile=5 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 185, "gfx_data": 286331153, "note": "gfx solid tile=5 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 186, "gfx_data": 286331153, "note": "gfx solid tile=5 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 187, "gfx_data": 286331153, "note": "gfx solid tile=5 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 188, "gfx_data": 286331153, "note": "gfx solid tile=5 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 189, "gfx_data": 286331153, "note": "gfx solid tile=5 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 190, "gfx_data": 2576980377, "note": "gfx solid tile=5 row=15 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 191, "gfx_data": 2576980377, "note": "gfx solid tile=5 row=15 pen=0x9"}
+{"op": "write_sprite", "addr": 131072, "data": 5, "be": 3, "note": "spr[0] y_zoom=0 full height word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "spr[0] y_zoom=0 full height word1=zoom y=0x00 x=0x00"}
+{"op": "write_sprite", "addr": 131074, "data": 60, "be": 3, "note": "spr[0] y_zoom=0 full height word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 100, "be": 3, "note": "spr[0] y_zoom=0 full height word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 5, "be": 3, "note": "spr[0] y_zoom=0 full height word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] y_zoom=0 full height word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 99, "screen_col": 60, "exp_pixel": 83, "note": "y_zoom00 top row (pen=3) exp=0x053"}
+{"op": "check_sprite_pixel", "vpos": 114, "screen_col": 60, "exp_pixel": 89, "note": "y_zoom00 bot row (pen=9) exp=0x059"}
+{"op": "reset", "note": "reset for asymmetric zoom x=0x40 y=0x80"}
+{"op": "write_gfx", "gfx_addr": 192, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=0 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 193, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=0 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 194, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=1 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 195, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=1 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 196, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=2 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 197, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=2 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 198, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=3 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 199, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=3 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 200, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=4 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 201, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=4 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 202, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=5 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 203, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=5 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 204, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=6 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 205, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=6 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 206, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=7 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 207, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=7 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 208, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=8 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 209, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=8 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 210, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=9 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 211, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=9 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 212, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=10 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 213, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=10 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 214, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=11 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 215, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=11 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 216, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=12 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 217, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=12 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 218, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=13 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 219, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=13 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 220, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=14 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 221, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=14 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 222, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=15 pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 223, "gfx_data": 3722304989, "note": "gfx solid tile=6 row=15 pen=0xd"}
+{"op": "write_sprite", "addr": 131072, "data": 6, "be": 3, "note": "spr[0] asym zoom x=0x40 y=0x80 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 32832, "be": 3, "note": "spr[0] asym zoom x=0x40 y=0x80 word1=zoom y=0x80 x=0x40"}
+{"op": "write_sprite", "addr": 131074, "data": 140, "be": 3, "note": "spr[0] asym zoom x=0x40 y=0x80 word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 50, "be": 3, "note": "spr[0] asym zoom x=0x40 y=0x80 word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 18, "be": 3, "note": "spr[0] asym zoom x=0x40 y=0x80 word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] asym zoom x=0x40 y=0x80 word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 140, "exp_pixel": 301, "note": "asym_zoom col+0 (visible) exp=0x12d"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 141, "exp_pixel": 301, "note": "asym_zoom col+1 (visible) exp=0x12d"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 142, "exp_pixel": 301, "note": "asym_zoom col+2 (visible) exp=0x12d"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 143, "exp_pixel": 301, "note": "asym_zoom col+3 (visible) exp=0x12d"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 144, "exp_pixel": 301, "note": "asym_zoom col+4 (visible) exp=0x12d"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 145, "exp_pixel": 301, "note": "asym_zoom col+5 (visible) exp=0x12d"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 146, "exp_pixel": 301, "note": "asym_zoom col+6 (visible) exp=0x12d"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 147, "exp_pixel": 301, "note": "asym_zoom col+7 (visible) exp=0x12d"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 148, "exp_pixel": 301, "note": "asym_zoom col+8 (visible) exp=0x12d"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 149, "exp_pixel": 301, "note": "asym_zoom col+9 (visible) exp=0x12d"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 150, "exp_pixel": 301, "note": "asym_zoom col+10 (visible) exp=0x12d"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 151, "exp_pixel": 301, "note": "asym_zoom col+11 (visible) exp=0x12d"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 152, "exp_pixel": 0, "note": "asym_zoom col+12 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 153, "exp_pixel": 0, "note": "asym_zoom col+13 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 154, "exp_pixel": 0, "note": "asym_zoom col+14 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 155, "exp_pixel": 0, "note": "asym_zoom col+15 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 57, "screen_col": 140, "exp_pixel": 0, "note": "asym_zoom y row+8 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 58, "screen_col": 140, "exp_pixel": 0, "note": "asym_zoom y row+9 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 140, "exp_pixel": 0, "note": "asym_zoom y row+10 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 60, "screen_col": 140, "exp_pixel": 0, "note": "asym_zoom y row+11 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 61, "screen_col": 140, "exp_pixel": 0, "note": "asym_zoom y row+12 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 62, "screen_col": 140, "exp_pixel": 0, "note": "asym_zoom y row+13 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 63, "screen_col": 140, "exp_pixel": 0, "note": "asym_zoom y row+14 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 64, "screen_col": 140, "exp_pixel": 0, "note": "asym_zoom y row+15 (transparent) exp=0x000"}
+{"op": "reset", "note": "reset for x_zoom=0x80 + flipX test"}
+{"op": "write_gfx", "gfx_addr": 224, "gfx_data": 19088743, "note": "gfx gradient tile=7 row=0"}
+{"op": "write_gfx", "gfx_addr": 225, "gfx_data": 2309737967, "note": "gfx gradient tile=7 row=0"}
+{"op": "write_gfx", "gfx_addr": 226, "gfx_data": 572662306, "note": "gfx solid tile=7 row=1 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 227, "gfx_data": 572662306, "note": "gfx solid tile=7 row=1 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 228, "gfx_data": 572662306, "note": "gfx solid tile=7 row=2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 229, "gfx_data": 572662306, "note": "gfx solid tile=7 row=2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 230, "gfx_data": 572662306, "note": "gfx solid tile=7 row=3 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 231, "gfx_data": 572662306, "note": "gfx solid tile=7 row=3 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 232, "gfx_data": 572662306, "note": "gfx solid tile=7 row=4 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 233, "gfx_data": 572662306, "note": "gfx solid tile=7 row=4 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 234, "gfx_data": 572662306, "note": "gfx solid tile=7 row=5 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 235, "gfx_data": 572662306, "note": "gfx solid tile=7 row=5 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 236, "gfx_data": 572662306, "note": "gfx solid tile=7 row=6 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 237, "gfx_data": 572662306, "note": "gfx solid tile=7 row=6 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 238, "gfx_data": 572662306, "note": "gfx solid tile=7 row=7 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 239, "gfx_data": 572662306, "note": "gfx solid tile=7 row=7 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 240, "gfx_data": 572662306, "note": "gfx solid tile=7 row=8 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 241, "gfx_data": 572662306, "note": "gfx solid tile=7 row=8 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 242, "gfx_data": 572662306, "note": "gfx solid tile=7 row=9 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 243, "gfx_data": 572662306, "note": "gfx solid tile=7 row=9 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 244, "gfx_data": 572662306, "note": "gfx solid tile=7 row=10 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 245, "gfx_data": 572662306, "note": "gfx solid tile=7 row=10 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 246, "gfx_data": 572662306, "note": "gfx solid tile=7 row=11 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 247, "gfx_data": 572662306, "note": "gfx solid tile=7 row=11 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 248, "gfx_data": 572662306, "note": "gfx solid tile=7 row=12 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 249, "gfx_data": 572662306, "note": "gfx solid tile=7 row=12 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 250, "gfx_data": 572662306, "note": "gfx solid tile=7 row=13 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 251, "gfx_data": 572662306, "note": "gfx solid tile=7 row=13 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 252, "gfx_data": 572662306, "note": "gfx solid tile=7 row=14 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 253, "gfx_data": 572662306, "note": "gfx solid tile=7 row=14 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 254, "gfx_data": 572662306, "note": "gfx solid tile=7 row=15 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 255, "gfx_data": 572662306, "note": "gfx solid tile=7 row=15 pen=0x2"}
+{"op": "write_sprite", "addr": 131072, "data": 7, "be": 3, "note": "spr[0] x_zoom=0x80+flipX word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 128, "be": 3, "note": "spr[0] x_zoom=0x80+flipX word1=zoom y=0x00 x=0x80"}
+{"op": "write_sprite", "addr": 131074, "data": 60, "be": 3, "note": "spr[0] x_zoom=0x80+flipX word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 110, "be": 3, "note": "spr[0] x_zoom=0x80+flipX word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 526, "be": 3, "note": "spr[0] x_zoom=0x80+flipX word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] x_zoom=0x80+flipX word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 60, "exp_pixel": 231, "note": "zoom80_flipX col+0 exp=0x0e7"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 61, "exp_pixel": 231, "note": "zoom80_flipX col+1 exp=0x0e7"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 62, "exp_pixel": 230, "note": "zoom80_flipX col+2 exp=0x0e6"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 63, "exp_pixel": 230, "note": "zoom80_flipX col+3 exp=0x0e6"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 64, "exp_pixel": 229, "note": "zoom80_flipX col+4 exp=0x0e5"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 65, "exp_pixel": 229, "note": "zoom80_flipX col+5 exp=0x0e5"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 66, "exp_pixel": 228, "note": "zoom80_flipX col+6 exp=0x0e4"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 67, "exp_pixel": 228, "note": "zoom80_flipX col+7 exp=0x0e4"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 68, "exp_pixel": 0, "note": "zoom80_flipX col+8 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 69, "exp_pixel": 0, "note": "zoom80_flipX col+9 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 70, "exp_pixel": 0, "note": "zoom80_flipX col+10 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 71, "exp_pixel": 0, "note": "zoom80_flipX col+11 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 72, "exp_pixel": 0, "note": "zoom80_flipX col+12 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 73, "exp_pixel": 0, "note": "zoom80_flipX col+13 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 74, "exp_pixel": 0, "note": "zoom80_flipX col+14 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 75, "exp_pixel": 0, "note": "zoom80_flipX col+15 (transparent) exp=0x000"}
+{"op": "reset", "note": "reset for y_zoom=0x80 + flipY test"}
+{"op": "write_gfx", "gfx_addr": 256, "gfx_data": 1145324612, "note": "gfx solid tile=8 row=0 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 257, "gfx_data": 1145324612, "note": "gfx solid tile=8 row=0 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 258, "gfx_data": 572662306, "note": "gfx solid tile=8 row=1 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 259, "gfx_data": 572662306, "note": "gfx solid tile=8 row=1 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 260, "gfx_data": 572662306, "note": "gfx solid tile=8 row=2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 261, "gfx_data": 572662306, "note": "gfx solid tile=8 row=2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 262, "gfx_data": 572662306, "note": "gfx solid tile=8 row=3 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 263, "gfx_data": 572662306, "note": "gfx solid tile=8 row=3 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 264, "gfx_data": 572662306, "note": "gfx solid tile=8 row=4 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 265, "gfx_data": 572662306, "note": "gfx solid tile=8 row=4 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 266, "gfx_data": 572662306, "note": "gfx solid tile=8 row=5 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 267, "gfx_data": 572662306, "note": "gfx solid tile=8 row=5 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 268, "gfx_data": 572662306, "note": "gfx solid tile=8 row=6 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 269, "gfx_data": 572662306, "note": "gfx solid tile=8 row=6 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 270, "gfx_data": 572662306, "note": "gfx solid tile=8 row=7 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 271, "gfx_data": 572662306, "note": "gfx solid tile=8 row=7 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 272, "gfx_data": 572662306, "note": "gfx solid tile=8 row=8 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 273, "gfx_data": 572662306, "note": "gfx solid tile=8 row=8 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 274, "gfx_data": 572662306, "note": "gfx solid tile=8 row=9 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 275, "gfx_data": 572662306, "note": "gfx solid tile=8 row=9 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 276, "gfx_data": 572662306, "note": "gfx solid tile=8 row=10 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 277, "gfx_data": 572662306, "note": "gfx solid tile=8 row=10 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 278, "gfx_data": 572662306, "note": "gfx solid tile=8 row=11 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 279, "gfx_data": 572662306, "note": "gfx solid tile=8 row=11 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 280, "gfx_data": 572662306, "note": "gfx solid tile=8 row=12 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 281, "gfx_data": 572662306, "note": "gfx solid tile=8 row=12 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 282, "gfx_data": 572662306, "note": "gfx solid tile=8 row=13 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 283, "gfx_data": 572662306, "note": "gfx solid tile=8 row=13 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 284, "gfx_data": 572662306, "note": "gfx solid tile=8 row=14 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 285, "gfx_data": 572662306, "note": "gfx solid tile=8 row=14 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 286, "gfx_data": 2576980377, "note": "gfx solid tile=8 row=15 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 287, "gfx_data": 2576980377, "note": "gfx solid tile=8 row=15 pen=0x9"}
+{"op": "write_sprite", "addr": 131072, "data": 8, "be": 3, "note": "spr[0] y_zoom=0x80+flipY word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 32768, "be": 3, "note": "spr[0] y_zoom=0x80+flipY word1=zoom y=0x80 x=0x00"}
+{"op": "write_sprite", "addr": 131074, "data": 150, "be": 3, "note": "spr[0] y_zoom=0x80+flipY word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 130, "be": 3, "note": "spr[0] y_zoom=0x80+flipY word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 1051, "be": 3, "note": "spr[0] y_zoom=0x80+flipY word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] y_zoom=0x80+flipY word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 129, "screen_col": 150, "exp_pixel": 441, "note": "yzoom80_flipY row0 exp=0x1b9 (expect pen=9)"}
+{"op": "check_sprite_pixel", "vpos": 136, "screen_col": 150, "exp_pixel": 434, "note": "yzoom80_flipY row7 exp=0x1b2 (expect pen=2)"}
+{"op": "check_sprite_pixel", "vpos": 137, "screen_col": 150, "exp_pixel": 0, "note": "yzoom80_flipY row8 transparent exp=0x000"}
+{"op": "reset", "note": "reset for x_zoom=0xC0 quarter-width test"}
+{"op": "write_gfx", "gfx_addr": 288, "gfx_data": 19088743, "note": "gfx gradient tile=9 row=0"}
+{"op": "write_gfx", "gfx_addr": 289, "gfx_data": 2309737967, "note": "gfx gradient tile=9 row=0"}
+{"op": "write_gfx", "gfx_addr": 290, "gfx_data": 858993459, "note": "gfx solid tile=9 row=1 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 291, "gfx_data": 858993459, "note": "gfx solid tile=9 row=1 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 292, "gfx_data": 858993459, "note": "gfx solid tile=9 row=2 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 293, "gfx_data": 858993459, "note": "gfx solid tile=9 row=2 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 294, "gfx_data": 858993459, "note": "gfx solid tile=9 row=3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 295, "gfx_data": 858993459, "note": "gfx solid tile=9 row=3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 296, "gfx_data": 858993459, "note": "gfx solid tile=9 row=4 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 297, "gfx_data": 858993459, "note": "gfx solid tile=9 row=4 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 298, "gfx_data": 858993459, "note": "gfx solid tile=9 row=5 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 299, "gfx_data": 858993459, "note": "gfx solid tile=9 row=5 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 300, "gfx_data": 858993459, "note": "gfx solid tile=9 row=6 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 301, "gfx_data": 858993459, "note": "gfx solid tile=9 row=6 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 302, "gfx_data": 858993459, "note": "gfx solid tile=9 row=7 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 303, "gfx_data": 858993459, "note": "gfx solid tile=9 row=7 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 304, "gfx_data": 858993459, "note": "gfx solid tile=9 row=8 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 305, "gfx_data": 858993459, "note": "gfx solid tile=9 row=8 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 306, "gfx_data": 858993459, "note": "gfx solid tile=9 row=9 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 307, "gfx_data": 858993459, "note": "gfx solid tile=9 row=9 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 308, "gfx_data": 858993459, "note": "gfx solid tile=9 row=10 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 309, "gfx_data": 858993459, "note": "gfx solid tile=9 row=10 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 310, "gfx_data": 858993459, "note": "gfx solid tile=9 row=11 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 311, "gfx_data": 858993459, "note": "gfx solid tile=9 row=11 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 312, "gfx_data": 858993459, "note": "gfx solid tile=9 row=12 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 313, "gfx_data": 858993459, "note": "gfx solid tile=9 row=12 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 314, "gfx_data": 858993459, "note": "gfx solid tile=9 row=13 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 315, "gfx_data": 858993459, "note": "gfx solid tile=9 row=13 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 316, "gfx_data": 858993459, "note": "gfx solid tile=9 row=14 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 317, "gfx_data": 858993459, "note": "gfx solid tile=9 row=14 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 318, "gfx_data": 858993459, "note": "gfx solid tile=9 row=15 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 319, "gfx_data": 858993459, "note": "gfx solid tile=9 row=15 pen=0x3"}
+{"op": "write_sprite", "addr": 131072, "data": 9, "be": 3, "note": "spr[0] x_zoom=0xC0 (4px wide) word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 192, "be": 3, "note": "spr[0] x_zoom=0xC0 (4px wide) word1=zoom y=0x00 x=0xc0"}
+{"op": "write_sprite", "addr": 131074, "data": 200, "be": 3, "note": "spr[0] x_zoom=0xC0 (4px wide) word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 160, "be": 3, "note": "spr[0] x_zoom=0xC0 (4px wide) word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 3, "be": 3, "note": "spr[0] x_zoom=0xC0 (4px wide) word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] x_zoom=0xC0 (4px wide) word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 200, "exp_pixel": 0, "note": "x_zoomC0 col+0 (visible) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 201, "exp_pixel": 0, "note": "x_zoomC0 col+1 (visible) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 202, "exp_pixel": 0, "note": "x_zoomC0 col+2 (visible) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 203, "exp_pixel": 0, "note": "x_zoomC0 col+3 (visible) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 204, "exp_pixel": 0, "note": "x_zoomC0 col+4 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 205, "exp_pixel": 0, "note": "x_zoomC0 col+5 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 206, "exp_pixel": 0, "note": "x_zoomC0 col+6 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 207, "exp_pixel": 0, "note": "x_zoomC0 col+7 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 208, "exp_pixel": 0, "note": "x_zoomC0 col+8 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 209, "exp_pixel": 0, "note": "x_zoomC0 col+9 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 210, "exp_pixel": 0, "note": "x_zoomC0 col+10 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 211, "exp_pixel": 0, "note": "x_zoomC0 col+11 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 212, "exp_pixel": 0, "note": "x_zoomC0 col+12 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 213, "exp_pixel": 0, "note": "x_zoomC0 col+13 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 214, "exp_pixel": 0, "note": "x_zoomC0 col+14 (transparent) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 159, "screen_col": 215, "exp_pixel": 0, "note": "x_zoomC0 col+15 (transparent) exp=0x000"}
+{"op": "reset", "note": "reset for y_zoom=0xC0 quarter-height test"}
+{"op": "write_gfx", "gfx_addr": 320, "gfx_data": 2863311530, "note": "gfx solid tile=10 row=0 pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 321, "gfx_data": 2863311530, "note": "gfx solid tile=10 row=0 pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 322, "gfx_data": 286331153, "note": "gfx solid tile=10 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 323, "gfx_data": 286331153, "note": "gfx solid tile=10 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 324, "gfx_data": 286331153, "note": "gfx solid tile=10 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 325, "gfx_data": 286331153, "note": "gfx solid tile=10 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 326, "gfx_data": 3149642683, "note": "gfx solid tile=10 row=3 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 327, "gfx_data": 3149642683, "note": "gfx solid tile=10 row=3 pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 328, "gfx_data": 286331153, "note": "gfx solid tile=10 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 329, "gfx_data": 286331153, "note": "gfx solid tile=10 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 330, "gfx_data": 286331153, "note": "gfx solid tile=10 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 331, "gfx_data": 286331153, "note": "gfx solid tile=10 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 332, "gfx_data": 286331153, "note": "gfx solid tile=10 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 333, "gfx_data": 286331153, "note": "gfx solid tile=10 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 334, "gfx_data": 286331153, "note": "gfx solid tile=10 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 335, "gfx_data": 286331153, "note": "gfx solid tile=10 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 336, "gfx_data": 286331153, "note": "gfx solid tile=10 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 337, "gfx_data": 286331153, "note": "gfx solid tile=10 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 338, "gfx_data": 286331153, "note": "gfx solid tile=10 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 339, "gfx_data": 286331153, "note": "gfx solid tile=10 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 340, "gfx_data": 286331153, "note": "gfx solid tile=10 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 341, "gfx_data": 286331153, "note": "gfx solid tile=10 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 342, "gfx_data": 286331153, "note": "gfx solid tile=10 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 343, "gfx_data": 286331153, "note": "gfx solid tile=10 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 344, "gfx_data": 286331153, "note": "gfx solid tile=10 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 345, "gfx_data": 286331153, "note": "gfx solid tile=10 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 346, "gfx_data": 286331153, "note": "gfx solid tile=10 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 347, "gfx_data": 286331153, "note": "gfx solid tile=10 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 348, "gfx_data": 286331153, "note": "gfx solid tile=10 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 349, "gfx_data": 286331153, "note": "gfx solid tile=10 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 350, "gfx_data": 286331153, "note": "gfx solid tile=10 row=15 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 351, "gfx_data": 286331153, "note": "gfx solid tile=10 row=15 pen=0x1"}
+{"op": "write_sprite", "addr": 131072, "data": 10, "be": 3, "note": "spr[0] y_zoom=0xC0 (4 rows) word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 49152, "be": 3, "note": "spr[0] y_zoom=0xC0 (4 rows) word1=zoom y=0xc0 x=0x00"}
+{"op": "write_sprite", "addr": 131074, "data": 50, "be": 3, "note": "spr[0] y_zoom=0xC0 (4 rows) word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 40, "be": 3, "note": "spr[0] y_zoom=0xC0 (4 rows) word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 28, "be": 3, "note": "spr[0] y_zoom=0xC0 (4 rows) word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] y_zoom=0xC0 (4 rows) word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 50, "exp_pixel": 458, "note": "y_zoomC0 row+0 visible exp=0x1ca"}
+{"op": "check_sprite_pixel", "vpos": 40, "screen_col": 50, "exp_pixel": 458, "note": "y_zoomC0 row+1 visible exp=0x1ca"}
+{"op": "check_sprite_pixel", "vpos": 41, "screen_col": 50, "exp_pixel": 458, "note": "y_zoomC0 row+2 visible exp=0x1ca"}
+{"op": "check_sprite_pixel", "vpos": 42, "screen_col": 50, "exp_pixel": 458, "note": "y_zoomC0 row+3 visible exp=0x1ca"}
+{"op": "check_sprite_pixel", "vpos": 43, "screen_col": 50, "exp_pixel": 0, "note": "y_zoomC0 row+4 transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 44, "screen_col": 50, "exp_pixel": 0, "note": "y_zoomC0 row+5 transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 45, "screen_col": 50, "exp_pixel": 0, "note": "y_zoomC0 row+6 transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 46, "screen_col": 50, "exp_pixel": 0, "note": "y_zoomC0 row+7 transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 47, "screen_col": 50, "exp_pixel": 0, "note": "y_zoomC0 row+8 transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 48, "screen_col": 50, "exp_pixel": 0, "note": "y_zoomC0 row+9 transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 50, "exp_pixel": 0, "note": "y_zoomC0 row+10 transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 50, "screen_col": 50, "exp_pixel": 0, "note": "y_zoomC0 row+11 transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 51, "screen_col": 50, "exp_pixel": 0, "note": "y_zoomC0 row+12 transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 52, "screen_col": 50, "exp_pixel": 0, "note": "y_zoomC0 row+13 transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 53, "screen_col": 50, "exp_pixel": 0, "note": "y_zoomC0 row+14 transparent exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 54, "screen_col": 50, "exp_pixel": 0, "note": "y_zoomC0 row+15 transparent exp=0x000"}
+{"op": "reset", "note": "reset for zoom overlap priority test"}
+{"op": "write_gfx", "gfx_addr": 352, "gfx_data": 858993459, "note": "gfx solid tile=11 row=0 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 353, "gfx_data": 858993459, "note": "gfx solid tile=11 row=0 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 354, "gfx_data": 858993459, "note": "gfx solid tile=11 row=1 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 355, "gfx_data": 858993459, "note": "gfx solid tile=11 row=1 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 356, "gfx_data": 858993459, "note": "gfx solid tile=11 row=2 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 357, "gfx_data": 858993459, "note": "gfx solid tile=11 row=2 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 358, "gfx_data": 858993459, "note": "gfx solid tile=11 row=3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 359, "gfx_data": 858993459, "note": "gfx solid tile=11 row=3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 360, "gfx_data": 858993459, "note": "gfx solid tile=11 row=4 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 361, "gfx_data": 858993459, "note": "gfx solid tile=11 row=4 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 362, "gfx_data": 858993459, "note": "gfx solid tile=11 row=5 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 363, "gfx_data": 858993459, "note": "gfx solid tile=11 row=5 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 364, "gfx_data": 858993459, "note": "gfx solid tile=11 row=6 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 365, "gfx_data": 858993459, "note": "gfx solid tile=11 row=6 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 366, "gfx_data": 858993459, "note": "gfx solid tile=11 row=7 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 367, "gfx_data": 858993459, "note": "gfx solid tile=11 row=7 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 368, "gfx_data": 858993459, "note": "gfx solid tile=11 row=8 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 369, "gfx_data": 858993459, "note": "gfx solid tile=11 row=8 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 370, "gfx_data": 858993459, "note": "gfx solid tile=11 row=9 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 371, "gfx_data": 858993459, "note": "gfx solid tile=11 row=9 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 372, "gfx_data": 858993459, "note": "gfx solid tile=11 row=10 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 373, "gfx_data": 858993459, "note": "gfx solid tile=11 row=10 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 374, "gfx_data": 858993459, "note": "gfx solid tile=11 row=11 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 375, "gfx_data": 858993459, "note": "gfx solid tile=11 row=11 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 376, "gfx_data": 858993459, "note": "gfx solid tile=11 row=12 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 377, "gfx_data": 858993459, "note": "gfx solid tile=11 row=12 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 378, "gfx_data": 858993459, "note": "gfx solid tile=11 row=13 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 379, "gfx_data": 858993459, "note": "gfx solid tile=11 row=13 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 380, "gfx_data": 858993459, "note": "gfx solid tile=11 row=14 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 381, "gfx_data": 858993459, "note": "gfx solid tile=11 row=14 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 382, "gfx_data": 858993459, "note": "gfx solid tile=11 row=15 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 383, "gfx_data": 858993459, "note": "gfx solid tile=11 row=15 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 384, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=0 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 385, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=0 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 386, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=1 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 387, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=1 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 388, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=2 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 389, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=2 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 390, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=3 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 391, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=3 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 392, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=4 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 393, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=4 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 394, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=5 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 395, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=5 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 396, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=6 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 397, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=6 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 398, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 399, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 400, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=8 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 401, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=8 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 402, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=9 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 403, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=9 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 404, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=10 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 405, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=10 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 406, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=11 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 407, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=11 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 408, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=12 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 409, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=12 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 410, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=13 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 411, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=13 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 412, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=14 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 413, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=14 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 414, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=15 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 415, "gfx_data": 2004318071, "note": "gfx solid tile=12 row=15 pen=0x7"}
+{"op": "write_sprite", "addr": 131072, "data": 11, "be": 3, "note": "spr[0] zoom half-width pen=3 (top) word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 128, "be": 3, "note": "spr[0] zoom half-width pen=3 (top) word1=zoom y=0x00 x=0x80"}
+{"op": "write_sprite", "addr": 131074, "data": 130, "be": 3, "note": "spr[0] zoom half-width pen=3 (top) word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 170, "be": 3, "note": "spr[0] zoom half-width pen=3 (top) word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 5, "be": 3, "note": "spr[0] zoom half-width pen=3 (top) word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] zoom half-width pen=3 (top) word5=tile_hi"}
+{"op": "write_sprite", "addr": 131080, "data": 12, "be": 3, "note": "spr[1] full-width pen=7 (bottom) word0=tile_lo"}
+{"op": "write_sprite", "addr": 131081, "data": 0, "be": 3, "note": "spr[1] full-width pen=7 (bottom) word1=zoom y=0x00 x=0x00"}
+{"op": "write_sprite", "addr": 131082, "data": 130, "be": 3, "note": "spr[1] full-width pen=7 (bottom) word2=sx"}
+{"op": "write_sprite", "addr": 131083, "data": 170, "be": 3, "note": "spr[1] full-width pen=7 (bottom) word3=sy"}
+{"op": "write_sprite", "addr": 131084, "data": 2, "be": 3, "note": "spr[1] full-width pen=7 (bottom) word4=ctrl"}
+{"op": "write_sprite", "addr": 131085, "data": 0, "be": 3, "note": "spr[1] full-width pen=7 (bottom) word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 130, "exp_pixel": 39, "note": "zoom_overlap col+0 (spr0 wins) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 131, "exp_pixel": 39, "note": "zoom_overlap col+1 (spr0 wins) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 132, "exp_pixel": 39, "note": "zoom_overlap col+2 (spr0 wins) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 133, "exp_pixel": 39, "note": "zoom_overlap col+3 (spr0 wins) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 134, "exp_pixel": 39, "note": "zoom_overlap col+4 (spr0 wins) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 135, "exp_pixel": 39, "note": "zoom_overlap col+5 (spr0 wins) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 136, "exp_pixel": 39, "note": "zoom_overlap col+6 (spr0 wins) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 137, "exp_pixel": 39, "note": "zoom_overlap col+7 (spr0 wins) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 138, "exp_pixel": 39, "note": "zoom_overlap col+8 (spr1 only) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 139, "exp_pixel": 39, "note": "zoom_overlap col+9 (spr1 only) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 140, "exp_pixel": 39, "note": "zoom_overlap col+10 (spr1 only) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 141, "exp_pixel": 39, "note": "zoom_overlap col+11 (spr1 only) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 142, "exp_pixel": 39, "note": "zoom_overlap col+12 (spr1 only) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 143, "exp_pixel": 39, "note": "zoom_overlap col+13 (spr1 only) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 144, "exp_pixel": 39, "note": "zoom_overlap col+14 (spr1 only) exp=0x027"}
+{"op": "check_sprite_pixel", "vpos": 169, "screen_col": 145, "exp_pixel": 39, "note": "zoom_overlap col+15 (spr1 only) exp=0x027"}

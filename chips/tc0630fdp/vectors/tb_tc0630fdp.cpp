@@ -1,5 +1,5 @@
 // =============================================================================
-// Gate 5 (Steps 1–8): Verilator testbench for tc0630fdp.sv
+// Gate 5 (Steps 1–9): Verilator testbench for tc0630fdp.sv
 //
 // Reads one or more vector files (jsonl). Each line is a JSON object with "op":
 //

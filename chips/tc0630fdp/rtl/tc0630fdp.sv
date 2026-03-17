@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Taito F3 Display Processor (Step 8: +Simple Sprites)
+// TC0630FDP — Taito F3 Display Processor (Step 9: +Sprite Zoom)
 // =============================================================================
 // Integrates all video functions for Taito F3 arcade hardware (1992–1997):
 //   · 4 scrolling tilemap layers (PF1–PF4), 16×16 tiles, 4bpp  ← STEP 3 ✓
@@ -505,15 +505,16 @@ logic [ 6:0] scan_scount_rd_data;
 assign scan_scount_rd_data = scount_ram[scan_scount_rd_addr];
 
 // =============================================================================
-// Sprite list BRAM (232 × 64 × 64-bit) — Step 8
+// Sprite list BRAM (232 × 64 × 72-bit) — Step 9: widened from 64 to 72 bits
+// 72-bit descriptor carries full x_zoom[7:0] and y_zoom[7:0] fields.
 // 14-bit address: {screen_scan[7:0], slot[5:0]}
 // =============================================================================
-logic [63:0] slist_ram [0:14847];  // 232*64 = 14848
+logic [71:0] slist_ram [0:14847];  // 232*64 = 14848
 
 // Scanner write port
 logic        scan_slist_wr;
 logic [13:0] scan_slist_addr;
-logic [63:0] scan_slist_data;
+logic [71:0] scan_slist_data;
 
 always_ff @(posedge clk) begin
     if (scan_slist_wr)
@@ -522,7 +523,7 @@ end
 
 // Renderer read port (combinational — see spr_ram scanner port comment above)
 logic [13:0] rend_slist_rd_addr;
-logic [63:0] rend_slist_rd_data;
+logic [71:0] rend_slist_rd_data;
 assign rend_slist_rd_data = slist_ram[rend_slist_rd_addr];
 
 // =============================================================================

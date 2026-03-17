@@ -1,27 +1,29 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Sprite Scanner  (Step 8: simple sprites, no zoom, no block, no jump)
+// TC0630FDP — Sprite Scanner  (Step 9: +zoom pass-through)
 // =============================================================================
 // Runs during VBLANK.  Walks sprite entries 0..SPR_COUNT-1, decodes each
 // 8-word entry, and appends it to the per-scanline active-sprite lists.
 //
 // Sprite RAM format (section1 §8.1):
 //   Word 0: tile_lo[15:0]
+//   Word 1: y_zoom[15:8], x_zoom[7:0]  ← Step 9: latched and passed through
 //   Word 2: scroll_mode[15:14], sx[11:0] (signed)
 //   Word 3: is_cmd[15],         sy[11:0] (signed)
 //   Word 4: block_ctrl[15:12], lock[11], flipY[10], flipX[9], color[7:0]
 //   Word 5: tile_hi[0]
 //
-// 64-bit sprite list descriptor (shared with sprite_render):
-//   [63:47] tile_code[16:0]
-//   [46:35] sx[11:0]
-//   [34:23] sy[11:0]
-//   [22:17] palette[5:0]
-//   [16:15] priority[1:0]
-//   [14]    flipY
-//   [13]    flipX
-//   [12:5]  y_zoom[7:0]    (Step 8: 0x00)
-//   [4:0]   x_zoom[4:0]    (Step 8: 0x00)
+// 72-bit sprite list descriptor (shared with sprite_render):
+//   [71:55] tile_code[16:0]
+//   [54:43] sx[11:0]
+//   [42:31] sy[11:0]
+//   [30:25] palette[5:0]
+//   [24:23] priority[1:0]
+//   [22]    flipY
+//   [21]    flipX
+//   [20:13] y_zoom[7:0]
+//   [12:5]  x_zoom[7:0]   ← Step 9: was 5-bit (unused zeros), now full 8 bits
+//   [4:0]   (unused, zero)
 // =============================================================================
 
 module tc0630fdp_sprite_scan (
@@ -38,7 +40,7 @@ module tc0630fdp_sprite_scan (
     // ── Per-scanline sprite list write port ──────────────────────────────
     output logic        slist_wr,
     output logic [13:0] slist_addr,    // {screen_scan[7:0], slot[5:0]}
-    output logic [63:0] slist_data,
+    output logic [71:0] slist_data,
 
     // ── Sprite count BRAM write port ─────────────────────────────────────
     output logic        scount_wr,
@@ -53,7 +55,7 @@ module tc0630fdp_sprite_scan (
 // ---------------------------------------------------------------------------
 localparam int V_START   = 24;
 localparam int V_END     = 256;
-localparam int SPR_COUNT = 256;    // Step 8: first 256 entries only
+localparam int SPR_COUNT = 256;    // Step 9: first 256 entries only
 localparam int MAX_SLOT  = 63;
 localparam int NSCANS    = V_END - V_START;  // 232
 
@@ -64,12 +66,13 @@ typedef enum logic [3:0] {
     S_IDLE   = 4'd0,
     S_CLEAR  = 4'd1,
     S_LAT_W0 = 4'd2,
-    S_LAT_W2 = 4'd3,
-    S_LAT_W3 = 4'd4,
-    S_LAT_W4 = 4'd5,
-    S_LAT_W5 = 4'd6,
-    S_EMIT   = 4'd7,
-    S_NEXT   = 4'd8
+    S_LAT_W1 = 4'd3,   // Step 9: latch word 1 (zoom bytes)
+    S_LAT_W2 = 4'd4,
+    S_LAT_W3 = 4'd5,
+    S_LAT_W4 = 4'd6,
+    S_LAT_W5 = 4'd7,
+    S_EMIT   = 4'd8,
+    S_NEXT   = 4'd9
 } state_t;
 
 state_t state;
@@ -80,7 +83,7 @@ state_t state;
 logic  [7:0] clear_cnt;
 logic  [7:0] spr_idx;
 
-logic [15:0] w0_r, w2_r, w3_r, w4_r, w5_r;
+logic [15:0] w0_r, w1_r, w2_r, w3_r, w4_r, w5_r;
 
 // Emit loop
 logic  [8:0] emit_v;        // current scanline (absolute, V_START..V_END)
@@ -98,6 +101,7 @@ logic [11:0] sx_d, sy_d;
 logic        flipy_d, flipx_d;
 logic [ 5:0] palette_d;
 logic [ 1:0] prio_d;
+logic [ 7:0] y_zoom_d, x_zoom_d;
 
 always_comb begin
     tile_code_d = {w5_r[0], w0_r};
@@ -107,13 +111,24 @@ always_comb begin
     flipx_d     = w4_r[9];
     palette_d   = w4_r[5:0];
     prio_d      = w4_r[7:6];
+    y_zoom_d    = w1_r[15:8];   // Step 9: y_zoom from word 1 [15:8]
+    x_zoom_d    = w1_r[7:0];    // Step 9: x_zoom from word 1 [7:0]
+    // 72-bit descriptor:
+    // [71:55]=tile_code, [54:43]=sx, [42:31]=sy,
+    // [30:25]=palette, [24:23]=prio, [22]=flipY, [21]=flipX,
+    // [20:13]=y_zoom, [12:5]=x_zoom, [4:0]=0
     slist_data  = {tile_code_d, sx_d, sy_d,
                    palette_d, prio_d, flipy_d, flipx_d,
-                   8'h00, 5'h00};
+                   y_zoom_d, x_zoom_d, 5'h00};
 end
 
 // ---------------------------------------------------------------------------
-// sy range clamping (combinational, based on w3_r)
+// Zoom-aware sy range clamping
+// When y_zoom != 0x00 the rendered height = (16 * (0x100 - y_zoom)) >> 8.
+// For the scanner, we use the un-zoomed height (16 rows) for the scanline
+// range — the renderer will skip rows outside the zoomed tile.
+// This is conservative (may add sprite to scanlines where it renders nothing)
+// but is correct: a sprite's visible rows are always a subset of [sy, sy+15].
 // ---------------------------------------------------------------------------
 logic signed [12:0] sy_s;
 logic signed [12:0] sy_end_s;
@@ -165,7 +180,7 @@ always_ff @(posedge clk) begin
         scount_wr      <= 1'b0;
         scount_wr_addr <= 8'd0;
         scount_wr_data <= 7'd0;
-        w0_r <= 16'd0; w2_r <= 16'd0; w3_r <= 16'd0;
+        w0_r <= 16'd0; w1_r <= 16'd0; w2_r <= 16'd0; w3_r <= 16'd0;
         w4_r <= 16'd0; w5_r <= 16'd0;
         emit_v         <= 9'd0;
         emit_v_end     <= 9'd0;
@@ -197,7 +212,7 @@ always_ff @(posedge clk) begin
                     scount_wr      <= 1'b1;
                     scount_wr_addr <= 8'(NSCANS - 1);
                     scount_wr_data <= 7'd0;
-                    // Start walk
+                    // Start walk — issue address for word 0 of sprite 0
                     spr_idx        <= 8'd0;
                     spr_rd_addr    <= 15'd0;  // sprite 0, word 0
                     state          <= S_LAT_W0;
@@ -212,7 +227,13 @@ always_ff @(posedge clk) begin
             // ─ Latch sprite words (1-cycle BRAM latency) ─────────────────
             S_LAT_W0: begin
                 w0_r        <= spr_rd_data;
-                spr_rd_addr <= 15'({spr_idx, 3'd2});
+                spr_rd_addr <= 15'({spr_idx, 3'd1});  // issue word 1 address
+                state       <= S_LAT_W1;
+            end
+
+            S_LAT_W1: begin
+                w1_r        <= spr_rd_data;            // latch word 1 (zoom)
+                spr_rd_addr <= 15'({spr_idx, 3'd2});  // issue word 2 address
                 state       <= S_LAT_W2;
             end
 

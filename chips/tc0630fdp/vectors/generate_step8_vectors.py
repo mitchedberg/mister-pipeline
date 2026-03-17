@@ -81,35 +81,41 @@ def write_spr_word(word_offset: int, data: int, note: str = "") -> None:
 
 def write_sprite_entry(idx: int, tile_code: int, sx: int, sy: int,
                        color: int, flipx: bool = False, flipy: bool = False,
+                       x_zoom: int = 0x00, y_zoom: int = 0x00,
                        note: str = "") -> None:
-    """Write a complete 8-word sprite entry to Sprite RAM (words 0,2,3,4,5).
+    """Write a complete 8-word sprite entry to Sprite RAM (words 0,1,2,3,4,5).
 
-    idx       : sprite entry index (0..255 for Step 8)
+    idx       : sprite entry index (0..255 for Step 8/9)
     tile_code : 17-bit tile code
     sx        : screen X signed (12-bit)
     sy        : screen Y signed (12-bit)
     color     : 8-bit: [7:6]=priority_group, [5:0]=palette
     flipx     : horizontal flip
     flipy     : vertical flip
+    x_zoom    : 8-bit X zoom (0x00=full, 0x80=half; Step 9)
+    y_zoom    : 8-bit Y zoom (0x00=full, 0x80=half; Step 9)
     """
     base = idx * 8
     tile_lo = tile_code & 0xFFFF
     tile_hi = (tile_code >> 16) & 0x1
     sx_12   = sx & 0xFFF
     sy_12   = sy & 0xFFF
+    w1      = ((y_zoom & 0xFF) << 8) | (x_zoom & 0xFF)
     w4      = color & 0xFF
     if flipx: w4 |= (1 << 9)
     if flipy: w4 |= (1 << 10)
 
     tag = note or f"spr[{idx}]"
     write_spr_word(base + 0, tile_lo,  f"{tag} word0=tile_lo")
+    write_spr_word(base + 1, w1,       f"{tag} word1=zoom y={y_zoom:#04x} x={x_zoom:#04x}")
     write_spr_word(base + 2, sx_12,    f"{tag} word2=sx")
     write_spr_word(base + 3, sy_12,    f"{tag} word3=sy")
     write_spr_word(base + 4, w4,       f"{tag} word4=ctrl")
     write_spr_word(base + 5, tile_hi,  f"{tag} word5=tile_hi")
 
     # Mirror to model
-    m.write_sprite_entry(idx, tile_code, sx, sy, color, flipx, flipy)
+    m.write_sprite_entry(idx, tile_code, sx, sy, color, flipx, flipy,
+                         x_zoom=x_zoom, y_zoom=y_zoom)
 
 
 def write_gfx_word(word_addr: int, data: int, note: str = "") -> None:

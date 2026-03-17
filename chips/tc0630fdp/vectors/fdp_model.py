@@ -1,5 +1,5 @@
 """
-TC0630FDP behavioral model — Python reference implementation (Steps 1–7).
+TC0630FDP behavioral model — Python reference implementation (Steps 1–9).
 
 Step 1 scope:
   - Display control register bank (16 × 16-bit registers)
@@ -27,6 +27,7 @@ Step 8 scope (added):
 
   Sprite RAM entry format (section1 §8.1, 8 words per entry):
     Word 0: tile_lo[15:0]
+    Word 1: y_zoom[15:8], x_zoom[7:0]  ← Step 9: zoom bytes
     Word 2: scroll_mode[15:14], sx[11:0] (signed)
     Word 3: is_cmd[15],         sy[11:0] (signed)
     Word 4: block_ctrl[15:12], lock[11], flipY[10], flipX[9], color[7:0]
@@ -34,6 +35,18 @@ Step 8 scope (added):
   tile_code = {tile_hi, tile_lo}  (17-bit total)
   priority  = color[7:6]         (top 2 bits of color byte)
   palette   = color[5:0]         (lower 6 bits)
+
+Step 9 scope (added):
+  - Zoom accumulator in render_sprite_scanline():
+      scale_x = 0x100 - x_zoom  (0x100 = full size, 0x80 = half, 0xFF → 1 pixel wide)
+      scale_y = 0x100 - y_zoom
+      rendered_width  = (16 * scale_x) >> 8
+      rendered_height = (16 * scale_y) >> 8
+      For output column dst_x (0..rendered_width-1):
+        src_x = (dst_x * scale_x) >> 8  (integer source pixel 0..15)
+      For output row dst_row:
+        src_row = (dst_row * scale_y) >> 8  (with flipY applied after)
+  - Zoom fields passed from scan_sprites() in sprite descriptors.
 
 Step 7 scope (added):
   - _line_colscroll(plane, scan): returns 9-bit column scroll offset (§9.2 bits[8:0])
@@ -279,25 +292,31 @@ class TaitoF3Model:
         return self.spr_ram[word_addr & 0x7FFF]
 
     def write_sprite_entry(self, idx: int, tile_code: int, sx: int, sy: int,
-                           color: int, flipx: bool = False, flipy: bool = False) -> None:
+                           color: int, flipx: bool = False, flipy: bool = False,
+                           x_zoom: int = 0x00, y_zoom: int = 0x00) -> None:
         """Write a complete sprite entry to Sprite RAM.
 
-        idx       : sprite entry index (0–255 for Step 8)
+        idx       : sprite entry index (0–255 for Step 9)
         tile_code : 17-bit tile code
         sx        : screen X (signed 12-bit, left edge of tile)
         sy        : screen Y (signed 12-bit, top edge of tile)
         color     : 8-bit color byte: [7:6]=priority_group, [5:0]=palette
         flipx     : horizontal flip
         flipy     : vertical flip
+        x_zoom    : 8-bit X zoom (0x00=full, 0x80=half, 0xFF≈zero-size; Step 9)
+        y_zoom    : 8-bit Y zoom (0x00=full, 0x80=half; Step 9)
         """
         idx &= 0xFF
         base = idx * 8
         tile_lo = tile_code & 0xFFFF
         tile_hi = (tile_code >> 16) & 0x1
 
-        # sy is signed 12-bit; mask to 12 bits
+        # sy/sx are signed 12-bit; mask to 12 bits
         sx_12 = sx & 0xFFF
         sy_12 = sy & 0xFFF
+
+        # word 1: [15:8]=y_zoom, [7:0]=x_zoom  (Step 9)
+        w1 = ((y_zoom & 0xFF) << 8) | (x_zoom & 0xFF)
 
         # word 4: [10]=flipY, [9]=flipX, [7:0]=color
         w4 = (color & 0xFF)
@@ -305,6 +324,7 @@ class TaitoF3Model:
         if flipy: w4 |= (1 << 10)
 
         self.spr_ram[base + 0] = tile_lo
+        self.spr_ram[base + 1] = w1       # Step 9: zoom word
         self.spr_ram[base + 2] = sx_12
         self.spr_ram[base + 3] = sy_12
         self.spr_ram[base + 4] = w4
@@ -315,20 +335,27 @@ class TaitoF3Model:
 
         Returns: list of 232 lists (one per screen scanline V_START..V_END-1),
                  each list containing up to 64 sprite descriptors (dict).
-        Sprite descriptor fields: tile_code, sx, sy, palette, prio, flipx, flipy.
+        Sprite descriptor fields: tile_code, sx, sy, palette, prio, flipx, flipy,
+                                   x_zoom, y_zoom.
         Matches RTL scanner logic: V_START=24, V_END=256, MAX_SLOT=63, SPR_COUNT=256.
+
+        Step 9: zoom fields extracted from word 1. Scanner uses unzoomed height (16)
+        for scanline range — renderer handles early termination via zoom.
         """
         slist = [[] for _ in range(V_END - V_START)]  # 232 entries
 
         for idx in range(self.SPR_COUNT):
             base = idx * 8
             w0 = self.spr_ram[base + 0]
+            w1 = self.spr_ram[base + 1]   # Step 9: zoom word
             w2 = self.spr_ram[base + 2]
             w3 = self.spr_ram[base + 3]
             w4 = self.spr_ram[base + 4]
             w5 = self.spr_ram[base + 5]
 
             tile_lo   = w0
+            y_zoom    = (w1 >> 8) & 0xFF   # Step 9
+            x_zoom    = w1 & 0xFF           # Step 9
             sx_raw    = w2 & 0xFFF
             sy_raw    = w3 & 0xFFF
             flipy     = bool(w4 & (1 << 10))
@@ -343,7 +370,8 @@ class TaitoF3Model:
             sx = sx_raw if sx_raw < 0x800 else sx_raw - 0x1000
             sy = sy_raw if sy_raw < 0x800 else sy_raw - 0x1000
 
-            # Compute active scanline range: sy to sy+15 (16×16 tile)
+            # Scanner uses unzoomed range [sy, sy+15] (conservative, matches RTL).
+            # The renderer will compute actual zoomed height and skip invalid rows.
             sy_top = max(V_START, sy)
             sy_bot = min(V_END - 1, sy + 15)
 
@@ -362,6 +390,8 @@ class TaitoF3Model:
                     'prio':      prio,
                     'flipx':     flipx,
                     'flipy':     flipy,
+                    'x_zoom':    x_zoom,   # Step 9
+                    'y_zoom':    y_zoom,   # Step 9
                 })
 
         return slist
@@ -377,13 +407,17 @@ class TaitoF3Model:
           slist : pre-built scanline sprite list (from scan_sprites()); if None,
                   will call scan_sprites() internally.
 
-        Rendering:
+        Rendering (Step 9: zoom-aware):
           - Iterates sprites in slot order (0 first, last slot overwrites = on top).
-          - For each sprite: compute tile row from (vpos+1) - sy.
-          - Decode 16 pixels from GFX ROM (left 8 + right 8).
-          - Write non-transparent (pen != 0) pixels to linebuf at sx + px.
-          - flipX: reverse nibble order within each 8-pixel half.
-          - flipY: use row (15 - tile_row) from GFX ROM.
+          - scale_x = 0x100 - x_zoom  (9-bit; 0x100 = full size)
+          - scale_y = 0x100 - y_zoom
+          - rendered_width  = (16 * scale_x) >> 8
+          - rendered_height = (16 * scale_y) >> 8
+          - dst_row = render_scan - sy  (0..15 raw, must be < rendered_height)
+          - src_row = (dst_row * scale_y) >> 8  (tile row 0..15; then flipY)
+          - For output column dst_x (0..rendered_width-1):
+              src_x = (dst_x * scale_x) >> 8  (pixel 0..15; then flipX applied to nibble)
+          - Pen = 0 → transparent (skip).
         """
         render_scan = vpos + 1   # RTL renders scanline vpos+1
 
@@ -406,29 +440,42 @@ class TaitoF3Model:
             prio      = spr['prio']
             flipx     = spr['flipx']
             flipy     = spr['flipy']
+            x_zoom    = spr.get('x_zoom', 0x00)   # Step 9 (default 0=full for Step 8 compat)
+            y_zoom    = spr.get('y_zoom', 0x00)
 
-            # Tile row: lower 4 bits of (render_scan - sy)
-            tile_row = (render_scan - sy) & 0xF
-            fetch_row = (15 - tile_row) if flipy else tile_row
+            # Step 9 zoom: compute scale factors and rendered dimensions
+            scale_x = 0x100 - x_zoom    # 9-bit
+            scale_y = 0x100 - y_zoom
+            rendered_w = (16 * scale_x) >> 8   # 0..16
+            rendered_h = (16 * scale_y) >> 8   # 0..16
+
+            # dst_row = render_scan - sy  (must be < rendered_h)
+            dst_row = render_scan - sy
+            if dst_row < 0 or dst_row >= rendered_h:
+                continue  # this scanline is outside the zoomed sprite height
+
+            # src_row from zoom accumulator
+            src_row = (dst_row * scale_y) >> 8
+            fetch_row = (15 - src_row) if flipy else src_row
 
             left_addr  = tile_code * 32 + fetch_row * 2
             right_addr = left_addr + 1
             left_word  = self.gfx_rom[left_addr]  if left_addr  < self.GFX_ROM_WORDS else 0
             right_word = self.gfx_rom[right_addr] if right_addr < self.GFX_ROM_WORDS else 0
 
-            for px in range(16):
-                scol = sx + px
+            for dst_x in range(rendered_w):
+                scol = sx + dst_x
                 if scol < 0 or scol >= 320:
                     continue
 
-                # Select half word and nibble index
-                if px < 8:
-                    ni = (7 - px) if flipx else px
-                    sh = 28 - ni * 4
+                # src_x from zoom accumulator
+                src_x = (dst_x * scale_x) >> 8   # integer pixel index 0..15
+                half_px = src_x & 7
+                ni = (7 - half_px) if flipx else half_px
+                sh = 28 - ni * 4
+                if src_x < 8:
                     pen = (left_word >> sh) & 0xF
                 else:
-                    ni = (7 - (px & 7)) if flipx else (px & 7)
-                    sh = 28 - ni * 4
                     pen = (right_word >> sh) & 0xF
 
                 if pen == 0:
