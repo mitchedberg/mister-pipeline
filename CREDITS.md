@@ -11,7 +11,7 @@ This FPGA arcade core pipeline stands on the shoulders of decades of arcade pres
 MAME is the gold standard of arcade emulation. Every RTL core in this pipeline starts with MAME source analysis to understand chip behavior, timing, and state machine logic. We read MAME's C implementation, extract the algorithmic essence, and write original RTL that matches its observable behavior.
 
 **What we use:** Emulation logic, register behavior, timing specifications, state machine design patterns.
-**What we don't do:** Copy code. MAME is GPL; our RTL is original and MIT-licensed, derived only from behavioral analysis.
+**What we don't do:** Copy code. MAME is GPL; our RTL is original and GPL-2.0-licensed, derived only from behavioral analysis.
 
 ---
 
@@ -107,7 +107,7 @@ Real silicon analysis has shaped our understanding of chip timing and state mach
 
 ## Authorship & License
 
-**Original RTL:** All `.sv` and `.vhd` files in `chips/` are original implementations licensed under the **MIT License** (see LICENSE file).
+**Original RTL:** All `.sv` and `.vhd` files in `chips/` are original implementations licensed under the **GPL-2.0** (see LICENSE file).
 
 **Process:** Each chip is:
 1. Researched via MAME source + datasheets
@@ -124,7 +124,7 @@ Real silicon analysis has shaped our understanding of chip timing and state mach
 We welcome improvements, bug fixes, and new chip implementations. See `CONTRIBUTING.md` for the contribution process.
 
 When you contribute:
-- Respect existing licenses (GPL-2.0 for system code, MIT for new RTL)
+- Respect existing licenses (GPL-2.0 for all code)
 - Credit the sources you read (MAME, decaps, datasheets)
 - Write original RTL; don't copy from other projects
 - Verify against MAME test vectors before submitting

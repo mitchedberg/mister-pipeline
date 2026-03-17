@@ -1,79 +1,32 @@
-MIT License
+GNU GENERAL PUBLIC LICENSE
+Version 2, June 1991
 
-Copyright (c) 2024-2026 MiSTer Pipeline Contributors
+Copyright (C) 2026 MiSTer Pipeline Contributors
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-================================================================================
-DEPENDENCY LICENSES
-================================================================================
+SPDX-License-Identifier: GPL-2.0-only
 
-This project incorporates and builds upon the following open-source projects,
-which are licensed under their respective terms:
+---
 
-1. MAME (Multi Arcade Machine Emulator)
-   - License: GPL-2.0
-   - Used as behavioral reference for chip implementations
-   - https://github.com/mamedev/mame
+The full license text is available at: https://www.gnu.org/licenses/gpl-2.0.html
 
-2. fx68k (68000 soft core)
-   - Author: Jorge Cwik (ijor)
-   - License: MIT
-   - https://github.com/ijor/fx68k
-
-3. T80 (Z80 soft core)
-   - License: LGPL
-   - Used in audio CPU implementations
-
-4. TG68K (68020 soft core)
-   - Author: Tobias Gubener
-   - License: LGPL/CC0
-   - https://github.com/TobiFlex/TG68K.C
-
-5. MiSTer sys/ framework
-   - License: GPL-2.0
-   - Authors: MiSTer-devel team
-   - Components: HPS interface, video scaler, SDRAM controller framework
-   - https://github.com/MiSTer-devel/Template_MiSTer
-
-6. TaitoF2_MiSTer
-   - Author: wickerwaka
-   - License: GPL-2.0
-   - Support chips: TC0260DAR, TC0140SYT, TC0220IOC
-   - https://github.com/wickerwaka/TaitoF2_MiSTer
-
-================================================================================
-SPECIAL NOTES ON ORIGINAL RTL
-================================================================================
-
-The RTL in chips/ contains original implementations of arcade hardware based on:
-- MAME source code analysis (behavioral reference only)
-- Hardware decap analysis and datasheets where available
-- Community-contributed disassemblies and hardware research
-
-We do NOT copy MAME or other projects' code. Each RTL module is written from
-scratch to match documented hardware behavior and datasheet specifications.
-
-================================================================================
-CONTRIBUTING
-================================================================================
-
-All contributions to this project must be compatible with the MIT license
-and GPL-2.0 where dependencies are used. See CONTRIBUTING.md for details.
-
+Dependencies and their licenses:
+- MiSTer sys/ framework (MiSTer-devel): GPL-2.0
+- fx68k (ijor/Jorge Cwik): MIT
+- TG68K (Tobias Gubener): LGPL-2.1
+- T80 (Daniel Wallner): LGPL-2.1
+- TaitoF2_MiSTer support chips (wickerwaka): GPL-2.0
+- MAME (mamedev): GPL-2.0 (used as behavioral reference only; no code copied)
