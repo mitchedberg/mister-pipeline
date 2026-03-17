@@ -1,0 +1,309 @@
+{"op": "write", "addr": 0, "data": 1193046, "be": 15, "note": "write index 0x0000 R=0x12 G=0x34 B=0x56"}
+{"op": "readback", "addr": 0, "exp_data": 1193046, "note": "readback index 0x0000"}
+{"op": "write", "addr": 2047, "data": 14593470, "be": 15, "note": "write index 0x07FF R=0xde G=0xad B=0xbe"}
+{"op": "readback", "addr": 2047, "exp_data": 14593470, "note": "readback index 0x07FF"}
+{"op": "write", "addr": 8191, "data": 13303296, "be": 15, "note": "write index 0x1FFF (max) R=0xca G=0xfe B=0x00"}
+{"op": "readback", "addr": 8191, "exp_data": 13303296, "note": "readback index 0x1FFF (max)"}
+{"op": "lookup", "addr": 0, "mode_12bit": 0, "exp_r": 18, "exp_g": 52, "exp_b": 86, "note": "lookup index 0x0000 standard mode"}
+{"op": "lookup", "addr": 2047, "mode_12bit": 0, "exp_r": 222, "exp_g": 173, "exp_b": 190, "note": "lookup index 0x07FF standard mode"}
+{"op": "lookup", "addr": 8191, "mode_12bit": 0, "exp_r": 202, "exp_g": 254, "exp_b": 0, "note": "lookup index 0x1FFF standard mode"}
+{"op": "write", "addr": 4096, "data": 1122867, "be": 15, "note": "12bit-test: write 0x112233 at index 0x1000"}
+{"op": "lookup", "addr": 4096, "mode_12bit": 0, "exp_r": 17, "exp_g": 34, "exp_b": 51, "note": "12bit-test: lookup 0x1000 standard \u2192 0x112233"}
+{"op": "write", "addr": 0, "data": 42432, "be": 15, "note": "12bit-test: write 0x0000A5C0 at index 0x0000"}
+{"op": "lookup", "addr": 0, "mode_12bit": 1, "exp_r": 170, "exp_g": 85, "exp_b": 204, "note": "12bit-test: lookup 0x0000 mode_12bit=1 \u2192 R=0xAA G=0x55 B=0xCC"}
+{"op": "lookup", "addr": 4096, "mode_12bit": 1, "exp_r": 170, "exp_g": 85, "exp_b": 204, "note": "12bit-test: lookup 0x1000 mode_12bit=1 \u2192 aliases to 0x0000"}
+{"op": "write", "addr": 16, "data": 2864434397, "be": 15, "note": "be-test: full write 0xAABBCCDD at index 0x0010"}
+{"op": "readback", "addr": 16, "exp_data": 2864434397, "note": "be-test: readback full write"}
+{"op": "write", "addr": 16, "data": 4279304192, "be": 12, "note": "be-test: partial write be=0xC (R byte only effective)"}
+{"op": "readback", "addr": 16, "exp_data": 4279356637, "note": "be-test: readback after partial write be=0xC"}
+{"op": "lookup", "addr": 16, "mode_12bit": 0, "exp_r": 17, "exp_g": 204, "exp_b": 221, "note": "be-test: lookup after be=0xC write \u2192 G=0xCC B=0xDD unchanged"}
+{"op": "write", "addr": 16, "data": 30464, "be": 2, "note": "be-test: partial write be=0x2 (G byte only)"}
+{"op": "readback", "addr": 16, "exp_data": 4279334877, "note": "be-test: readback after partial write be=0x2"}
+{"op": "lookup", "addr": 16, "mode_12bit": 0, "exp_r": 17, "exp_g": 119, "exp_b": 221, "note": "be-test: lookup after be=0x2 write \u2192 G=0x77, R and B unchanged"}
+{"op": "write", "addr": 16, "data": 136, "be": 1, "note": "be-test: partial write be=0x1 (B byte only)"}
+{"op": "readback", "addr": 16, "exp_data": 4279334792, "note": "be-test: readback after partial write be=0x1"}
+{"op": "lookup", "addr": 16, "mode_12bit": 0, "exp_r": 17, "exp_g": 119, "exp_b": 136, "note": "be-test: lookup after be=0x1 write \u2192 B=0x88, R and G unchanged"}
+{"op": "write", "addr": 0, "data": 259, "be": 15, "note": "sweep write idx=0x0000"}
+{"op": "write", "addr": 128, "data": 263690, "be": 15, "note": "sweep write idx=0x0080"}
+{"op": "write", "addr": 256, "data": 527121, "be": 15, "note": "sweep write idx=0x0100"}
+{"op": "write", "addr": 384, "data": 790552, "be": 15, "note": "sweep write idx=0x0180"}
+{"op": "write", "addr": 512, "data": 1053983, "be": 15, "note": "sweep write idx=0x0200"}
+{"op": "write", "addr": 640, "data": 1317414, "be": 15, "note": "sweep write idx=0x0280"}
+{"op": "write", "addr": 768, "data": 1580845, "be": 15, "note": "sweep write idx=0x0300"}
+{"op": "write", "addr": 896, "data": 1844276, "be": 15, "note": "sweep write idx=0x0380"}
+{"op": "write", "addr": 1024, "data": 2107707, "be": 15, "note": "sweep write idx=0x0400"}
+{"op": "write", "addr": 1152, "data": 2371138, "be": 15, "note": "sweep write idx=0x0480"}
+{"op": "write", "addr": 1280, "data": 2634569, "be": 15, "note": "sweep write idx=0x0500"}
+{"op": "write", "addr": 1408, "data": 2898000, "be": 15, "note": "sweep write idx=0x0580"}
+{"op": "write", "addr": 1536, "data": 3161431, "be": 15, "note": "sweep write idx=0x0600"}
+{"op": "write", "addr": 1664, "data": 3424862, "be": 15, "note": "sweep write idx=0x0680"}
+{"op": "write", "addr": 1792, "data": 3688293, "be": 15, "note": "sweep write idx=0x0700"}
+{"op": "write", "addr": 1920, "data": 3951724, "be": 15, "note": "sweep write idx=0x0780"}
+{"op": "write", "addr": 2048, "data": 4215155, "be": 15, "note": "sweep write idx=0x0800"}
+{"op": "write", "addr": 2176, "data": 4478586, "be": 15, "note": "sweep write idx=0x0880"}
+{"op": "write", "addr": 2304, "data": 4742017, "be": 15, "note": "sweep write idx=0x0900"}
+{"op": "write", "addr": 2432, "data": 5005448, "be": 15, "note": "sweep write idx=0x0980"}
+{"op": "write", "addr": 2560, "data": 5268879, "be": 15, "note": "sweep write idx=0x0a00"}
+{"op": "write", "addr": 2688, "data": 5532310, "be": 15, "note": "sweep write idx=0x0a80"}
+{"op": "write", "addr": 2816, "data": 5795741, "be": 15, "note": "sweep write idx=0x0b00"}
+{"op": "write", "addr": 2944, "data": 6059172, "be": 15, "note": "sweep write idx=0x0b80"}
+{"op": "write", "addr": 3072, "data": 6322603, "be": 15, "note": "sweep write idx=0x0c00"}
+{"op": "write", "addr": 3200, "data": 6586034, "be": 15, "note": "sweep write idx=0x0c80"}
+{"op": "write", "addr": 3328, "data": 6849465, "be": 15, "note": "sweep write idx=0x0d00"}
+{"op": "write", "addr": 3456, "data": 7112896, "be": 15, "note": "sweep write idx=0x0d80"}
+{"op": "write", "addr": 3584, "data": 7376327, "be": 15, "note": "sweep write idx=0x0e00"}
+{"op": "write", "addr": 3712, "data": 7639758, "be": 15, "note": "sweep write idx=0x0e80"}
+{"op": "write", "addr": 3840, "data": 7903189, "be": 15, "note": "sweep write idx=0x0f00"}
+{"op": "write", "addr": 3968, "data": 8166620, "be": 15, "note": "sweep write idx=0x0f80"}
+{"op": "write", "addr": 4096, "data": 8430051, "be": 15, "note": "sweep write idx=0x1000"}
+{"op": "write", "addr": 4224, "data": 8693482, "be": 15, "note": "sweep write idx=0x1080"}
+{"op": "write", "addr": 4352, "data": 8956913, "be": 15, "note": "sweep write idx=0x1100"}
+{"op": "write", "addr": 4480, "data": 9220344, "be": 15, "note": "sweep write idx=0x1180"}
+{"op": "write", "addr": 4608, "data": 9483775, "be": 15, "note": "sweep write idx=0x1200"}
+{"op": "write", "addr": 4736, "data": 9746950, "be": 15, "note": "sweep write idx=0x1280"}
+{"op": "write", "addr": 4864, "data": 10010381, "be": 15, "note": "sweep write idx=0x1300"}
+{"op": "write", "addr": 4992, "data": 10273812, "be": 15, "note": "sweep write idx=0x1380"}
+{"op": "write", "addr": 5120, "data": 10537243, "be": 15, "note": "sweep write idx=0x1400"}
+{"op": "write", "addr": 5248, "data": 10800674, "be": 15, "note": "sweep write idx=0x1480"}
+{"op": "write", "addr": 5376, "data": 11064105, "be": 15, "note": "sweep write idx=0x1500"}
+{"op": "write", "addr": 5504, "data": 11327536, "be": 15, "note": "sweep write idx=0x1580"}
+{"op": "write", "addr": 5632, "data": 11590967, "be": 15, "note": "sweep write idx=0x1600"}
+{"op": "write", "addr": 5760, "data": 11854398, "be": 15, "note": "sweep write idx=0x1680"}
+{"op": "write", "addr": 5888, "data": 12117829, "be": 15, "note": "sweep write idx=0x1700"}
+{"op": "write", "addr": 6016, "data": 12381260, "be": 15, "note": "sweep write idx=0x1780"}
+{"op": "write", "addr": 6144, "data": 12644691, "be": 15, "note": "sweep write idx=0x1800"}
+{"op": "write", "addr": 6272, "data": 12908122, "be": 15, "note": "sweep write idx=0x1880"}
+{"op": "write", "addr": 6400, "data": 13171553, "be": 15, "note": "sweep write idx=0x1900"}
+{"op": "write", "addr": 6528, "data": 13369448, "be": 15, "note": "sweep write idx=0x1980"}
+{"op": "write", "addr": 6656, "data": 13632879, "be": 15, "note": "sweep write idx=0x1a00"}
+{"op": "write", "addr": 6784, "data": 13896310, "be": 15, "note": "sweep write idx=0x1a80"}
+{"op": "write", "addr": 6912, "data": 14159741, "be": 15, "note": "sweep write idx=0x1b00"}
+{"op": "write", "addr": 7040, "data": 14423172, "be": 15, "note": "sweep write idx=0x1b80"}
+{"op": "write", "addr": 7168, "data": 14686603, "be": 15, "note": "sweep write idx=0x1c00"}
+{"op": "write", "addr": 7296, "data": 14950034, "be": 15, "note": "sweep write idx=0x1c80"}
+{"op": "write", "addr": 7424, "data": 15213465, "be": 15, "note": "sweep write idx=0x1d00"}
+{"op": "write", "addr": 7552, "data": 15476896, "be": 15, "note": "sweep write idx=0x1d80"}
+{"op": "write", "addr": 7680, "data": 15740327, "be": 15, "note": "sweep write idx=0x1e00"}
+{"op": "write", "addr": 7808, "data": 16003758, "be": 15, "note": "sweep write idx=0x1e80"}
+{"op": "write", "addr": 7936, "data": 16267189, "be": 15, "note": "sweep write idx=0x1f00"}
+{"op": "write", "addr": 8064, "data": 16530620, "be": 15, "note": "sweep write idx=0x1f80"}
+{"op": "lookup", "addr": 0, "mode_12bit": 0, "exp_r": 0, "exp_g": 1, "exp_b": 3, "note": "sweep lookup idx=0x0000"}
+{"op": "lookup", "addr": 128, "mode_12bit": 0, "exp_r": 4, "exp_g": 6, "exp_b": 10, "note": "sweep lookup idx=0x0080"}
+{"op": "lookup", "addr": 256, "mode_12bit": 0, "exp_r": 8, "exp_g": 11, "exp_b": 17, "note": "sweep lookup idx=0x0100"}
+{"op": "lookup", "addr": 384, "mode_12bit": 0, "exp_r": 12, "exp_g": 16, "exp_b": 24, "note": "sweep lookup idx=0x0180"}
+{"op": "lookup", "addr": 512, "mode_12bit": 0, "exp_r": 16, "exp_g": 21, "exp_b": 31, "note": "sweep lookup idx=0x0200"}
+{"op": "lookup", "addr": 640, "mode_12bit": 0, "exp_r": 20, "exp_g": 26, "exp_b": 38, "note": "sweep lookup idx=0x0280"}
+{"op": "lookup", "addr": 768, "mode_12bit": 0, "exp_r": 24, "exp_g": 31, "exp_b": 45, "note": "sweep lookup idx=0x0300"}
+{"op": "lookup", "addr": 896, "mode_12bit": 0, "exp_r": 28, "exp_g": 36, "exp_b": 52, "note": "sweep lookup idx=0x0380"}
+{"op": "lookup", "addr": 1024, "mode_12bit": 0, "exp_r": 32, "exp_g": 41, "exp_b": 59, "note": "sweep lookup idx=0x0400"}
+{"op": "lookup", "addr": 1152, "mode_12bit": 0, "exp_r": 36, "exp_g": 46, "exp_b": 66, "note": "sweep lookup idx=0x0480"}
+{"op": "lookup", "addr": 1280, "mode_12bit": 0, "exp_r": 40, "exp_g": 51, "exp_b": 73, "note": "sweep lookup idx=0x0500"}
+{"op": "lookup", "addr": 1408, "mode_12bit": 0, "exp_r": 44, "exp_g": 56, "exp_b": 80, "note": "sweep lookup idx=0x0580"}
+{"op": "lookup", "addr": 1536, "mode_12bit": 0, "exp_r": 48, "exp_g": 61, "exp_b": 87, "note": "sweep lookup idx=0x0600"}
+{"op": "lookup", "addr": 1664, "mode_12bit": 0, "exp_r": 52, "exp_g": 66, "exp_b": 94, "note": "sweep lookup idx=0x0680"}
+{"op": "lookup", "addr": 1792, "mode_12bit": 0, "exp_r": 56, "exp_g": 71, "exp_b": 101, "note": "sweep lookup idx=0x0700"}
+{"op": "lookup", "addr": 1920, "mode_12bit": 0, "exp_r": 60, "exp_g": 76, "exp_b": 108, "note": "sweep lookup idx=0x0780"}
+{"op": "lookup", "addr": 2048, "mode_12bit": 0, "exp_r": 64, "exp_g": 81, "exp_b": 115, "note": "sweep lookup idx=0x0800"}
+{"op": "lookup", "addr": 2176, "mode_12bit": 0, "exp_r": 68, "exp_g": 86, "exp_b": 122, "note": "sweep lookup idx=0x0880"}
+{"op": "lookup", "addr": 2304, "mode_12bit": 0, "exp_r": 72, "exp_g": 91, "exp_b": 129, "note": "sweep lookup idx=0x0900"}
+{"op": "lookup", "addr": 2432, "mode_12bit": 0, "exp_r": 76, "exp_g": 96, "exp_b": 136, "note": "sweep lookup idx=0x0980"}
+{"op": "lookup", "addr": 2560, "mode_12bit": 0, "exp_r": 80, "exp_g": 101, "exp_b": 143, "note": "sweep lookup idx=0x0a00"}
+{"op": "lookup", "addr": 2688, "mode_12bit": 0, "exp_r": 84, "exp_g": 106, "exp_b": 150, "note": "sweep lookup idx=0x0a80"}
+{"op": "lookup", "addr": 2816, "mode_12bit": 0, "exp_r": 88, "exp_g": 111, "exp_b": 157, "note": "sweep lookup idx=0x0b00"}
+{"op": "lookup", "addr": 2944, "mode_12bit": 0, "exp_r": 92, "exp_g": 116, "exp_b": 164, "note": "sweep lookup idx=0x0b80"}
+{"op": "lookup", "addr": 3072, "mode_12bit": 0, "exp_r": 96, "exp_g": 121, "exp_b": 171, "note": "sweep lookup idx=0x0c00"}
+{"op": "lookup", "addr": 3200, "mode_12bit": 0, "exp_r": 100, "exp_g": 126, "exp_b": 178, "note": "sweep lookup idx=0x0c80"}
+{"op": "lookup", "addr": 3328, "mode_12bit": 0, "exp_r": 104, "exp_g": 131, "exp_b": 185, "note": "sweep lookup idx=0x0d00"}
+{"op": "lookup", "addr": 3456, "mode_12bit": 0, "exp_r": 108, "exp_g": 136, "exp_b": 192, "note": "sweep lookup idx=0x0d80"}
+{"op": "lookup", "addr": 3584, "mode_12bit": 0, "exp_r": 112, "exp_g": 141, "exp_b": 199, "note": "sweep lookup idx=0x0e00"}
+{"op": "lookup", "addr": 3712, "mode_12bit": 0, "exp_r": 116, "exp_g": 146, "exp_b": 206, "note": "sweep lookup idx=0x0e80"}
+{"op": "lookup", "addr": 3840, "mode_12bit": 0, "exp_r": 120, "exp_g": 151, "exp_b": 213, "note": "sweep lookup idx=0x0f00"}
+{"op": "lookup", "addr": 3968, "mode_12bit": 0, "exp_r": 124, "exp_g": 156, "exp_b": 220, "note": "sweep lookup idx=0x0f80"}
+{"op": "lookup", "addr": 4096, "mode_12bit": 0, "exp_r": 128, "exp_g": 161, "exp_b": 227, "note": "sweep lookup idx=0x1000"}
+{"op": "lookup", "addr": 4224, "mode_12bit": 0, "exp_r": 132, "exp_g": 166, "exp_b": 234, "note": "sweep lookup idx=0x1080"}
+{"op": "lookup", "addr": 4352, "mode_12bit": 0, "exp_r": 136, "exp_g": 171, "exp_b": 241, "note": "sweep lookup idx=0x1100"}
+{"op": "lookup", "addr": 4480, "mode_12bit": 0, "exp_r": 140, "exp_g": 176, "exp_b": 248, "note": "sweep lookup idx=0x1180"}
+{"op": "lookup", "addr": 4608, "mode_12bit": 0, "exp_r": 144, "exp_g": 181, "exp_b": 255, "note": "sweep lookup idx=0x1200"}
+{"op": "lookup", "addr": 4736, "mode_12bit": 0, "exp_r": 148, "exp_g": 186, "exp_b": 6, "note": "sweep lookup idx=0x1280"}
+{"op": "lookup", "addr": 4864, "mode_12bit": 0, "exp_r": 152, "exp_g": 191, "exp_b": 13, "note": "sweep lookup idx=0x1300"}
+{"op": "lookup", "addr": 4992, "mode_12bit": 0, "exp_r": 156, "exp_g": 196, "exp_b": 20, "note": "sweep lookup idx=0x1380"}
+{"op": "lookup", "addr": 5120, "mode_12bit": 0, "exp_r": 160, "exp_g": 201, "exp_b": 27, "note": "sweep lookup idx=0x1400"}
+{"op": "lookup", "addr": 5248, "mode_12bit": 0, "exp_r": 164, "exp_g": 206, "exp_b": 34, "note": "sweep lookup idx=0x1480"}
+{"op": "lookup", "addr": 5376, "mode_12bit": 0, "exp_r": 168, "exp_g": 211, "exp_b": 41, "note": "sweep lookup idx=0x1500"}
+{"op": "lookup", "addr": 5504, "mode_12bit": 0, "exp_r": 172, "exp_g": 216, "exp_b": 48, "note": "sweep lookup idx=0x1580"}
+{"op": "lookup", "addr": 5632, "mode_12bit": 0, "exp_r": 176, "exp_g": 221, "exp_b": 55, "note": "sweep lookup idx=0x1600"}
+{"op": "lookup", "addr": 5760, "mode_12bit": 0, "exp_r": 180, "exp_g": 226, "exp_b": 62, "note": "sweep lookup idx=0x1680"}
+{"op": "lookup", "addr": 5888, "mode_12bit": 0, "exp_r": 184, "exp_g": 231, "exp_b": 69, "note": "sweep lookup idx=0x1700"}
+{"op": "lookup", "addr": 6016, "mode_12bit": 0, "exp_r": 188, "exp_g": 236, "exp_b": 76, "note": "sweep lookup idx=0x1780"}
+{"op": "lookup", "addr": 6144, "mode_12bit": 0, "exp_r": 192, "exp_g": 241, "exp_b": 83, "note": "sweep lookup idx=0x1800"}
+{"op": "lookup", "addr": 6272, "mode_12bit": 0, "exp_r": 196, "exp_g": 246, "exp_b": 90, "note": "sweep lookup idx=0x1880"}
+{"op": "lookup", "addr": 6400, "mode_12bit": 0, "exp_r": 200, "exp_g": 251, "exp_b": 97, "note": "sweep lookup idx=0x1900"}
+{"op": "lookup", "addr": 6528, "mode_12bit": 0, "exp_r": 204, "exp_g": 0, "exp_b": 104, "note": "sweep lookup idx=0x1980"}
+{"op": "lookup", "addr": 6656, "mode_12bit": 0, "exp_r": 208, "exp_g": 5, "exp_b": 111, "note": "sweep lookup idx=0x1a00"}
+{"op": "lookup", "addr": 6784, "mode_12bit": 0, "exp_r": 212, "exp_g": 10, "exp_b": 118, "note": "sweep lookup idx=0x1a80"}
+{"op": "lookup", "addr": 6912, "mode_12bit": 0, "exp_r": 216, "exp_g": 15, "exp_b": 125, "note": "sweep lookup idx=0x1b00"}
+{"op": "lookup", "addr": 7040, "mode_12bit": 0, "exp_r": 220, "exp_g": 20, "exp_b": 132, "note": "sweep lookup idx=0x1b80"}
+{"op": "lookup", "addr": 7168, "mode_12bit": 0, "exp_r": 224, "exp_g": 25, "exp_b": 139, "note": "sweep lookup idx=0x1c00"}
+{"op": "lookup", "addr": 7296, "mode_12bit": 0, "exp_r": 228, "exp_g": 30, "exp_b": 146, "note": "sweep lookup idx=0x1c80"}
+{"op": "lookup", "addr": 7424, "mode_12bit": 0, "exp_r": 232, "exp_g": 35, "exp_b": 153, "note": "sweep lookup idx=0x1d00"}
+{"op": "lookup", "addr": 7552, "mode_12bit": 0, "exp_r": 236, "exp_g": 40, "exp_b": 160, "note": "sweep lookup idx=0x1d80"}
+{"op": "lookup", "addr": 7680, "mode_12bit": 0, "exp_r": 240, "exp_g": 45, "exp_b": 167, "note": "sweep lookup idx=0x1e00"}
+{"op": "lookup", "addr": 7808, "mode_12bit": 0, "exp_r": 244, "exp_g": 50, "exp_b": 174, "note": "sweep lookup idx=0x1e80"}
+{"op": "lookup", "addr": 7936, "mode_12bit": 0, "exp_r": 248, "exp_g": 55, "exp_b": 181, "note": "sweep lookup idx=0x1f00"}
+{"op": "lookup", "addr": 8064, "mode_12bit": 0, "exp_r": 252, "exp_g": 60, "exp_b": 188, "note": "sweep lookup idx=0x1f80"}
+{"op": "write", "addr": 7916, "data": 864882, "be": 7, "note": "random write addr=0x1eec be=0x7"}
+{"op": "write", "addr": 5986, "data": 15517606, "be": 6, "note": "random write addr=0x1762 be=0x6"}
+{"op": "write", "addr": 1919, "data": 7040846, "be": 15, "note": "random write addr=0x077f be=0xf"}
+{"op": "write", "addr": 6328, "data": 16515845, "be": 6, "note": "random write addr=0x18b8 be=0x6"}
+{"op": "write", "addr": 7072, "data": 3740683, "be": 3, "note": "random write addr=0x1ba0 be=0x3"}
+{"op": "write", "addr": 7867, "data": 13444714, "be": 3, "note": "random write addr=0x1ebb be=0x3"}
+{"op": "write", "addr": 140, "data": 8202755, "be": 7, "note": "random write addr=0x008c be=0x7"}
+{"op": "write", "addr": 4345, "data": 2655655, "be": 6, "note": "random write addr=0x10f9 be=0x6"}
+{"op": "write", "addr": 2407, "data": 3172562, "be": 12, "note": "random write addr=0x0967 be=0xc"}
+{"op": "write", "addr": 5121, "data": 7954212, "be": 14, "note": "random write addr=0x1401 be=0xe"}
+{"op": "write", "addr": 8041, "data": 5065258, "be": 7, "note": "random write addr=0x1f69 be=0x7"}
+{"op": "write", "addr": 6258, "data": 5433080, "be": 3, "note": "random write addr=0x1872 be=0x3"}
+{"op": "write", "addr": 1477, "data": 13241264, "be": 14, "note": "random write addr=0x05c5 be=0xe"}
+{"op": "write", "addr": 2430, "data": 2376634, "be": 15, "note": "random write addr=0x097e be=0xf"}
+{"op": "write", "addr": 8069, "data": 15316125, "be": 12, "note": "random write addr=0x1f85 be=0xc"}
+{"op": "write", "addr": 3666, "data": 10960492, "be": 12, "note": "random write addr=0x0e52 be=0xc"}
+{"op": "write", "addr": 5566, "data": 11774521, "be": 7, "note": "random write addr=0x15be be=0x7"}
+{"op": "write", "addr": 7461, "data": 13586615, "be": 15, "note": "random write addr=0x1d25 be=0xf"}
+{"op": "write", "addr": 1099, "data": 10369598, "be": 7, "note": "random write addr=0x044b be=0x7"}
+{"op": "write", "addr": 3, "data": 622940, "be": 6, "note": "random write addr=0x0003 be=0x6"}
+{"op": "write", "addr": 3667, "data": 3377118, "be": 12, "note": "random write addr=0x0e53 be=0xc"}
+{"op": "write", "addr": 4446, "data": 10314867, "be": 7, "note": "random write addr=0x115e be=0x7"}
+{"op": "write", "addr": 5957, "data": 11794200, "be": 7, "note": "random write addr=0x1745 be=0x7"}
+{"op": "write", "addr": 6095, "data": 3467102, "be": 12, "note": "random write addr=0x17cf be=0xc"}
+{"op": "write", "addr": 6955, "data": 5701802, "be": 6, "note": "random write addr=0x1b2b be=0x6"}
+{"op": "write", "addr": 3960, "data": 15457695, "be": 6, "note": "random write addr=0x0f78 be=0x6"}
+{"op": "write", "addr": 847, "data": 4698898, "be": 12, "note": "random write addr=0x034f be=0xc"}
+{"op": "write", "addr": 6924, "data": 10296054, "be": 7, "note": "random write addr=0x1b0c be=0x7"}
+{"op": "write", "addr": 2, "data": 16687272, "be": 14, "note": "random write addr=0x0002 be=0xe"}
+{"op": "write", "addr": 3755, "data": 6126868, "be": 7, "note": "random write addr=0x0eab be=0x7"}
+{"op": "write", "addr": 1640, "data": 12157489, "be": 3, "note": "random write addr=0x0668 be=0x3"}
+{"op": "write", "addr": 3129, "data": 12498074, "be": 3, "note": "random write addr=0x0c39 be=0x3"}
+{"op": "write", "addr": 7702, "data": 6987549, "be": 14, "note": "random write addr=0x1e16 be=0xe"}
+{"op": "write", "addr": 4655, "data": 3254770, "be": 15, "note": "random write addr=0x122f be=0xf"}
+{"op": "write", "addr": 3588, "data": 8500401, "be": 7, "note": "random write addr=0x0e04 be=0x7"}
+{"op": "write", "addr": 6562, "data": 6732268, "be": 7, "note": "random write addr=0x19a2 be=0x7"}
+{"op": "write", "addr": 6530, "data": 13823067, "be": 12, "note": "random write addr=0x1982 be=0xc"}
+{"op": "write", "addr": 2315, "data": 7225656, "be": 12, "note": "random write addr=0x090b be=0xc"}
+{"op": "write", "addr": 6535, "data": 4675145, "be": 12, "note": "random write addr=0x1987 be=0xc"}
+{"op": "write", "addr": 1305, "data": 8910747, "be": 7, "note": "random write addr=0x0519 be=0x7"}
+{"op": "write", "addr": 6472, "data": 8543097, "be": 7, "note": "random write addr=0x1948 be=0x7"}
+{"op": "write", "addr": 4887, "data": 4245030, "be": 12, "note": "random write addr=0x1317 be=0xc"}
+{"op": "write", "addr": 2443, "data": 4236318, "be": 14, "note": "random write addr=0x098b be=0xe"}
+{"op": "write", "addr": 3676, "data": 11522599, "be": 6, "note": "random write addr=0x0e5c be=0x6"}
+{"op": "write", "addr": 1081, "data": 12670580, "be": 7, "note": "random write addr=0x0439 be=0x7"}
+{"op": "write", "addr": 7981, "data": 396539, "be": 6, "note": "random write addr=0x1f2d be=0x6"}
+{"op": "write", "addr": 4181, "data": 10512228, "be": 15, "note": "random write addr=0x1055 be=0xf"}
+{"op": "write", "addr": 5055, "data": 12002025, "be": 3, "note": "random write addr=0x13bf be=0x3"}
+{"op": "write", "addr": 2323, "data": 15772772, "be": 7, "note": "random write addr=0x0913 be=0x7"}
+{"op": "write", "addr": 6190, "data": 5386775, "be": 15, "note": "random write addr=0x182e be=0xf"}
+{"op": "write", "addr": 1690, "data": 16252126, "be": 12, "note": "random write addr=0x069a be=0xc"}
+{"op": "write", "addr": 3916, "data": 908687, "be": 14, "note": "random write addr=0x0f4c be=0xe"}
+{"op": "write", "addr": 145, "data": 6841426, "be": 7, "note": "random write addr=0x0091 be=0x7"}
+{"op": "write", "addr": 7096, "data": 5242963, "be": 14, "note": "random write addr=0x1bb8 be=0xe"}
+{"op": "write", "addr": 5616, "data": 10832155, "be": 7, "note": "random write addr=0x15f0 be=0x7"}
+{"op": "write", "addr": 7752, "data": 14457049, "be": 6, "note": "random write addr=0x1e48 be=0x6"}
+{"op": "write", "addr": 1969, "data": 15815709, "be": 3, "note": "random write addr=0x07b1 be=0x3"}
+{"op": "write", "addr": 4417, "data": 11988208, "be": 15, "note": "random write addr=0x1141 be=0xf"}
+{"op": "write", "addr": 8082, "data": 10769132, "be": 15, "note": "random write addr=0x1f92 be=0xf"}
+{"op": "write", "addr": 6884, "data": 1241041, "be": 12, "note": "random write addr=0x1ae4 be=0xc"}
+{"op": "write", "addr": 7625, "data": 2875389, "be": 15, "note": "random write addr=0x1dc9 be=0xf"}
+{"op": "write", "addr": 4963, "data": 12245817, "be": 15, "note": "random write addr=0x1363 be=0xf"}
+{"op": "write", "addr": 7594, "data": 7764983, "be": 6, "note": "random write addr=0x1daa be=0x6"}
+{"op": "write", "addr": 4703, "data": 2947599, "be": 7, "note": "random write addr=0x125f be=0x7"}
+{"op": "write", "addr": 1507, "data": 4907658, "be": 12, "note": "random write addr=0x05e3 be=0xc"}
+{"op": "write", "addr": 4404, "data": 9326379, "be": 3, "note": "random write addr=0x1134 be=0x3"}
+{"op": "write", "addr": 2877, "data": 8454686, "be": 3, "note": "random write addr=0x0b3d be=0x3"}
+{"op": "write", "addr": 6188, "data": 2704571, "be": 12, "note": "random write addr=0x182c be=0xc"}
+{"op": "write", "addr": 4533, "data": 10206323, "be": 12, "note": "random write addr=0x11b5 be=0xc"}
+{"op": "write", "addr": 4252, "data": 8772314, "be": 6, "note": "random write addr=0x109c be=0x6"}
+{"op": "write", "addr": 2888, "data": 14331084, "be": 6, "note": "random write addr=0x0b48 be=0x6"}
+{"op": "write", "addr": 6715, "data": 6426839, "be": 3, "note": "random write addr=0x1a3b be=0x3"}
+{"op": "write", "addr": 2240, "data": 15889356, "be": 7, "note": "random write addr=0x08c0 be=0x7"}
+{"op": "write", "addr": 4725, "data": 14949717, "be": 7, "note": "random write addr=0x1275 be=0x7"}
+{"op": "write", "addr": 2216, "data": 2888494, "be": 3, "note": "random write addr=0x08a8 be=0x3"}
+{"op": "write", "addr": 6472, "data": 14487153, "be": 14, "note": "random write addr=0x1948 be=0xe"}
+{"op": "write", "addr": 5436, "data": 11683810, "be": 14, "note": "random write addr=0x153c be=0xe"}
+{"op": "write", "addr": 5954, "data": 6708072, "be": 3, "note": "random write addr=0x1742 be=0x3"}
+{"op": "write", "addr": 502, "data": 14287006, "be": 14, "note": "random write addr=0x01f6 be=0xe"}
+{"op": "write", "addr": 5504, "data": 7290495, "be": 7, "note": "random write addr=0x1580 be=0x7"}
+{"op": "lookup", "addr": 6648, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x19f8"}
+{"op": "lookup", "addr": 3252, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x0cb4"}
+{"op": "lookup", "addr": 873, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x0369"}
+{"op": "lookup", "addr": 2932, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x0b74"}
+{"op": "lookup", "addr": 5716, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x1654"}
+{"op": "lookup", "addr": 4973, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x136d"}
+{"op": "lookup", "addr": 1744, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x06d0"}
+{"op": "lookup", "addr": 5213, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x145d"}
+{"op": "lookup", "addr": 5426, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x1532"}
+{"op": "lookup", "addr": 6470, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x1946"}
+{"op": "lookup", "addr": 3787, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x0ecb"}
+{"op": "lookup", "addr": 1096, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x0448"}
+{"op": "lookup", "addr": 3785, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x0ec9"}
+{"op": "lookup", "addr": 1236, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x04d4"}
+{"op": "lookup", "addr": 2671, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x0a6f"}
+{"op": "lookup", "addr": 5576, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x15c8"}
+{"op": "lookup", "addr": 1783, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x06f7"}
+{"op": "lookup", "addr": 8092, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x1f9c"}
+{"op": "lookup", "addr": 2007, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x07d7"}
+{"op": "lookup", "addr": 2074, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x081a"}
+{"op": "lookup", "addr": 6601, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x19c9"}
+{"op": "lookup", "addr": 1373, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x055d"}
+{"op": "lookup", "addr": 1339, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x053b"}
+{"op": "lookup", "addr": 6290, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x1892"}
+{"op": "lookup", "addr": 7247, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x1c4f"}
+{"op": "lookup", "addr": 5541, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x15a5"}
+{"op": "lookup", "addr": 1890, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x0762"}
+{"op": "lookup", "addr": 1996, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x07cc"}
+{"op": "lookup", "addr": 1357, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x054d"}
+{"op": "lookup", "addr": 7043, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x1b83"}
+{"op": "lookup", "addr": 3365, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x0d25"}
+{"op": "lookup", "addr": 6387, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x18f3"}
+{"op": "lookup", "addr": 2696, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x0a88"}
+{"op": "lookup", "addr": 1915, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x077b"}
+{"op": "lookup", "addr": 20, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x0014"}
+{"op": "lookup", "addr": 1465, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x05b9"}
+{"op": "lookup", "addr": 763, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x02fb"}
+{"op": "lookup", "addr": 7400, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x1ce8"}
+{"op": "lookup", "addr": 1776, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x06f0"}
+{"op": "lookup", "addr": 6581, "mode_12bit": 0, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "random lookup addr=0x19b5"}
+{"op": "write", "addr": 256, "data": 0, "be": 15, "note": "12bit nib=0x0 packed=0x0000 at idx 0x0100"}
+{"op": "lookup", "addr": 256, "mode_12bit": 1, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "12bit nib=0x0 lookup \u2192 R=G=B=0x00"}
+{"op": "write", "addr": 257, "data": 4368, "be": 15, "note": "12bit nib=0x1 packed=0x1110 at idx 0x0101"}
+{"op": "lookup", "addr": 257, "mode_12bit": 1, "exp_r": 17, "exp_g": 17, "exp_b": 17, "note": "12bit nib=0x1 lookup \u2192 R=G=B=0x11"}
+{"op": "write", "addr": 258, "data": 8736, "be": 15, "note": "12bit nib=0x2 packed=0x2220 at idx 0x0102"}
+{"op": "lookup", "addr": 258, "mode_12bit": 1, "exp_r": 34, "exp_g": 34, "exp_b": 34, "note": "12bit nib=0x2 lookup \u2192 R=G=B=0x22"}
+{"op": "write", "addr": 259, "data": 13104, "be": 15, "note": "12bit nib=0x3 packed=0x3330 at idx 0x0103"}
+{"op": "lookup", "addr": 259, "mode_12bit": 1, "exp_r": 51, "exp_g": 51, "exp_b": 51, "note": "12bit nib=0x3 lookup \u2192 R=G=B=0x33"}
+{"op": "write", "addr": 260, "data": 17472, "be": 15, "note": "12bit nib=0x4 packed=0x4440 at idx 0x0104"}
+{"op": "lookup", "addr": 260, "mode_12bit": 1, "exp_r": 68, "exp_g": 68, "exp_b": 68, "note": "12bit nib=0x4 lookup \u2192 R=G=B=0x44"}
+{"op": "write", "addr": 261, "data": 21840, "be": 15, "note": "12bit nib=0x5 packed=0x5550 at idx 0x0105"}
+{"op": "lookup", "addr": 261, "mode_12bit": 1, "exp_r": 85, "exp_g": 85, "exp_b": 85, "note": "12bit nib=0x5 lookup \u2192 R=G=B=0x55"}
+{"op": "write", "addr": 262, "data": 26208, "be": 15, "note": "12bit nib=0x6 packed=0x6660 at idx 0x0106"}
+{"op": "lookup", "addr": 262, "mode_12bit": 1, "exp_r": 102, "exp_g": 102, "exp_b": 102, "note": "12bit nib=0x6 lookup \u2192 R=G=B=0x66"}
+{"op": "write", "addr": 263, "data": 30576, "be": 15, "note": "12bit nib=0x7 packed=0x7770 at idx 0x0107"}
+{"op": "lookup", "addr": 263, "mode_12bit": 1, "exp_r": 119, "exp_g": 119, "exp_b": 119, "note": "12bit nib=0x7 lookup \u2192 R=G=B=0x77"}
+{"op": "write", "addr": 264, "data": 34944, "be": 15, "note": "12bit nib=0x8 packed=0x8880 at idx 0x0108"}
+{"op": "lookup", "addr": 264, "mode_12bit": 1, "exp_r": 136, "exp_g": 136, "exp_b": 136, "note": "12bit nib=0x8 lookup \u2192 R=G=B=0x88"}
+{"op": "write", "addr": 265, "data": 39312, "be": 15, "note": "12bit nib=0x9 packed=0x9990 at idx 0x0109"}
+{"op": "lookup", "addr": 265, "mode_12bit": 1, "exp_r": 153, "exp_g": 153, "exp_b": 153, "note": "12bit nib=0x9 lookup \u2192 R=G=B=0x99"}
+{"op": "write", "addr": 266, "data": 43680, "be": 15, "note": "12bit nib=0xA packed=0xAAA0 at idx 0x010a"}
+{"op": "lookup", "addr": 266, "mode_12bit": 1, "exp_r": 170, "exp_g": 170, "exp_b": 170, "note": "12bit nib=0xA lookup \u2192 R=G=B=0xAA"}
+{"op": "write", "addr": 267, "data": 48048, "be": 15, "note": "12bit nib=0xB packed=0xBBB0 at idx 0x010b"}
+{"op": "lookup", "addr": 267, "mode_12bit": 1, "exp_r": 187, "exp_g": 187, "exp_b": 187, "note": "12bit nib=0xB lookup \u2192 R=G=B=0xBB"}
+{"op": "write", "addr": 268, "data": 52416, "be": 15, "note": "12bit nib=0xC packed=0xCCC0 at idx 0x010c"}
+{"op": "lookup", "addr": 268, "mode_12bit": 1, "exp_r": 204, "exp_g": 204, "exp_b": 204, "note": "12bit nib=0xC lookup \u2192 R=G=B=0xCC"}
+{"op": "write", "addr": 269, "data": 56784, "be": 15, "note": "12bit nib=0xD packed=0xDDD0 at idx 0x010d"}
+{"op": "lookup", "addr": 269, "mode_12bit": 1, "exp_r": 221, "exp_g": 221, "exp_b": 221, "note": "12bit nib=0xD lookup \u2192 R=G=B=0xDD"}
+{"op": "write", "addr": 270, "data": 61152, "be": 15, "note": "12bit nib=0xE packed=0xEEE0 at idx 0x010e"}
+{"op": "lookup", "addr": 270, "mode_12bit": 1, "exp_r": 238, "exp_g": 238, "exp_b": 238, "note": "12bit nib=0xE lookup \u2192 R=G=B=0xEE"}
+{"op": "write", "addr": 271, "data": 65520, "be": 15, "note": "12bit nib=0xF packed=0xFFF0 at idx 0x010f"}
+{"op": "lookup", "addr": 271, "mode_12bit": 1, "exp_r": 255, "exp_g": 255, "exp_b": 255, "note": "12bit nib=0xF lookup \u2192 R=G=B=0xFF"}
+{"op": "write", "addr": 512, "data": 16711680, "be": 15, "note": "overwrite first write R=0xFF G=0 B=0"}
+{"op": "lookup", "addr": 512, "mode_12bit": 0, "exp_r": 255, "exp_g": 0, "exp_b": 0, "note": "overwrite verify R=0xFF before overwrite"}
+{"op": "write", "addr": 512, "data": 65280, "be": 15, "note": "overwrite second write R=0 G=0xFF B=0"}
+{"op": "lookup", "addr": 512, "mode_12bit": 0, "exp_r": 0, "exp_g": 255, "exp_b": 0, "note": "overwrite verify G=0xFF after overwrite"}
