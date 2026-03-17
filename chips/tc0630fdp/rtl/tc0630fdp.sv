@@ -150,7 +150,25 @@ module tc0630fdp (
 
     // ── Pivot Pixel Output (Step 16) ────────────────────────────────────
     // {color[3:0], pen[3:0]}.  pen==0 → transparent.  color always 0.
-    output logic [ 7:0] pivot_pixel_out
+    output logic [ 7:0] pivot_pixel_out,
+
+    // ── TC0650FDA CPU Interface (Step 17: alpha blend + DAC) ─────────────
+    // 32-bit write-only bus from 68EC020 for RGB888 palette RAM writes.
+    // Address range: 0x440000–0x447FFF (decoded externally).
+    input  logic        fda_cpu_cs,       // chip select
+    input  logic        fda_cpu_we,       // write enable
+    input  logic [12:0] fda_cpu_addr,     // palette index 0x0000–0x1FFF
+    input  logic [31:0] fda_cpu_din,      // 32-bit write data {unused, R, G, B}
+    input  logic [ 3:0] fda_cpu_be,       // byte enables
+    input  logic        fda_mode_12bit,   // 0=RGB888, 1=12-bit legacy
+
+    // ── TC0650FDA Video Output (Step 17) ─────────────────────────────────
+    // RGB888 output from alpha blend MAC, 3 pixel-clock cycles after src_pal.
+    output logic [7:0]  fda_video_r,
+    output logic [7:0]  fda_video_g,
+    output logic [7:0]  fda_video_b,
+    // pixel_valid delayed by 3 pixel-clock cycles to match FDA output.
+    output logic [2:0]  fda_pixel_valid_d
 );
 
 // =============================================================================
@@ -916,15 +934,13 @@ end
 // =============================================================================
 // tc0630fdp_colmix — Layer Compositor (Step 14: +Alpha Blend Mode B)
 // =============================================================================
-// TC0650FDA blend interface wires (new outputs from colmix)
-/* verilator lint_off UNUSED */
+// TC0650FDA blend interface wires — drive tc0650fda u_fda below.
 logic [12:0] colmix_src_pal;
 logic [12:0] colmix_dst_pal;
 logic [ 3:0] colmix_src_blend;
 logic [ 3:0] colmix_dst_blend;
 logic        colmix_do_blend;
 logic        colmix_pixel_valid_out;
-/* verilator lint_on UNUSED */
 
 tc0630fdp_colmix u_colmix (
     .clk               (clk),
@@ -974,6 +990,46 @@ tc0630fdp_colmix u_colmix (
 );
 
 // =============================================================================
+// tc0650fda — Palette RAM + Alpha Blend + DAC (Step 17)
+// =============================================================================
+// tc0630fdp runs at pixel clock (clk = 6.6715 MHz) with ce_pixel=1 always.
+// TC0650FDA is designed for system clock + ce_pixel gating; here both are the
+// same pixel clock domain so ce_pixel is tied high.
+// cpu_rd_raw output is unused at the top level — suppressed below.
+/* verilator lint_off UNUSED */
+logic [31:0] fda_cpu_rd_raw;
+/* verilator lint_on UNUSED */
+
+/* verilator lint_off PINCONNECTEMPTY */
+tc0650fda u_fda (
+    .clk            (clk),
+    .ce_pixel       (1'b1),           // pixel clock domain: always enabled
+    .rst_n          (rst_n),
+    // CPU interface — exposed as top-level ports
+    .cpu_cs         (fda_cpu_cs),
+    .cpu_we         (fda_cpu_we),
+    .cpu_addr       (fda_cpu_addr),
+    .cpu_din        (fda_cpu_din),
+    .cpu_be         (fda_cpu_be),
+    .cpu_dtack_n    (),               // unconnected: permanently 0, caller ignores
+    .cpu_rd_raw     (fda_cpu_rd_raw),
+    // Video inputs from colmix
+    .pixel_valid    (colmix_pixel_valid_out),
+    .src_pal        (colmix_src_pal),
+    .dst_pal        (colmix_dst_pal),
+    .src_blend      (colmix_src_blend),
+    .dst_blend      (colmix_dst_blend),
+    .do_blend       (colmix_do_blend),
+    .mode_12bit     (fda_mode_12bit),
+    // Video outputs
+    .video_r        (fda_video_r),
+    .video_g        (fda_video_g),
+    .video_b        (fda_video_b),
+    .pixel_valid_d  (fda_pixel_valid_d)
+);
+/* verilator lint_on PINCONNECTEMPTY */
+
+// =============================================================================
 // GFX ROM / Palette stubs (external palette port kept for compatibility)
 // =============================================================================
 assign gfx_lo_addr = 25'b0;
@@ -982,7 +1038,9 @@ assign gfx_hi_addr = 25'b0;
 assign gfx_hi_rd   = 1'b0;
 assign pal_addr    = 15'b0;
 assign pal_rd      = 1'b0;
-assign rgb_out     = blend_rgb_out;
+// rgb_out now uses TC0650FDA output (replaces blend_rgb_out stub).
+// The blend_rgb_out port is kept for testbench validation of the colmix blend path.
+assign rgb_out     = {fda_video_r, fda_video_g, fda_video_b};
 
 // =============================================================================
 // Suppress unused-signal warnings

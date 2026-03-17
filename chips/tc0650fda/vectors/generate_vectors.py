@@ -1,28 +1,28 @@
 """
-Generate tier1_vectors.jsonl for TC0650FDA Step 1 testbench.
+Generate tier1_vectors.jsonl for TC0650FDA Steps 1–4 testbench.
 
 Vector format (one JSON object per line):
   {
-    "op":        "write" | "lookup" | "reset_check",
-    "addr":      palette index (0..8191),
-    "data":      32-bit write value  (write ops only),
-    "be":        byte-enable nibble  (write ops, 0..15),
-    "mode_12bit": 0 | 1              (lookup ops),
-    "exp_r":     expected R byte,
-    "exp_g":     expected G byte,
-    "exp_b":     expected B byte,
-    "note":      human-readable description
+    "op":         "write" | "readback" | "lookup" | "blend" | "reset_check",
+    "addr":       palette index (0..8191)  — src_pal for blend ops,
+    "dst_addr":   palette index for dst_pal (blend ops only),
+    "data":       32-bit write value  (write ops only),
+    "be":         byte-enable nibble  (write ops, 0..15),
+    "mode_12bit": 0 | 1              (lookup/blend ops),
+    "src_blend":  0..15              (blend ops, default 8),
+    "dst_blend":  0..15              (blend ops, default 0),
+    "do_blend":   0 | 1              (1=use MAC formula, 0=opaque passthrough),
+    "exp_r":      expected R byte,
+    "exp_g":      expected G byte,
+    "exp_b":      expected B byte,
+    "note":       human-readable description
   }
 
-Test cases covered (Step 1 spec):
-  1. Reset: all outputs 0 — verified inline in testbench (not a vector)
-  2. Write palette entries: index 0x0000, 0x07FF, 0x1FFF
-  3. CPU read-back: same three indices
-  4. Pixel lookup: index 0x0000 → rgb matches written value
-  5. mode_12bit: write at 0x1000, normal read vs 12-bit address aliasing
-  6. Byte enables: partial writes leave other bytes unchanged
-  7. Full index sweep (sample of 256 entries across 8192 range)
-  8. pixel_valid gate: tested inline in testbench (not a vector)
+Test cases covered:
+  Step 1 (Groups 1–8): palette write/readback/lookup, 12-bit mode, byte enables,
+    index sweep, random entries, 12-bit nibble sweep, overwrite test.
+  Step 2 / Step 4 (Groups 9–12): alpha blend MAC, saturation, opaque passthrough,
+    asymmetric coefficients, zero-blend, full sweep of blend values.
 """
 
 import json
@@ -53,13 +53,34 @@ def emit_write(addr: int, data: int, be: int, note: str) -> None:
 def emit_lookup(addr: int, mode_12bit: bool, note: str) -> None:
     r, g, b = model.lookup(addr, mode_12bit)
     vectors.append({
-        "op":        "lookup",
-        "addr":      addr,
+        "op":         "lookup",
+        "addr":       addr,
         "mode_12bit": 1 if mode_12bit else 0,
-        "exp_r":     r,
-        "exp_g":     g,
-        "exp_b":     b,
-        "note":      note,
+        "exp_r":      r,
+        "exp_g":      g,
+        "exp_b":      b,
+        "note":       note,
+    })
+
+
+def emit_blend(src_addr: int, dst_addr: int,
+               src_blend: int, dst_blend: int,
+               do_blend: bool,
+               mode_12bit: bool, note: str) -> None:
+    r, g, b = model.blend(src_addr, dst_addr, src_blend, dst_blend,
+                          do_blend=do_blend, mode_12bit=mode_12bit)
+    vectors.append({
+        "op":         "blend",
+        "addr":       src_addr,
+        "dst_addr":   dst_addr,
+        "mode_12bit": 1 if mode_12bit else 0,
+        "src_blend":  src_blend,
+        "dst_blend":  dst_blend,
+        "do_blend":   1 if do_blend else 0,
+        "exp_r":      r,
+        "exp_g":      g,
+        "exp_b":      b,
+        "note":       note,
     })
 
 
@@ -67,10 +88,10 @@ def emit_readback(addr: int, note: str) -> None:
     """CPU read-back: expected value is exactly what the model has stored."""
     exp = model.read(addr)
     vectors.append({
-        "op":      "readback",
-        "addr":    addr,
+        "op":       "readback",
+        "addr":     addr,
         "exp_data": exp,
-        "note":    note,
+        "note":     note,
     })
 
 
@@ -200,6 +221,92 @@ emit_write(0x0200, 0x00_FF_00_00, be=0xF, note="overwrite first write R=0xFF G=0
 emit_lookup(0x0200, mode_12bit=False, note="overwrite verify R=0xFF before overwrite")
 emit_write(0x0200, 0x00_00_FF_00, be=0xF, note="overwrite second write R=0 G=0xFF B=0")
 emit_lookup(0x0200, mode_12bit=False, note="overwrite verify G=0xFF after overwrite")
+
+# =============================================================================
+# Test group 9 — Alpha blend: basic blend formula verification
+# Formula: out = clamp((src * sb + dst * db) >> 3, 0, 255)
+# =============================================================================
+
+# 9a: src_blend=8, dst_blend=0 → output = src_R exactly (opaque src)
+emit_write(0x0300, 0x00_80_40_FF, be=0xF, note="blend9a src R=0x80 G=0x40 B=0xFF")
+emit_write(0x0301, 0x00_FF_FF_FF, be=0xF, note="blend9a dst white (should be zeroed out)")
+emit_blend(0x0300, 0x0301, src_blend=8, dst_blend=0, do_blend=True, mode_12bit=False,
+           note="blend9a sb=8 db=0 → output = src exactly")
+
+# 9b: src_blend=0, dst_blend=8 → output = dst_R exactly (transparent src)
+emit_blend(0x0301, 0x0300, src_blend=0, dst_blend=8, do_blend=True, mode_12bit=False,
+           note="blend9b sb=0 db=8 → output = dst exactly (R=0x80 G=0x40 B=0xFF)")
+
+# 9c: half blend (sb=4, db=4)
+# src R=0x80(128), dst R=0x40(64) → (128*4 + 64*4)>>3 = (512+256)/8 = 96 = 0x60
+emit_write(0x0302, 0x00_80_80_80, be=0xF, note="blend9c src gray 0x80")
+emit_write(0x0303, 0x00_40_40_40, be=0xF, note="blend9c dst gray 0x40")
+emit_blend(0x0302, 0x0303, src_blend=4, dst_blend=4, do_blend=True, mode_12bit=False,
+           note="blend9c sb=4 db=4 → (0x80*4+0x40*4)>>3 = 96 = 0x60 per channel")
+
+# =============================================================================
+# Test group 10 — Saturation tests
+# =============================================================================
+
+# 10a: src R=0x80, dst R=0xA0, both sb=db=8 → (128*8 + 160*8)>>3 = (1024+1280)/8 = 288 → 0xFF
+emit_write(0x0310, 0x00_80_00_00, be=0xF, note="blend10a src R=0x80")
+emit_write(0x0311, 0x00_A0_00_00, be=0xF, note="blend10a dst R=0xA0")
+emit_blend(0x0310, 0x0311, src_blend=8, dst_blend=8, do_blend=True, mode_12bit=False,
+           note="blend10a sb=db=8 R=0x80+0xA0 → saturate 288→0xFF")
+
+# 10b: both channels 0xFF, sb=db=8 → saturate to 0xFF
+emit_write(0x0312, 0x00_FF_FF_FF, be=0xF, note="blend10b src all=0xFF")
+emit_write(0x0313, 0x00_FF_FF_FF, be=0xF, note="blend10b dst all=0xFF")
+emit_blend(0x0312, 0x0313, src_blend=8, dst_blend=8, do_blend=True, mode_12bit=False,
+           note="blend10b sb=db=8 0xFF+0xFF → saturate 0xFF each channel")
+
+# 10c: no overflow — src R=0x40, dst R=0x20, sb=db=8 → (64*8+32*8)/8 = (512+256)/8 = 96 = 0x60
+emit_write(0x0314, 0x00_40_00_00, be=0xF, note="blend10c src R=0x40")
+emit_write(0x0315, 0x00_20_00_00, be=0xF, note="blend10c dst R=0x20")
+emit_blend(0x0314, 0x0315, src_blend=8, dst_blend=8, do_blend=True, mode_12bit=False,
+           note="blend10c sb=db=8 0x40+0x20 → 96=0x60 no overflow")
+
+# =============================================================================
+# Test group 11 — Opaque passthrough (do_blend=0)
+# =============================================================================
+
+# 11a: do_blend=0 → dst values ignored, output = src exactly
+emit_write(0x0320, 0x00_C8_64_32, be=0xF, note="blend11a src R=200 G=100 B=50")
+emit_write(0x0321, 0x00_FF_FF_FF, be=0xF, note="blend11a dst white (must be ignored)")
+emit_blend(0x0320, 0x0321, src_blend=8, dst_blend=8, do_blend=False, mode_12bit=False,
+           note="blend11a do_blend=0 → output=src regardless of dst and coefficients")
+
+# 11b: do_blend=0 with zero coefficients — still passes src through
+emit_blend(0x0320, 0x0321, src_blend=0, dst_blend=0, do_blend=False, mode_12bit=False,
+           note="blend11b do_blend=0 coeff=0 → still output=src")
+
+# =============================================================================
+# Test group 12 — Asymmetric blends and edge cases
+# =============================================================================
+
+# 12a: asymmetric — sb=2, db=6
+# src R=0x80(128), dst R=0x40(64): (128*2+64*6)>>3 = (256+384)/8 = 80
+emit_write(0x0330, 0x00_80_00_00, be=0xF, note="blend12a src R=0x80")
+emit_write(0x0331, 0x00_40_00_00, be=0xF, note="blend12a dst R=0x40")
+emit_blend(0x0330, 0x0331, src_blend=2, dst_blend=6, do_blend=True, mode_12bit=False,
+           note="blend12a sb=2 db=6 → (128*2+64*6)>>3=80")
+
+# 12b: zero blend (sb=0, db=0) → black
+emit_blend(0x0330, 0x0331, src_blend=0, dst_blend=0, do_blend=True, mode_12bit=False,
+           note="blend12b sb=0 db=0 → all zeros (black)")
+
+# 12c: reverse blend — sb=6, db=2
+emit_blend(0x0330, 0x0331, src_blend=6, dst_blend=2, do_blend=True, mode_12bit=False,
+           note="blend12c sb=6 db=2 → (128*6+64*2)>>3=(768+128)/8=112")
+
+# 12d: full sweep of src_blend values 0–8 with fixed dst=0
+emit_write(0x0340, 0x00_80_40_20, be=0xF, note="blend12d src R=128 G=64 B=32")
+emit_write(0x0341, 0x00_40_20_10, be=0xF, note="blend12d dst R=64 G=32 B=16")
+for sb in range(9):
+    for db in range(9):
+        emit_blend(0x0340, 0x0341, src_blend=sb, dst_blend=db, do_blend=True,
+                   mode_12bit=False,
+                   note=f"blend12d sweep sb={sb} db={db}")
 
 # =============================================================================
 # Write vectors file

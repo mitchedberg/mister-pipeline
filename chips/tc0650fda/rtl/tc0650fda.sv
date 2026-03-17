@@ -4,8 +4,7 @@
 // =============================================================================
 // Stores 8192 × 32-bit palette entries (RGB888, bits[23:0] used).
 // Two mirrored BRAM copies (src_bram, dst_bram) share every CPU write.
-// Step 1: single src_pal lookup only — dst_pal/blend inputs are wired but
-// not yet used; video output is direct palette lookup with 2-cycle pipeline.
+// Step 2: dual-source lookup with 3-stage MAC pipeline for alpha blending.
 //
 // CPU Interface (32-bit write-only, 68EC020 bus fragment):
 //   cpu_addr[12:0] — 13-bit palette index (word-aligned 32-bit access)
@@ -15,11 +14,16 @@
 //   cpu_cs         — chip select
 //   cpu_dtack_n    — permanently 0 (zero-wait-state BRAM)
 //
-// Pixel pipeline (2 registered stages, advances on ce_pixel):
-//   Cycle 0 : pal_idx latched, BRAM addressed
-//   Cycle 1 : BRAM data registered (pal_rd_data)
-//   Cycle 2 : RGB output registered → video_r/g/b
-//   pixel_valid_d[2:0] shift register aligns pixel_valid to match
+// Pixel pipeline (3 registered stages, advances on ce_pixel):
+//   Stage 0 (combinational): src_bram[src_pal] and dst_bram[dst_pal] addressed
+//   Stage 1 (registered)   : BRAM outputs captured; 12-bit mode decode applied
+//   Stage 2 (registered)   : multiply — src*src_blend and dst*dst_blend (12-bit products)
+//   Stage 3 (registered)   : accumulate, shift-right-3, saturate → video_r/g/b
+//   pixel_valid_d[2:0] shift register aligns pixel_valid to match 3-stage depth
+//
+// Alpha blend formula (section1 §6):
+//   out_C = clamp((src_C * src_blend + dst_C * dst_blend) >> 3, 0, 255)
+//   When do_blend=0: passthrough src_rgb directly (pipeline depth still 3 stages)
 //
 // 12-bit legacy mode (mode_12bit = 1):
 //   Palette entry bits[15:12]=R[3:0], [11:8]=G[3:0], [7:4]=B[3:0]
@@ -53,9 +57,10 @@ module tc0650fda (
     // -------------------------------------------------------------------------
     input  logic        pixel_valid,  // High during active display pixels
     input  logic [12:0] src_pal,      // Source palette index (13-bit)
-    input  logic [12:0] dst_pal,      // Destination palette index (Step 2)
-    input  logic [ 3:0] src_blend,    // Source blend factor 0–8 (Step 2)
-    input  logic [ 3:0] dst_blend,    // Destination blend factor 0–8 (Step 2)
+    input  logic [12:0] dst_pal,      // Destination palette index (blend destination)
+    input  logic [ 3:0] src_blend,    // Source blend factor 0–8
+    input  logic [ 3:0] dst_blend,    // Destination blend factor 0–8
+    input  logic        do_blend,     // 1=alpha blend, 0=opaque passthrough
 
     // -------------------------------------------------------------------------
     // Mode Control
@@ -70,23 +75,11 @@ module tc0650fda (
     output logic [7:0]  video_b,
 
     // -------------------------------------------------------------------------
-    // Pixel valid delayed output — 2 ce_pixel cycles behind pixel_valid input.
+    // Pixel valid delayed output — 3 ce_pixel cycles behind pixel_valid input.
     // Provided for downstream display interface alignment (HSYNC/VSYNC delay).
     // -------------------------------------------------------------------------
-    output logic [1:0]  pixel_valid_d  // [0]=1-cycle delay, [1]=2-cycle delay
+    output logic [2:0]  pixel_valid_d  // [0]=1-cycle, [1]=2-cycle, [2]=3-cycle delay
 );
-
-// =============================================================================
-// Unused Step-2 inputs suppressed (kept on port for interface stability)
-// =============================================================================
-/* verilator lint_off UNUSEDSIGNAL */
-logic [12:0] dst_pal_unused;
-logic [ 3:0] src_blend_unused;
-logic [ 3:0] dst_blend_unused;
-assign dst_pal_unused    = dst_pal;
-assign src_blend_unused  = src_blend;
-assign dst_blend_unused  = dst_blend;
-/* verilator lint_on UNUSEDSIGNAL */
 
 // =============================================================================
 // cpu_dtack_n — permanently low (zero-wait-state palette BRAM)
@@ -94,10 +87,10 @@ assign dst_blend_unused  = dst_blend;
 assign cpu_dtack_n = 1'b0;
 
 // =============================================================================
-// Palette BRAM — 8192 × 32-bit
-// Two mirrored copies (src_bram / dst_bram).  Every CPU write hits both.
-// Step 1: only src_bram is read by the video path.
-// Step 2 will add the dst_bram read for the dual-lookup blend pipeline.
+// Palette BRAM — 8192 × 32-bit, two mirrored copies.
+// src_bram: read port for src_pal (winning pixel)
+// dst_bram: read port for dst_pal (blend destination pixel)
+// Both receive identical CPU writes.
 //
 // Physical layout:
 //   bits[31:24] — unused (cpu_be[3] accepted, stored, ignored on read path)
@@ -106,11 +99,7 @@ assign cpu_dtack_n = 1'b0;
 //   bits[7:0]   — B[7:0]
 // =============================================================================
 logic [31:0] src_bram [0:8191];
-// dst_bram mirrors src_bram so Step 2 can add a second read port without
-// changing the write logic.  It is written here but read only in Step 2.
-/* verilator lint_off UNUSEDSIGNAL */
 logic [31:0] dst_bram [0:8191];
-/* verilator lint_on UNUSEDSIGNAL */
 
 // ── CPU write port (system clock, no pixel-clock gating) ──────────────────
 always_ff @(posedge clk) begin
@@ -140,86 +129,149 @@ end
 
 // =============================================================================
 // CPU read-back path
-// Section1 §1 notes no documented CPU read; cpu_rd_raw is an output port
-// exposed for testbench write-integrity verification without going through
-// the pixel pipeline.  Read latency: 1 cycle (BRAM registered output).
+// Exposed for testbench write-integrity verification without going through
+// the pixel pipeline. Read latency: 1 cycle (BRAM registered output).
 // =============================================================================
 always_ff @(posedge clk) begin
     cpu_rd_raw <= src_bram[cpu_addr];
 end
 
 // =============================================================================
-// Pixel output pipeline
-//
-// Stage 0 (this block): effective_idx computed → BRAM addressed
-// Stage 1 (registered): BRAM output captured in pal_rd_data
-// Stage 2 (registered): RGB decode + output registered → video_r/g/b
-//
-// pixel_valid_d shifts pixel_valid through 2 stages (matching 2 registered
-// pipeline stages so the output enable is correctly aligned).
+// 12-bit mode address masking
+// In 12-bit mode the effective address is {1'b0, idx[11:0]}.
 // =============================================================================
-
-// 12-bit mode: zero-extend upper bit of index to map 4096 → 8192 address space
-logic [12:0] effective_idx;
+logic [12:0] src_eff_idx;
+logic [12:0] dst_eff_idx;
 always_comb begin
-    effective_idx = mode_12bit ? {1'b0, src_pal[11:0]} : src_pal;
+    src_eff_idx = mode_12bit ? {1'b0, src_pal[11:0]} : src_pal;
+    dst_eff_idx = mode_12bit ? {1'b0, dst_pal[11:0]} : dst_pal;
 end
 
-// Stage 1 register: BRAM output (bits[23:0] only — bits[31:24] are the
-// unused channel and are never needed in the decode path)
-logic [23:0] pal_rd_data;
-// Stage 1 valid
+// =============================================================================
+// 3-Stage MAC Pipeline
+//
+// Stage 1: BRAM reads (src_bram[src_eff_idx], dst_bram[dst_eff_idx]) registered.
+//          mode_12bit decode applied. src_blend/dst_blend/do_blend pipelined.
+// Stage 2: Multiply — 8-bit × 4-bit = 12-bit products for each channel.
+//          (When do_blend=0, pass src_rgb directly through multiplier stage.)
+// Stage 3: Accumulate + shift-right-3 + saturate → video_r/g/b.
+// =============================================================================
+
+// ── Stage 1 registers ────────────────────────────────────────────────────────
+logic [23:0] src_rgb_s1;       // decoded RGB from src_bram
+logic [23:0] dst_rgb_s1;       // decoded RGB from dst_bram
+logic [ 3:0] src_blend_s1;
+logic [ 3:0] dst_blend_s1;
+logic        do_blend_s1;
 logic        pv_s1;
 
 always_ff @(posedge clk) begin
     if (ce_pixel) begin
-        pal_rd_data <= src_bram[effective_idx][23:0];
-        pv_s1       <= pixel_valid;
+        // Read both BRAMs and decode 12-bit or standard
+        if (!mode_12bit) begin
+            src_rgb_s1 <= src_bram[src_eff_idx][23:0];
+            dst_rgb_s1 <= dst_bram[dst_eff_idx][23:0];
+        end else begin
+            // 12-bit nibble-repeat decode: bits[15:12]=R, [11:8]=G, [7:4]=B
+            src_rgb_s1 <= {src_bram[src_eff_idx][15:12], src_bram[src_eff_idx][15:12],
+                           src_bram[src_eff_idx][11:8],  src_bram[src_eff_idx][11:8],
+                           src_bram[src_eff_idx][7:4],   src_bram[src_eff_idx][7:4]};
+            dst_rgb_s1 <= {dst_bram[dst_eff_idx][15:12], dst_bram[dst_eff_idx][15:12],
+                           dst_bram[dst_eff_idx][11:8],  dst_bram[dst_eff_idx][11:8],
+                           dst_bram[dst_eff_idx][7:4],   dst_bram[dst_eff_idx][7:4]};
+        end
+        src_blend_s1 <= src_blend;
+        dst_blend_s1 <= dst_blend;
+        do_blend_s1  <= do_blend;
+        pv_s1        <= pixel_valid;
     end
 end
 
-// Stage 2 register: RGB decode + output
-// mode_12bit sampled one cycle late (aligned to BRAM output stage)
-logic mode_12bit_s1;
+// ── Stage 2 registers — multiply ─────────────────────────────────────────────
+// 8-bit × 4-bit products: max 255×8 = 2040, fits in 12 bits.
+// When do_blend=0: pass src_rgb[channel] directly (multiply-by-8 not needed
+// because we bypass by storing the decoded RGB in the mul registers directly).
+logic [11:0] mul_r_src_s2, mul_g_src_s2, mul_b_src_s2;
+logic [11:0] mul_r_dst_s2, mul_g_dst_s2, mul_b_dst_s2;
+logic        do_blend_s2;
+logic        pv_s2;
 
 always_ff @(posedge clk) begin
     if (ce_pixel) begin
-        mode_12bit_s1 <= mode_12bit;
+        if (!do_blend_s1) begin
+            // Opaque passthrough: treat as src_blend=8, dst_blend=0 without MAC.
+            // Store src_rgb scaled to <<3 equivalent: src * 8 = {src, 3'b0}
+            // so that stage 3 shift-right-3 recovers src exactly.
+            mul_r_src_s2 <= {4'b0, src_rgb_s1[23:16]};  // = src_r (will be <<3/>>3 = identity)
+            mul_g_src_s2 <= {4'b0, src_rgb_s1[15:8]};
+            mul_b_src_s2 <= {4'b0, src_rgb_s1[7:0]};
+            mul_r_dst_s2 <= 12'd0;
+            mul_g_dst_s2 <= 12'd0;
+            mul_b_dst_s2 <= 12'd0;
+        end else begin
+            // Full MAC: 8-bit × 4-bit = 12-bit
+            mul_r_src_s2 <= 12'(src_rgb_s1[23:16]) * 12'(src_blend_s1);
+            mul_g_src_s2 <= 12'(src_rgb_s1[15:8])  * 12'(src_blend_s1);
+            mul_b_src_s2 <= 12'(src_rgb_s1[7:0])   * 12'(src_blend_s1);
+            mul_r_dst_s2 <= 12'(dst_rgb_s1[23:16]) * 12'(dst_blend_s1);
+            mul_g_dst_s2 <= 12'(dst_rgb_s1[15:8])  * 12'(dst_blend_s1);
+            mul_b_dst_s2 <= 12'(dst_rgb_s1[7:0])   * 12'(dst_blend_s1);
+        end
+        do_blend_s2 <= do_blend_s1;
+        pv_s2       <= pv_s1;
     end
 end
+
+// ── Stage 3 registers — accumulate, shift, saturate, output ─────────────────
+// Sum is 13-bit (12+12+1 carry): max 2040+2040 = 4080.
+// Shift right by 3: 4080>>3 = 510, fits in 9 bits.
+// Saturate: if result > 255, output 0xFF.
+//
+// Opaque path: sum = src_r (stored in mul_r_src) + 0 = src_r.
+//   sum >> 3 would give src_r>>3 which is wrong. For do_blend=0 we instead
+//   output mul_r_src_s2[7:0] directly (the raw 8-bit value stored at [7:0]).
+//   This is the passthrough fast path.
 
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         video_r <= 8'd0;
         video_g <= 8'd0;
         video_b <= 8'd0;
-    end else if (ce_pixel && pv_s1) begin
-        if (!mode_12bit_s1) begin
-            // Standard RGB888: bits[23:16]=R, [15:8]=G, [7:0]=B
-            video_r <= pal_rd_data[23:16];
-            video_g <= pal_rd_data[15:8];
-            video_b <= pal_rd_data[7:0];
+    end else if (ce_pixel && pv_s2) begin
+        if (!do_blend_s2) begin
+            // Opaque passthrough: output the raw src RGB stored in mul_r_src_s2[7:0]
+            video_r <= mul_r_src_s2[7:0];
+            video_g <= mul_g_src_s2[7:0];
+            video_b <= mul_b_src_s2[7:0];
         end else begin
-            // 12-bit legacy: bits[15:12]=R[3:0], [11:8]=G[3:0], [7:4]=B[3:0]
-            // Expand 4→8 by nibble-repeat: 0x0→0x00, 0xF→0xFF (linear 0..255)
-            video_r <= {pal_rd_data[15:12], pal_rd_data[15:12]};
-            video_g <= {pal_rd_data[11:8],  pal_rd_data[11:8]};
-            video_b <= {pal_rd_data[7:4],   pal_rd_data[7:4]};
+            // Blend: sum = (src * src_blend + dst * dst_blend) >> 3, saturated.
+            // Sum is 13-bit (max 4080); after >>3 the result is 10-bit (max 510).
+            // Compute shifted sum directly as 10-bit to avoid unused-bits warnings.
+            begin
+                logic [9:0] shifted_r, shifted_g, shifted_b;
+                shifted_r = 10'((13'(mul_r_src_s2) + 13'(mul_r_dst_s2)) >> 3);
+                shifted_g = 10'((13'(mul_g_src_s2) + 13'(mul_g_dst_s2)) >> 3);
+                shifted_b = 10'((13'(mul_b_src_s2) + 13'(mul_b_dst_s2)) >> 3);
+                video_r <= (shifted_r > 10'd255) ? 8'hFF : 8'(shifted_r);
+                video_g <= (shifted_g > 10'd255) ? 8'hFF : 8'(shifted_g);
+                video_b <= (shifted_b > 10'd255) ? 8'hFF : 8'(shifted_b);
+            end
         end
     end
 end
 
 // =============================================================================
-// pixel_valid_d — 2-stage shift register tracking pixel_valid through the
-// pixel pipeline so downstream display logic can align HSYNC/VSYNC.
+// pixel_valid_d — 3-stage shift register tracking pixel_valid through the
+// 3-stage pixel pipeline so downstream display logic can align HSYNC/VSYNC.
 //   pixel_valid_d[0] = 1 ce_pixel cycle behind pixel_valid
-//   pixel_valid_d[1] = 2 ce_pixel cycles behind pixel_valid  (matches video_r/g/b)
+//   pixel_valid_d[1] = 2 ce_pixel cycles behind pixel_valid
+//   pixel_valid_d[2] = 3 ce_pixel cycles behind pixel_valid  (matches video_r/g/b)
 // =============================================================================
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        pixel_valid_d <= 2'b00;
+        pixel_valid_d <= 3'b000;
     end else if (ce_pixel) begin
-        pixel_valid_d <= {pixel_valid_d[0], pixel_valid};
+        pixel_valid_d <= {pixel_valid_d[1:0], pixel_valid};
     end
 end
 

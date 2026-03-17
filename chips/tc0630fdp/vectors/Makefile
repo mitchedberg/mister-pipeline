@@ -1,4 +1,5 @@
 CHIP_DIR   := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))/..
+FDA_DIR    := $(abspath $(CHIP_DIR)/../tc0650fda)
 
 RTL        := $(CHIP_DIR)/rtl/tc0630fdp.sv \
               $(CHIP_DIR)/rtl/tc0630fdp_text.sv \
@@ -7,7 +8,8 @@ RTL        := $(CHIP_DIR)/rtl/tc0630fdp.sv \
               $(CHIP_DIR)/rtl/tc0630fdp_sprite_scan.sv \
               $(CHIP_DIR)/rtl/tc0630fdp_sprite_render.sv \
               $(CHIP_DIR)/rtl/tc0630fdp_colmix.sv \
-              $(CHIP_DIR)/rtl/tc0630fdp_pivot.sv
+              $(CHIP_DIR)/rtl/tc0630fdp_pivot.sv \
+              $(FDA_DIR)/rtl/tc0650fda.sv
 TB         := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))tb_tc0630fdp.cpp)
 VEC_DIR    := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 OBJ_DIR    := $(VEC_DIR)/obj_dir

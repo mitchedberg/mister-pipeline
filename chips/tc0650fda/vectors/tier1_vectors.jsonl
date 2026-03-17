@@ -307,3 +307,111 @@
 {"op": "lookup", "addr": 512, "mode_12bit": 0, "exp_r": 255, "exp_g": 0, "exp_b": 0, "note": "overwrite verify R=0xFF before overwrite"}
 {"op": "write", "addr": 512, "data": 65280, "be": 15, "note": "overwrite second write R=0 G=0xFF B=0"}
 {"op": "lookup", "addr": 512, "mode_12bit": 0, "exp_r": 0, "exp_g": 255, "exp_b": 0, "note": "overwrite verify G=0xFF after overwrite"}
+{"op": "write", "addr": 768, "data": 8405247, "be": 15, "note": "blend9a src R=0x80 G=0x40 B=0xFF"}
+{"op": "write", "addr": 769, "data": 16777215, "be": 15, "note": "blend9a dst white (should be zeroed out)"}
+{"op": "blend", "addr": 768, "dst_addr": 769, "mode_12bit": 0, "src_blend": 8, "dst_blend": 0, "do_blend": 1, "exp_r": 128, "exp_g": 64, "exp_b": 255, "note": "blend9a sb=8 db=0 \u2192 output = src exactly"}
+{"op": "blend", "addr": 769, "dst_addr": 768, "mode_12bit": 0, "src_blend": 0, "dst_blend": 8, "do_blend": 1, "exp_r": 128, "exp_g": 64, "exp_b": 255, "note": "blend9b sb=0 db=8 \u2192 output = dst exactly (R=0x80 G=0x40 B=0xFF)"}
+{"op": "write", "addr": 770, "data": 8421504, "be": 15, "note": "blend9c src gray 0x80"}
+{"op": "write", "addr": 771, "data": 4210752, "be": 15, "note": "blend9c dst gray 0x40"}
+{"op": "blend", "addr": 770, "dst_addr": 771, "mode_12bit": 0, "src_blend": 4, "dst_blend": 4, "do_blend": 1, "exp_r": 96, "exp_g": 96, "exp_b": 96, "note": "blend9c sb=4 db=4 \u2192 (0x80*4+0x40*4)>>3 = 96 = 0x60 per channel"}
+{"op": "write", "addr": 784, "data": 8388608, "be": 15, "note": "blend10a src R=0x80"}
+{"op": "write", "addr": 785, "data": 10485760, "be": 15, "note": "blend10a dst R=0xA0"}
+{"op": "blend", "addr": 784, "dst_addr": 785, "mode_12bit": 0, "src_blend": 8, "dst_blend": 8, "do_blend": 1, "exp_r": 255, "exp_g": 0, "exp_b": 0, "note": "blend10a sb=db=8 R=0x80+0xA0 \u2192 saturate 288\u21920xFF"}
+{"op": "write", "addr": 786, "data": 16777215, "be": 15, "note": "blend10b src all=0xFF"}
+{"op": "write", "addr": 787, "data": 16777215, "be": 15, "note": "blend10b dst all=0xFF"}
+{"op": "blend", "addr": 786, "dst_addr": 787, "mode_12bit": 0, "src_blend": 8, "dst_blend": 8, "do_blend": 1, "exp_r": 255, "exp_g": 255, "exp_b": 255, "note": "blend10b sb=db=8 0xFF+0xFF \u2192 saturate 0xFF each channel"}
+{"op": "write", "addr": 788, "data": 4194304, "be": 15, "note": "blend10c src R=0x40"}
+{"op": "write", "addr": 789, "data": 2097152, "be": 15, "note": "blend10c dst R=0x20"}
+{"op": "blend", "addr": 788, "dst_addr": 789, "mode_12bit": 0, "src_blend": 8, "dst_blend": 8, "do_blend": 1, "exp_r": 96, "exp_g": 0, "exp_b": 0, "note": "blend10c sb=db=8 0x40+0x20 \u2192 96=0x60 no overflow"}
+{"op": "write", "addr": 800, "data": 13132850, "be": 15, "note": "blend11a src R=200 G=100 B=50"}
+{"op": "write", "addr": 801, "data": 16777215, "be": 15, "note": "blend11a dst white (must be ignored)"}
+{"op": "blend", "addr": 800, "dst_addr": 801, "mode_12bit": 0, "src_blend": 8, "dst_blend": 8, "do_blend": 0, "exp_r": 200, "exp_g": 100, "exp_b": 50, "note": "blend11a do_blend=0 \u2192 output=src regardless of dst and coefficients"}
+{"op": "blend", "addr": 800, "dst_addr": 801, "mode_12bit": 0, "src_blend": 0, "dst_blend": 0, "do_blend": 0, "exp_r": 200, "exp_g": 100, "exp_b": 50, "note": "blend11b do_blend=0 coeff=0 \u2192 still output=src"}
+{"op": "write", "addr": 816, "data": 8388608, "be": 15, "note": "blend12a src R=0x80"}
+{"op": "write", "addr": 817, "data": 4194304, "be": 15, "note": "blend12a dst R=0x40"}
+{"op": "blend", "addr": 816, "dst_addr": 817, "mode_12bit": 0, "src_blend": 2, "dst_blend": 6, "do_blend": 1, "exp_r": 80, "exp_g": 0, "exp_b": 0, "note": "blend12a sb=2 db=6 \u2192 (128*2+64*6)>>3=80"}
+{"op": "blend", "addr": 816, "dst_addr": 817, "mode_12bit": 0, "src_blend": 0, "dst_blend": 0, "do_blend": 1, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "blend12b sb=0 db=0 \u2192 all zeros (black)"}
+{"op": "blend", "addr": 816, "dst_addr": 817, "mode_12bit": 0, "src_blend": 6, "dst_blend": 2, "do_blend": 1, "exp_r": 112, "exp_g": 0, "exp_b": 0, "note": "blend12c sb=6 db=2 \u2192 (128*6+64*2)>>3=(768+128)/8=112"}
+{"op": "write", "addr": 832, "data": 8405024, "be": 15, "note": "blend12d src R=128 G=64 B=32"}
+{"op": "write", "addr": 833, "data": 4202512, "be": 15, "note": "blend12d dst R=64 G=32 B=16"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 0, "dst_blend": 0, "do_blend": 1, "exp_r": 0, "exp_g": 0, "exp_b": 0, "note": "blend12d sweep sb=0 db=0"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 0, "dst_blend": 1, "do_blend": 1, "exp_r": 8, "exp_g": 4, "exp_b": 2, "note": "blend12d sweep sb=0 db=1"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 0, "dst_blend": 2, "do_blend": 1, "exp_r": 16, "exp_g": 8, "exp_b": 4, "note": "blend12d sweep sb=0 db=2"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 0, "dst_blend": 3, "do_blend": 1, "exp_r": 24, "exp_g": 12, "exp_b": 6, "note": "blend12d sweep sb=0 db=3"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 0, "dst_blend": 4, "do_blend": 1, "exp_r": 32, "exp_g": 16, "exp_b": 8, "note": "blend12d sweep sb=0 db=4"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 0, "dst_blend": 5, "do_blend": 1, "exp_r": 40, "exp_g": 20, "exp_b": 10, "note": "blend12d sweep sb=0 db=5"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 0, "dst_blend": 6, "do_blend": 1, "exp_r": 48, "exp_g": 24, "exp_b": 12, "note": "blend12d sweep sb=0 db=6"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 0, "dst_blend": 7, "do_blend": 1, "exp_r": 56, "exp_g": 28, "exp_b": 14, "note": "blend12d sweep sb=0 db=7"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 0, "dst_blend": 8, "do_blend": 1, "exp_r": 64, "exp_g": 32, "exp_b": 16, "note": "blend12d sweep sb=0 db=8"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 1, "dst_blend": 0, "do_blend": 1, "exp_r": 16, "exp_g": 8, "exp_b": 4, "note": "blend12d sweep sb=1 db=0"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 1, "dst_blend": 1, "do_blend": 1, "exp_r": 24, "exp_g": 12, "exp_b": 6, "note": "blend12d sweep sb=1 db=1"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 1, "dst_blend": 2, "do_blend": 1, "exp_r": 32, "exp_g": 16, "exp_b": 8, "note": "blend12d sweep sb=1 db=2"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 1, "dst_blend": 3, "do_blend": 1, "exp_r": 40, "exp_g": 20, "exp_b": 10, "note": "blend12d sweep sb=1 db=3"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 1, "dst_blend": 4, "do_blend": 1, "exp_r": 48, "exp_g": 24, "exp_b": 12, "note": "blend12d sweep sb=1 db=4"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 1, "dst_blend": 5, "do_blend": 1, "exp_r": 56, "exp_g": 28, "exp_b": 14, "note": "blend12d sweep sb=1 db=5"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 1, "dst_blend": 6, "do_blend": 1, "exp_r": 64, "exp_g": 32, "exp_b": 16, "note": "blend12d sweep sb=1 db=6"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 1, "dst_blend": 7, "do_blend": 1, "exp_r": 72, "exp_g": 36, "exp_b": 18, "note": "blend12d sweep sb=1 db=7"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 1, "dst_blend": 8, "do_blend": 1, "exp_r": 80, "exp_g": 40, "exp_b": 20, "note": "blend12d sweep sb=1 db=8"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 2, "dst_blend": 0, "do_blend": 1, "exp_r": 32, "exp_g": 16, "exp_b": 8, "note": "blend12d sweep sb=2 db=0"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 2, "dst_blend": 1, "do_blend": 1, "exp_r": 40, "exp_g": 20, "exp_b": 10, "note": "blend12d sweep sb=2 db=1"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 2, "dst_blend": 2, "do_blend": 1, "exp_r": 48, "exp_g": 24, "exp_b": 12, "note": "blend12d sweep sb=2 db=2"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 2, "dst_blend": 3, "do_blend": 1, "exp_r": 56, "exp_g": 28, "exp_b": 14, "note": "blend12d sweep sb=2 db=3"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 2, "dst_blend": 4, "do_blend": 1, "exp_r": 64, "exp_g": 32, "exp_b": 16, "note": "blend12d sweep sb=2 db=4"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 2, "dst_blend": 5, "do_blend": 1, "exp_r": 72, "exp_g": 36, "exp_b": 18, "note": "blend12d sweep sb=2 db=5"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 2, "dst_blend": 6, "do_blend": 1, "exp_r": 80, "exp_g": 40, "exp_b": 20, "note": "blend12d sweep sb=2 db=6"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 2, "dst_blend": 7, "do_blend": 1, "exp_r": 88, "exp_g": 44, "exp_b": 22, "note": "blend12d sweep sb=2 db=7"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 2, "dst_blend": 8, "do_blend": 1, "exp_r": 96, "exp_g": 48, "exp_b": 24, "note": "blend12d sweep sb=2 db=8"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 3, "dst_blend": 0, "do_blend": 1, "exp_r": 48, "exp_g": 24, "exp_b": 12, "note": "blend12d sweep sb=3 db=0"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 3, "dst_blend": 1, "do_blend": 1, "exp_r": 56, "exp_g": 28, "exp_b": 14, "note": "blend12d sweep sb=3 db=1"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 3, "dst_blend": 2, "do_blend": 1, "exp_r": 64, "exp_g": 32, "exp_b": 16, "note": "blend12d sweep sb=3 db=2"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 3, "dst_blend": 3, "do_blend": 1, "exp_r": 72, "exp_g": 36, "exp_b": 18, "note": "blend12d sweep sb=3 db=3"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 3, "dst_blend": 4, "do_blend": 1, "exp_r": 80, "exp_g": 40, "exp_b": 20, "note": "blend12d sweep sb=3 db=4"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 3, "dst_blend": 5, "do_blend": 1, "exp_r": 88, "exp_g": 44, "exp_b": 22, "note": "blend12d sweep sb=3 db=5"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 3, "dst_blend": 6, "do_blend": 1, "exp_r": 96, "exp_g": 48, "exp_b": 24, "note": "blend12d sweep sb=3 db=6"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 3, "dst_blend": 7, "do_blend": 1, "exp_r": 104, "exp_g": 52, "exp_b": 26, "note": "blend12d sweep sb=3 db=7"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 3, "dst_blend": 8, "do_blend": 1, "exp_r": 112, "exp_g": 56, "exp_b": 28, "note": "blend12d sweep sb=3 db=8"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 4, "dst_blend": 0, "do_blend": 1, "exp_r": 64, "exp_g": 32, "exp_b": 16, "note": "blend12d sweep sb=4 db=0"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 4, "dst_blend": 1, "do_blend": 1, "exp_r": 72, "exp_g": 36, "exp_b": 18, "note": "blend12d sweep sb=4 db=1"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 4, "dst_blend": 2, "do_blend": 1, "exp_r": 80, "exp_g": 40, "exp_b": 20, "note": "blend12d sweep sb=4 db=2"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 4, "dst_blend": 3, "do_blend": 1, "exp_r": 88, "exp_g": 44, "exp_b": 22, "note": "blend12d sweep sb=4 db=3"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 4, "dst_blend": 4, "do_blend": 1, "exp_r": 96, "exp_g": 48, "exp_b": 24, "note": "blend12d sweep sb=4 db=4"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 4, "dst_blend": 5, "do_blend": 1, "exp_r": 104, "exp_g": 52, "exp_b": 26, "note": "blend12d sweep sb=4 db=5"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 4, "dst_blend": 6, "do_blend": 1, "exp_r": 112, "exp_g": 56, "exp_b": 28, "note": "blend12d sweep sb=4 db=6"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 4, "dst_blend": 7, "do_blend": 1, "exp_r": 120, "exp_g": 60, "exp_b": 30, "note": "blend12d sweep sb=4 db=7"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 4, "dst_blend": 8, "do_blend": 1, "exp_r": 128, "exp_g": 64, "exp_b": 32, "note": "blend12d sweep sb=4 db=8"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 5, "dst_blend": 0, "do_blend": 1, "exp_r": 80, "exp_g": 40, "exp_b": 20, "note": "blend12d sweep sb=5 db=0"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 5, "dst_blend": 1, "do_blend": 1, "exp_r": 88, "exp_g": 44, "exp_b": 22, "note": "blend12d sweep sb=5 db=1"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 5, "dst_blend": 2, "do_blend": 1, "exp_r": 96, "exp_g": 48, "exp_b": 24, "note": "blend12d sweep sb=5 db=2"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 5, "dst_blend": 3, "do_blend": 1, "exp_r": 104, "exp_g": 52, "exp_b": 26, "note": "blend12d sweep sb=5 db=3"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 5, "dst_blend": 4, "do_blend": 1, "exp_r": 112, "exp_g": 56, "exp_b": 28, "note": "blend12d sweep sb=5 db=4"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 5, "dst_blend": 5, "do_blend": 1, "exp_r": 120, "exp_g": 60, "exp_b": 30, "note": "blend12d sweep sb=5 db=5"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 5, "dst_blend": 6, "do_blend": 1, "exp_r": 128, "exp_g": 64, "exp_b": 32, "note": "blend12d sweep sb=5 db=6"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 5, "dst_blend": 7, "do_blend": 1, "exp_r": 136, "exp_g": 68, "exp_b": 34, "note": "blend12d sweep sb=5 db=7"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 5, "dst_blend": 8, "do_blend": 1, "exp_r": 144, "exp_g": 72, "exp_b": 36, "note": "blend12d sweep sb=5 db=8"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 6, "dst_blend": 0, "do_blend": 1, "exp_r": 96, "exp_g": 48, "exp_b": 24, "note": "blend12d sweep sb=6 db=0"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 6, "dst_blend": 1, "do_blend": 1, "exp_r": 104, "exp_g": 52, "exp_b": 26, "note": "blend12d sweep sb=6 db=1"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 6, "dst_blend": 2, "do_blend": 1, "exp_r": 112, "exp_g": 56, "exp_b": 28, "note": "blend12d sweep sb=6 db=2"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 6, "dst_blend": 3, "do_blend": 1, "exp_r": 120, "exp_g": 60, "exp_b": 30, "note": "blend12d sweep sb=6 db=3"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 6, "dst_blend": 4, "do_blend": 1, "exp_r": 128, "exp_g": 64, "exp_b": 32, "note": "blend12d sweep sb=6 db=4"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 6, "dst_blend": 5, "do_blend": 1, "exp_r": 136, "exp_g": 68, "exp_b": 34, "note": "blend12d sweep sb=6 db=5"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 6, "dst_blend": 6, "do_blend": 1, "exp_r": 144, "exp_g": 72, "exp_b": 36, "note": "blend12d sweep sb=6 db=6"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 6, "dst_blend": 7, "do_blend": 1, "exp_r": 152, "exp_g": 76, "exp_b": 38, "note": "blend12d sweep sb=6 db=7"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 6, "dst_blend": 8, "do_blend": 1, "exp_r": 160, "exp_g": 80, "exp_b": 40, "note": "blend12d sweep sb=6 db=8"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 7, "dst_blend": 0, "do_blend": 1, "exp_r": 112, "exp_g": 56, "exp_b": 28, "note": "blend12d sweep sb=7 db=0"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 7, "dst_blend": 1, "do_blend": 1, "exp_r": 120, "exp_g": 60, "exp_b": 30, "note": "blend12d sweep sb=7 db=1"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 7, "dst_blend": 2, "do_blend": 1, "exp_r": 128, "exp_g": 64, "exp_b": 32, "note": "blend12d sweep sb=7 db=2"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 7, "dst_blend": 3, "do_blend": 1, "exp_r": 136, "exp_g": 68, "exp_b": 34, "note": "blend12d sweep sb=7 db=3"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 7, "dst_blend": 4, "do_blend": 1, "exp_r": 144, "exp_g": 72, "exp_b": 36, "note": "blend12d sweep sb=7 db=4"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 7, "dst_blend": 5, "do_blend": 1, "exp_r": 152, "exp_g": 76, "exp_b": 38, "note": "blend12d sweep sb=7 db=5"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 7, "dst_blend": 6, "do_blend": 1, "exp_r": 160, "exp_g": 80, "exp_b": 40, "note": "blend12d sweep sb=7 db=6"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 7, "dst_blend": 7, "do_blend": 1, "exp_r": 168, "exp_g": 84, "exp_b": 42, "note": "blend12d sweep sb=7 db=7"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 7, "dst_blend": 8, "do_blend": 1, "exp_r": 176, "exp_g": 88, "exp_b": 44, "note": "blend12d sweep sb=7 db=8"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 8, "dst_blend": 0, "do_blend": 1, "exp_r": 128, "exp_g": 64, "exp_b": 32, "note": "blend12d sweep sb=8 db=0"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 8, "dst_blend": 1, "do_blend": 1, "exp_r": 136, "exp_g": 68, "exp_b": 34, "note": "blend12d sweep sb=8 db=1"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 8, "dst_blend": 2, "do_blend": 1, "exp_r": 144, "exp_g": 72, "exp_b": 36, "note": "blend12d sweep sb=8 db=2"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 8, "dst_blend": 3, "do_blend": 1, "exp_r": 152, "exp_g": 76, "exp_b": 38, "note": "blend12d sweep sb=8 db=3"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 8, "dst_blend": 4, "do_blend": 1, "exp_r": 160, "exp_g": 80, "exp_b": 40, "note": "blend12d sweep sb=8 db=4"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 8, "dst_blend": 5, "do_blend": 1, "exp_r": 168, "exp_g": 84, "exp_b": 42, "note": "blend12d sweep sb=8 db=5"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 8, "dst_blend": 6, "do_blend": 1, "exp_r": 176, "exp_g": 88, "exp_b": 44, "note": "blend12d sweep sb=8 db=6"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 8, "dst_blend": 7, "do_blend": 1, "exp_r": 184, "exp_g": 92, "exp_b": 46, "note": "blend12d sweep sb=8 db=7"}
+{"op": "blend", "addr": 832, "dst_addr": 833, "mode_12bit": 0, "src_blend": 8, "dst_blend": 8, "do_blend": 1, "exp_r": 192, "exp_g": 96, "exp_b": 48, "note": "blend12d sweep sb=8 db=8"}

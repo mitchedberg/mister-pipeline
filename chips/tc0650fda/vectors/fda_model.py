@@ -1,18 +1,21 @@
 """
 TC0650FDA behavioral model — Python reference implementation.
 
-Step 1 scope:
+Steps 1–4 scope:
   - 8192-entry × 32-bit palette RAM (CPU write with byte enables)
-  - Single-index lookup: src_pal → RGB888 output (2-cycle pipeline)
+  - Dual-index lookup: src_pal + dst_pal → RGB888 (3-stage MAC pipeline)
+  - Alpha blend MAC: out = clamp((src * src_blend + dst * dst_blend) >> 3, 0, 255)
+  - Opaque passthrough (do_blend=0): output = src_rgb directly
   - 12-bit legacy decode (nibble-repeat 4→8 expansion)
-
-Not modelled here (Step 2):
-  - dst_pal lookup
-  - Alpha blend MAC pipeline
 
 Format reference (section1 §2):
   Standard:  bits[23:16]=R, bits[15:8]=G, bits[7:0]=B
   12-bit:    bits[15:12]=R[3:0], bits[11:8]=G[3:0], bits[7:4]=B[3:0]
+
+Blend formula (section1 §6):
+  out_C = clamp((src_C * src_blend + dst_C * dst_blend) >> 3, 0, 255)
+  Coefficient range: 0–8 (section2 §2.2 notes max is 8; but RTL accepts 0–15 4-bit)
+  When do_blend=False: out = src_rgb (bypass MAC entirely)
 """
 
 
@@ -22,7 +25,7 @@ class TC0650FDA:
     def __init__(self) -> None:
         # Palette RAM: 8192 entries × 32-bit (stored as Python ints)
         self.pal_ram: list[int] = [0] * self.PALETTE_DEPTH
-        # Video output (after 2-cycle pipeline — modelled as instant in software)
+        # Video output (after 3-cycle pipeline — modelled as instant in software)
         self.video_r: int = 0
         self.video_g: int = 0
         self.video_b: int = 0
@@ -89,7 +92,7 @@ class TC0650FDA:
         b = (b4 << 4) | b4
         return r, g, b
 
-    # ── Pixel lookup (software model — no pipeline delay) ────────────────────
+    # ── Palette lookup (single index) ─────────────────────────────────────────
 
     def lookup(self, idx: int, mode_12bit: bool = False) -> tuple[int, int, int]:
         """Look up palette index and return (R, G, B).
@@ -108,3 +111,42 @@ class TC0650FDA:
             return self.decode_12bit(entry)
         else:
             return self.decode_standard(entry)
+
+    # ── Alpha blend MAC ───────────────────────────────────────────────────────
+
+    @staticmethod
+    def blend_channel(src_c: int, dst_c: int, src_blend: int, dst_blend: int) -> int:
+        """Compute blended channel value.
+
+        Formula: clamp((src_c * src_blend + dst_c * dst_blend) >> 3, 0, 255)
+        Matches RTL section2_rtl_plan §2.2 formula exactly.
+        """
+        result = (src_c * src_blend + dst_c * dst_blend) >> 3
+        return min(result, 255)
+
+    def blend(
+        self,
+        src_idx: int,
+        dst_idx: int,
+        src_blend: int,
+        dst_blend: int,
+        do_blend: bool = True,
+        mode_12bit: bool = False,
+    ) -> tuple[int, int, int]:
+        """Perform dual-index palette lookup + alpha blend MAC.
+
+        When do_blend=False, return src_rgb directly (opaque passthrough).
+        Coefficients are 4-bit (0–15) but hardware uses 0–8 range in practice.
+        """
+        src_r, src_g, src_b = self.lookup(src_idx, mode_12bit)
+
+        if not do_blend:
+            return src_r, src_g, src_b
+
+        dst_r, dst_g, dst_b = self.lookup(dst_idx, mode_12bit)
+
+        out_r = self.blend_channel(src_r, dst_r, src_blend, dst_blend)
+        out_g = self.blend_channel(src_g, dst_g, src_blend, dst_blend)
+        out_b = self.blend_channel(src_b, dst_b, src_blend, dst_blend)
+
+        return out_r, out_g, out_b

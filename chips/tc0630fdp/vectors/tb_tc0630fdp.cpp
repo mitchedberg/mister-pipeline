@@ -163,6 +163,13 @@ static void do_reset() {
     dut->pvt_wr_en   = 0;
     dut->pvt_wr_addr = 0;
     dut->pvt_wr_data = 0;
+    // TC0650FDA CPU interface — idle state
+    dut->fda_cpu_cs    = 0;
+    dut->fda_cpu_we    = 0;
+    dut->fda_cpu_addr  = 0;
+    dut->fda_cpu_din   = 0;
+    dut->fda_cpu_be    = 0;
+    dut->fda_mode_12bit = 0;
     for (int i = 0; i < 4; i++) tick();
     dut->async_rst_n = 1;
     for (int i = 0; i < 2; i++) tick();
@@ -692,6 +699,13 @@ int main(int argc, char** argv) {
     dut->pvt_wr_en   = 0;
     dut->pvt_wr_addr = 0;
     dut->pvt_wr_data = 0;
+    // TC0650FDA CPU interface — idle state
+    dut->fda_cpu_cs    = 0;
+    dut->fda_cpu_we    = 0;
+    dut->fda_cpu_addr  = 0;
+    dut->fda_cpu_din   = 0;
+    dut->fda_cpu_be    = 0;
+    dut->fda_mode_12bit = 0;
     for (int i = 0; i < 4; i++) tick();
     dut->async_rst_n = 1;
     for (int i = 0; i < 4; i++) tick();
