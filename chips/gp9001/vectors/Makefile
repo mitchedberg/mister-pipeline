@@ -2,35 +2,64 @@ CHIP_DIR   := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))/..
 
 RTL        := $(CHIP_DIR)/rtl/gp9001.sv
 VEC_DIR    := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-TB         := $(VEC_DIR)/tb_gate1.cpp
 OBJ_DIR    := $(VEC_DIR)/obj_dir
 VERILATOR  := verilator
 PYTHON     := python3
 
+# ── Gate 1 ──────────────────────────────────────────────────────────────────
+
+TB1        := $(VEC_DIR)/tb_gate1.cpp
 VEC1       := $(VEC_DIR)/gate1_vectors.jsonl
-SIM_BIN    := $(OBJ_DIR)/Vgp9001
+SIM1       := $(OBJ_DIR)/Vgp9001_gate1
 
-.PHONY: all vectors build run clean test
+.PHONY: all gate1 gate2 vectors build run clean test
 
-all: vectors build run
+all: gate1 gate2
 
 test: all
 
-vectors: $(VEC1)
-
+# Gate 1 vectors
 $(VEC1): $(VEC_DIR)/generate_gate1.py $(VEC_DIR)/gate1_model.py
 	cd $(VEC_DIR) && $(PYTHON) generate_gate1.py
 
-build: $(SIM_BIN)
-$(SIM_BIN): $(TB) $(RTL)
-	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR) -Wall --top-module gp9001 \
+# Gate 1 simulation binary (separate obj dir; RTL change forces rebuild)
+$(SIM1): $(TB1) $(RTL)
+	mkdir -p $(OBJ_DIR)/gate1
+	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR)/gate1 -Wall --top-module gp9001 \
 	    -O0 -fno-dfg -fno-dfg-peephole \
 	    $(RTL) \
-	    $(TB) --build -CFLAGS "-O2 -std=c++17" 2>&1
+	    $(TB1) --build -CFLAGS "-O2 -std=c++17" 2>&1
+	cp $(OBJ_DIR)/gate1/Vgp9001 $(SIM1)
 
-run: $(SIM_BIN) $(VEC1)
-	cd $(VEC_DIR) && $(SIM_BIN) $(VEC1)
+gate1: $(VEC1) $(SIM1)
+	cd $(VEC_DIR) && $(SIM1) $(VEC1)
+
+# ── Gate 2 ──────────────────────────────────────────────────────────────────
+
+TB2        := $(VEC_DIR)/tb_gate2.cpp
+VEC2       := $(VEC_DIR)/gate2_vectors.jsonl
+SIM2       := $(OBJ_DIR)/Vgp9001_gate2
+
+# Gate 2 vectors
+$(VEC2): $(VEC_DIR)/generate_gate2.py $(VEC_DIR)/gate2_model.py
+	cd $(VEC_DIR) && $(PYTHON) generate_gate2.py
+
+# Gate 2 simulation binary (separate obj dir; RTL change forces rebuild)
+$(SIM2): $(TB2) $(RTL)
+	mkdir -p $(OBJ_DIR)/gate2
+	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR)/gate2 -Wall --top-module gp9001 \
+	    -O0 -fno-dfg -fno-dfg-peephole \
+	    $(RTL) \
+	    $(TB2) --build -CFLAGS "-O2 -std=c++17" 2>&1
+	cp $(OBJ_DIR)/gate2/Vgp9001 $(SIM2)
+
+gate2: $(VEC2) $(SIM2)
+	cd $(VEC_DIR) && $(SIM2) $(VEC2)
+
+# ── Misc ────────────────────────────────────────────────────────────────────
+
+vectors: $(VEC1) $(VEC2)
 
 clean:
 	rm -rf $(OBJ_DIR)
-	rm -f $(VEC1)
+	rm -f $(VEC1) $(VEC2)
