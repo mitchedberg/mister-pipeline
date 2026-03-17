@@ -1,0 +1,88 @@
+# =============================================================================
+# Taito F3 Core — QIP File (Quartus Source Files)
+# =============================================================================
+#
+# Add core-specific RTL files here.
+# System framework files (sys.qip) are sourced from sys/sys.tcl.
+#
+# WARNING: Do not add files through Quartus IDE — edit this file directly!
+#
+# =============================================================================
+
+# =========================================================================
+# TOP-LEVEL EMU WRAPPER
+# =========================================================================
+
+set_global_assignment -name SYSTEMVERILOG_FILE emu.sv
+
+# =========================================================================
+# PLL (Phase-Locked Loop)
+# =========================================================================
+# Generates sys_clk (53.372 MHz) and sdram_clk (143 MHz) from 50 MHz reference
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/pll.sv
+
+# =========================================================================
+# TAITO F3 CORE (Main Logic)
+# =========================================================================
+# 68EC020 CPU adapter, memory arbitration, I/O handling
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/taito_f3.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/taito_f3_gfx_arbiter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/tc0640fio.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sdram_f3.sv
+
+# =========================================================================
+# RAM CONTROLLERS (Asynchronous & Synchronous)
+# =========================================================================
+# MB8421: Dual-port SRAM (work RAM, sprite buffer)
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/mb8421.sv
+
+# =========================================================================
+# 68EC020 CPU (Motorola 68020 Emulation)
+# =========================================================================
+# TG68K: VHDL-based 68020 core (25 MHz capable, Taito F3 uses ~10 MHz)
+# tg68k_adapter.sv: SystemVerilog interface wrapper
+
+set_global_assignment -name VHDL_FILE ../../m68020/hdl/tg68k/TG68K_ALU.vhd
+set_global_assignment -name VHDL_FILE ../../m68020/hdl/tg68k/TG68K_Pack.vhd
+set_global_assignment -name VHDL_FILE ../../m68020/hdl/tg68k/TG68K.vhd
+set_global_assignment -name VHDL_FILE ../../m68020/hdl/tg68k/TG68KdotC_Kernel.vhd
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68020/rtl/tg68k_adapter.sv
+
+# =========================================================================
+# TC0630FDP (2-Layer Tilemap + Sprite Renderer)
+# =========================================================================
+# Taito custom graphics chip:
+#   — Spritemaster: Scans OBJ buffer, manages rendering pipeline
+#   — Layer 0 (BG):  Background tilemap
+#   — Layer 1 (FG):  Foreground tilemap
+#   — Colmix:         8-bit color output, palette lookup
+#   — Lineram:       Per-line sprite state tracking
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_text.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_bg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_lineram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_sprite_scan.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_sprite_render.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_colmix.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_pivot.sv
+
+# =========================================================================
+# TC0650FDA (Color Mixer & DAC)
+# =========================================================================
+# Final color output stage: palette lookup, OBJ priority mixing
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0650fda/rtl/tc0650fda.sv
+
+# =========================================================================
+# TIMING CONSTRAINTS
+# =========================================================================
+
+set_global_assignment -name SDC_FILE taito_f3.sdc
+
+# =============================================================================
+# END OF FILES.QIP
+# =============================================================================

@@ -1,0 +1,179 @@
+# =============================================================================
+# Taito F3 — Timing Constraints (SDC)
+# =============================================================================
+#
+# Timing constraints for Taito F3 MiSTer core on DE-10 Nano (Cyclone V)
+#
+# System clock: 53.372 MHz (from PLL; pixel clock = sys_clk / 2 = 26.686 MHz)
+# SDRAM clock:  143.0 MHz (PLL output)
+# Reference:    50 MHz (FPGA_CLK1_50)
+#
+# =============================================================================
+
+# =========================================================================
+# PRIMARY INPUT CLOCKS (DE-10 Nano)
+# =========================================================================
+
+# Main FPGA reference clock (50 MHz) — used by PLL
+create_clock -period "20.0 ns" -name {FPGA_CLK1_50} [get_ports {FPGA_CLK1_50}]
+
+# Secondary reference clocks (typically unused in Taito F3, but defined for completeness)
+create_clock -period "20.0 ns" -name {FPGA_CLK2_50} [get_ports {FPGA_CLK2_50}]
+create_clock -period "20.0 ns" -name {FPGA_CLK3_50} [get_ports {FPGA_CLK3_50}]
+
+# ==========================================================================
+# GENERATED CLOCKS (from PLL)
+# ==========================================================================
+
+# Automatically derive all PLL-generated clocks from sys.tcl/sys.qip
+# These include sys_clk (53.372 MHz), sdram_clk (143 MHz), HDMI clocks, audio clocks, etc.
+derive_pll_clocks
+
+# Apply timing margin for setup/hold across process corners
+derive_clock_uncertainty
+
+# ==========================================================================
+# CLOCK DOMAIN ISOLATION (Exclusive Clock Groups)
+# ==========================================================================
+#
+# Taito F3 operates in multiple asynchronous clock domains:
+#   — sys_clk (53.372 MHz): CPU, graphics (TC0630FDP), sound (Ensoniq)
+#   — sdram_clk (143 MHz):  SDRAM controller
+#   — HDMI clocks:          Video output
+#   — Audio clocks:         I2S output
+#
+# Marking these as mutually exclusive prevents Quartus from trying to
+# resolve impossible timing paths across domains, simplifying P&R.
+#
+
+set_clock_groups -exclusive \
+   -group [get_clocks { *|pll|pll_inst|altera_pll_i|*[*].*|divclk}] \
+   -group [get_clocks { pll_hdmi|pll_hdmi_inst|altera_pll_i|*[0].*|divclk}] \
+   -group [get_clocks { pll_audio|pll_audio_inst|altera_pll_i|*[0].*|divclk}] \
+   -group [get_clocks { FPGA_CLK1_50 }] \
+   -group [get_clocks { FPGA_CLK2_50 }] \
+   -group [get_clocks { FPGA_CLK3_50 }]
+
+# ==========================================================================
+# FALSE PATHS — USER INPUT & DISPLAY
+# ==========================================================================
+
+# Button inputs (asynchronous to system clock; use CDC)
+set_false_path -from [get_ports {KEY*}]
+set_false_path -from [get_ports {BTN_*}]
+
+# LED outputs (low timing criticality)
+set_false_path -to   [get_ports {LED_*}]
+
+# VGA/HDMI outputs (timing handled by arcade_video scaler)
+set_false_path -to   [get_ports {VGA_*}]
+set_false_path -from [get_ports {VGA_EN}]
+
+# Audio outputs (I2S clock-domain crossing)
+set_false_path -to   [get_ports {AUDIO_SPDIF}]
+set_false_path -to   [get_ports {AUDIO_L}]
+set_false_path -to   [get_ports {AUDIO_R}]
+
+# DIP switches (async, sampled by core)
+set_false_path -from {get_ports {SW[*]}}
+
+# ==========================================================================
+# FALSE PATHS — CONFIGURATION & DISPLAY SCALING
+# ==========================================================================
+
+# OSD/scaler configuration (changed infrequently)
+set_false_path -to   {cfg[*]}
+set_false_path -from {cfg[*]}
+set_false_path -from {VSET[*]}
+
+# Display resolution calculator (not in hot path)
+set_false_path -to   {wcalc[*] hcalc[*]}
+
+# HDMI resolution configuration (set during boot)
+set_false_path -to   {hdmi_width[*] hdmi_height[*]}
+
+# Debounce & button enable (slow control path)
+set_false_path -to   {deb_* btn_en btn_up}
+
+# ==========================================================================
+# MULTI-CYCLE PATHS — OSD Counters
+# ==========================================================================
+
+# OSD vertical counter can tolerate 2 cycles for setup, 1 for hold
+# (slow OSD rendering pipeline, not performance-critical)
+set_multicycle_path -to {*_osd|osd_vcnt*} -setup 2
+set_multicycle_path -to {*_osd|osd_vcnt*} -hold 1
+
+# ==========================================================================
+# FALSE PATHS — OSD DISPLAY LOGIC
+# ==========================================================================
+
+set_false_path -to   {*_osd|v_cnt*}
+set_false_path -to   {*_osd|v_osd_start*}
+set_false_path -to   {*_osd|v_info_start*}
+set_false_path -to   {*_osd|h_osd_start*}
+set_false_path -from {*_osd|v_osd_start*}
+set_false_path -from {*_osd|v_info_start*}
+set_false_path -from {*_osd|h_osd_start*}
+set_false_path -from {*_osd|rot*}
+set_false_path -from {*_osd|dsp_width*}
+set_false_path -to   {*_osd|half}
+
+# ==========================================================================
+# FALSE PATHS — ARCADE VIDEO SCALER
+# ==========================================================================
+
+# Display timing parameters (set during init, not real-time critical)
+set_false_path -to   {WIDTH[*] HFP[*] HS[*] HBP[*] HEIGHT[*] VFP[*] VS[*] VBP[*]}
+set_false_path -from {WIDTH[*] HFP[*] HS[*] HBP[*] HEIGHT[*] VFP[*] VS[*] VBP[*]}
+
+# Framebuffer configuration
+set_false_path -to   {FB_BASE[*] FB_BASE[*] FB_WIDTH[*] FB_HEIGHT[*] LFB_HMIN[*] LFB_HMAX[*] LFB_VMIN[*] LFB_VMAX[*]}
+set_false_path -from {FB_BASE[*] FB_BASE[*] FB_WIDTH[*] FB_HEIGHT[*] LFB_HMIN[*] LFB_HMAX[*] LFB_VMIN[*] LFB_VMAX[*]}
+
+# Scaler control signals
+set_false_path -to   {vol_att[*] scaler_flt[*] led_overtake[*] led_state[*]}
+set_false_path -from {vol_att[*] scaler_flt[*] led_overtake[*] led_state[*]}
+
+# ==========================================================================
+# FALSE PATHS — ANALOG VIDEO & FILTERS
+# ==========================================================================
+
+# Analog filter configuration (not real-time; set at boot)
+set_false_path -from {aflt_* acx* acy* areset* arc*}
+set_false_path -from {arx* ary*}
+set_false_path -from {vs_line*}
+
+# Color burst & PAL/NTSC configuration
+set_false_path -from {ColorBurst_Range* PhaseInc* pal_en cvbs yc_en}
+
+# ==========================================================================
+# FALSE PATHS — ASCAL (Advanced Scaler) PARAMETERS
+# ==========================================================================
+
+# Ascal is a slow scaler pipeline; its configuration is not timing-critical
+set_false_path -from {ascal|o_ihsize*}
+set_false_path -from {ascal|o_ivsize*}
+set_false_path -from {ascal|o_format*}
+set_false_path -from {ascal|o_hdown}
+set_false_path -from {ascal|o_vdown}
+set_false_path -from {ascal|o_hmin* ascal|o_hmax* ascal|o_vmin* ascal|o_vmax* ascal|o_vrrmax* ascal|o_vrr}
+set_false_path -from {ascal|o_hdisp* ascal|o_vdisp*}
+set_false_path -from {ascal|o_htotal* ascal|o_vtotal*}
+set_false_path -from {ascal|o_hsstart* ascal|o_vsstart* ascal|o_hsend* ascal|o_vsend*}
+set_false_path -from {ascal|o_hsize* ascal|o_vsize*}
+
+# ==========================================================================
+# FALSE PATHS — I/O EXPANDER & HPS INTERFACE
+# ==========================================================================
+
+# MCP23009 I2C GPIO expander (low bandwidth)
+set_false_path -from {mcp23009|flg_*}
+
+# HPS (Hard Processor System) clock crossing
+# (F2H = FPGA-to-HPS, asynchronous CDC handled elsewhere)
+set_false_path -to   {sysmem|fpga_interfaces|clocks_resets|f2h*}
+
+# =============================================================================
+# END OF TIMING CONSTRAINTS
+# =============================================================================
