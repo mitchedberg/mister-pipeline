@@ -26,6 +26,7 @@ VEC11      := $(VEC_DIR)/step11_vectors.jsonl
 VEC12      := $(VEC_DIR)/step12_vectors.jsonl
 VEC13      := $(VEC_DIR)/step13_vectors.jsonl
 VEC14      := $(VEC_DIR)/step14_vectors.jsonl
+VEC15      := $(VEC_DIR)/step15_vectors.jsonl
 SIM_BIN    := $(OBJ_DIR)/Vtc0630fdp
 
 .PHONY: all vectors build run clean test
@@ -33,7 +34,7 @@ all: vectors build run
 
 test: all
 
-vectors: $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14)
+vectors: $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14) $(VEC15)
 
 $(VEC1): $(VEC_DIR)/generate_vectors.py $(VEC_DIR)/fdp_model.py
 	cd $(VEC_DIR) && $(PYTHON) generate_vectors.py
@@ -77,15 +78,18 @@ $(VEC13): $(VEC_DIR)/generate_step13_vectors.py $(VEC_DIR)/fdp_model.py
 $(VEC14): $(VEC_DIR)/generate_step14_vectors.py $(VEC_DIR)/fdp_model.py
 	cd $(VEC_DIR) && $(PYTHON) generate_step14_vectors.py
 
+$(VEC15): $(VEC_DIR)/generate_step15_vectors.py $(VEC_DIR)/fdp_model.py
+	cd $(VEC_DIR) && $(PYTHON) generate_step15_vectors.py
+
 build: $(SIM_BIN)
 $(SIM_BIN): $(TB) $(RTL)
 	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR) -Wall --top-module tc0630fdp \
 	    $(RTL) \
 	    $(TB) --build -CFLAGS "-O2 -std=c++17" 2>&1
 
-run: $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14)
-	cd $(VEC_DIR) && $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14)
+run: $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14) $(VEC15)
+	cd $(VEC_DIR) && $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14) $(VEC15)
 
 clean:
 	rm -rf $(OBJ_DIR)
-	rm -f $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14)
+	rm -f $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8) $(VEC9) $(VEC10) $(VEC11) $(VEC12) $(VEC13) $(VEC14) $(VEC15)

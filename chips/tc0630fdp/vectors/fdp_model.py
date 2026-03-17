@@ -1,5 +1,5 @@
 """
-TC0630FDP behavioral model — Python reference implementation (Steps 1–14).
+TC0630FDP behavioral model — Python reference implementation (Steps 1–15).
 
 Step 1 scope:
   - Display control register bank (16 × 16-bit registers)
@@ -116,6 +116,20 @@ Step 14 scope (added):
       mode 01 → Normal blend A using A_src/A_dst coefficients.
       mode 10 → Reverse blend B using B_src/B_dst coefficients.
       mode 00/11 → Opaque: output src color directly.
+
+Step 15 scope (added):
+  - _line_mosaic(scan): returns (mosaic_rate[3:0], pf_en4[3:0], spr_en) from §9.6
+      mo_word at byte 0x6400–0x65FF → word 0x3200 + (scan & 0xFF).
+      bits[11:8] = X mosaic rate (4-bit; 0=no effect, F=16px blocks)
+      bits[3:0]  = PF mosaic enable (bit 0=PF1, bit 1=PF2, bit 2=PF3, bit 3=PF4)
+      bit[8]     = Sprite mosaic enable (overlaps with rate bit 0)
+  - _mosaic_snap_col(scol, rate): snap column index to mosaic grid.
+      Formula: off = (scol + 114) % 432 % (rate + 1); snapped = scol - off
+      Matches RTL BG and sprite_render modules exactly.
+  - render_bg_scanline() updated: when PF mosaic enabled, snaps scol before
+    linebuf read. Linebuf is still filled normally during HBLANK.
+  - render_sprite_scanline() updated: when spr mosaic enabled, snaps scol
+    before lbuf read (read-time snap, not write-time).
 
 Step 7 scope (added):
   - _line_colscroll(plane, scan): returns 9-bit column scroll offset (§9.2 bits[8:0])
@@ -545,16 +559,20 @@ class TaitoF3Model:
 
         return slist
 
-    def render_sprite_scanline(self, vpos: int, slist: list = None) -> list:
+    def render_sprite_scanline(self, vpos: int, slist: list = None,
+                               mosaic_en: bool = False,
+                               mosaic_rate: int = 0) -> list:
         """Render sprites for scanline (vpos+1) into a 320-entry line buffer.
 
         Returns list of 320 12-bit pixels: {prio[1:0], palette[5:0], pen[3:0]}.
         Zero entry = transparent (no sprite pixel at that column).
 
         Parameters:
-          vpos  : current scanline (renders vpos+1, matching RTL hblank_fall logic)
-          slist : pre-built scanline sprite list (from scan_sprites()); if None,
-                  will call scan_sprites() internally.
+          vpos        : current scanline (renders vpos+1, matching RTL hblank_fall logic)
+          slist       : pre-built scanline sprite list (from scan_sprites()); if None,
+                        will call scan_sprites() internally.
+          mosaic_en   : Step 15 — apply X-snap at read time (mirrors RTL lbuf[spr_scol_snap])
+          mosaic_rate : Step 15 — 4-bit rate; sample_rate = rate + 1
 
         Rendering (Step 9: zoom-aware):
           - Iterates sprites in slot order (0 first, last slot overwrites = on top).
@@ -630,6 +648,14 @@ class TaitoF3Model:
                 if pen == 0:
                     continue  # transparent
                 linebuf[scol] = (prio << 10) | (palette << 4) | pen
+
+        # Step 15: mosaic X-snap — read-time snap (mirrors RTL lbuf[spr_scol_snap])
+        # The linebuf was filled normally above; now produce the snapped output.
+        if mosaic_en and mosaic_rate != 0:
+            snapped = [0] * 320
+            for scol in range(320):
+                snapped[scol] = linebuf[self._mosaic_snap_col(scol, mosaic_rate)]
+            return snapped
 
         return linebuf
 
@@ -747,7 +773,9 @@ class TaitoF3Model:
 
     def render_bg_scanline(self, vpos: int, plane: int,
                            xscroll: int, yscroll: int,
-                           extend_mode: bool = False) -> list:
+                           extend_mode: bool = False,
+                           mosaic_en: bool = False,
+                           mosaic_rate: int = 0) -> list:
         """Return 320-entry list of BG layer pixels for the scanline AFTER vpos.
 
         Pre-fetch pattern (matches RTL): fills during HBLANK of vpos,
@@ -762,6 +790,8 @@ class TaitoF3Model:
           xscroll     : raw pf_xscroll register value (16-bit)
           yscroll     : raw pf_yscroll register value (16-bit)
           extend_mode : False=32-wide map, True=64-wide map
+          mosaic_en   : Step 15 — apply X-snap at read time (mirrors RTL linebuf[scol_snap])
+          mosaic_rate : Step 15 — 4-bit rate; sample_rate = rate + 1
 
         Scroll decode (section1 §3.1):
           xscroll_int = xscroll >> 6   (10-bit integer pixel offset)
@@ -883,6 +913,14 @@ class TaitoF3Model:
             # Advance accumulator and compute next tile
             acc = (acc + 16 * zoom_step) & 0x7FFFF   # keep 19 bits
             current_tile_x = (acc >> 12) & wrap_mask_tile
+
+        # Step 15: mosaic X-snap — read-time snap (mirrors RTL linebuf[scol_snap])
+        # The linebuf was filled normally above; now produce the snapped output.
+        if mosaic_en and mosaic_rate != 0:
+            snapped = [0] * 320
+            for scol in range(320):
+                snapped[scol] = linebuf[self._mosaic_snap_col(scol, mosaic_rate)]
+            return snapped
 
         return linebuf
 
@@ -1072,6 +1110,43 @@ class TaitoF3Model:
         sb_word = self.line_ram[0x3000 + scan8]
         return (sb_word >> (group * 2)) & 0x3
 
+    # ── Line RAM mosaic helpers (Step 15) ─────────────────────────────────────
+
+    def _line_mosaic(self, scan: int) -> tuple:
+        """Return (mosaic_rate, pf_en4, spr_en) for scanline scan (Step 15).
+
+        section1 §9.6 mo_word at byte 0x6400–0x65FF → word 0x3200 + (scan & 0xFF):
+          bits[11:8] = X mosaic rate (4-bit; 0=no mosaic, F=16px blocks)
+          bits[3:0]  = PF mosaic enable (bit 0=PF1..bit 3=PF4)
+          bit[8]     = Sprite mosaic enable (overlaps with rate[0])
+        """
+        scan8 = scan & 0xFF
+        mo_word = self.line_ram[0x3200 + scan8]
+        mosaic_rate = (mo_word >> 8) & 0xF
+        pf_en4      = mo_word & 0xF
+        spr_en      = bool((mo_word >> 8) & 0x1)   # bit[8] = rate[0]
+        return mosaic_rate, pf_en4, spr_en
+
+    @staticmethod
+    def _mosaic_snap_col(scol: int, rate: int) -> int:
+        """Snap screen column scol to mosaic grid for given 4-bit rate.
+
+        Matches RTL formula exactly:
+          gx_wide  = scol + 114
+          grid_sum = gx_wide - 432 if gx_wide >= 432 else gx_wide   (9-bit)
+          sr       = rate + 1   (sample_rate, 1..16)
+          off      = grid_sum % sr
+          snapped  = scol - off
+        rate=0 → sr=1 → off=0 → no snap (passthrough).
+        """
+        if rate == 0:
+            return scol
+        gx_wide  = scol + 114
+        grid_sum = gx_wide - 432 if gx_wide >= 432 else gx_wide
+        sr       = rate + 1
+        off      = grid_sum % sr
+        return scol - off
+
     def write_pal_ram(self, addr: int, data: int) -> None:
         """Write one 16-bit color word to palette RAM (Step 13)."""
         if 0 <= addr < self.PAL_RAM_WORDS:
@@ -1161,15 +1236,21 @@ class TaitoF3Model:
         # Text layer (pen from bits[3:0], color from bits[8:4])
         text_buf = self.render_text_scanline(vpos)   # 9-bit: {color[4:0], pen[3:0]}
 
+        # Step 15: mosaic parameters for this scanline
+        mo_rate, pf_mo_en4, _spr_mo_en = self._line_mosaic(render_scan)
+
         # PF layers (13-bit each: {palette[8:0], pen[3:0]})
         pf_bufs = []
         for plane in range(4):
+            pf_mo = bool((pf_mo_en4 >> plane) & 1)
             pf_bufs.append(
                 self.render_bg_scanline(
                     vpos, plane,
                     self.pf_xscroll[plane],
                     self.pf_yscroll[plane],
                     self.extend_mode,
+                    mosaic_en=pf_mo,
+                    mosaic_rate=mo_rate,
                 )
             )
 
@@ -1288,14 +1369,20 @@ class TaitoF3Model:
         # ── Render each layer ────────────────────────────────────────────────
         text_buf = self.render_text_scanline(vpos)
 
+        # Step 15: mosaic parameters for this scanline
+        mo_rate, pf_mo_en4, _spr_mo_en = self._line_mosaic(render_scan)
+
         pf_bufs = []
         for plane in range(4):
+            pf_mo = bool((pf_mo_en4 >> plane) & 1)
             pf_bufs.append(
                 self.render_bg_scanline(
                     vpos, plane,
                     self.pf_xscroll[plane],
                     self.pf_yscroll[plane],
                     self.extend_mode,
+                    mosaic_en=pf_mo,
+                    mosaic_rate=mo_rate,
                 )
             )
 

@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Taito F3 Display Processor (Step 14: +Alpha Blend Mode B)
+// TC0630FDP — Taito F3 Display Processor (Step 15: +Mosaic Effect)
 // =============================================================================
 // Integrates all video functions for Taito F3 arcade hardware (1992–1997):
 //   · 4 scrolling tilemap layers (PF1–PF4), 16×16 tiles, 4bpp  ← STEP 3 ✓
@@ -646,6 +646,10 @@ logic [ 1:0] ls_spr_blend [0:3];
 // Step 14: reverse blend B coefficients
 logic [ 3:0] ls_b_src;
 logic [ 3:0] ls_b_dst;
+// Step 15: mosaic effect
+logic [ 3:0] ls_mosaic_rate;
+logic [ 3:0] ls_pf_mosaic_en;
+logic        ls_spr_mosaic_en;
 
 tc0630fdp_lineram u_lineram (
     .clk            (clk),
@@ -681,7 +685,11 @@ tc0630fdp_lineram u_lineram (
     .ls_spr_blend     (ls_spr_blend),
     // Step 14: reverse blend B coefficients
     .ls_b_src         (ls_b_src),
-    .ls_b_dst         (ls_b_dst)
+    .ls_b_dst         (ls_b_dst),
+    // Step 15: mosaic
+    .ls_mosaic_rate   (ls_mosaic_rate),
+    .ls_pf_mosaic_en  (ls_pf_mosaic_en),
+    .ls_spr_mosaic_en (ls_spr_mosaic_en)
 );
 
 // =============================================================================
@@ -720,6 +728,9 @@ generate
             .ls_zoom_y      (ls_zoom_y[gi]),
             .ls_colscroll   (ls_colscroll[gi]),
             .ls_pal_add     (ls_pal_add[gi]),
+            // Step 15: mosaic
+            .ls_mosaic_en   (ls_pf_mosaic_en[gi]),
+            .ls_mosaic_rate (ls_mosaic_rate),
             .pf_rd_addr     (pf_rd_addr_w[gi]),
             .pf_q           (pf_q_w[gi]),
             .gfx_addr       (bg_gfx_addr[gi]),
@@ -753,19 +764,22 @@ tc0630fdp_sprite_scan u_sprite_scan (
 // tc0630fdp_sprite_render — Sprite Line Buffer Renderer (Step 8)
 // =============================================================================
 tc0630fdp_sprite_render u_sprite_render (
-    .clk             (clk),
-    .rst_n           (rst_n),
-    .hblank          (hblank),
-    .hblank_fall     (hblank_fall),
-    .vpos            (vpos),
-    .hpos            (hpos),
-    .scount_rd_addr  (rend_scount_rd_addr),
-    .scount_rd_data  (rend_scount_rd_data),
-    .slist_rd_addr   (rend_slist_rd_addr),
-    .slist_rd_data   (rend_slist_rd_data),
-    .gfx_addr        (spr_gfx_addr),
-    .gfx_data        (spr_gfx_data),
-    .spr_pixel       (spr_pixel_out)
+    .clk               (clk),
+    .rst_n             (rst_n),
+    .hblank            (hblank),
+    .hblank_fall       (hblank_fall),
+    .vpos              (vpos),
+    .hpos              (hpos),
+    // Step 15: mosaic
+    .ls_spr_mosaic_en  (ls_spr_mosaic_en),
+    .ls_mosaic_rate    (ls_mosaic_rate),
+    .scount_rd_addr    (rend_scount_rd_addr),
+    .scount_rd_data    (rend_scount_rd_data),
+    .slist_rd_addr     (rend_slist_rd_addr),
+    .slist_rd_data     (rend_slist_rd_data),
+    .gfx_addr          (spr_gfx_addr),
+    .gfx_data          (spr_gfx_data),
+    .spr_pixel         (spr_pixel_out)
 );
 
 // =============================================================================

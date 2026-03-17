@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — BG Tilemap Layer Engine  (Step 7: +colscroll +pal_add)
+// TC0630FDP — BG Tilemap Layer Engine  (Step 15: +mosaic X-snap)
 // =============================================================================
 // One instance per playfield (PF1–PF4). PLANE parameter = 0..3.
 //
@@ -105,6 +105,13 @@ module tc0630fdp_bg #(
     // Palette-line offset = ls_pal_add / 16 (divides raw value by 16).
     // 0 = no palette addition.
     input  logic [15:0] ls_pal_add,
+
+    // ── Per-scanline mosaic (Step 15) ──────────────────────────────────────
+    // ls_mosaic_en: 1 when mosaic is enabled for this PF plane.
+    // ls_mosaic_rate: 4-bit rate; sample_rate = rate + 1.
+    //   When enabled, read linebuf at snapped column instead of hpos column.
+    input  logic        ls_mosaic_en,
+    input  logic [ 3:0] ls_mosaic_rate,
 
     // ── PF RAM async read port (0x1800 words per PF) ─────────────────────
     output logic [12:0] pf_rd_addr,
@@ -319,7 +326,7 @@ end
 // =============================================================================
 logic [12:0] linebuf [0:319];
 
-// Screen column from hpos
+// Screen column from hpos (unsnapped)
 logic [8:0] scol_c;
 always_comb begin
     if (hpos >= 10'(H_START) && hpos < 10'(H_START + 320))
@@ -328,7 +335,40 @@ always_comb begin
         scol_c = 9'd0;
 end
 
-assign bg_pixel = linebuf[scol_c];
+// Step 15: Mosaic X-snap
+// Formula (section2 §5.4):
+//   snapped_x = screen_x - ((screen_x - H_START + 114) % 432 % sample_rate)
+//   In column terms: scol_c = hpos - H_START, so:
+//   scol_snap = scol_c - ((scol_c + 114) % 432 % sample_rate)
+//
+// Implementation: compute (scol_c + 114) % 432, then mod sample_rate.
+// sample_rate = ls_mosaic_rate + 1 (range 1..16).
+logic [8:0] scol_snap;  // mosaic-snapped column (or scol_c when disabled)
+
+always_comb begin
+    automatic logic [9:0] gx_wide;
+    automatic logic [8:0] grid_sum;
+    automatic logic [8:0] sr;
+    automatic logic [4:0] off;
+
+    // grid_sum = (scol_c + 114) % 432 (unsigned 9-bit result; scol_c in 0..319 so max sum = 433 → 1 subtract)
+    gx_wide  = {1'b0, scol_c} + 10'd114;
+    grid_sum = (gx_wide >= 10'd432) ? gx_wide[8:0] - 9'd432 : gx_wide[8:0];
+
+    // sample_rate = ls_mosaic_rate + 1 (range 1..16, fits in 5-bit)
+    sr = 9'd1 + {5'b0, ls_mosaic_rate};
+
+    // offset = grid_sum % sample_rate (4-bit result, max 15 for rate=16)
+    off = 5'(grid_sum % sr);
+
+    // Apply mosaic snap when enabled and rate > 0 (rate=0 → sample_rate=1 → no snap)
+    if (ls_mosaic_en && ls_mosaic_rate != 4'd0)
+        scol_snap = 9'(scol_c - {5'b0, off});
+    else
+        scol_snap = scol_c;
+end
+
+assign bg_pixel = linebuf[scol_snap];
 
 // =============================================================================
 // FSM

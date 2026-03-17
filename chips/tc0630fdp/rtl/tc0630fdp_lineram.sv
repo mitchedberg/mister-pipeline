@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Line RAM Parser  (Step 13: +alpha blend coefficients + blend modes)
+// TC0630FDP — Line RAM Parser  (Step 15: +mosaic effect)
 // =============================================================================
 // The Line RAM is 64 KB (32768 × 16-bit words) that provides per-scanline
 // override of virtually every display parameter.  This module:
@@ -205,7 +205,19 @@ module tc0630fdp_lineram (
     // B_dst: destination contribution for reverse blend mode B
     // From §9.5 ab_word bits[15:12]=B_src, bits[7:4]=B_dst
     output logic [ 3:0] ls_b_src,
-    output logic [ 3:0] ls_b_dst
+    output logic [ 3:0] ls_b_dst,
+
+    // ── Step 15: Mosaic effect outputs ───────────────────────────────────────
+    // From §9.6 mosaic word at byte 0x6400–0x65FF → word 0x3200 + scan:
+    //   bits[11:8] = mosaic_rate (0=1px/no effect, F=16px blocks)
+    //   bits[3:0]  = PF mosaic enable (bit n = PF(n+1) enable)
+    //   bit[8]     = sprite mosaic enable (same bit as rate LSB)
+    // ls_mosaic_rate  : 4-bit sample rate (sample_rate = rate + 1)
+    // ls_pf_mosaic_en : 4-bit PF enable (bit 0=PF1..bit 3=PF4)
+    // ls_spr_mosaic_en: sprite layer mosaic enable
+    output logic [ 3:0] ls_mosaic_rate,
+    output logic [ 3:0] ls_pf_mosaic_en,
+    output logic        ls_spr_mosaic_en
 );
 
 // =============================================================================
@@ -322,6 +334,13 @@ logic [15:0] sb_word;  // sprite blend word: bits[7:0] = blend mode per group
 /* verilator lint_on UNUSEDSIGNAL */
 assign sb_word       = line_ram[15'h3000 + {7'b0, next_scan}];
 
+// Step 15: Mosaic / X-sample §9.6  byte 0x6400 → word 0x3200
+// bits[11:8]=mosaic_rate, bits[3:0]=PF mosaic enable, bit[8]=sprite enable
+/* verilator lint_off UNUSEDSIGNAL */
+logic [15:0] mo_word;  // mosaic word
+/* verilator lint_on UNUSEDSIGNAL */
+assign mo_word       = line_ram[15'h3200 + {7'b0, next_scan}];
+
 // PF2/PF4 Y-zoom cross-read wires (hardware swap, §9.9):
 // PF2 Y-zoom is stored at PF4's RAM address (0x4300+scan).
 // PF4 Y-zoom is stored at PF2's RAM address (0x4200+scan).
@@ -366,6 +385,10 @@ always_ff @(posedge clk) begin
         // Step 14: reverse blend B defaults
         ls_b_src          <= 4'd8;  // default: fully opaque source
         ls_b_dst          <= 4'd0;  // default: no destination contribution
+        // Step 15: mosaic defaults (no mosaic)
+        ls_mosaic_rate    <= 4'b0;
+        ls_pf_mosaic_en   <= 4'b0;
+        ls_spr_mosaic_en  <= 1'b0;
     end else if (hblank_fall) begin
         for (int n = 0; n < 4; n++) begin
             // Rowscroll: enable bit n of en_row_word[3:0]
@@ -457,6 +480,12 @@ always_ff @(posedge clk) begin
         ls_spr_blend[1] <= sb_word[3:2];   // group 0x40
         ls_spr_blend[2] <= sb_word[5:4];   // group 0x80
         ls_spr_blend[3] <= sb_word[7:6];   // group 0xC0
+
+        // ── Step 15: Mosaic from §9.6 mo_word ────────────────────────────────
+        // mo_word bits[11:8]=mosaic_rate, bits[3:0]=PF enable, bit[8]=spr enable
+        ls_mosaic_rate   <= mo_word[11:8];
+        ls_pf_mosaic_en  <= mo_word[3:0];
+        ls_spr_mosaic_en <= mo_word[8];
     end
 end
 

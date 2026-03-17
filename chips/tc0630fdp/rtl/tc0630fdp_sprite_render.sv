@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Sprite Renderer  (Step 9: +zoom accumulator)
+// TC0630FDP — Sprite Renderer  (Step 15: +mosaic X-snap at read time)
 // =============================================================================
 // Ping-pong line buffer renderer: during HBLANK for scanline N, renders the
 // sprite list for scanline N+1 into the back buffer; during active scan N+1,
@@ -59,6 +59,12 @@ module tc0630fdp_sprite_render (
     input  logic [ 8:0] vpos,
     input  logic [ 9:0] hpos,
 
+    // ── Step 15: Mosaic ───────────────────────────────────────────────────
+    // ls_spr_mosaic_en: when 1, apply X-snap to sprite line buffer read.
+    // ls_mosaic_rate: 4-bit rate; sample_rate = rate + 1.
+    input  logic        ls_spr_mosaic_en,
+    input  logic [ 3:0] ls_mosaic_rate,
+
     output logic [ 7:0] scount_rd_addr,
     input  logic [ 6:0] scount_rd_data,
 
@@ -87,9 +93,37 @@ logic front_buf;
 logic hblank_end;
 assign hblank_end = (hpos == 10'(H_START - 1));
 
+// Step 15: Mosaic snap for sprite line buffer read
+// Same formula as BG: snapped_col = col - ((col + 114) % 432 % sample_rate)
+logic [8:0] spr_scol_raw;
+logic [8:0] spr_scol_snap;
+
+always_comb begin
+    automatic logic [9:0] gx_wide;
+    automatic logic [8:0] grid_sum;
+    automatic logic [8:0] sr;
+    automatic logic [4:0] off;
+
+    // Raw column from hpos
+    if (hpos >= 10'(H_START) && hpos < 10'(H_END))
+        spr_scol_raw = hpos[8:0] - 9'(H_START);
+    else
+        spr_scol_raw = 9'd0;
+
+    gx_wide  = {1'b0, spr_scol_raw} + 10'd114;
+    grid_sum = (gx_wide >= 10'd432) ? gx_wide[8:0] - 9'd432 : gx_wide[8:0];
+    sr       = 9'd1 + {5'b0, ls_mosaic_rate};
+    off      = 5'(grid_sum % sr);
+
+    if (ls_spr_mosaic_en && ls_mosaic_rate != 4'd0)
+        spr_scol_snap = 9'(spr_scol_raw - {5'b0, off});
+    else
+        spr_scol_snap = spr_scol_raw;
+end
+
 always_comb begin
     if (hpos >= 10'(H_START) && hpos < 10'(H_END))
-        spr_pixel = lbuf[front_buf][9'(hpos - 10'(H_START))];
+        spr_pixel = lbuf[front_buf][spr_scol_snap];
     else
         spr_pixel = 12'd0;
 end
