@@ -1,0 +1,139 @@
+name: Taito F3 Synthesis
+
+on:
+  push:
+    paths:
+      - 'chips/taito_f3/**'
+      - '.github/workflows/taito_f3_synthesis.yml'
+    branches:
+      - master
+      - main
+  pull_request:
+    paths:
+      - 'chips/taito_f3/**'
+  workflow_dispatch:
+
+jobs:
+  quartus-f3-synthesis:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Quartus
+        uses: actions/cache@v4
+        id: cache-quartus
+        with:
+          path: ~/intelFPGA_lite
+          key: quartus-lite-17.0.2
+
+      - name: Install Quartus Lite 17.0.2
+        if: steps.cache-quartus.outputs.cache-hit != 'true'
+        run: |
+          # Quartus 17.0.2 is the standard for MiSTer/Cyclone V
+          # Download from Intel/Altera archives
+          wget -q "https://downloads.intel.com/akdlm/software/acdsinst/17.0std/602/ib_installers/QuartusLiteSetup-17.0.2.602-linux.run"
+          chmod +x QuartusLiteSetup-17.0.2.602-linux.run
+
+          # Install to home directory (no sudo required)
+          ./QuartusLiteSetup-17.0.2.602-linux.run --mode unattended --accept_eula 1 --installdir ~/intelFPGA_lite
+
+          # Verify installation
+          echo "Quartus installation complete"
+          ls -lah ~/intelFPGA_lite/quartus/bin/quartus_sh || echo "Warning: quartus_sh not found"
+
+      - name: Add Quartus to PATH (cached)
+        if: steps.cache-quartus.outputs.cache-hit == 'true'
+        run: |
+          echo "Using cached Quartus installation"
+          ls -lah ~/intelFPGA_lite/quartus/bin/quartus_sh || echo "Warning: cached quartus_sh not found"
+
+      - name: Set up PATH for both cases
+        run: |
+          echo "$HOME/intelFPGA_lite/quartus/bin" >> $GITHUB_PATH
+          echo "PATH now includes Quartus bin directory"
+
+      - name: Verify Quartus installation
+        run: |
+          which quartus_sh || echo "quartus_sh not in PATH"
+          quartus_sh --version || echo "quartus_sh --version failed"
+
+      - name: Run Quartus synthesis
+        run: |
+          cd chips/taito_f3/quartus
+
+          echo "=========================================="
+          echo "Starting Quartus F3 synthesis"
+          echo "=========================================="
+
+          # Run full compile flow: analysis, synthesis, fitting, assembly
+          if quartus_sh --flow compile taito_f3; then
+            echo "=========================================="
+            echo "Synthesis SUCCESSFUL"
+            echo "=========================================="
+          else
+            echo "=========================================="
+            echo "Synthesis FAILED"
+            echo "=========================================="
+            exit 1
+          fi
+
+          # Verify RBF output was created
+          if [ -f output_files/taito_f3.rbf ]; then
+            echo "RBF file generated: output_files/taito_f3.rbf"
+            ls -lh output_files/taito_f3.rbf
+          else
+            echo "ERROR: RBF file not found!"
+            ls -la output_files/ || echo "output_files directory doesn't exist"
+            exit 1
+          fi
+
+      - name: Collect artifacts
+        if: success()
+        run: |
+          mkdir -p /tmp/f3_artifacts
+          cp chips/taito_f3/quartus/output_files/taito_f3.rbf /tmp/f3_artifacts/
+
+          # Also copy MRA files if they exist
+          if [ -d "chips/taito_f3/mra" ]; then
+            cp chips/taito_f3/mra/*.mra /tmp/f3_artifacts/ 2>/dev/null || true
+          fi
+
+          # Copy key documentation
+          if [ -f "chips/taito_f3/DEPLOY.md" ]; then
+            cp chips/taito_f3/DEPLOY.md /tmp/f3_artifacts/
+          fi
+
+          echo "Artifacts collected:"
+          ls -lh /tmp/f3_artifacts/
+
+      - name: Upload RBF artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: taito_f3_rbf
+          path: /tmp/f3_artifacts/
+          retention-days: 30
+          compression-level: 0
+
+      - name: Upload synthesis reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: taito_f3_synthesis_reports
+          path: |
+            chips/taito_f3/quartus/output_files/*.rpt
+            chips/taito_f3/quartus/*.rpt
+          retention-days: 14
+
+      - name: Report status
+        if: always()
+        run: |
+          echo "Job Status: ${{ job.status }}"
+          if [ -f "chips/taito_f3/quartus/output_files/taito_f3.fit.rpt" ]; then
+            echo ""
+            echo "Fitting Report Summary:"
+            grep -E "^Total logic elements|Total memory bits|Total pins|I/O pins used" \
+              "chips/taito_f3/quartus/output_files/taito_f3.fit.rpt" || echo "(fitting report available)"
+          fi
