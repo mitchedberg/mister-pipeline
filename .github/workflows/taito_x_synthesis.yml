@@ -1,0 +1,92 @@
+name: Taito X Synthesis
+
+on:
+  push:
+    paths:
+      - 'chips/taito_x/**'
+      - '.github/workflows/taito_x_synthesis.yml'
+    branches:
+      - master
+      - main
+  pull_request:
+    paths:
+      - 'chips/taito_x/**'
+  workflow_dispatch:
+
+jobs:
+  quartus-x-synthesis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Quartus synthesis (via Docker)
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace/chips/taito_x/quartus \
+            raetro/quartus:17.0 \
+            sh -c "
+              echo '=========================================='
+              echo 'Starting Quartus Taito X synthesis'
+              echo '=========================================='
+              quartus_sh --flow compile taito_x
+              STATUS=\$?
+              if [ \$STATUS -eq 0 ]; then
+                echo '=========================================='
+                echo 'Synthesis SUCCESSFUL'
+                echo '=========================================='
+              else
+                echo '=========================================='
+                echo 'Synthesis FAILED (exit \$STATUS)'
+                echo '=========================================='
+                exit \$STATUS
+              fi
+              if [ -f output_files/taito_x.rbf ]; then
+                echo 'RBF file generated:'
+                ls -lh output_files/taito_x.rbf
+              else
+                echo 'ERROR: RBF file not found'
+                ls -la output_files/ 2>/dev/null || true
+                exit 1
+              fi
+            "
+
+      - name: Collect artifacts
+        if: success()
+        run: |
+          mkdir -p /tmp/x_artifacts
+          cp chips/taito_x/quartus/output_files/taito_x.rbf /tmp/x_artifacts/
+          cp chips/taito_x/mra/*.mra /tmp/x_artifacts/ 2>/dev/null || true
+          ls -lh /tmp/x_artifacts/
+
+      - name: Upload RBF artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: taito_x_rbf
+          path: /tmp/x_artifacts/
+          retention-days: 30
+          compression-level: 0
+
+      - name: Upload synthesis reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: taito_x_synthesis_reports
+          path: |
+            chips/taito_x/quartus/output_files/*.rpt
+            chips/taito_x/quartus/*.rpt
+          retention-days: 14
+
+      - name: Report status
+        if: always()
+        run: |
+          echo "Job Status: ${{ job.status }}"
+          RPT=chips/taito_x/quartus/output_files/taito_x.fit.rpt
+          if [ -f "$RPT" ]; then
+            echo ""
+            echo "Fitting Report Summary:"
+            grep -E "^Total logic elements|Total memory bits|Total pins|I/O pins used" "$RPT" || true
+          fi
