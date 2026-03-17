@@ -7,16 +7,16 @@
 // Two MC68000 CPUs (CPU A @ 16 MHz, CPU B @ 16 MHz), Z80 + YM2610 sound.
 //
 // Instantiated chips / blocks:
-//   tc0480scp     — Tilemap engine (BG0–BG3 + FG text)
-//   tc0510nio     — I/O controller (joystick, coin, wheel, pedal)
-//   taito_z_palette — Inline xBGR_555 palette BRAM (no TC0260DAR)
-//   TC0140SYT     — 68000↔Z80 sound communication + ADPCM ROM arbiter
-//   tc0150rod_stub — Road generator stub (TC0150ROD — deferred)
-//   tc0370mso_stub — Sprite scanner stub (TC0370MSO — deferred)
-//   sprite_ram    — 16KB BRAM, CPU A-writable
-//   shared_ram    — 64KB dual-port BRAM (CPU A ↔ CPU B)
-//   work_ram_a    — 64KB BRAM (CPU A private)
-//   work_ram_b    — 32KB BRAM (CPU B private)
+//   tc0480scp          — Tilemap engine (BG0–BG3 + FG text)
+//   tc0510nio          — I/O controller (joystick, coin, wheel, pedal)
+//   taito_z_palette    — Inline xBGR_555 palette BRAM (no TC0260DAR)
+//   taito_z_compositor — Priority compositor (SCP + ROD + MSO → palette index)
+//   TC0140SYT          — 68000↔Z80 sound communication + ADPCM ROM arbiter
+//   tc0150rod          — Road generator (TC0150ROD, CPU B bus)
+//   tc0370mso          — Sprite scanner + line buffer (TC0370MSO + TC0300FLA)
+//   shared_ram         — 64KB dual-port BRAM (CPU A ↔ CPU B)
+//   work_ram_a         — 64KB BRAM (CPU A private)
+//   work_ram_b         — 32KB BRAM (CPU B private)
 //
 // CPU A address map (dblaxle byte addresses):
 //   0x000000–0x07FFFF  prog ROM A (512KB, SDRAM via sdr_*)
@@ -41,13 +41,12 @@
 // Interrupt controller:
 //   VBL (vblank_fall from TC0480SCP) → IRQ4 on CPU A and CPU B
 //
-// Deferred / stubbed:
-//   TC0150ROD: road generator chip (CPU B bus, 0x300000–0x301FFF)
-//   TC0370MSO: sprite scanner/renderer
-//   Priority mixer: BG0→BG1→road→sprites→BG3→text
+// Deferred / incomplete:
 //   SDRAM prog ROM fetches (CPU A/B): pass-through to sdr_* ports
 //   GFX ROM SDRAM bridge: TC0480SCP 4-port gfx_addr → gfx_* ports
-//   Sprite ROM SDRAM bridge: TC0370MSO sprite ROM → spr_* ports
+//   Sprite ROM SDRAM bridge: TC0370MSO OBJ ROM (spr_*) + STYM ROM (stym_*)
+//   Road ROM SDRAM bridge: TC0150ROD rod_rom_* ports
+//   Per-layer BG priority for BG3/text vs sprites (SCP composites internally)
 //
 // Assumptions / known differences from MAME:
 //   1. dblaxle address map used as primary target. racingb differs in:
@@ -108,11 +107,23 @@ module taito_z (
     output logic [3:0]       gfx_req,
     input  logic [3:0]       gfx_ack,
 
-    // ── Sprite ROM (TC0370MSO scanner — 64-bit wide) ──────────────────────────
-    output logic [21:0] spr_addr,
+    // ── Sprite OBJ ROM (TC0370MSO scanner — 64-bit wide) ─────────────────────
+    output logic [22:0] spr_addr,       // OBJ GFX ROM byte address (obj_row_addr → 23-bit)
     input  logic [63:0] spr_data,
     output logic        spr_req,
     input  logic        spr_ack,
+
+    // ── Spritemap ROM (TC0370MSO STYM — 16-bit wide) ──────────────────────────
+    output logic [17:0] stym_addr,      // word address into 512KB spritemap ROM
+    input  logic [15:0] stym_data,
+    output logic        stym_req,
+    input  logic        stym_ack,
+
+    // ── Road ROM (TC0150ROD — 16-bit wide) ────────────────────────────────────
+    output logic [17:0] rod_rom_addr,   // word address into 512KB road ROM
+    input  logic [15:0] rod_rom_data,
+    output logic        rod_rom_req,
+    input  logic        rod_rom_ack,
 
     // ── SDRAM (prog ROM fetch + ADPCM — shared arbiter) ──────────────────────
     output logic [26:0] sdr_addr,
@@ -330,6 +341,36 @@ tc0510nio u_nio (
 );
 
 // =============================================================================
+// Priority Compositor
+// =============================================================================
+// Resolves the final pixel from TC0480SCP (BG/text), TC0150ROD (road), and
+// TC0370MSO (sprites) using MAME dblaxle priority rules.
+// All three chips run in clk_pix domain; compositor is purely combinational.
+// =============================================================================
+logic [11:0] comp_pix_index;
+logic        comp_pix_valid;
+
+taito_z_compositor u_comp (
+    // TC0480SCP output
+    .scp_pixel_out    (scp_pixel_out),
+    .scp_pixel_valid  (scp_pixel_valid),
+
+    // TC0150ROD road output
+    .rod_pix_out      (rod_pix_out),
+    .rod_pix_valid    (rod_pix_valid),
+    .rod_pix_transp   (rod_pix_transp),
+
+    // TC0370MSO sprite output
+    .mso_pix_out      (mso_pix_out),
+    .mso_pix_valid    (mso_pix_valid),
+    .mso_pix_priority (mso_pix_priority),
+
+    // Compositor output → palette
+    .comp_pix_index   (comp_pix_index),
+    .comp_pix_valid   (comp_pix_valid)
+);
+
+// =============================================================================
 // Palette RAM
 // =============================================================================
 logic [15:0] pal_dout;
@@ -343,9 +384,9 @@ taito_z_palette u_pal (
     .cpu_din   (cpua_din),
     .cpu_be    ({!cpua_uds_n, !cpua_lds_n}),
     .cpu_dout  (pal_dout),
-    // Palette lookup: TC0480SCP pixel_out[11:0] = palette index
-    .pix_index (scp_pixel_out[11:0]),
-    .pix_valid (scp_pixel_valid),
+    // Palette lookup: compositor output — final priority-resolved palette index
+    .pix_index (comp_pix_index),
+    .pix_valid (comp_pix_valid),
     .rgb_r     (rgb_r),
     .rgb_g     (rgb_g),
     .rgb_b     (rgb_b)
@@ -418,19 +459,12 @@ TC0140SYT #(
 );
 
 // =============================================================================
-// Sprite RAM — 16KB BRAM (CPU A write at 0xC00000–0xC03FFF)
-// TC0370MSO reads this autonomously via stub below.
+// Sprite RAM note — no standalone BRAM needed
 // =============================================================================
-logic [15:0] spr_ram [0:8191];
-logic [15:0] spr_ram_dout;
-
-always_ff @(posedge clk_sys) begin
-    if (spr_ram_cs && !cpua_rw) begin
-        if (!cpua_uds_n) spr_ram[cpua_addr[13:1]][15:8] <= cpua_din[15:8];
-        if (!cpua_lds_n) spr_ram[cpua_addr[13:1]][ 7:0] <= cpua_din[ 7:0];
-    end
-    spr_ram_dout <= spr_ram[cpua_addr[13:1]];
-end
+// TC0370MSO owns sprite RAM internally (8K × 16-bit dual-port BRAM).
+// CPU A writes are routed to TC0370MSO's spr_cs/spr_we/spr_addr/spr_din.
+// CPU A reads return mso_spr_dout (TC0370MSO registered read port).
+// No separate sprite_ram BRAM is needed in taito_z.sv.
 
 // =============================================================================
 // Shared RAM — 64KB dual-port BRAM
@@ -521,43 +555,135 @@ end
 assign cpub_reset_n = reset_n && cpub_reset_reg;
 
 // =============================================================================
-// TC0150ROD Stub — Road Generator (CPU B bus, 0x300000–0x301FFF)
-// Deferred: full TC0150ROD RTL not yet implemented.
-// Stub: accepts CPU B writes (captured but ignored), returns open bus on read,
-//       outputs road_pixel = 4'h0 (transparent / no road).
+// TC0150ROD — Road Generator (CPU B bus, 0x300000–0x301FFF)
 // =============================================================================
-/* verilator lint_off UNUSED */
-logic [15:0] rod_ram [0:4095];
-/* verilator lint_on UNUSED */
+// dblaxle parameters (from screen_update_dblaxle):
+//   y_offs = 0 (default road Y alignment)
+//   palette_offs = 0
+//   road_type = 0 (standard road A/B fill)
+//   road_trans = 0 (road not transparent overall)
+//   low_priority = 1, high_priority = 2 (road between BG2 and sprites)
+//
+// CPU B address: 0x300000–0x301FFF (8KB = 4096 × 16-bit words, 12-bit index)
+//   cpub_addr[12:1] = 12-bit word index
+// =============================================================================
 logic [15:0] rod_dout;
+logic [14:0] rod_pix_out;
+logic        rod_pix_valid;
+logic        rod_pix_transp;
+logic [ 7:0] rod_line_priority;
 /* verilator lint_off UNUSED */
-logic [ 3:0] road_pixel;
+logic        rod_render_done;
 /* verilator lint_on UNUSED */
 
-always_ff @(posedge clk_sys) begin
-    if (rod_cs && !cpub_rw) begin
-        if (!cpub_uds_n) rod_ram[cpub_addr[12:1]][15:8] <= cpub_din[15:8];
-        if (!cpub_lds_n) rod_ram[cpub_addr[12:1]][ 7:0] <= cpub_din[ 7:0];
-    end
-    rod_dout <= rod_ram[cpub_addr[12:1]];
-end
+tc0150rod u_rod (
+    .clk            (clk_pix),
+    .rst_n          (reset_n),
 
-assign road_pixel = 4'h0;   // stub: no road rendered
+    // CPU B bus (0x300000–0x301FFF, byte address → word address cpub_addr[12:1])
+    .cpu_cs         (rod_cs),
+    .cpu_we         (!cpub_rw),
+    .cpu_addr       (cpub_addr[12:1]),
+    .cpu_din        (cpub_din),
+    .cpu_dout       (rod_dout),
+    .cpu_be         ({!cpub_uds_n, !cpub_lds_n}),
+    /* verilator lint_off PINCONNECTEMPTY */
+    .cpu_dtack_n    (),
+    /* verilator lint_on PINCONNECTEMPTY */
+
+    // Road ROM (toggle-req/ack SDRAM arbiter)
+    .rom_addr       (rod_rom_addr),
+    .rom_data       (rod_rom_data),
+    .rom_req        (rod_rom_req),
+    .rom_ack        (rod_rom_ack),
+
+    // Video timing (from TC0480SCP, pixel-clock domain)
+    .hblank         (scp_hblank),
+    .vblank         (scp_vblank),
+    .hpos           (scp_hpos[8:0]),
+    .vpos           (scp_vpos[7:0]),
+
+    // Game-specific parameters for dblaxle
+    .y_offs         (8'sd0),
+    .palette_offs   (8'd0),
+    .road_type      (2'd0),
+    .road_trans     (1'b0),
+    .low_priority   (8'd1),
+    .high_priority  (8'd2),
+
+    // Pixel output
+    .pix_out        (rod_pix_out),
+    .pix_valid      (rod_pix_valid),
+    .pix_transp     (rod_pix_transp),
+    .line_priority  (rod_line_priority),
+    .render_done    (rod_render_done)
+);
 
 // =============================================================================
-// TC0370MSO Stub — Sprite Scanner / Renderer
-// Deferred: full sprite scanner RTL not yet implemented.
-// Reads sprite_ram (wired above), outputs spr_pixel = 4'h0.
-// spr_addr / spr_data / spr_req / spr_ack tied off.
+// TC0370MSO — Sprite Scanner + TC0300FLA Line Buffer
 // =============================================================================
+// Sprite RAM is the 16KB BRAM above (CPU A writes at 0xC00000–0xC03FFF).
+// TC0370MSO has its own internal copy of sprite RAM; here we wire the CPU A
+// bus directly to TC0370MSO's spr_cs/spr_we interface so it maintains its own
+// internal copy (the taito_z sprite_ram BRAM above is now the CPU-read path
+// only; TC0370MSO owns the scanner-write/scan-read path internally).
+//
+// dblaxle parameters:
+//   y_offs    = 7 (shifts sprites 7 pixels up to align with display area,
+//               from bshark_draw_sprites_16x8 call in screen_update_dblaxle)
+//   frame_sel = 0 (dblaxle uses single-buffer; frame toggle unused)
+//   flip_screen = 0 (no screen flip in dblaxle)
+// =============================================================================
+logic [11:0] mso_pix_out;
+logic        mso_pix_valid;
+logic        mso_pix_priority;
 /* verilator lint_off UNUSED */
-logic [ 3:0] spr_pixel;
+logic [15:0] mso_spr_dout;
+logic        mso_spr_dtack_n;
 /* verilator lint_on UNUSED */
 
-assign spr_pixel = 4'h0;    // stub: no sprites rendered
-assign spr_addr  = 22'b0;
-assign spr_req   = 1'b0;
-// spr_data and spr_ack are inputs — no action needed
+tc0370mso u_mso (
+    .clk            (clk_pix),
+    .rst_n          (reset_n),
+
+    // CPU A sprite RAM interface (0xC00000–0xC03FFF)
+    // cpua_addr[13:1] = 13-bit word address within 16KB sprite RAM
+    .spr_cs         (spr_ram_cs),
+    .spr_we         (!cpua_rw),
+    .spr_addr       (cpua_addr[13:1]),
+    .spr_din        (cpua_din),
+    .spr_dout       (mso_spr_dout),
+    .spr_be         ({!cpua_uds_n, !cpua_lds_n}),
+    .spr_dtack_n    (mso_spr_dtack_n),
+
+    // Spritemap (STYM) ROM — 16-bit, 18-bit word address
+    .stym_addr      (stym_addr),
+    .stym_data      (stym_data),
+    .stym_req       (stym_req),
+    .stym_ack       (stym_ack),
+
+    // OBJ GFX ROM — 64-bit wide, 23-bit byte address
+    .obj_addr       (spr_addr),
+    .obj_data       (spr_data),
+    .obj_req        (spr_req),
+    .obj_ack        (spr_ack),
+
+    // Video timing (from TC0480SCP, pixel-clock domain)
+    .vblank         (scp_vblank),
+    .hblank         (scp_hblank),
+    .hpos           (scp_hpos[8:0]),
+    .vpos           (scp_vpos[7:0]),
+
+    // Game-specific parameters for dblaxle
+    .y_offs         (4'sd7),
+    .frame_sel      (1'b0),
+    .flip_screen    (1'b0),
+
+    // Pixel output
+    .pix_out        (mso_pix_out),
+    .pix_valid      (mso_pix_valid),
+    .pix_priority   (mso_pix_priority)
+);
 
 // =============================================================================
 // CPU A Data Bus Read Mux
@@ -579,7 +705,7 @@ always_comb begin
     else if (!syt_mcs_n)
         cpua_dout = syt_a_dout_word;
     else if (spr_ram_cs)
-        cpua_dout = spr_ram_dout;
+        cpua_dout = mso_spr_dout;
     else if (shram_a_cs)
         cpua_dout = shram_a_dout;
     else if (wrama_cs)
@@ -701,9 +827,12 @@ assign vblank  = scp_vblank;
 // =============================================================================
 /* verilator lint_off UNUSED */
 logic _unused;
-assign _unused = ^{scp_hpos, scp_vpos, scp_pixel_active, scp_hblank_fall,
-                   scp_pixel_out[15:12],  // upper 4 bits of pixel_out not used as palette index
-                   gfx_ack, spr_data, spr_ack};
+assign _unused = ^{scp_pixel_active, scp_hblank_fall,
+                   scp_pixel_out[15:12],  // upper 4 bits not used as palette index
+                   scp_hpos[9],           // TC0370MSO/TC0150ROD only need hpos[8:0]
+                   scp_vpos[8],           // TC0370MSO/TC0150ROD only need vpos[7:0]
+                   gfx_ack,              // TC0480SCP gfx_ack consumed by toggle-bridge
+                   rod_line_priority};   // road priority tag not consumed by compositor
 /* verilator lint_on UNUSED */
 
 endmodule
