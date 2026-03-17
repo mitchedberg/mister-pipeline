@@ -198,7 +198,14 @@ module tc0630fdp_lineram (
     output logic [ 1:0] ls_pf_blend  [0:3],
     // Sprite blend modes from §9.4 bits[7:0] (2 bits per group):
     //   bits[7:6]=group0xC0, bits[5:4]=group0x80, bits[3:2]=group0x40, bits[1:0]=group0x00
-    output logic [ 1:0] ls_spr_blend [0:3]
+    output logic [ 1:0] ls_spr_blend [0:3],
+
+    // ── Step 14: Reverse blend B coefficients ────────────────────────────────
+    // B_src: source contribution for reverse blend mode B (0=transparent, 8=opaque)
+    // B_dst: destination contribution for reverse blend mode B
+    // From §9.5 ab_word bits[15:12]=B_src, bits[7:4]=B_dst
+    output logic [ 3:0] ls_b_src,
+    output logic [ 3:0] ls_b_dst
 );
 
 // =============================================================================
@@ -356,6 +363,9 @@ always_ff @(posedge clk) begin
             ls_pf_blend[n]  <= 2'b00;  // default: opaque
             ls_spr_blend[n] <= 2'b00;  // default: opaque
         end
+        // Step 14: reverse blend B defaults
+        ls_b_src          <= 4'd8;  // default: fully opaque source
+        ls_b_dst          <= 4'd0;  // default: no destination contribution
     end else if (hblank_fall) begin
         for (int n = 0; n < 4; n++) begin
             // Rowscroll: enable bit n of en_row_word[3:0]
@@ -431,6 +441,10 @@ always_ff @(posedge clk) begin
         // ab_word bits[11:8]=A_src, bits[3:0]=A_dst
         ls_a_src <= ab_word[11:8];
         ls_a_dst <= ab_word[3:0];
+        // ── Step 14: Reverse blend B coefficients from §9.5 ab_word ──────────
+        // ab_word bits[15:12]=B_src, bits[7:4]=B_dst
+        ls_b_src <= ab_word[15:12];
+        ls_b_dst <= ab_word[7:4];
 
         // ── Step 13: PF blend modes from §9.12 pp_word bits[15:14] ───────────
         for (int n = 0; n < 4; n++) begin

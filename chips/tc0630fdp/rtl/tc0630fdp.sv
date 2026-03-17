@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Taito F3 Display Processor (Step 13: +Alpha Blend Mode A)
+// TC0630FDP — Taito F3 Display Processor (Step 14: +Alpha Blend Mode B)
 // =============================================================================
 // Integrates all video functions for Taito F3 arcade hardware (1992–1997):
 //   · 4 scrolling tilemap layers (PF1–PF4), 16×16 tiles, 4bpp  ← STEP 3 ✓
@@ -643,6 +643,9 @@ logic [ 3:0] ls_a_src;
 logic [ 3:0] ls_a_dst;
 logic [ 1:0] ls_pf_blend  [0:3];
 logic [ 1:0] ls_spr_blend [0:3];
+// Step 14: reverse blend B coefficients
+logic [ 3:0] ls_b_src;
+logic [ 3:0] ls_b_dst;
 
 tc0630fdp_lineram u_lineram (
     .clk            (clk),
@@ -675,7 +678,10 @@ tc0630fdp_lineram u_lineram (
     .ls_a_src         (ls_a_src),
     .ls_a_dst         (ls_a_dst),
     .ls_pf_blend      (ls_pf_blend),
-    .ls_spr_blend     (ls_spr_blend)
+    .ls_spr_blend     (ls_spr_blend),
+    // Step 14: reverse blend B coefficients
+    .ls_b_src         (ls_b_src),
+    .ls_b_dst         (ls_b_dst)
 );
 
 // =============================================================================
@@ -792,7 +798,7 @@ always_ff @(posedge clk) begin
 end
 
 // =============================================================================
-// tc0630fdp_colmix — Layer Compositor (Step 13: +Alpha Blend)
+// tc0630fdp_colmix — Layer Compositor (Step 14: +Alpha Blend Mode B)
 // =============================================================================
 tc0630fdp_colmix u_colmix (
     .clk               (clk),
@@ -818,6 +824,9 @@ tc0630fdp_colmix u_colmix (
     .ls_a_dst          (ls_a_dst),
     .ls_pf_blend       (ls_pf_blend),
     .ls_spr_blend      (ls_spr_blend),
+    // Step 14: reverse blend B coefficients
+    .ls_b_src          (ls_b_src),
+    .ls_b_dst          (ls_b_dst),
     // Step 13: palette read ports
     .pal_addr_src      (colmix_pal_addr_src),
     .pal_addr_dst      (colmix_pal_addr_dst),

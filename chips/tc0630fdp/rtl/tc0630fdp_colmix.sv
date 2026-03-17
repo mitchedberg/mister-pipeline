@@ -1,9 +1,9 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Layer Compositor / Color Mixer (Step 13: +Alpha Blend Mode A)
+// TC0630FDP — Layer Compositor / Color Mixer (Step 14: +Alpha Blend Mode B)
 // =============================================================================
 // Implements a 6-layer priority mux with per-layer clip plane evaluation and
-// alpha blending (Normal Mode A).
+// alpha blending (Normal Mode A and Reverse Mode B).
 //
 // Priority rules:
 //   1. Text layer wins over everything if pen != 0 (always opaque).
@@ -15,30 +15,25 @@
 // Clip plane evaluation (Step 12): per-layer clip windows evaluated per pixel.
 //   Text layer has no clip planes.
 //
-// Alpha blend (Step 13 — Normal Mode A):
+// Alpha blend (Steps 13+14):
 //   Blend mode per layer from §9.12 pp_word bits[15:14] (PF) / §9.4 (sprite):
-//     00 / 11 = opaque (winner replaces dst entirely)
+//     00      = opaque (winner replaces dst entirely)
 //     01      = normal blend A: out = clamp(src*A_src/8 + dst*A_dst/8, 0, 255)
-//     10      = reverse blend B (reserved for Step 14; treated as opaque here)
+//     10      = reverse blend B: out = clamp(src*B_src/8 + dst*B_dst/8, 0, 255)
+//     11      = opaque layer (same as 00 — winner replaces dst entirely)
 //
-//   Dual-priority tracking per pixel:
-//     src_prio: priority of the topmost committed pixel (starts at -1 = none)
-//     dst_prio: same as src_prio (tracked as a unit in Step 13; dst_prio used for mode-B)
+//   win_blend_mode encodes the active blend mode (2 bits, registered with palette
+//   addresses). In cycle N+1: if mode==01 → use A coefficients; if mode==10 → use B.
 //
-//   Mode 01 fires when layer_prio > src_prio (strictly higher):
-//     The current output pixel becomes "dst"; the new layer is "src".
-//     Blended output = clamp(src_rgb * A_src/8 + dst_rgb * A_dst/8)
-//     src_prio updated to layer_prio.
-//
-//   Darius Gaiden conflict (Step 13, Test 5):
-//     Two layers at same priority, both blend mode 01.
+//   Darius Gaiden conflict (Test 5 from Step 13):
+//     Two layers at same priority, both blend modes.
 //     Second layer: layer_prio == src_prio → strictly-greater fails → skip.
 //     Only the first layer's blend is applied.
 //
 //   Opaque layer beats blend destination:
 //     An opaque layer at higher priority replaces the blend result entirely.
 //
-// Palette and RGB output (Step 13):
+// Palette and RGB output:
 //   colmix identifies src and dst palette indices.
 //   Two palette read addresses are output: pal_addr_src, pal_addr_dst.
 //   Top-level provides two registered palette read data words: pal_rdata_src, pal_rdata_dst.
@@ -46,10 +41,10 @@
 //   blend_rgb_out[23:0] = 24-bit blended RGB (available 1 cycle after colmix_pixel_out).
 //
 // Pipeline timing:
-//   Cycle N:   Combinational: compute win_pal, win_dst, win_blend.
+//   Cycle N:   Combinational: compute win_pal, win_dst, win_blend_mode.
 //              Registered: colmix_pixel_out = {win_pal, win_pen}.
-//              Output: pal_addr_src = {win_pal[8:0], 1'b0}, pal_addr_dst = {win_dst[8:0], 1'b0}.
-//              Register: blend_en, a_src, a_dst for use in cycle N+1.
+//              Output: pal_addr_src = {win_pal[8:0], win_pen[3:0]}, pal_addr_dst = {win_dst[8:0], 4'b0}.
+//              Register: blend_mode_r, a_src_r, a_dst_r, b_src_r, b_dst_r for use in cycle N+1.
 //   Cycle N+1: pal_rdata_src / pal_rdata_dst arrive (from top-level BRAM registered at N).
 //              blend_rgb_out computed and registered.
 //
@@ -98,6 +93,10 @@ module tc0630fdp_colmix (
     input  logic [ 3:0] ls_a_dst,          // A_dst coefficient (0–8)
     input  logic [ 1:0] ls_pf_blend  [0:3],// PF blend modes (bits[15:14] of pp_word)
     input  logic [ 1:0] ls_spr_blend [0:3],// Sprite blend modes (2 bits per group)
+
+    // ── Step 14: Reverse blend B coefficients ─────────────────────────────────
+    input  logic [ 3:0] ls_b_src,          // B_src coefficient for reverse blend (0–8)
+    input  logic [ 3:0] ls_b_dst,          // B_dst coefficient for reverse blend (0–8)
 
     // ── Step 13: Palette RAM interface (two read ports) ────────────────────────
     // Src palette address (current winner's palette index, combinational output):
@@ -247,32 +246,33 @@ assign text_color = text_pixel[8:4];
 assign text_pal9  = {4'b0, text_color};
 
 // ── Rolling arbitration with blend tracking ───────────────────────────────────
-// Each stage tracks: (win_prio5, win_pal9, win_pen4, dst_pal9, do_blend)
-// win_pal9  = src palette index (winning layer)
-// dst_pal9  = destination palette index (what was below the blend layer)
-// do_blend  = 1 when blend mode 01 should be applied
+// Each stage tracks: (win_prio5, win_pal9, win_pen4, dst_pal9, blend_mode)
+// win_pal9   = src palette index (winning layer)
+// dst_pal9   = destination palette index (what was below the blend layer)
+// blend_mode = 2-bit: 00=opaque, 01=blend A, 10=blend B, 11=opaque
+//              (01 and 10 use different coefficient pairs; 11 same as 00)
 
 // Stage outputs: after PF0
 logic [4:0]  w0_prio; logic [8:0] w0_pal; logic [3:0] w0_pen;
-logic [8:0]  w0_dst;  logic       w0_blend;
+logic [8:0]  w0_dst;  logic [1:0] w0_bmode;
 // after PF1
 logic [4:0]  w1_prio; logic [8:0] w1_pal; logic [3:0] w1_pen;
-logic [8:0]  w1_dst;  logic       w1_blend;
+logic [8:0]  w1_dst;  logic [1:0] w1_bmode;
 // after PF2
 logic [4:0]  w2_prio; logic [8:0] w2_pal; logic [3:0] w2_pen;
-logic [8:0]  w2_dst;  logic       w2_blend;
+logic [8:0]  w2_dst;  logic [1:0] w2_bmode;
 // after PF3
 logic [4:0]  w3_prio; logic [8:0] w3_pal; logic [3:0] w3_pen;
-logic [8:0]  w3_dst;  logic       w3_blend;
+logic [8:0]  w3_dst;  logic [1:0] w3_bmode;
 // after sprite
 logic [4:0]  w4_prio; logic [8:0] w4_pal; logic [3:0] w4_pen;
-logic [8:0]  w4_dst;  logic       w4_blend;
+logic [8:0]  w4_dst;  logic [1:0] w4_bmode;
 // final (after text)
 logic [4:0]  win_prio;
 logic [8:0]  win_pal;
 logic [3:0]  win_pen;
 logic [8:0]  win_dst;
-logic        win_blend;
+logic [1:0]  win_bmode;
 
 // PF0 — first layer, no dst yet (pen=0 = no winner)
 always_comb begin
@@ -282,10 +282,10 @@ always_comb begin
         w0_pen   = pf_pen[0];
         // First layer: nothing beneath, no blend possible
         w0_dst   = 9'b0;
-        w0_blend = 1'b0;
+        w0_bmode = 2'b00;
     end else begin
         w0_prio = 5'd0; w0_pal = 9'd0; w0_pen = 4'd0;
-        w0_dst  = 9'd0; w0_blend = 1'b0;
+        w0_dst  = 9'd0; w0_bmode = 2'b00;
     end
 end
 
@@ -295,17 +295,17 @@ always_comb begin
         w1_prio  = pf_prio[1];
         w1_pal   = pf_pal[1];
         w1_pen   = pf_pen[1];
-        // Blend mode 01 when there is an existing opaque pixel below
-        if (pf_bmode[1] == 2'b01 && w0_pen != 4'd0) begin
+        // Blend mode 01 or 10 when there is an existing opaque pixel below
+        if ((pf_bmode[1] == 2'b01 || pf_bmode[1] == 2'b10) && w0_pen != 4'd0) begin
             w1_dst   = w0_pal;
-            w1_blend = 1'b1;
+            w1_bmode = pf_bmode[1];
         end else begin
             w1_dst   = 9'b0;
-            w1_blend = 1'b0;
+            w1_bmode = 2'b00;
         end
     end else begin
         w1_prio = w0_prio; w1_pal = w0_pal; w1_pen = w0_pen;
-        w1_dst  = w0_dst;  w1_blend = w0_blend;
+        w1_dst  = w0_dst;  w1_bmode = w0_bmode;
     end
 end
 
@@ -315,16 +315,16 @@ always_comb begin
         w2_prio  = pf_prio[2];
         w2_pal   = pf_pal[2];
         w2_pen   = pf_pen[2];
-        if (pf_bmode[2] == 2'b01 && w1_pen != 4'd0) begin
+        if ((pf_bmode[2] == 2'b01 || pf_bmode[2] == 2'b10) && w1_pen != 4'd0) begin
             w2_dst   = w1_pal;
-            w2_blend = 1'b1;
+            w2_bmode = pf_bmode[2];
         end else begin
             w2_dst   = 9'b0;
-            w2_blend = 1'b0;
+            w2_bmode = 2'b00;
         end
     end else begin
         w2_prio = w1_prio; w2_pal = w1_pal; w2_pen = w1_pen;
-        w2_dst  = w1_dst;  w2_blend = w1_blend;
+        w2_dst  = w1_dst;  w2_bmode = w1_bmode;
     end
 end
 
@@ -334,16 +334,16 @@ always_comb begin
         w3_prio  = pf_prio[3];
         w3_pal   = pf_pal[3];
         w3_pen   = pf_pen[3];
-        if (pf_bmode[3] == 2'b01 && w2_pen != 4'd0) begin
+        if ((pf_bmode[3] == 2'b01 || pf_bmode[3] == 2'b10) && w2_pen != 4'd0) begin
             w3_dst   = w2_pal;
-            w3_blend = 1'b1;
+            w3_bmode = pf_bmode[3];
         end else begin
             w3_dst   = 9'b0;
-            w3_blend = 1'b0;
+            w3_bmode = 2'b00;
         end
     end else begin
         w3_prio = w2_prio; w3_pal = w2_pal; w3_pen = w2_pen;
-        w3_dst  = w2_dst;  w3_blend = w2_blend;
+        w3_dst  = w2_dst;  w3_bmode = w2_bmode;
     end
 end
 
@@ -353,16 +353,16 @@ always_comb begin
         w4_prio  = spr_prio5;
         w4_pal   = spr_pal9;
         w4_pen   = spr_pen;
-        if (spr_bmode == 2'b01 && w3_pen != 4'd0) begin
+        if ((spr_bmode == 2'b01 || spr_bmode == 2'b10) && w3_pen != 4'd0) begin
             w4_dst   = w3_pal;
-            w4_blend = 1'b1;
+            w4_bmode = spr_bmode;
         end else begin
             w4_dst   = 9'b0;
-            w4_blend = 1'b0;
+            w4_bmode = 2'b00;
         end
     end else begin
         w4_prio = w3_prio; w4_pal = w3_pal; w4_pen = w3_pen;
-        w4_dst  = w3_dst;  w4_blend = w3_blend;
+        w4_dst  = w3_dst;  w4_bmode = w3_bmode;
     end
 end
 
@@ -373,13 +373,13 @@ always_comb begin
         win_pal   = text_pal9;
         win_pen   = text_pen_w;
         win_dst   = 9'b0;
-        win_blend = 1'b0;
+        win_bmode = 2'b00;
     end else begin
         win_prio  = w4_prio;
         win_pal   = w4_pal;
         win_pen   = w4_pen;
         win_dst   = w4_dst;
-        win_blend = w4_blend;
+        win_bmode = w4_bmode;
     end
 end
 
@@ -388,6 +388,14 @@ end
 logic _unused_winprio;
 assign _unused_winprio = ^win_prio;
 /* verilator lint_on UNUSED */
+
+// Decode whether any blend is active (01 or 10).
+// Used in comments/documentation; suppressed since blend dispatch is done
+// directly via win_bmode in the pipeline register.
+/* verilator lint_off UNUSED */
+logic win_do_blend;
+/* verilator lint_on UNUSED */
+assign win_do_blend = (win_bmode == 2'b01) || (win_bmode == 2'b10);
 
 // ── Registered colmix_pixel_out ───────────────────────────────────────────────
 always_ff @(posedge clk) begin
@@ -424,19 +432,25 @@ assign pal_addr_dst = {win_dst, 4'b0};       // 9+4 = 13 bits
 //   - Register into blend_rgb_out
 
 // Stage 0 pipeline registers
-logic        blend_en_r;
+logic [1:0]  blend_mode_r;   // registered blend mode (00=opaque, 01=A, 10=B, 11=opaque)
 logic [ 3:0] a_src_r;
 logic [ 3:0] a_dst_r;
+logic [ 3:0] b_src_r;
+logic [ 3:0] b_dst_r;
 
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        blend_en_r <= 1'b0;
-        a_src_r    <= 4'd8;
-        a_dst_r    <= 4'd0;
+        blend_mode_r <= 2'b00;
+        a_src_r      <= 4'd8;
+        a_dst_r      <= 4'd0;
+        b_src_r      <= 4'd8;
+        b_dst_r      <= 4'd0;
     end else begin
-        blend_en_r <= win_blend;
-        a_src_r    <= ls_a_src;
-        a_dst_r    <= ls_a_dst;
+        blend_mode_r <= win_bmode;
+        a_src_r      <= ls_a_src;
+        a_dst_r      <= ls_a_dst;
+        b_src_r      <= ls_b_src;
+        b_dst_r      <= ls_b_dst;
     end
 end
 
@@ -499,17 +513,28 @@ always_ff @(posedge clk) begin
     if (!rst_n) begin
         blend_rgb_out <= 24'b0;
     end else begin
-        if (blend_en_r) begin
-            // Normal blend A
-            blend_rgb_out <= {
-                blend_channel(src_r, dst_r, a_src_r, a_dst_r),
-                blend_channel(src_g, dst_g, a_src_r, a_dst_r),
-                blend_channel(src_b, dst_b, a_src_r, a_dst_r)
-            };
-        end else begin
-            // Opaque: output src color directly
-            blend_rgb_out <= {src_r, src_g, src_b};
-        end
+        unique case (blend_mode_r)
+            2'b01: begin
+                // Normal blend A: src*A_src/8 + dst*A_dst/8
+                blend_rgb_out <= {
+                    blend_channel(src_r, dst_r, a_src_r, a_dst_r),
+                    blend_channel(src_g, dst_g, a_src_r, a_dst_r),
+                    blend_channel(src_b, dst_b, a_src_r, a_dst_r)
+                };
+            end
+            2'b10: begin
+                // Reverse blend B: src*B_src/8 + dst*B_dst/8
+                blend_rgb_out <= {
+                    blend_channel(src_r, dst_r, b_src_r, b_dst_r),
+                    blend_channel(src_g, dst_g, b_src_r, b_dst_r),
+                    blend_channel(src_b, dst_b, b_src_r, b_dst_r)
+                };
+            end
+            default: begin
+                // Opaque (modes 00 and 11): output src color directly
+                blend_rgb_out <= {src_r, src_g, src_b};
+            end
+        endcase
     end
 end
 
