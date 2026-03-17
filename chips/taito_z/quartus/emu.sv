@@ -776,37 +776,98 @@ wire [7:0] core_rgb_r, core_rgb_g, core_rgb_b;
 wire       core_hsync_n, core_vsync_n;
 wire       core_hblank, core_vblank;
 
+//////////////////////////////////////////////////////////////////
+// fx68k_adapter — CPU A (MC68000 @ 16 MHz)
+//////////////////////////////////////////////////////////////////
+
+wire [23:1] cpua_addr;
+wire [15:0] cpua_din;     // taito_z → CPU A (read data from bus)
+wire [15:0] cpua_dout;    // CPU A → taito_z (write data)
+wire        cpua_rw;
+wire        cpua_uds_n;
+wire        cpua_lds_n;
+wire        cpua_as_n;
+wire        cpua_dtack_n; // taito_z → CPU A
+wire [2:0]  cpua_ipl_n;   // taito_z → CPU A
+wire        cpua_reset_n_out;
+
+fx68k_adapter u_cpu_a (
+    .clk            (clk_sys),
+    .cpu_ce         (ce_cpu),
+    .reset_n        (reset_n),
+
+    .cpu_addr       (cpua_addr),
+    .cpu_din        (cpua_din),
+    .cpu_dout       (cpua_dout),
+    .cpu_rw         (cpua_rw),
+    .cpu_uds_n      (cpua_uds_n),
+    .cpu_lds_n      (cpua_lds_n),
+    .cpu_as_n       (cpua_as_n),
+    .cpu_dtack_n    (cpua_dtack_n),
+    .cpu_ipl_n      (cpua_ipl_n),
+    .cpu_reset_n_out(cpua_reset_n_out)
+);
+
+//////////////////////////////////////////////////////////////////
+// fx68k_adapter — CPU B (MC68000 @ 16 MHz, opposite phase)
+//////////////////////////////////////////////////////////////////
+
+wire [23:1] cpub_addr;
+wire [15:0] cpub_din;     // taito_z → CPU B (read data from bus)
+wire [15:0] cpub_dout;    // CPU B → taito_z (write data)
+wire        cpub_rw;
+wire        cpub_uds_n;
+wire        cpub_lds_n;
+wire        cpub_as_n;
+wire        cpub_dtack_n; // taito_z → CPU B
+wire [2:0]  cpub_ipl_n;   // taito_z → CPU B
+wire        cpub_reset_n; // taito_z → CPU B (CPU A can hold CPU B in reset)
+wire        cpub_reset_n_out;
+
+fx68k_adapter u_cpu_b (
+    .clk            (clk_sys),
+    .cpu_ce         (ce_cpu_b),         // opposite phase to CPU A
+    .reset_n        (reset_n & cpub_reset_n),  // held in reset by CPU A control register
+    .cpu_addr       (cpub_addr),
+    .cpu_din        (cpub_din),
+    .cpu_dout       (cpub_dout),
+    .cpu_rw         (cpub_rw),
+    .cpu_uds_n      (cpub_uds_n),
+    .cpu_lds_n      (cpub_lds_n),
+    .cpu_as_n       (cpub_as_n),
+    .cpu_dtack_n    (cpub_dtack_n),
+    .cpu_ipl_n      (cpub_ipl_n),
+    .cpu_reset_n_out(cpub_reset_n_out)
+);
+
 taito_z u_taito_z
 (
     .clk_sys    (clk_sys),
     .clk_pix    (ce_pix),
     .reset_n    (reset_n),
 
-    // ── CPU A bus (driven by 68000 core in emu, passed into taito_z) ──────────
-    // Note: The MC68000 CPU cores are instantiated here in emu.sv so they have
-    // direct access to the SDRAM controller for program ROM reads.
-    // taito_z exposes CPU bus ports for peripherals (RAM, chips); the CPUs
-    // themselves live in this wrapper.
-    //
-    // For this integration skeleton, we stub the CPU A and CPU B buses with
-    // idle values. The 68000 CPU instances will be added in a subsequent step
-    // once the TG68 or fx68k core is wired in.
-    //
-    // CPU A bus (stub — idle, no transactions)
-    .cpua_addr   (23'h0),
-    .cpua_din    (16'h0),
-    .cpua_lds_n  (1'b1),
-    .cpua_uds_n  (1'b1),
-    .cpua_rw     (1'b1),
-    .cpua_as_n   (1'b1),
+    // ── CPU A bus — driven by fx68k_adapter u_cpu_a ──────────────────────────
+    .cpua_addr   (cpua_addr),
+    .cpua_din    (cpua_dout),   // CPU A write data → taito_z
+    .cpua_dout   (cpua_din),    // taito_z read data → CPU A
+    .cpua_lds_n  (cpua_lds_n),
+    .cpua_uds_n  (cpua_uds_n),
+    .cpua_rw     (cpua_rw),
+    .cpua_as_n   (cpua_as_n),
+    .cpua_dtack_n(cpua_dtack_n),
+    .cpua_ipl_n  (cpua_ipl_n),
 
-    // CPU B bus (stub — idle, no transactions)
-    .cpub_addr   (23'h0),
-    .cpub_din    (16'h0),
-    .cpub_lds_n  (1'b1),
-    .cpub_uds_n  (1'b1),
-    .cpub_rw     (1'b1),
-    .cpub_as_n   (1'b1),
+    // ── CPU B bus — driven by fx68k_adapter u_cpu_b ──────────────────────────
+    .cpub_addr   (cpub_addr),
+    .cpub_din    (cpub_dout),   // CPU B write data → taito_z
+    .cpub_dout   (cpub_din),    // taito_z read data → CPU B
+    .cpub_lds_n  (cpub_lds_n),
+    .cpub_uds_n  (cpub_uds_n),
+    .cpub_rw     (cpub_rw),
+    .cpub_as_n   (cpub_as_n),
+    .cpub_dtack_n(cpub_dtack_n),
+    .cpub_ipl_n  (cpub_ipl_n),
+    .cpub_reset_n(cpub_reset_n),
 
     // ── GFX ROM (TC0480SCP, 4 × 32-bit toggle-handshake) ─────────────────────
     .gfx_addr    (gfx_addr_core),
@@ -910,19 +971,9 @@ wire _unused = &{
     direct_video,
     joystick_0[31:11], joystick_1[31:10],
     dsw[0], dsw[1], dsw[2], dsw[3],
-    ce_cpu_b
+    cpua_reset_n_out,   // CPU A RESET instruction output (not used at top level)
+    cpub_reset_n_out    // CPU B RESET instruction output (not used at top level)
 };
-/* verilator lint_on UNUSED */
-
-// Suppress taito_z CPU output ports (not consumed here — CPU stubs only)
-/* verilator lint_off UNUSED */
-wire [15:0] _cpua_dout;
-wire        _cpua_dtack_n;
-wire  [2:0] _cpua_ipl_n;
-wire [15:0] _cpub_dout;
-wire        _cpub_dtack_n;
-wire  [2:0] _cpub_ipl_n;
-wire        _cpub_reset_n;
 /* verilator lint_on UNUSED */
 
 endmodule

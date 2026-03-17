@@ -53,12 +53,15 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0370mso/rtl/tc0370mso.sv
 # =========================================================================
 # MC68000 CPU CORES (Dual CPU A + CPU B)
 # =========================================================================
-# fx68k: Cycle-accurate 68000 implementation
-# Two instances: one for CPU A, one for CPU B
+# fx68k: Cycle-accurate 68000 implementation by Jorge Cwik
+# Source: https://github.com/ijor/fx68k
+# Downloaded to: chips/m68000/hdl/fx68k/
+# Two instances instantiated via fx68k_adapter (chips/m68000/rtl/fx68k_adapter.sv)
 
-set_global_assignment -name VERILOG_FILE ../../fx68k/fx68k.v
-set_global_assignment -name VERILOG_FILE ../../fx68k/fx68kAlu.v
-set_global_assignment -name VERILOG_FILE ../../fx68k/uaddrPla.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/fx68k.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/fx68kAlu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/uaddrPla.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/rtl/fx68k_adapter.sv
 
 # =========================================================================
 # TIMING CONSTRAINTS
