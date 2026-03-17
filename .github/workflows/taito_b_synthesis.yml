@@ -24,14 +24,8 @@ jobs:
       - name: Probe Quartus container
         run: |
           mkdir -p /tmp/quartus_diag
-          docker run --rm raetro/quartus:17.0 sh -c "
-            echo '=== ENV PATH ===' && echo \$PATH
-            echo '=== which quartus_sh ===' && which quartus_sh || echo NOT_IN_PATH
-            echo '=== quartus_sh version ===' && quartus_sh --version 2>&1 || echo NO_VERSION
-            echo '=== find quartus_sh ===' && find / -name 'quartus_sh' 2>/dev/null | head -10 || true
-            echo '=== /opt listing ===' && ls /opt 2>/dev/null || echo 'no /opt'
-          " 2>&1 | tee /tmp/quartus_diag/probe.log
-          echo "Probe exit: ${PIPESTATUS[0]}"
+          docker run --rm raetro/quartus:17.0 sh -c 'echo "PATH=$PATH"; which quartus_sh || echo NOT_IN_PATH; quartus_sh --version 2>&1 || echo NO_VERSION; find / -name quartus_sh 2>/dev/null | head -10; ls /opt 2>/dev/null || echo no_opt' 2>&1 | tee /tmp/quartus_diag/probe.log
+          echo "Probe done"
 
       - name: Run Quartus synthesis (via Docker)
         run: |
@@ -40,23 +34,8 @@ jobs:
             -v "$GITHUB_WORKSPACE:/workspace" \
             -w /workspace/chips/taito_b/quartus \
             raetro/quartus:17.0 \
-            sh -c "
-              echo '==========================================
-Starting Quartus Taito B synthesis
-=========================================='
-              echo '=== PATH ===' && echo \$PATH
-              echo '=== quartus_sh ===' && (which quartus_sh && quartus_sh --version) || echo quartus_sh NOT IN PATH
-              for d in /opt/intelFPGA_lite/17.0/quartus/bin /opt/intelFPGA/17.0/quartus/bin /opt/altera/17.0/quartus/bin; do
-                if [ -f \"\$d/quartus_sh\" ]; then
-                  echo \"Found at \$d\" && export PATH=\"\$d:\$PATH\" && break
-                fi
-              done
-              echo '=== Working dir ===' && ls -la
-              quartus_sh --flow compile taito_b
-              STATUS=\$?
-              echo '=== Output files ===' && ls -la output_files/ 2>/dev/null || echo 'no output_files dir'
-              exit \$STATUS
-            " 2>&1 | tee /tmp/quartus_diag/b_synthesis.log
+            sh -c 'echo "=== PATH ===" && echo "$PATH" && (which quartus_sh && quartus_sh --version) || echo "quartus_sh NOT IN PATH" && for d in /opt/intelFPGA_lite/17.0/quartus/bin /opt/intelFPGA/17.0/quartus/bin /opt/altera/17.0/quartus/bin; do [ -f "$d/quartus_sh" ] && export PATH="$d:$PATH" && echo "found at $d" && break; done && echo "=== Working dir ===" && ls -la && quartus_sh --flow compile taito_b; STATUS=$?; echo "=== Output files ===" && ls -la output_files/ 2>/dev/null || echo "no output_files"; exit $STATUS' \
+            2>&1 | tee /tmp/quartus_diag/b_synthesis.log
           EXIT=${PIPESTATUS[0]}
           echo "Docker exit code: $EXIT"
           exit $EXIT
