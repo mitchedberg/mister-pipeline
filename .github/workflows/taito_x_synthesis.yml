@@ -21,40 +21,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache Quartus
-        uses: actions/cache@v4
-        id: cache-quartus
-        with:
-          path: ~/intelFPGA_lite
-          key: quartus-lite-17.0.2
-
-      - name: Install Quartus Lite 17.0.2
-        if: steps.cache-quartus.outputs.cache-hit != 'true'
+      - name: Run Quartus synthesis (Docker)
         run: |
-          # Quartus 17.0.2 is the standard for MiSTer/Cyclone V
-          # Download tar archive from Intel (8.7GB, ~30min on fast connection)
-          echo "Downloading Quartus Lite 17.0.2 (8.7GB)..."
-          wget --timeout=300 -q "https://downloads.intel.com/akdlm/software/acdsinst/17.0std.2/602/ib_tar/Quartus-lite-17.0.2.602-linux.tar"
-          echo "Extracting to ~/intelFPGA_lite..."
-          mkdir -p ~/intelFPGA_lite
-          tar -xf Quartus-lite-17.0.2.602-linux.tar -C ~/intelFPGA_lite --strip-components=1
-
-      - name: Run Quartus synthesis
-        run: |
-          export PATH="$HOME/intelFPGA_lite/quartus/bin:$PATH"
-          cd "${{ github.workspace }}/chips/taito_x/quartus"
-          mkdir -p /tmp/quartus_diag
-          quartus_sh --flow compile taito_x 2>&1 | tee /tmp/quartus_diag/x_synthesis.log
-          EXIT=${PIPESTATUS[0]}
-          echo "Quartus exit code: $EXIT"
-          exit $EXIT
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/taito_x/quartus && /opt/intelFPGA/quartus/bin/quartus_sh --flow compile taito_x 2>&1 | tee /workspace/taito_x_synthesis.log; exit \${PIPESTATUS[0]}"
 
       - name: Upload synthesis log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: taito_x_synthesis_log
-          path: /tmp/quartus_diag/x_synthesis.log
+          path: taito_x_synthesis.log
           retention-days: 7
 
       - name: Collect artifacts
