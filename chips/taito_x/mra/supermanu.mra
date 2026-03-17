@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Superman (US) — Taito X System, 1988
+  MC68000 @ 8 MHz, Z80 @ 4 MHz, YM2610 OPNB @ 8 MHz
+  X1-001A/X1-002A sprites, xRGB_555 palette (2048 entries), 384×240 @ 60 Hz
+
+  ROM set name in MAME: supermanu
+  Parent set:           superman (Japan)
+  Difference:           Program ROM only; sprite/GFX ROMs shared with parent.
+
+  SDRAM layout: same as superman.mra
+  CRCs are placeholders — replace with MAME ROM dump values.
+-->
+<misterromdescription>
+  <name>Superman (US)</name>
+  <setname>supermanu</setname>
+  <rbf>taito_x</rbf>
+  <mameversion>0264</mameversion>
+  <year>1988</year>
+  <manufacturer>Taito America</manufacturer>
+  <category>Beat &apos;em up</category>
+  <players>2</players>
+  <buttons names="Attack,Jump,Special,Start,Coin" default="A,B,X,Start,Select"/>
+
+  <!-- 68000 program ROM (US version) + Z80 audio -->
+  <rom index="0" zip="supermanu.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="a54-08.6e" crc="00000000" offset="0x000000" length="0x040000"/>
+    <part name="a54-09.6f" crc="00000000" offset="0x040000" length="0x040000"/>
+    <!-- Z80 audio: same as Japan version -->
+    <part name="a54-03.1e" crc="00000000" offset="0x080000" length="0x010000"/>
+  </rom>
+
+  <!-- Sprite/GFX ROM: same as japan set -->
+  <rom index="1" zip="superman.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="a54-04.4d" crc="00000000" offset="0x000000" length="0x080000"/>
+    <part name="a54-05.4f" crc="00000000" offset="0x080000" length="0x080000"/>
+    <part name="a54-06.4k" crc="00000000" offset="0x100000" length="0x080000"/>
+    <part name="a54-07.4m" crc="00000000" offset="0x180000" length="0x080000"/>
+  </rom>
+
+  <rom index="0xFE">
+    <part repeat="4">FF</part>
+  </rom>
+
+</misterromdescription>

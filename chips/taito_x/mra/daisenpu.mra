@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Daisenpu (Japan) — Taito X System, 1989
+  MC68000 @ 8 MHz, Z80 @ 4 MHz, YM2151 OPM @ 3.58 MHz
+  X1-001A/X1-002A sprites, xRGB_555 palette (2048 entries), 384×240 @ 60 Hz
+
+  ROM set name in MAME: daisenpu
+  Parent set:           twinhawk (US)
+  Difference:           Program ROM + Japanese text
+
+  SDRAM layout: same as twinhawk.mra
+  CRCs are placeholders — replace with MAME ROM dump values.
+-->
+<misterromdescription>
+  <name>Daisenpu (Japan)</name>
+  <setname>daisenpu</setname>
+  <rbf>taito_x</rbf>
+  <mameversion>0264</mameversion>
+  <year>1989</year>
+  <manufacturer>Toaplan / Taito</manufacturer>
+  <category>Shooter</category>
+  <players>2</players>
+  <buttons names="Fire,Bomb,Start,Coin" default="A,B,Start,Select"/>
+
+  <!-- 68000 program ROM (Japan version) + Z80 audio -->
+  <rom index="0" zip="daisenpu.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c45-09.ic52" crc="00000000" offset="0x000000" length="0x040000"/>
+    <part name="c45-08.ic51" crc="00000000" offset="0x040000" length="0x040000"/>
+    <part name="c45-10.ic28" crc="00000000" offset="0x080000" length="0x010000"/>
+  </rom>
+
+  <!-- Sprite/Tile GFX ROM: shared with twinhawk parent -->
+  <rom index="1" zip="twinhawk.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c45-02.ic14" crc="00000000" offset="0x000000" length="0x080000"/>
+    <part name="c45-03.ic15" crc="00000000" offset="0x080000" length="0x080000"/>
+    <part name="c45-04.ic16" crc="00000000" offset="0x100000" length="0x080000"/>
+  </rom>
+
+  <rom index="0xFE">
+    <part repeat="4">FF</part>
+  </rom>
+
+</misterromdescription>
