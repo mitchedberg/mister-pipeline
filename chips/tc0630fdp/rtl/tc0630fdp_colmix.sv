@@ -1,37 +1,61 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Layer Compositor / Color Mixer (Step 12: +Clip Planes)
+// TC0630FDP — Layer Compositor / Color Mixer (Step 13: +Alpha Blend Mode A)
 // =============================================================================
-// Implements a 6-layer priority mux with per-layer clip plane evaluation:
-//   - 4 PF tilemap layers (PF1–PF4): variable priority 0–15 from Line RAM §9.12
-//   - Text layer: fixed highest priority (always on top, overrides all)
-//   - Sprite layer: 4 priority groups (0x00/0x40/0x80/0xC0), priority 0–15 from §9.8
+// Implements a 6-layer priority mux with per-layer clip plane evaluation and
+// alpha blending (Normal Mode A).
 //
-// Priority rules (Step 11, no alpha blend):
-//   1. Text layer wins over everything if pen != 0.
-//   2. Among PF and sprite layers, higher numeric priority wins.
-//   3. Equal-priority tie: sprite wins over PF.
+// Priority rules:
+//   1. Text layer wins over everything if pen != 0 (always opaque).
+//   2. Among PF and sprite layers, higher numeric priority wins (strictly >).
+//   3. Equal-priority tie: sprite wins over PF (>=).
 //   4. Transparent pixels (pen == 0) are skipped.
 //   5. If all layers are transparent, output pen=0 (background).
 //
-// Clip plane evaluation (Step 12):
-//   For each PF layer n and sprite layer:
-//     For each enabled clip plane p (ls_pf_clip_en[n][p] or ls_spr_clip_en[p]):
-//       inside_p = (screen_x >= ls_clip_left[p]) && (screen_x <= ls_clip_right[p])
-//     Normal mode (clip_inv[p]==0): pixel visible if inside ALL enabled planes.
-//       visible = AND of all enabled inside_p
-//     Invert mode (clip_inv[p]==1): pixel blanked if inside that plane (complement).
-//       For each plane independently: if clip_inv[p] set, flip inside_p.
-//     Inversion sense bit: if set, invert the overall clip_invert interpretation.
-//   If layer is clipped (not visible): treat pen as 0 (transparent) for that layer.
+// Clip plane evaluation (Step 12): per-layer clip windows evaluated per pixel.
 //   Text layer has no clip planes.
+//
+// Alpha blend (Step 13 — Normal Mode A):
+//   Blend mode per layer from §9.12 pp_word bits[15:14] (PF) / §9.4 (sprite):
+//     00 / 11 = opaque (winner replaces dst entirely)
+//     01      = normal blend A: out = clamp(src*A_src/8 + dst*A_dst/8, 0, 255)
+//     10      = reverse blend B (reserved for Step 14; treated as opaque here)
+//
+//   Dual-priority tracking per pixel:
+//     src_prio: priority of the topmost committed pixel (starts at -1 = none)
+//     dst_prio: same as src_prio (tracked as a unit in Step 13; dst_prio used for mode-B)
+//
+//   Mode 01 fires when layer_prio > src_prio (strictly higher):
+//     The current output pixel becomes "dst"; the new layer is "src".
+//     Blended output = clamp(src_rgb * A_src/8 + dst_rgb * A_dst/8)
+//     src_prio updated to layer_prio.
+//
+//   Darius Gaiden conflict (Step 13, Test 5):
+//     Two layers at same priority, both blend mode 01.
+//     Second layer: layer_prio == src_prio → strictly-greater fails → skip.
+//     Only the first layer's blend is applied.
+//
+//   Opaque layer beats blend destination:
+//     An opaque layer at higher priority replaces the blend result entirely.
+//
+// Palette and RGB output (Step 13):
+//   colmix identifies src and dst palette indices.
+//   Two palette read addresses are output: pal_addr_src, pal_addr_dst.
+//   Top-level provides two registered palette read data words: pal_rdata_src, pal_rdata_dst.
+//   Blend computation uses 4-bit R/G/B channels from each, expanded to 8-bit.
+//   blend_rgb_out[23:0] = 24-bit blended RGB (available 1 cycle after colmix_pixel_out).
+//
+// Pipeline timing:
+//   Cycle N:   Combinational: compute win_pal, win_dst, win_blend.
+//              Registered: colmix_pixel_out = {win_pal, win_pen}.
+//              Output: pal_addr_src = {win_pal[8:0], 1'b0}, pal_addr_dst = {win_dst[8:0], 1'b0}.
+//              Register: blend_en, a_src, a_dst for use in cycle N+1.
+//   Cycle N+1: pal_rdata_src / pal_rdata_dst arrive (from top-level BRAM registered at N).
+//              blend_rgb_out computed and registered.
 //
 // Output:
 //   colmix_pixel_out[12:0] = {palette[8:0], pen[3:0]}
-//     pen==0 means all layers transparent.
-//     Text layer stores color[4:0] in palette[4:0] (bits[8:5] are 0).
-//
-// Screen X coordinate: hpos - H_START  (valid during active display, hpos in [46,366))
+//   blend_rgb_out[23:0]    = blended 24-bit RGB
 // =============================================================================
 
 localparam int COLMIX_H_START = 46;
@@ -56,39 +80,42 @@ module tc0630fdp_colmix (
     input  logic [11:0] spr_pixel,
 
     // ── Per-scanline priority values ──────────────────────────────────────────
-    // PF priority: ls_pf_prio[n] = priority for PF(n+1).
     input  logic [ 3:0] ls_pf_prio  [0:3],
-    // Sprite group priorities: [0]=group0x00, [1]=group0x40, [2]=group0x80, [3]=group0xC0.
     input  logic [ 3:0] ls_spr_prio [0:3],
 
     // ── Step 12: Clip plane inputs ─────────────────────────────────────────────
-    // Clip plane boundaries (8-bit, one per plane 0–3):
     input  logic [ 7:0] ls_clip_left   [0:3],
     input  logic [ 7:0] ls_clip_right  [0:3],
-
-    // PF clip configuration (per PF layer):
-    //   ls_pf_clip_en[n]      = 4-bit enable mask (one bit per clip plane)
-    //   ls_pf_clip_inv[n]     = 4-bit invert mask (per clip plane)
-    //   ls_pf_clip_sense[n]   = inversion sense bit
     input  logic [ 3:0] ls_pf_clip_en   [0:3],
     input  logic [ 3:0] ls_pf_clip_inv  [0:3],
     input  logic        ls_pf_clip_sense[0:3],
-
-    // Sprite clip configuration:
     input  logic [ 3:0] ls_spr_clip_en,
     input  logic [ 3:0] ls_spr_clip_inv,
     input  logic        ls_spr_clip_sense,
 
+    // ── Step 13: Alpha blend inputs ───────────────────────────────────────────
+    input  logic [ 3:0] ls_a_src,          // A_src coefficient (0–8)
+    input  logic [ 3:0] ls_a_dst,          // A_dst coefficient (0–8)
+    input  logic [ 1:0] ls_pf_blend  [0:3],// PF blend modes (bits[15:14] of pp_word)
+    input  logic [ 1:0] ls_spr_blend [0:3],// Sprite blend modes (2 bits per group)
+
+    // ── Step 13: Palette RAM interface (two read ports) ────────────────────────
+    // Src palette address (current winner's palette index, combinational output):
+    output logic [12:0] pal_addr_src,
+    // Dst palette address (blend destination's palette index, combinational output):
+    output logic [12:0] pal_addr_dst,
+    // Palette data arrives registered (1-cycle latency from top-level BRAM):
+    input  logic [15:0] pal_rdata_src,     // palette[pal_addr_src] registered
+    input  logic [15:0] pal_rdata_dst,     // palette[pal_addr_dst] registered
+
     // ── Composited output ─────────────────────────────────────────────────────
-    output logic [12:0] colmix_pixel_out
+    output logic [12:0] colmix_pixel_out,
+    // ── Step 13: Blended RGB output ───────────────────────────────────────────
+    // Registered 1 cycle after colmix_pixel_out.
+    output logic [23:0] blend_rgb_out
 );
 
 // ── Screen X coordinate ──────────────────────────────────────────────────────
-// screen_x is valid during active display (when pixel_valid is asserted).
-// hpos is 10-bit; H_START=46; active region [46,366). screen_x = hpos - H_START.
-// Active area is 320 pixels (0–319), which fits in 9 bits; clip boundaries are
-// 8-bit (0–255) so we use the lower 8 bits for comparison.
-// screen_x_9[8] is unused because clip boundaries are 8-bit (0–255 max).
 /* verilator lint_off UNUSEDSIGNAL */
 logic [8:0] screen_x_9;
 /* verilator lint_on UNUSEDSIGNAL */
@@ -102,26 +129,6 @@ always_comb begin
 end
 
 // ── Clip plane evaluation function ───────────────────────────────────────────
-// Evaluate 4 clip planes for a layer. Returns 1 if the pixel is VISIBLE.
-// Parameters:
-//   clip_en    : 4-bit enable mask
-//   clip_inv   : 4-bit invert mask (per-plane inversion)
-//   clip_sense : inversion sense (when 1, flip invert interpretation)
-//   sx         : 9-bit screen X
-//   left[0..3] : clip plane left boundaries
-//   right[0..3]: clip plane right boundaries
-//
-// Algorithm (per section1 §12.3):
-//   For each enabled plane p:
-//     inside_p = (sx >= left[p]) && (sx <= right[p])
-//     effective_inv_p = clip_inv[p] XOR clip_sense
-//     if effective_inv_p: visible_p = !inside_p  (invert mode — blank inside)
-//     else:               visible_p = inside_p   (normal mode — show inside)
-//   If no planes enabled: visible = 1 (no clip).
-//   Intersect all enabled plane visibility: visible = AND of all visible_p.
-//
-// Result: 1 = pixel passes clip (visible), 0 = pixel clipped (blanked).
-
 function automatic logic eval_clip(
     input logic [ 3:0] clip_en,
     input logic [ 3:0] clip_inv,
@@ -141,7 +148,6 @@ function automatic logic eval_clip(
     for (int p = 0; p < 4; p++) begin
         if (clip_en[p]) begin
             any_en = 1'b1;
-            // Select boundaries for plane p
             unique case (p)
                 0: begin lp = l0; rp = r0; end
                 1: begin lp = l1; rp = r1; end
@@ -149,69 +155,57 @@ function automatic logic eval_clip(
                 3: begin lp = l3; rp = r3; end
                 default: begin lp = 8'h00; rp = 8'hFF; end
             endcase
-            // inside_p: left is inclusive, right is inclusive
             inside_p = (sx >= lp) && (sx <= rp);
-            // effective invert: per-plane invert XOR sense bit
-            eff_inv = clip_inv[p] ^ clip_sense;
-            // visible_p: in normal mode show inside; in invert mode show outside
-            vis_p = eff_inv ? ~inside_p : inside_p;
-            // Intersect: pixel visible only if ALL enabled planes pass
-            result = result & vis_p;
+            eff_inv  = clip_inv[p] ^ clip_sense;
+            vis_p    = eff_inv ? ~inside_p : inside_p;
+            result   = result & vis_p;
         end
     end
-    // If no planes enabled, no clip (always visible)
     if (!any_en) result = 1'b1;
     return result;
 endfunction
 
-// ── Sprite group index and resolved priority ─────────────────────────────────
+// ── Sprite group index and resolved priority / blend mode ─────────────────────
 logic [1:0] spr_grp;
 logic [3:0] spr_prio_val;
+logic [1:0] spr_blend_val;
 
 assign spr_grp = spr_pixel[11:10];
 
 always_comb begin
     unique case (spr_grp)
-        2'd0:    spr_prio_val = ls_spr_prio[0];
-        2'd1:    spr_prio_val = ls_spr_prio[1];
-        2'd2:    spr_prio_val = ls_spr_prio[2];
-        2'd3:    spr_prio_val = ls_spr_prio[3];
-        default: spr_prio_val = 4'd0;
+        2'd0:    begin spr_prio_val = ls_spr_prio[0]; spr_blend_val = ls_spr_blend[0]; end
+        2'd1:    begin spr_prio_val = ls_spr_prio[1]; spr_blend_val = ls_spr_blend[1]; end
+        2'd2:    begin spr_prio_val = ls_spr_prio[2]; spr_blend_val = ls_spr_blend[2]; end
+        2'd3:    begin spr_prio_val = ls_spr_prio[3]; spr_blend_val = ls_spr_blend[3]; end
+        default: begin spr_prio_val = 4'd0;           spr_blend_val = 2'b00;          end
     endcase
 end
 
 // ── Per-layer clipped pen values ─────────────────────────────────────────────
-// Apply clip plane evaluation: if clipped, force pen to 0.
-
 logic [3:0] pf_pen_clipped  [0:3];
 logic [3:0] spr_pen_clipped;
 
-// Per-PF clip evaluation
 logic pf_vis [0:3];
 genvar gi;
 generate
     for (gi = 0; gi < 4; gi++) begin : gen_pf_clip
         always_comb begin
             pf_vis[gi] = eval_clip(
-                ls_pf_clip_en[gi],
-                ls_pf_clip_inv[gi],
-                ls_pf_clip_sense[gi],
+                ls_pf_clip_en[gi], ls_pf_clip_inv[gi], ls_pf_clip_sense[gi],
                 screen_x,
                 ls_clip_left[0], ls_clip_left[1], ls_clip_left[2], ls_clip_left[3],
                 ls_clip_right[0], ls_clip_right[1], ls_clip_right[2], ls_clip_right[3]
             );
-            pf_pen_clipped[gi] = (pf_vis[gi]) ? bg_pixel[gi][3:0] : 4'd0;
+            pf_pen_clipped[gi] = pf_vis[gi] ? bg_pixel[gi][3:0] : 4'd0;
         end
     end
 endgenerate
 
-// Sprite clip evaluation
 logic spr_vis;
 always_comb begin
     spr_vis = eval_clip(
-        ls_spr_clip_en,
-        ls_spr_clip_inv,
-        ls_spr_clip_sense,
+        ls_spr_clip_en, ls_spr_clip_inv, ls_spr_clip_sense,
         screen_x,
         ls_clip_left[0], ls_clip_left[1], ls_clip_left[2], ls_clip_left[3],
         ls_clip_right[0], ls_clip_right[1], ls_clip_right[2], ls_clip_right[3]
@@ -219,137 +213,173 @@ always_comb begin
     spr_pen_clipped = spr_vis ? spr_pixel[3:0] : 4'd0;
 end
 
-// ── Combinational winner selection ────────────────────────────────────────────
-// Variables for the rolling best-candidate.
-// 5-bit priority: 0–15 for PF/sprite layers, 16 for text (always top).
-// We initialize with pen=0 (transparent) meaning "no winner yet".
-// Any opaque layer beats "no winner" regardless of its priority value.
-
-logic [4:0]  win_prio;
-logic [8:0]  win_pal;
-logic [3:0]  win_pen;
-
-// Per-PF intermediate candidates (unrolled to avoid generate issues)
-// pf_beats[n] is 1 when PFn should update the current winner.
+// ── Layer field extraction ────────────────────────────────────────────────────
 logic [3:0]  pf_pen  [0:3];
 logic [8:0]  pf_pal  [0:3];
 logic [4:0]  pf_prio [0:3];
+logic [1:0]  pf_bmode[0:3];
 
 generate
     for (gi = 0; gi < 4; gi++) begin : gen_pf_fields
-        assign pf_pen[gi]  = pf_pen_clipped[gi];      // clipped pen (0 if outside clip)
-        assign pf_pal[gi]  = bg_pixel[gi][12:4];
-        assign pf_prio[gi] = {1'b0, ls_pf_prio[gi]};
+        assign pf_pen[gi]   = pf_pen_clipped[gi];
+        assign pf_pal[gi]   = bg_pixel[gi][12:4];
+        assign pf_prio[gi]  = {1'b0, ls_pf_prio[gi]};
+        assign pf_bmode[gi] = ls_pf_blend[gi];
     end
 endgenerate
 
 logic [4:0]  spr_prio5;
 logic [8:0]  spr_pal9;
 logic [3:0]  spr_pen;
+logic [1:0]  spr_bmode;
 
 assign spr_prio5 = {1'b0, spr_prio_val};
 assign spr_pal9  = {3'b0, spr_pixel[9:4]};
-assign spr_pen   = spr_pen_clipped;                   // clipped pen
+assign spr_pen   = spr_pen_clipped;
+assign spr_bmode = spr_blend_val;
 
 logic [3:0]  text_pen_w;
 logic [4:0]  text_color;
 logic [8:0]  text_pal9;
 
-assign text_pen_w  = text_pixel[3:0];
-assign text_color  = text_pixel[8:4];
-assign text_pal9   = {4'b0, text_color};
+assign text_pen_w = text_pixel[3:0];
+assign text_color = text_pixel[8:4];
+assign text_pal9  = {4'b0, text_color};
 
-// Rolling arbitration across 6 layers
-// Unrolled manually to keep Verilator happy with no variable declarations in always_comb.
+// ── Rolling arbitration with blend tracking ───────────────────────────────────
+// Each stage tracks: (win_prio5, win_pal9, win_pen4, dst_pal9, do_blend)
+// win_pal9  = src palette index (winning layer)
+// dst_pal9  = destination palette index (what was below the blend layer)
+// do_blend  = 1 when blend mode 01 should be applied
 
-// After PF0:
-logic [4:0]  w0_prio;  logic [8:0]  w0_pal;  logic [3:0]  w0_pen;
-// After PF1:
-logic [4:0]  w1_prio;  logic [8:0]  w1_pal;  logic [3:0]  w1_pen;
-// After PF2:
-logic [4:0]  w2_prio;  logic [8:0]  w2_pal;  logic [3:0]  w2_pen;
-// After PF3:
-logic [4:0]  w3_prio;  logic [8:0]  w3_pal;  logic [3:0]  w3_pen;
-// After sprite:
-logic [4:0]  w4_prio;  logic [8:0]  w4_pal;  logic [3:0]  w4_pen;
-// After text (final):
-//   text_pen_w, text_pal9, 16 always win
+// Stage outputs: after PF0
+logic [4:0]  w0_prio; logic [8:0] w0_pal; logic [3:0] w0_pen;
+logic [8:0]  w0_dst;  logic       w0_blend;
+// after PF1
+logic [4:0]  w1_prio; logic [8:0] w1_pal; logic [3:0] w1_pen;
+logic [8:0]  w1_dst;  logic       w1_blend;
+// after PF2
+logic [4:0]  w2_prio; logic [8:0] w2_pal; logic [3:0] w2_pen;
+logic [8:0]  w2_dst;  logic       w2_blend;
+// after PF3
+logic [4:0]  w3_prio; logic [8:0] w3_pal; logic [3:0] w3_pen;
+logic [8:0]  w3_dst;  logic       w3_blend;
+// after sprite
+logic [4:0]  w4_prio; logic [8:0] w4_pal; logic [3:0] w4_pen;
+logic [8:0]  w4_dst;  logic       w4_blend;
+// final (after text)
+logic [4:0]  win_prio;
+logic [8:0]  win_pal;
+logic [3:0]  win_pen;
+logic [8:0]  win_dst;
+logic        win_blend;
 
-// PF0 — first layer, initializes from "no winner" (pen=0)
+// PF0 — first layer, no dst yet (pen=0 = no winner)
 always_comb begin
     if (pf_pen[0] != 4'd0) begin
-        w0_prio = pf_prio[0];
-        w0_pal  = pf_pal[0];
-        w0_pen  = pf_pen[0];
+        w0_prio  = pf_prio[0];
+        w0_pal   = pf_pal[0];
+        w0_pen   = pf_pen[0];
+        // First layer: nothing beneath, no blend possible
+        w0_dst   = 9'b0;
+        w0_blend = 1'b0;
     end else begin
-        w0_prio = 5'd0;
-        w0_pal  = 9'd0;
-        w0_pen  = 4'd0;
+        w0_prio = 5'd0; w0_pal = 9'd0; w0_pen = 4'd0;
+        w0_dst  = 9'd0; w0_blend = 1'b0;
     end
 end
 
-// PF1 — wins only if pen!=0 AND (no winner yet OR strictly higher priority)
+// PF1
 always_comb begin
     if (pf_pen[1] != 4'd0 && (w0_pen == 4'd0 || pf_prio[1] > w0_prio)) begin
-        w1_prio = pf_prio[1];
-        w1_pal  = pf_pal[1];
-        w1_pen  = pf_pen[1];
+        w1_prio  = pf_prio[1];
+        w1_pal   = pf_pal[1];
+        w1_pen   = pf_pen[1];
+        // Blend mode 01 when there is an existing opaque pixel below
+        if (pf_bmode[1] == 2'b01 && w0_pen != 4'd0) begin
+            w1_dst   = w0_pal;
+            w1_blend = 1'b1;
+        end else begin
+            w1_dst   = 9'b0;
+            w1_blend = 1'b0;
+        end
     end else begin
-        w1_prio = w0_prio;
-        w1_pal  = w0_pal;
-        w1_pen  = w0_pen;
+        w1_prio = w0_prio; w1_pal = w0_pal; w1_pen = w0_pen;
+        w1_dst  = w0_dst;  w1_blend = w0_blend;
     end
 end
 
 // PF2
 always_comb begin
     if (pf_pen[2] != 4'd0 && (w1_pen == 4'd0 || pf_prio[2] > w1_prio)) begin
-        w2_prio = pf_prio[2];
-        w2_pal  = pf_pal[2];
-        w2_pen  = pf_pen[2];
+        w2_prio  = pf_prio[2];
+        w2_pal   = pf_pal[2];
+        w2_pen   = pf_pen[2];
+        if (pf_bmode[2] == 2'b01 && w1_pen != 4'd0) begin
+            w2_dst   = w1_pal;
+            w2_blend = 1'b1;
+        end else begin
+            w2_dst   = 9'b0;
+            w2_blend = 1'b0;
+        end
     end else begin
-        w2_prio = w1_prio;
-        w2_pal  = w1_pal;
-        w2_pen  = w1_pen;
+        w2_prio = w1_prio; w2_pal = w1_pal; w2_pen = w1_pen;
+        w2_dst  = w1_dst;  w2_blend = w1_blend;
     end
 end
 
 // PF3
 always_comb begin
     if (pf_pen[3] != 4'd0 && (w2_pen == 4'd0 || pf_prio[3] > w2_prio)) begin
-        w3_prio = pf_prio[3];
-        w3_pal  = pf_pal[3];
-        w3_pen  = pf_pen[3];
+        w3_prio  = pf_prio[3];
+        w3_pal   = pf_pal[3];
+        w3_pen   = pf_pen[3];
+        if (pf_bmode[3] == 2'b01 && w2_pen != 4'd0) begin
+            w3_dst   = w2_pal;
+            w3_blend = 1'b1;
+        end else begin
+            w3_dst   = 9'b0;
+            w3_blend = 1'b0;
+        end
     end else begin
-        w3_prio = w2_prio;
-        w3_pal  = w2_pal;
-        w3_pen  = w2_pen;
+        w3_prio = w2_prio; w3_pal = w2_pal; w3_pen = w2_pen;
+        w3_dst  = w2_dst;  w3_blend = w2_blend;
     end
 end
 
 // Sprite — wins on tie (>=) over PF at same priority
 always_comb begin
     if (spr_pen != 4'd0 && (w3_pen == 4'd0 || spr_prio5 >= w3_prio)) begin
-        w4_prio = spr_prio5;
-        w4_pal  = spr_pal9;
-        w4_pen  = spr_pen;
+        w4_prio  = spr_prio5;
+        w4_pal   = spr_pal9;
+        w4_pen   = spr_pen;
+        if (spr_bmode == 2'b01 && w3_pen != 4'd0) begin
+            w4_dst   = w3_pal;
+            w4_blend = 1'b1;
+        end else begin
+            w4_dst   = 9'b0;
+            w4_blend = 1'b0;
+        end
     end else begin
-        w4_prio = w3_prio;
-        w4_pal  = w3_pal;
-        w4_pen  = w3_pen;
+        w4_prio = w3_prio; w4_pal = w3_pal; w4_pen = w3_pen;
+        w4_dst  = w3_dst;  w4_blend = w3_blend;
     end
 end
 
-// Text — always wins over any priority-0–15 layer
+// Text — always opaque, always wins
 always_comb begin
     if (text_pen_w != 4'd0) begin
-        win_prio = 5'd16;
-        win_pal  = text_pal9;
-        win_pen  = text_pen_w;
+        win_prio  = 5'd16;
+        win_pal   = text_pal9;
+        win_pen   = text_pen_w;
+        win_dst   = 9'b0;
+        win_blend = 1'b0;
     end else begin
-        win_prio = w4_prio;
-        win_pal  = w4_pal;
-        win_pen  = w4_pen;
+        win_prio  = w4_prio;
+        win_pal   = w4_pal;
+        win_pen   = w4_pen;
+        win_dst   = w4_dst;
+        win_blend = w4_blend;
     end
 end
 
@@ -359,7 +389,7 @@ logic _unused_winprio;
 assign _unused_winprio = ^win_prio;
 /* verilator lint_on UNUSED */
 
-// ── Registered output ─────────────────────────────────────────────────────────
+// ── Registered colmix_pixel_out ───────────────────────────────────────────────
 always_ff @(posedge clk) begin
     if (!rst_n)
         colmix_pixel_out <= 13'b0;
@@ -367,10 +397,130 @@ always_ff @(posedge clk) begin
         colmix_pixel_out <= {win_pal, win_pen};
 end
 
+// ── Palette address outputs ────────────────────────────────────────────────────
+// pal_addr_src: lookup the winning (src) palette color.
+// pal_addr_dst: lookup the blend destination palette color.
+// Both are 13-bit: {palette[8:0], pen_lsb} — the palette RAM stores one color
+// per entry; pen index selects within a 16-color group.
+// For blend, we use pen=0 within the dst palette to get the base color.
+//
+// NOTE: palette index in colmix_pixel_out is {win_pal[8:0], win_pen[3:0]} = 13 bits.
+// The palette RAM address space is 13 bits = 8192 entries.
+// pal_addr_src = {win_pal[8:0], win_pen[3:0]} (full 13-bit address)
+// pal_addr_dst = {win_dst[8:0], 4'b0} (base of the dst palette line)
+
+assign pal_addr_src = {win_pal, win_pen};    // 9+4 = 13 bits
+assign pal_addr_dst = {win_dst, 4'b0};       // 9+4 = 13 bits
+
+// ── Step 13: Blend pipeline (1-cycle palette latency) ─────────────────────────
+// Stage 0 (this cycle):
+//   - win_blend, ls_a_src, ls_a_dst are combinational inputs
+//   - We register them for use in stage 1
+//   - pal_addr_src/dst are combinational outputs → top-level registers them into BRAM
+// Stage 1 (next cycle):
+//   - pal_rdata_src arrives = palette[pal_addr_src from prev cycle]
+//   - pal_rdata_dst arrives = palette[pal_addr_dst from prev cycle]
+//   - Compute blend: out = clamp(src*A_src/8 + dst*A_dst/8)
+//   - Register into blend_rgb_out
+
+// Stage 0 pipeline registers
+logic        blend_en_r;
+logic [ 3:0] a_src_r;
+logic [ 3:0] a_dst_r;
+
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        blend_en_r <= 1'b0;
+        a_src_r    <= 4'd8;
+        a_dst_r    <= 4'd0;
+    end else begin
+        blend_en_r <= win_blend;
+        a_src_r    <= ls_a_src;
+        a_dst_r    <= ls_a_dst;
+    end
+end
+
+// ── Palette color decode ──────────────────────────────────────────────────────
+// Format: bits[15:12]=R(4-bit), bits[11:8]=G(4-bit), bits[7:4]=B(4-bit), bits[3:0]=don't care
+// Expand 4-bit to 8-bit: v * 17 = {v, v} (concatenation)
+function automatic logic [7:0] expand4to8(input logic [3:0] v);
+    return {v, v};
+endfunction
+
+// Src color channels (from pal_rdata_src)
+logic [7:0] src_r, src_g, src_b;
+always_comb begin
+    src_r = expand4to8(pal_rdata_src[15:12]);
+    src_g = expand4to8(pal_rdata_src[11:8]);
+    src_b = expand4to8(pal_rdata_src[7:4]);
+end
+
+// Dst color channels (from pal_rdata_dst)
+logic [7:0] dst_r, dst_g, dst_b;
+always_comb begin
+    dst_r = expand4to8(pal_rdata_dst[15:12]);
+    dst_g = expand4to8(pal_rdata_dst[11:8]);
+    dst_b = expand4to8(pal_rdata_dst[7:4]);
+end
+
+// ── Alpha blend computation ────────────────────────────────────────────────────
+// Formula: out = clamp(src * A_src/8 + dst * A_dst/8, 0, 255)
+// A_src / A_dst are 4-bit (0–8).
+// 8-bit color * 4-bit coeff = 12-bit product; sum = 13-bit; saturate to 8-bit.
+//
+// Note: multiply width in SV = max of operand widths.
+// To get correct 12-bit products: 16'(src_r) * 16'(a_src_r) → 16-bit result >> 3.
+// We actually need: (src_r * a_src_r) >> 3 with saturation.
+// Using 12-bit intermediates: 8'b * 4'b = 12'b; sum = 13-bit.
+
+function automatic logic [7:0] blend_channel(
+    input logic [7:0] src,
+    input logic [7:0] dst,
+    input logic [3:0] a_s,  // A_src (0–8)
+    input logic [3:0] a_d   // A_dst (0–8)
+);
+    logic [11:0] prod_src;
+    logic [11:0] prod_dst;
+    logic [12:0] sum13;
+    prod_src = 12'(src) * 12'(a_s);   // 8 * 4 = at most 255*8=2040, fits in 12 bits
+    prod_dst = 12'(dst) * 12'(a_d);
+    sum13    = 13'(prod_src) + 13'(prod_dst);  // sum >> 3 needed; sum13 is (sum*8)
+    // sum13 = (src*a_s + dst*a_d); we want (src*a_s + dst*a_d) / 8
+    // Divide by 8 by right-shifting 3:
+    if (sum13 >= 13'h7F8) begin  // saturate: if sum13/8 >= 255 then 255
+        return 8'hFF;
+    end else begin
+        return 8'(sum13 >> 3);
+    end
+endfunction
+
+// Stage 1: compute blend_rgb_out
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        blend_rgb_out <= 24'b0;
+    end else begin
+        if (blend_en_r) begin
+            // Normal blend A
+            blend_rgb_out <= {
+                blend_channel(src_r, dst_r, a_src_r, a_dst_r),
+                blend_channel(src_g, dst_g, a_src_r, a_dst_r),
+                blend_channel(src_b, dst_b, a_src_r, a_dst_r)
+            };
+        end else begin
+            // Opaque: output src color directly
+            blend_rgb_out <= {src_r, src_g, src_b};
+        end
+    end
+end
+
 // ── Suppress unused-signal warnings ──────────────────────────────────────────
 /* verilator lint_off UNUSED */
 logic _unused_colmix;
-assign _unused_colmix = ^{vpos, pixel_valid};
+// vpos/pixel_valid: timing inputs not needed in pure combinational pipeline
+// win_dst: used in blend tracking but Verilator sees the intermediate net as unused
+// pal_rdata[3:0]: palette format has don't-care bits[3:0] (color uses bits[15:4] only)
+assign _unused_colmix = ^{vpos, pixel_valid, win_dst,
+                           pal_rdata_src[3:0], pal_rdata_dst[3:0]};
 /* verilator lint_on UNUSED */
 
 endmodule

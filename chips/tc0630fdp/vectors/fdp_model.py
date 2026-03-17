@@ -1,5 +1,5 @@
 """
-TC0630FDP behavioral model — Python reference implementation (Steps 1–11).
+TC0630FDP behavioral model — Python reference implementation (Steps 1–13).
 
 Step 1 scope:
   - Display control register bank (16 × 16-bit registers)
@@ -93,6 +93,22 @@ Step 12 scope (added):
   - composite_scanline() updated to apply clip evaluation per layer per pixel.
   - Text layer has no clip planes (never clipped).
 
+Step 13 scope (added):
+  - Palette RAM (8192 × 16-bit words): color lookup for alpha blend output.
+      Format: bits[15:12]=R(4-bit), bits[11:8]=G(4-bit), bits[7:4]=B(4-bit).
+      expand 4→8 bit: {v, v} (multiply by 17).
+  - write_pal_ram(addr, data): write one 16-bit color word to palette RAM.
+  - _line_alpha_coeffs(scan): returns (a_src4, a_dst4) from §9.5 ab_word at 0x3100+scan.
+      bits[11:8]=A_src, bits[3:0]=A_dst.  Range 0–8.
+  - _line_pf_blend(plane, scan): returns 2-bit blend mode for PF plane from §9.12
+      pp_word bits[15:14].  00=opaque, 01=blendA, 10=blendB, 11=opaque-layer.
+  - _line_spr_blend(group, scan): returns 2-bit blend mode for sprite group from §9.4
+      sb_word bits[2*group+1 : 2*group] at 0x3000+scan.
+  - blend_channel(src, dst, a_s, a_d): alpha blend one 8-bit channel.
+      sum = (src * a_s + dst * a_d); result = min(sum >> 3, 255).
+  - composite_scanline() updated to track src/dst palette indices and blend flags.
+  - blend_scanline(): returns 320-entry list of 24-bit blended RGB values {R8, G8, B8}.
+
 Step 7 scope (added):
   - _line_colscroll(plane, scan): returns 9-bit column scroll offset (§9.2 bits[8:0])
   - _line_pal_add(plane, scan): returns palette-line addition offset (§9.10)
@@ -173,7 +189,7 @@ _UNUSED_REGS = {8, 9, 10, 11, 14}
 
 
 class TaitoF3Model:
-    """Steps 1–8 behavioral model: control registers, video timing, text layer, BG layers, Line RAM, zoom, sprites."""
+    """Steps 1–13 behavioral model: control registers, video timing, text layer, BG layers, Line RAM, zoom, sprites, alpha blend."""
 
     # Memory sizes
     TEXT_RAM_WORDS  = 4096    # 64×64 tile map × 1 word each
@@ -183,6 +199,7 @@ class TaitoF3Model:
     LINE_RAM_WORDS  = 32768   # 32K × 16-bit words = 64KB Line RAM (step 5)
     SPR_RAM_WORDS   = 32768   # 32K × 16-bit words = 64KB Sprite RAM (step 8)
     SPR_COUNT       = 256     # Step 8: scan only first 256 entries
+    PAL_RAM_WORDS   = 8192    # 8K × 16-bit words palette RAM (step 13)
 
     def __init__(self):
         self.ctrl     = [0] * 16          # 16 × 16-bit display control registers
@@ -192,6 +209,7 @@ class TaitoF3Model:
         self.gfx_rom  = [0] * self.GFX_ROM_WORDS   # step 3 (32-bit words)
         self.line_ram = [0] * self.LINE_RAM_WORDS   # step 5 (16-bit words)
         self.spr_ram  = [0] * self.SPR_RAM_WORDS    # step 8 (16-bit words)
+        self.pal_ram  = [0] * self.PAL_RAM_WORDS    # step 13 (16-bit words)
         self._rst()
 
     def _rst(self):
@@ -1003,6 +1021,66 @@ class TaitoF3Model:
         clip_sense = sm_word & 0x1
         return clip_en4, clip_inv4, clip_sense
 
+    # ── Line RAM alpha blend helpers (Step 13) ────────────────────────────────
+
+    def _line_alpha_coeffs(self, scan: int) -> tuple:
+        """Return (a_src, a_dst) for scanline scan (Step 13).
+
+        section1 §9.5 ab_word at byte 0x6200–0x63FF → word 0x3100 + (scan & 0xFF):
+          bits[11:8] = A_src (0–8, source contribution)
+          bits[3:0]  = A_dst (0–8, destination contribution)
+        Defaults (not written): a_src=8, a_dst=0 (fully opaque source).
+        """
+        scan8 = scan & 0xFF
+        ab_word = self.line_ram[0x3100 + scan8]
+        a_src = (ab_word >> 8) & 0xF
+        a_dst =  ab_word       & 0xF
+        return a_src, a_dst
+
+    def _line_pf_blend(self, plane: int, scan: int) -> int:
+        """Return 2-bit PF blend mode for plane on scanline scan (Step 13).
+
+        From §9.12 pp_word bits[15:14]:
+          00 = opaque   01 = normal blend A   10 = reverse blend B   11 = opaque-layer
+        """
+        scan8 = scan & 0xFF
+        pp_word = self.line_ram[0x5800 + plane * 0x100 + scan8]
+        return (pp_word >> 14) & 0x3
+
+    def _line_spr_blend(self, group: int, scan: int) -> int:
+        """Return 2-bit sprite blend mode for group on scanline scan (Step 13).
+
+        From §9.4 sb_word at byte 0x6000–0x61FF → word 0x3000 + (scan & 0xFF):
+          bits[1:0]  = group 0x00 blend mode
+          bits[3:2]  = group 0x40 blend mode
+          bits[5:4]  = group 0x80 blend mode
+          bits[7:6]  = group 0xC0 blend mode
+        """
+        scan8 = scan & 0xFF
+        sb_word = self.line_ram[0x3000 + scan8]
+        return (sb_word >> (group * 2)) & 0x3
+
+    def write_pal_ram(self, addr: int, data: int) -> None:
+        """Write one 16-bit color word to palette RAM (Step 13)."""
+        if 0 <= addr < self.PAL_RAM_WORDS:
+            self.pal_ram[addr] = data & 0xFFFF
+
+    @staticmethod
+    def _expand4to8(v: int) -> int:
+        """Expand 4-bit color component to 8-bit: {v, v} = v * 17."""
+        v4 = v & 0xF
+        return (v4 << 4) | v4
+
+    @staticmethod
+    def blend_channel(src: int, dst: int, a_s: int, a_d: int) -> int:
+        """Alpha blend one 8-bit channel.
+
+        Formula: clamp((src * a_s + dst * a_d) >> 3, 0, 255)
+        a_s, a_d are 4-bit coefficients (0–8).
+        """
+        s = (src * a_s + dst * a_d) >> 3
+        return min(s, 255)
+
     @staticmethod
     def _eval_clip(clip_en4: int, clip_inv4: int, clip_sense: int,
                    screen_x: int,
@@ -1044,12 +1122,16 @@ class TaitoF3Model:
           {palette[8:0], pen[3:0]}
           pen==0 means all transparent (background).
 
-        Compositing rules (Step 12 — with clip planes, no alpha blend):
+        Compositing rules (Step 13 — with clip planes and alpha blend):
           0. Clip evaluation: layers outside their clip windows are blanked (pen→0).
-          1. Text layer always wins if pen != 0 (no clip for text).
+          1. Text layer always wins if pen != 0 (no clip for text; always opaque).
           2. Among PF and sprite layers, higher numeric priority wins.
           3. Equal priority: sprite wins over PF.
           4. pen == 0: transparent, layer skipped.
+          5. Blend mode 01: if layer wins over an existing pixel (strictly >),
+             record src=winner, dst=previous winner; set blend flag.
+             Sprite uses >= so same-priority blend layers: first fires, second skips.
+          6. colmix_pixel_out = src palette index (13-bit); blend info tracked separately.
 
         Parameters:
           vpos        : current scanline (renders vpos+1)
@@ -1085,9 +1167,13 @@ class TaitoF3Model:
         else:
             spr_buf = spr_linebuf
 
-        # ── Per-scanline priority and clip values ─────────────────────────────
+        # ── Per-scanline priority, clip, and blend values ─────────────────────
         pf_prio  = [self._line_pf_prio(n, render_scan) for n in range(4)]
         spr_prio = [self._line_spr_prio(g, render_scan) for g in range(4)]
+
+        # Blend modes
+        pf_bmode  = [self._line_pf_blend(n, render_scan) for n in range(4)]
+        spr_bmode = [self._line_spr_blend(g, render_scan) for g in range(4)]
 
         # Clip plane boundaries for this scanline
         clip_left  = []
@@ -1118,8 +1204,10 @@ class TaitoF3Model:
 
             win_prio   = -1    # -1 = no winner yet
             win_val    = 0     # 13-bit: {palette[8:0], pen[3:0]}
+            # dst_pal tracks the palette index of the blend destination (for blend_scanline)
+            # Not included in colmix_pixel_out but needed by blend_scanline.
 
-            # PF layers — evaluate clip then priority
+            # PF layers — evaluate clip then priority, with blend mode tracking
             for n in range(4):
                 px = pf_bufs[n][col]
                 pen = px & 0xF
@@ -1132,9 +1220,16 @@ class TaitoF3Model:
                 if not visible:
                     continue   # clipped — treat as transparent
                 prio = pf_prio[n]
-                if win_prio < 0 or prio > win_prio:
+                bmode = pf_bmode[n]
+                if win_prio < 0:
+                    # First opaque pixel: becomes winner unconditionally
                     win_prio = prio
-                    win_val  = px   # 13-bit
+                    win_val  = px
+                elif prio > win_prio:
+                    # Strictly higher priority wins
+                    win_prio = prio
+                    win_val  = px
+                # Equal or lower priority: skip (blend mode 01 fires only on strict >)
 
             # Sprite layer (wins on tie >= over PF) — evaluate clip then priority
             spr_px = spr_buf[col]
@@ -1152,7 +1247,7 @@ class TaitoF3Model:
                         # Convert spr 12-bit to 13-bit palette format
                         win_val = (spr_palette << 4) | spr_pen
 
-            # Text layer (always top, no clip)
+            # Text layer (always top, no clip, always opaque)
             txt_px = text_buf[col]
             txt_pen = txt_px & 0xF
             if txt_pen != 0:
@@ -1161,6 +1256,182 @@ class TaitoF3Model:
                 win_val = (txt_color << 4) | txt_pen
 
             result[col] = win_val & 0x1FFF
+
+        return result
+
+    def _composite_with_blend(self, vpos: int,
+                               spr_linebuf: list = None) -> list:
+        """Internal: composite all 6 layers, returning per-pixel blend info.
+
+        Returns 320-entry list of dicts with keys:
+          'src_val'  : 13-bit {palette[8:0], pen[3:0]} of winner (colmix_pixel_out)
+          'dst_pal'  : 9-bit destination palette index (for blend dst color lookup)
+          'do_blend' : True if blend mode A should be applied
+        """
+        render_scan = vpos + 1
+
+        if render_scan < V_START or render_scan >= V_END:
+            return [{'src_val': 0, 'dst_pal': 0, 'do_blend': False}] * 320
+
+        # ── Render each layer ────────────────────────────────────────────────
+        text_buf = self.render_text_scanline(vpos)
+
+        pf_bufs = []
+        for plane in range(4):
+            pf_bufs.append(
+                self.render_bg_scanline(
+                    vpos, plane,
+                    self.pf_xscroll[plane],
+                    self.pf_yscroll[plane],
+                    self.extend_mode,
+                )
+            )
+
+        spr_buf = spr_linebuf if spr_linebuf is not None else [0] * 320
+
+        # ── Per-scanline values ───────────────────────────────────────────────
+        pf_prio   = [self._line_pf_prio(n, render_scan) for n in range(4)]
+        spr_prio  = [self._line_spr_prio(g, render_scan) for g in range(4)]
+        pf_bmode  = [self._line_pf_blend(n, render_scan) for n in range(4)]
+        spr_bmode = [self._line_spr_blend(g, render_scan) for g in range(4)]
+
+        clip_left, clip_right = [], []
+        for p in range(4):
+            l, r = self._line_clip_plane(p, render_scan)
+            clip_left.append(l); clip_right.append(r)
+
+        pf_clip_en, pf_clip_inv, pf_clip_sense = [], [], []
+        for n in range(4):
+            en, inv, sense = self._line_pf_clip(n, render_scan)
+            pf_clip_en.append(en); pf_clip_inv.append(inv); pf_clip_sense.append(sense)
+
+        spr_en, spr_inv, spr_sense = self._line_spr_clip(render_scan)
+
+        result = []
+        for col in range(320):
+            sx = col & 0xFF
+
+            # Rolling arbitration matching RTL colmix exactly
+            cur_prio  = -1    # -1 = no winner
+            cur_pal   = 0     # 9-bit winning palette
+            cur_pen   = 0     # 4-bit winning pen
+            dst_pal   = 0     # 9-bit blend destination palette
+            do_blend  = False
+
+            for n in range(4):
+                px = pf_bufs[n][col]
+                pen = px & 0xF
+                if pen == 0:
+                    continue
+                visible = self._eval_clip(pf_clip_en[n], pf_clip_inv[n],
+                                          pf_clip_sense[n], sx, clip_left, clip_right)
+                if not visible:
+                    continue
+                prio  = pf_prio[n]
+                bmode = pf_bmode[n]
+                pal9  = (px >> 4) & 0x1FF
+
+                if cur_prio < 0:
+                    # First pixel: no dst, no blend possible
+                    cur_prio = prio; cur_pal = pal9; cur_pen = pen
+                    dst_pal = 0; do_blend = False
+                elif prio > cur_prio:
+                    # New winner: check if blend mode A
+                    if bmode == 0b01:
+                        # Blend fires: dst = current winner
+                        dst_pal  = cur_pal
+                        do_blend = True
+                    else:
+                        dst_pal  = 0
+                        do_blend = False
+                    cur_prio = prio; cur_pal = pal9; cur_pen = pen
+                # Equal or lower: skip (strictly-greater rule)
+
+            # Sprite layer (wins on tie >=)
+            spr_px  = spr_buf[col]
+            spr_pen = spr_px & 0xF
+            if spr_pen != 0:
+                spr_visible = self._eval_clip(spr_en, spr_inv, spr_sense, sx,
+                                              clip_left, clip_right)
+                if spr_visible:
+                    spr_grp = (spr_px >> 10) & 0x3
+                    prio    = spr_prio[spr_grp]
+                    spr_pal = (spr_px >> 4) & 0x3F
+                    bmode   = spr_bmode[spr_grp]
+                    pal9    = spr_pal   # 6-bit palette, stored in lower 9
+
+                    if cur_prio < 0 or prio >= cur_prio:
+                        if bmode == 0b01 and cur_pen != 0:
+                            dst_pal  = cur_pal
+                            do_blend = True
+                        else:
+                            dst_pal  = 0
+                            do_blend = False
+                        cur_prio = prio; cur_pal = pal9; cur_pen = spr_pen
+
+            # Text layer: always wins, always opaque (clears blend)
+            txt_px  = text_buf[col]
+            txt_pen = txt_px & 0xF
+            if txt_pen != 0:
+                txt_color = (txt_px >> 4) & 0x1F
+                cur_pal  = txt_color   # lower 5 bits only
+                cur_pen  = txt_pen
+                dst_pal  = 0
+                do_blend = False
+
+            src_val = ((cur_pal & 0x1FF) << 4) | (cur_pen & 0xF)
+            result.append({'src_val': src_val, 'dst_pal': dst_pal & 0x1FF,
+                            'do_blend': do_blend})
+
+        return result
+
+    def blend_scanline(self, vpos: int, spr_linebuf: list = None) -> list:
+        """Compute blended 24-bit RGB output for the scanline AFTER vpos (Step 13).
+
+        Returns 320-entry list of 24-bit values {R8, G8, B8} packed as int.
+        For opaque pixels: RGB from src palette entry.
+        For blend mode A: out = clamp(src*A_src/8 + dst*A_dst/8, 0, 255) per channel.
+
+        Mirrors the RTL colmix blend pipeline:
+          Cycle N:   colmix determines src/dst palette indices.
+          Cycle N+1: palette read data arrives; blend computed; blend_rgb_out registered.
+        """
+        render_scan = vpos + 1
+        if render_scan < V_START or render_scan >= V_END:
+            return [0] * 320
+
+        blend_info = self._composite_with_blend(vpos, spr_linebuf)
+        a_src, a_dst = self._line_alpha_coeffs(render_scan)
+
+        result = []
+        for info in blend_info:
+            src_val  = info['src_val']
+            dst_pal9 = info['dst_pal']
+            do_blend = info['do_blend']
+
+            # Src palette address = {pal[8:0], pen[3:0]} (13-bit)
+            src_addr = src_val & 0x1FFF
+            # Dst palette address = {dst_pal[8:0], 4'b0} (base of dst palette line)
+            dst_addr = (dst_pal9 << 4) & 0x1FFF
+
+            src_word = self.pal_ram[src_addr] if src_addr < self.PAL_RAM_WORDS else 0
+            dst_word = self.pal_ram[dst_addr] if dst_addr < self.PAL_RAM_WORDS else 0
+
+            src_r = self._expand4to8((src_word >> 12) & 0xF)
+            src_g = self._expand4to8((src_word >>  8) & 0xF)
+            src_b = self._expand4to8((src_word >>  4) & 0xF)
+
+            if do_blend:
+                dst_r = self._expand4to8((dst_word >> 12) & 0xF)
+                dst_g = self._expand4to8((dst_word >>  8) & 0xF)
+                dst_b = self._expand4to8((dst_word >>  4) & 0xF)
+                r = self.blend_channel(src_r, dst_r, a_src, a_dst)
+                g = self.blend_channel(src_g, dst_g, a_src, a_dst)
+                b = self.blend_channel(src_b, dst_b, a_src, a_dst)
+            else:
+                r, g, b = src_r, src_g, src_b
+
+            result.append(((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF))
 
         return result
 

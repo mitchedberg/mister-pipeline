@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Line RAM Parser  (Step 12: +clip planes)
+// TC0630FDP — Line RAM Parser  (Step 13: +alpha blend coefficients + blend modes)
 // =============================================================================
 // The Line RAM is 64 KB (32768 × 16-bit words) that provides per-scanline
 // override of virtually every display parameter.  This module:
@@ -20,6 +20,24 @@
 //   group priority (§9.8 bits[15:0]) for the compositor.
 // Step 12 addition: per-scanline clip plane boundaries (§9.3) and per-layer
 //   clip enable/invert flags from §9.12 (PF layers) and §9.7 (sprite layer).
+// Step 13 addition: per-scanline alpha blend coefficients (§9.5) and blend
+//   mode bits from §9.12 (PF layers, bits[15:14]) and §9.4 (sprite/pivot layer).
+//
+// §9.5 Alpha blend values: byte 0x6200–0x63FF → word 0x3100 + scan
+//   bits[15:12] = B_src (reverse blend source coeff)
+//   bits[11:8]  = A_src (normal blend source coeff)
+//   bits[7:4]   = B_dst (reverse blend destination coeff)
+//   bits[3:0]   = A_dst (normal blend destination coeff)
+//   Range 0–8: 0=transparent, 8=fully opaque.
+//
+// §9.4 Pivot/Sprite blend control: byte 0x6000–0x61FF → word 0x3000 + scan
+//   bits[7:6] = blend mode for sprite group 0xC0 (00=opaque,01=blendA,10=blendB,11=opaque)
+//   bits[5:4] = blend mode for sprite group 0x80
+//   bits[3:2] = blend mode for sprite group 0x40
+//   bits[1:0] = blend mode for sprite group 0x00
+//
+// §9.12 pp_word bits[15:14]: PF blend mode
+//   00 = opaque   01 = normal blend A   10 = reverse blend B   11 = opaque (layer mode)
 //
 // Clip plane data addresses (byte addr → word addr by /2):
 //   §9.3 Plane 0: byte 0x5000–0x51FE → word 0x2800 + scan
@@ -167,7 +185,20 @@ module tc0630fdp_lineram (
     //   ls_spr_clip_sense = bit[0]     — inversion sense
     output logic [ 3:0] ls_spr_clip_en,
     output logic [ 3:0] ls_spr_clip_inv,
-    output logic        ls_spr_clip_sense
+    output logic        ls_spr_clip_sense,
+
+    // ── Step 13: Alpha blend outputs ─────────────────────────────────────────
+    // Alpha coefficients from §9.5 (latched per scanline):
+    //   A_src: source contribution for normal blend mode A (0=transparent, 8=opaque)
+    //   A_dst: destination contribution for normal blend mode A
+    output logic [ 3:0] ls_a_src,
+    output logic [ 3:0] ls_a_dst,
+    // PF blend modes from §9.12 pp_word bits[15:14]:
+    //   00=opaque  01=normal blend A  10=reverse blend B  11=opaque-layer
+    output logic [ 1:0] ls_pf_blend  [0:3],
+    // Sprite blend modes from §9.4 bits[7:0] (2 bits per group):
+    //   bits[7:6]=group0xC0, bits[5:4]=group0x80, bits[3:2]=group0x40, bits[1:0]=group0x00
+    output logic [ 1:0] ls_spr_blend [0:3]
 );
 
 // =============================================================================
@@ -270,6 +301,20 @@ logic [15:0] sm_word;  // sprite mix word (bits[15:12,3:1] unused in Step 12)
 /* verilator lint_on UNUSEDSIGNAL */
 assign sm_word       = line_ram[15'h3A00 + {7'b0, next_scan}];
 
+// Step 13: Alpha blend coefficients §9.5  byte 0x6200 → word 0x3100
+// bits[11:8]=A_src (normal blend), bits[3:0]=A_dst; bits[15:12]=B_src, bits[7:4]=B_dst (Step 14)
+/* verilator lint_off UNUSEDSIGNAL */
+logic [15:0] ab_word;  // alpha blend word: bits[11:8]=A_src, bits[3:0]=A_dst
+/* verilator lint_on UNUSEDSIGNAL */
+assign ab_word       = line_ram[15'h3100 + {7'b0, next_scan}];
+
+// Step 13: Pivot/sprite blend control §9.4  byte 0x6000 → word 0x3000
+// bits[7:0] = blend mode per group (2 bits each); bits[15:8] reserved for Step 14
+/* verilator lint_off UNUSEDSIGNAL */
+logic [15:0] sb_word;  // sprite blend word: bits[7:0] = blend mode per group
+/* verilator lint_on UNUSEDSIGNAL */
+assign sb_word       = line_ram[15'h3000 + {7'b0, next_scan}];
+
 // PF2/PF4 Y-zoom cross-read wires (hardware swap, §9.9):
 // PF2 Y-zoom is stored at PF4's RAM address (0x4300+scan).
 // PF4 Y-zoom is stored at PF2's RAM address (0x4200+scan).
@@ -304,6 +349,13 @@ always_ff @(posedge clk) begin
         ls_spr_clip_en    <= 4'b0;
         ls_spr_clip_inv   <= 4'b0;
         ls_spr_clip_sense <= 1'b0;
+        // Step 13: alpha blend defaults
+        ls_a_src          <= 4'd8;  // default: fully opaque source
+        ls_a_dst          <= 4'd0;  // default: no destination contribution
+        for (int n = 0; n < 4; n++) begin
+            ls_pf_blend[n]  <= 2'b00;  // default: opaque
+            ls_spr_blend[n] <= 2'b00;  // default: opaque
+        end
     end else if (hblank_fall) begin
         for (int n = 0; n < 4; n++) begin
             // Rowscroll: enable bit n of en_row_word[3:0]
@@ -374,6 +426,23 @@ always_ff @(posedge clk) begin
         ls_spr_clip_en    <= sm_word[11:8];
         ls_spr_clip_inv   <= sm_word[7:4];
         ls_spr_clip_sense <= sm_word[0];
+
+        // ── Step 13: Alpha blend coefficients from §9.5 ab_word ───────────────
+        // ab_word bits[11:8]=A_src, bits[3:0]=A_dst
+        ls_a_src <= ab_word[11:8];
+        ls_a_dst <= ab_word[3:0];
+
+        // ── Step 13: PF blend modes from §9.12 pp_word bits[15:14] ───────────
+        for (int n = 0; n < 4; n++) begin
+            ls_pf_blend[n] <= pp_word[n][15:14];
+        end
+
+        // ── Step 13: Sprite blend modes from §9.4 sb_word bits[7:0] ──────────
+        // bits[1:0]=group0x00, bits[3:2]=group0x40, bits[5:4]=group0x80, bits[7:6]=group0xC0
+        ls_spr_blend[0] <= sb_word[1:0];   // group 0x00
+        ls_spr_blend[1] <= sb_word[3:2];   // group 0x40
+        ls_spr_blend[2] <= sb_word[5:4];   // group 0x80
+        ls_spr_blend[3] <= sb_word[7:6];   // group 0xC0
     end
 end
 

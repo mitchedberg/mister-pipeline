@@ -1,5 +1,5 @@
 // =============================================================================
-// Gate 5 (Steps 1–11): Verilator testbench for tc0630fdp.sv
+// Gate 5 (Steps 1–13): Verilator testbench for tc0630fdp.sv
 //
 // Reads one or more vector files (jsonl). Each line is a JSON object with "op":
 //
@@ -65,6 +65,17 @@
 //     Advance to active display of vpos+1 at screen_col+1 (colmix adds 1 pipeline stage).
 //     Sample colmix_pixel_out (13-bit: {palette[8:0], pen[3:0]}).
 //     Compare to exp_pixel. pen==0 means all transparent (background).
+//
+// Step 13 ops:
+//   op="write_pal":
+//     Write one 16-bit color word to palette RAM via pal_wr_* testbench port.
+//     "pal_addr": 13-bit address (0..8191)
+//     "pal_data": 16-bit color word (bits[15:12]=R, bits[11:8]=G, bits[7:4]=B)
+//   op="check_blend_pixel":
+//     Like check_colmix_pixel but samples blend_rgb_out (24-bit) instead.
+//     blend_rgb_out is registered 1 cycle after colmix_pixel_out, so advance
+//     to screen_col+2 (colmix stage + palette read stage).
+//     "exp_rgb": 24-bit expected blended RGB value {R8, G8, B8}.
 //
 // All passing tests: prints "PASS [note]"
 // Any failure:       prints "FAIL [note]: got=X exp=Y"
@@ -146,9 +157,23 @@ static void do_reset() {
     dut->spr_wr_en   = 0;
     dut->spr_wr_addr = 0;
     dut->spr_wr_data = 0;
+    dut->pal_wr_en   = 0;
+    dut->pal_wr_addr = 0;
+    dut->pal_wr_data = 0;
     for (int i = 0; i < 4; i++) tick();
     dut->async_rst_n = 1;
     for (int i = 0; i < 2; i++) tick();
+}
+
+// Write one 16-bit word to palette RAM via the dedicated write port.
+// pal_addr: 13-bit address into palette RAM (0..8191).
+static void pal_write(int pal_addr, uint16_t data) {
+    dut->pal_wr_en   = 1;
+    dut->pal_wr_addr = (uint32_t)(pal_addr & 0x1FFF);
+    dut->pal_wr_data = data;
+    tick();
+    dut->pal_wr_en   = 0;
+    tick();
 }
 
 // ---------------------------------------------------------------------------
@@ -598,6 +623,9 @@ int main(int argc, char** argv) {
     dut->spr_wr_en   = 0;
     dut->spr_wr_addr = 0;
     dut->spr_wr_data = 0;
+    dut->pal_wr_en   = 0;
+    dut->pal_wr_addr = 0;
+    dut->pal_wr_data = 0;
     for (int i = 0; i < 4; i++) tick();
     dut->async_rst_n = 1;
     for (int i = 0; i < 4; i++) tick();
@@ -731,6 +759,71 @@ int main(int argc, char** argv) {
                                    jint(line, "screen_col"),
                                    jint(line, "exp_pixel"),
                                    note);
+
+            // ── Step 13 ops ─────────────────────────────────────────────────
+            // write_pal: write one 16-bit color word to palette RAM.
+            // "pal_addr": 13-bit address (0..8191)
+            // "pal_data": 16-bit color word
+            } else if (op == "write_pal") {
+                pal_write(jint(line, "pal_addr"), (uint16_t)(jint(line, "pal_data") & 0xFFFF));
+
+            // check_blend_pixel: advance to pixel position, sample blend_rgb_out.
+            // blend_rgb_out is valid 2 cycles after the layer outputs (colmix stage + palette
+            // read stage), so we advance to screen_col+2 rather than screen_col+1.
+            } else if (op == "check_blend_pixel") {
+                int target_vpos = jint(line, "vpos");
+                int screen_col  = jint(line, "screen_col");
+                int exp_rgb     = jint(line, "exp_rgb");
+                int limit = 4 * H_TOTAL * V_TOTAL;
+
+                // Step 1: advance to VBLANK start so sprite scanner fires
+                int found = 0;
+                for (int i = 0; i < limit; i++) {
+                    if ((int)dut->vpos == V_END) { found = 1; break; }
+                    tick();
+                }
+                if (!found) {
+                    printf("FAIL %s: could not reach vpos=%d (VBLANK start)\n",
+                           note.c_str(), V_END);
+                    g_fail++;
+                    continue;
+                }
+
+                // Step 2: wait for sprite scanner
+                for (int i = 0; i < 8000; i++) tick();
+
+                // Step 3: advance to HBLANK start of target_vpos
+                found = 0;
+                for (int i = 0; i < limit; i++) {
+                    if ((int)dut->hpos == H_END && (int)dut->vpos == target_vpos) {
+                        found = 1; break;
+                    }
+                    tick();
+                }
+                if (!found) {
+                    printf("FAIL %s: could not reach hpos=%d vpos=%d\n",
+                           note.c_str(), H_END, target_vpos);
+                    g_fail++;
+                    continue;
+                }
+
+                // Step 4: wait for layer FSMs
+                for (int i = 0; i < 115; i++) tick();
+
+                // Step 5: advance to screen_col+2 (colmix pipeline + palette read latency)
+                int disp_vpos = (target_vpos + 1) % V_TOTAL;
+                int disp_hpos = H_START + screen_col + 2;
+                if (disp_hpos >= H_END) disp_hpos = H_START + screen_col + 2 - 320;
+
+                for (int i = 0; i < limit; i++) {
+                    if ((int)dut->hpos == disp_hpos && (int)dut->vpos == disp_vpos)
+                        break;
+                    tick();
+                }
+
+                dut->eval();
+                int got = (int)dut->blend_rgb_out & 0xFFFFFF;
+                check(got == (exp_rgb & 0xFFFFFF), note, got, exp_rgb & 0xFFFFFF);
 
             } else {
                 fprintf(stderr, "Unknown op: %s\n", op.c_str());

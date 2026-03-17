@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Taito F3 Display Processor (Step 12: +Clip Planes)
+// TC0630FDP — Taito F3 Display Processor (Step 13: +Alpha Blend Mode A)
 // =============================================================================
 // Integrates all video functions for Taito F3 arcade hardware (1992–1997):
 //   · 4 scrolling tilemap layers (PF1–PF4), 16×16 tiles, 4bpp  ← STEP 3 ✓
@@ -124,7 +124,20 @@ module tc0630fdp (
 
     // ── Compositor Output (Step 11) ───────────────────────────────────────
     // {palette[8:0], pen[3:0]}.  pen==0 → all transparent (background).
-    output logic [12:0] colmix_pixel_out
+    output logic [12:0] colmix_pixel_out,
+
+    // ── Palette RAM Write Port (Step 13 testbench) ────────────────────────
+    // Testbench writes palette entries via this dedicated port.
+    // pal_wr_addr: 13-bit address into palette RAM (0..8191)
+    // pal_wr_data: 16-bit color word (bits[15:12]=R, bits[11:8]=G, bits[7:4]=B)
+    // pal_wr_en:   write enable (active high, registered on posedge clk)
+    input  logic [12:0] pal_wr_addr,
+    input  logic [15:0] pal_wr_data,
+    input  logic        pal_wr_en,
+
+    // ── Step 13: Blended RGB Output ─────────────────────────────────────
+    // 24-bit blended RGB; valid 1 cycle after colmix_pixel_out.
+    output logic [23:0] blend_rgb_out
 );
 
 // =============================================================================
@@ -625,6 +638,11 @@ logic        ls_pf_clip_sense[0:3];
 logic [ 3:0] ls_spr_clip_en;
 logic [ 3:0] ls_spr_clip_inv;
 logic        ls_spr_clip_sense;
+// Step 13: alpha blend outputs
+logic [ 3:0] ls_a_src;
+logic [ 3:0] ls_a_dst;
+logic [ 1:0] ls_pf_blend  [0:3];
+logic [ 1:0] ls_spr_blend [0:3];
 
 tc0630fdp_lineram u_lineram (
     .clk            (clk),
@@ -652,7 +670,12 @@ tc0630fdp_lineram u_lineram (
     .ls_pf_clip_sense (ls_pf_clip_sense),
     .ls_spr_clip_en   (ls_spr_clip_en),
     .ls_spr_clip_inv  (ls_spr_clip_inv),
-    .ls_spr_clip_sense(ls_spr_clip_sense)
+    .ls_spr_clip_sense(ls_spr_clip_sense),
+    // Step 13: alpha blend outputs
+    .ls_a_src         (ls_a_src),
+    .ls_a_dst         (ls_a_dst),
+    .ls_pf_blend      (ls_pf_blend),
+    .ls_spr_blend     (ls_spr_blend)
 );
 
 // =============================================================================
@@ -740,7 +763,36 @@ tc0630fdp_sprite_render u_sprite_render (
 );
 
 // =============================================================================
-// tc0630fdp_colmix — Layer Compositor (Step 11)
+// Palette RAM (8192 × 16-bit) — Step 13
+// Two async read ports for colmix (src + dst), one testbench write port.
+// Format: bits[15:12]=R(4), bits[11:8]=G(4), bits[7:4]=B(4), bits[3:0]=don't care.
+// =============================================================================
+logic [15:0] pal_ram [0:8191];
+
+// Testbench write port
+always_ff @(posedge clk) begin
+    if (pal_wr_en)
+        pal_ram[pal_wr_addr] <= pal_wr_data;
+end
+
+// Colmix palette read ports (registered — 1-cycle latency)
+logic [12:0] colmix_pal_addr_src;
+logic [12:0] colmix_pal_addr_dst;
+logic [15:0] colmix_pal_rdata_src;
+logic [15:0] colmix_pal_rdata_dst;
+
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        colmix_pal_rdata_src <= 16'b0;
+        colmix_pal_rdata_dst <= 16'b0;
+    end else begin
+        colmix_pal_rdata_src <= pal_ram[colmix_pal_addr_src];
+        colmix_pal_rdata_dst <= pal_ram[colmix_pal_addr_dst];
+    end
+end
+
+// =============================================================================
+// tc0630fdp_colmix — Layer Compositor (Step 13: +Alpha Blend)
 // =============================================================================
 tc0630fdp_colmix u_colmix (
     .clk               (clk),
@@ -761,11 +813,23 @@ tc0630fdp_colmix u_colmix (
     .ls_spr_clip_en    (ls_spr_clip_en),
     .ls_spr_clip_inv   (ls_spr_clip_inv),
     .ls_spr_clip_sense (ls_spr_clip_sense),
-    .colmix_pixel_out  (colmix_pixel_out)
+    // Step 13: alpha blend
+    .ls_a_src          (ls_a_src),
+    .ls_a_dst          (ls_a_dst),
+    .ls_pf_blend       (ls_pf_blend),
+    .ls_spr_blend      (ls_spr_blend),
+    // Step 13: palette read ports
+    .pal_addr_src      (colmix_pal_addr_src),
+    .pal_addr_dst      (colmix_pal_addr_dst),
+    .pal_rdata_src     (colmix_pal_rdata_src),
+    .pal_rdata_dst     (colmix_pal_rdata_dst),
+    // outputs
+    .colmix_pixel_out  (colmix_pixel_out),
+    .blend_rgb_out     (blend_rgb_out)
 );
 
 // =============================================================================
-// GFX ROM / Palette / RGB stubs
+// GFX ROM / Palette stubs (external palette port kept for compatibility)
 // =============================================================================
 assign gfx_lo_addr = 25'b0;
 assign gfx_lo_rd   = 1'b0;
@@ -773,7 +837,7 @@ assign gfx_hi_addr = 25'b0;
 assign gfx_hi_rd   = 1'b0;
 assign pal_addr    = 15'b0;
 assign pal_rd      = 1'b0;
-assign rgb_out     = 24'b0;
+assign rgb_out     = blend_rgb_out;
 
 // =============================================================================
 // Suppress unused-signal warnings
