@@ -1,0 +1,34 @@
+{"op": "reset", "note": "step2 reset"}
+{"op": "vram_zero", "base": 0, "count": 4, "note": "zero VRAM group1 area"}
+{"op": "vram_write", "addr": 0, "data": 43981, "be": 3, "note": "VRAM[0x0000]=0xABCD (BG0 tilemap base)"}
+{"op": "vram_read", "addr": 0, "exp_data": 43981, "note": "VRAM[0x0000] readback 0xABCD"}
+{"op": "vram_zero", "base": 8192, "count": 2, "note": "zero rowscroll area"}
+{"op": "vram_write", "addr": 8192, "data": 4660, "be": 3, "note": "VRAM[0x2000]=0x1234 (BG0 rowscroll hi base)"}
+{"op": "vram_read", "addr": 8192, "exp_data": 4660, "note": "VRAM[0x2000] readback 0x1234"}
+{"op": "vram_zero", "base": 24576, "count": 2, "note": "zero FG tilemap area"}
+{"op": "vram_write", "addr": 24576, "data": 22136, "be": 3, "note": "VRAM[0x6000]=0x5678 (FG0 tilemap base)"}
+{"op": "vram_read", "addr": 24576, "exp_data": 22136, "note": "VRAM[0x6000] readback 0x5678"}
+{"op": "vram_zero", "base": 28680, "count": 2, "note": "zero FG gfx area"}
+{"op": "vram_write", "addr": 28680, "data": 39612, "be": 3, "note": "VRAM[0x7008]=0x9ABC (FG0 gfx data)"}
+{"op": "vram_read", "addr": 28680, "exp_data": 39612, "note": "VRAM[0x7008] readback 0x9ABC"}
+{"op": "vram_zero", "base": 256, "count": 1, "note": "zero byte-enable test word"}
+{"op": "vram_write", "addr": 256, "data": 0, "be": 3, "note": "VRAM[0x0100] clear"}
+{"op": "vram_write", "addr": 256, "data": 205, "be": 1, "note": "VRAM[0x0100] write low byte 0xCD (be=1)"}
+{"op": "vram_read", "addr": 256, "exp_data": 205, "note": "VRAM[0x0100] after low-byte write: expect 0x00CD"}
+{"op": "vram_write", "addr": 256, "data": 43776, "be": 2, "note": "VRAM[0x0100] write high byte 0xAB (be=2)"}
+{"op": "vram_read", "addr": 256, "exp_data": 43981, "note": "VRAM[0x0100] after high-byte write: expect 0xABCD"}
+{"op": "vram_zero", "base": 512, "count": 4, "note": "zero aliasing test area"}
+{"op": "vram_write", "addr": 512, "data": 4369, "be": 3, "note": "VRAM[0x0200]=0x1111"}
+{"op": "vram_write", "addr": 513, "data": 8738, "be": 3, "note": "VRAM[0x0201]=0x2222"}
+{"op": "vram_write", "addr": 514, "data": 13107, "be": 3, "note": "VRAM[0x0202]=0x3333"}
+{"op": "vram_write", "addr": 515, "data": 17476, "be": 3, "note": "VRAM[0x0203]=0x4444"}
+{"op": "vram_read", "addr": 512, "exp_data": 4369, "note": "VRAM[0x0200] readback 0x1111 (no aliasing)"}
+{"op": "vram_read", "addr": 513, "exp_data": 8738, "note": "VRAM[0x0201] readback 0x2222 (no aliasing)"}
+{"op": "vram_read", "addr": 514, "exp_data": 13107, "note": "VRAM[0x0202] readback 0x3333 (no aliasing)"}
+{"op": "vram_read", "addr": 515, "exp_data": 17476, "note": "VRAM[0x0203] readback 0x4444 (no aliasing)"}
+{"op": "vram_zero", "base": 0, "count": 1, "note": "zero word 0"}
+{"op": "vram_zero", "base": 32767, "count": 1, "note": "zero last word"}
+{"op": "vram_write", "addr": 0, "data": 43690, "be": 3, "note": "VRAM[0x0000]=0xAAAA"}
+{"op": "vram_read", "addr": 0, "exp_data": 43690, "note": "VRAM[0x0000] readback 0xAAAA"}
+{"op": "vram_write", "addr": 32767, "data": 21845, "be": 3, "note": "VRAM[0x7FFF]=0x5555 (top of VRAM)"}
+{"op": "vram_read", "addr": 32767, "exp_data": 21845, "note": "VRAM[0x7FFF] readback 0x5555"}

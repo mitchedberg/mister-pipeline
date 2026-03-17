@@ -1,12 +1,12 @@
 {"op": "reset", "note": "power-on reset"}
 {"op": "write", "addr": 0, "data": 16, "be": 3, "note": "BG0_XSCROLL write 0x0010"}
-{"op": "check_bgscrollx", "layer": 0, "exp": 65520, "note": "BG0 bgscrollx stagger check: expect 0xFFF0 (=-(0x0010+0))"}
+{"op": "check_bgscrollx", "layer": 0, "exp": 65520, "note": "BG0 bgscrollx stagger check: expect 0xFFF0"}
 {"op": "write", "addr": 1, "data": 16, "be": 3, "note": "BG1_XSCROLL write 0x0010"}
-{"op": "check_bgscrollx", "layer": 1, "exp": 65516, "note": "BG1 bgscrollx stagger check: expect 0xFFEC (=-(0x0010+4))"}
+{"op": "check_bgscrollx", "layer": 1, "exp": 65516, "note": "BG1 bgscrollx stagger check: expect 0xFFEC"}
 {"op": "write", "addr": 2, "data": 16, "be": 3, "note": "BG2_XSCROLL write 0x0010"}
-{"op": "check_bgscrollx", "layer": 2, "exp": 65512, "note": "BG2 bgscrollx stagger check: expect 0xFFE8 (=-(0x0010+8))"}
+{"op": "check_bgscrollx", "layer": 2, "exp": 65512, "note": "BG2 bgscrollx stagger check: expect 0xFFE8"}
 {"op": "write", "addr": 3, "data": 16, "be": 3, "note": "BG3_XSCROLL write 0x0010"}
-{"op": "check_bgscrollx", "layer": 3, "exp": 65508, "note": "BG3 bgscrollx stagger check: expect 0xFFE4 (=-(0x0010+12))"}
+{"op": "check_bgscrollx", "layer": 3, "exp": 65508, "note": "BG3 bgscrollx stagger check: expect 0xFFE4"}
 {"op": "write", "addr": 4, "data": 32, "be": 3, "note": "BG0_YSCROLL write 0x0020"}
 {"op": "check_bgscrolly", "layer": 0, "exp": 32, "note": "BG0 bgscrolly pass-through: expect 0x0020"}
 {"op": "write", "addr": 5, "data": 33, "be": 3, "note": "BG1_YSCROLL write 0x0021"}
@@ -48,19 +48,19 @@
 {"op": "check_bg_priority", "exp": 801, "note": "bg_priority idx=7: expect 0x0321"}
 {"op": "write", "addr": 15, "data": 1, "be": 3, "note": "LAYER_CTRL=0x0001: rowzoom_en[2]=1"}
 {"op": "check_rowzoom_en", "layer": 2, "exp": 1, "note": "rowzoom_en[2]=1"}
-{"op": "check_rowzoom_en", "layer": 3, "exp": 0, "note": "rowzoom_en[3]=0 (bit1 clear)"}
+{"op": "check_rowzoom_en", "layer": 3, "exp": 0, "note": "rowzoom_en[3]=0"}
 {"op": "write", "addr": 15, "data": 2, "be": 3, "note": "LAYER_CTRL=0x0002: rowzoom_en[3]=1"}
 {"op": "check_rowzoom_en", "layer": 2, "exp": 0, "note": "rowzoom_en[2]=0 after bit0 clear"}
 {"op": "check_rowzoom_en", "layer": 3, "exp": 1, "note": "rowzoom_en[3]=1"}
-{"op": "write", "addr": 15, "data": 3, "be": 3, "note": "LAYER_CTRL=0x0003: rowzoom_en[2]=1, rowzoom_en[3]=1"}
+{"op": "write", "addr": 15, "data": 3, "be": 3, "note": "LAYER_CTRL=0x0003: both set"}
 {"op": "check_rowzoom_en", "layer": 2, "exp": 1, "note": "rowzoom_en[2]=1 (both set)"}
 {"op": "check_rowzoom_en", "layer": 3, "exp": 1, "note": "rowzoom_en[3]=1 (both set)"}
-{"op": "write", "addr": 15, "data": 0, "be": 3, "note": "LAYER_CTRL=0x0000: reset for timing tests"}
+{"op": "write", "addr": 15, "data": 0, "be": 3, "note": "LAYER_CTRL=0x0000: reset for timing"}
 {"op": "timing_frame", "exp_pv": 76800, "note": "timing: pixel_active count = 76800 (320\u00d7240)"}
 {"op": "timing_check", "hpos": 0, "vpos": 16, "exp_hblank": 0, "exp_vblank": 0, "exp_pixel_active": 1, "note": "timing: hpos=0 vpos=16 \u2192 active"}
-{"op": "timing_check", "hpos": 0, "vpos": 15, "exp_hblank": 0, "exp_vblank": 1, "exp_pixel_active": 0, "note": "timing: hpos=0 vpos=15 \u2192 vblank (not yet active)"}
+{"op": "timing_check", "hpos": 0, "vpos": 15, "exp_hblank": 0, "exp_vblank": 1, "exp_pixel_active": 0, "note": "timing: hpos=0 vpos=15 \u2192 vblank"}
 {"op": "timing_check", "hpos": 320, "vpos": 16, "exp_hblank": 1, "exp_vblank": 0, "exp_pixel_active": 0, "note": "timing: hpos=320 vpos=16 \u2192 hblank start"}
-{"op": "timing_check", "hpos": 319, "vpos": 16, "exp_hblank": 0, "exp_vblank": 0, "exp_pixel_active": 1, "note": "timing: hpos=319 vpos=16 \u2192 last active pixel of row"}
+{"op": "timing_check", "hpos": 319, "vpos": 16, "exp_hblank": 0, "exp_vblank": 0, "exp_pixel_active": 1, "note": "timing: hpos=319 vpos=16 \u2192 last active pixel"}
 {"op": "timing_check", "hpos": 320, "vpos": 16, "exp_hblank": 1, "exp_vblank": 0, "exp_pixel_active": 0, "note": "timing: hpos=320 vpos=16 \u2192 hblank asserted"}
 {"op": "write", "addr": 8, "data": 32832, "be": 3, "note": "BG0_ZOOM write 0x8040"}
 {"op": "read", "addr": 8, "exp_dout": 32832, "note": "BG0_ZOOM readback 0x8040"}

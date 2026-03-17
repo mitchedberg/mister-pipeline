@@ -1,0 +1,133 @@
+{"op": "reset", "note": "step3 reset"}
+{"op": "write", "addr": 12, "data": 0, "be": 3, "note": "TEXT_XSCROLL=0"}
+{"op": "write", "addr": 13, "data": 0, "be": 3, "note": "TEXT_YSCROLL=0"}
+{"op": "write", "addr": 15, "data": 0, "be": 3, "note": "LAYER_CTRL=0"}
+{"op": "vram_zero", "base": 24576, "count": 4096, "note": "zero FG0 tilemap"}
+{"op": "vram_zero", "base": 28672, "count": 4096, "note": "zero FG0 gfx data"}
+{"op": "vram_zero", "base": 0, "count": 8192, "note": "zero all BG tilemaps (transparent)"}
+{"op": "gfx_write", "word_addr": 0, "data": 21845, "note": "tile0 row0 word0=0x5555"}
+{"op": "gfx_write", "word_addr": 1, "data": 21845, "note": "tile0 row0 word1=0x5555"}
+{"op": "gfx_write", "word_addr": 2, "data": 21845, "note": "tile0 row1 word0=0x5555"}
+{"op": "gfx_write", "word_addr": 3, "data": 21845, "note": "tile0 row1 word1=0x5555"}
+{"op": "gfx_write", "word_addr": 4, "data": 21845, "note": "tile0 row2 word0=0x5555"}
+{"op": "gfx_write", "word_addr": 5, "data": 21845, "note": "tile0 row2 word1=0x5555"}
+{"op": "gfx_write", "word_addr": 6, "data": 21845, "note": "tile0 row3 word0=0x5555"}
+{"op": "gfx_write", "word_addr": 7, "data": 21845, "note": "tile0 row3 word1=0x5555"}
+{"op": "gfx_write", "word_addr": 8, "data": 21845, "note": "tile0 row4 word0=0x5555"}
+{"op": "gfx_write", "word_addr": 9, "data": 21845, "note": "tile0 row4 word1=0x5555"}
+{"op": "gfx_write", "word_addr": 10, "data": 21845, "note": "tile0 row5 word0=0x5555"}
+{"op": "gfx_write", "word_addr": 11, "data": 21845, "note": "tile0 row5 word1=0x5555"}
+{"op": "gfx_write", "word_addr": 12, "data": 21845, "note": "tile0 row6 word0=0x5555"}
+{"op": "gfx_write", "word_addr": 13, "data": 21845, "note": "tile0 row6 word1=0x5555"}
+{"op": "gfx_write", "word_addr": 14, "data": 21845, "note": "tile0 row7 word0=0x5555"}
+{"op": "gfx_write", "word_addr": 15, "data": 21845, "note": "tile0 row7 word1=0x5555"}
+{"op": "map_write_fg", "tile_x": 0, "tile_y": 0, "data": 768, "note": "FG map(0,0)=tile0 color=3 flipx=0 flipy=0"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 0, "exp": 53, "note": "solid tile pen=5 color=3 at (0,0): expect 0x0035"}
+{"op": "check_pixel", "screen_x": 7, "screen_y": 0, "exp": 53, "note": "solid tile pen=5 color=3 at (7,0): expect 0x0035"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 7, "exp": 53, "note": "solid tile pen=5 color=3 at (0,7): expect 0x0035"}
+{"op": "gfx_write", "word_addr": 16, "data": 0, "note": "tile1 row0 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 17, "data": 0, "note": "tile1 row0 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 18, "data": 0, "note": "tile1 row1 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 19, "data": 0, "note": "tile1 row1 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 20, "data": 0, "note": "tile1 row2 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 21, "data": 0, "note": "tile1 row2 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 22, "data": 0, "note": "tile1 row3 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 23, "data": 0, "note": "tile1 row3 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 24, "data": 0, "note": "tile1 row4 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 25, "data": 0, "note": "tile1 row4 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 26, "data": 0, "note": "tile1 row5 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 27, "data": 0, "note": "tile1 row5 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 28, "data": 0, "note": "tile1 row6 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 29, "data": 0, "note": "tile1 row6 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 30, "data": 0, "note": "tile1 row7 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 31, "data": 0, "note": "tile1 row7 word1=0x0000"}
+{"op": "map_write_fg", "tile_x": 1, "tile_y": 0, "data": 1793, "note": "FG map(1,0)=tile1 color=7 flipx=0 flipy=0"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 0, "exp": 0, "note": "transparent tile at (1,0): pixel (8,0) = 0 (background)"}
+{"op": "gfx_write", "word_addr": 32, "data": 4369, "note": "tile2 row0 word0=0x1111"}
+{"op": "gfx_write", "word_addr": 33, "data": 4369, "note": "tile2 row0 word1=0x1111"}
+{"op": "gfx_write", "word_addr": 34, "data": 8738, "note": "tile2 row1 word0=0x2222"}
+{"op": "gfx_write", "word_addr": 35, "data": 8738, "note": "tile2 row1 word1=0x2222"}
+{"op": "gfx_write", "word_addr": 36, "data": 4369, "note": "tile2 row2 word0=0x1111"}
+{"op": "gfx_write", "word_addr": 37, "data": 4369, "note": "tile2 row2 word1=0x1111"}
+{"op": "gfx_write", "word_addr": 38, "data": 8738, "note": "tile2 row3 word0=0x2222"}
+{"op": "gfx_write", "word_addr": 39, "data": 8738, "note": "tile2 row3 word1=0x2222"}
+{"op": "gfx_write", "word_addr": 40, "data": 4369, "note": "tile2 row4 word0=0x1111"}
+{"op": "gfx_write", "word_addr": 41, "data": 4369, "note": "tile2 row4 word1=0x1111"}
+{"op": "gfx_write", "word_addr": 42, "data": 8738, "note": "tile2 row5 word0=0x2222"}
+{"op": "gfx_write", "word_addr": 43, "data": 8738, "note": "tile2 row5 word1=0x2222"}
+{"op": "gfx_write", "word_addr": 44, "data": 4369, "note": "tile2 row6 word0=0x1111"}
+{"op": "gfx_write", "word_addr": 45, "data": 4369, "note": "tile2 row6 word1=0x1111"}
+{"op": "gfx_write", "word_addr": 46, "data": 8738, "note": "tile2 row7 word0=0x2222"}
+{"op": "gfx_write", "word_addr": 47, "data": 8738, "note": "tile2 row7 word1=0x2222"}
+{"op": "map_write_fg", "tile_x": 5, "tile_y": 3, "data": 258, "note": "FG map(5,3)=tile2 color=1 flipx=0 flipy=0"}
+{"op": "check_pixel", "screen_x": 40, "screen_y": 24, "exp": 17, "note": "striped tile row0 pen=1 at screen(40,24): expect 0x0011"}
+{"op": "check_pixel", "screen_x": 40, "screen_y": 25, "exp": 18, "note": "striped tile row1 pen=2 at screen(40,25): expect 0x0012"}
+{"op": "gfx_write", "word_addr": 48, "data": 4660, "note": "tile3 row0 word0=0x1234"}
+{"op": "gfx_write", "word_addr": 49, "data": 22136, "note": "tile3 row0 word1=0x5678"}
+{"op": "gfx_write", "word_addr": 50, "data": 4660, "note": "tile3 row1 word0=0x1234"}
+{"op": "gfx_write", "word_addr": 51, "data": 22136, "note": "tile3 row1 word1=0x5678"}
+{"op": "gfx_write", "word_addr": 52, "data": 4660, "note": "tile3 row2 word0=0x1234"}
+{"op": "gfx_write", "word_addr": 53, "data": 22136, "note": "tile3 row2 word1=0x5678"}
+{"op": "gfx_write", "word_addr": 54, "data": 4660, "note": "tile3 row3 word0=0x1234"}
+{"op": "gfx_write", "word_addr": 55, "data": 22136, "note": "tile3 row3 word1=0x5678"}
+{"op": "gfx_write", "word_addr": 56, "data": 4660, "note": "tile3 row4 word0=0x1234"}
+{"op": "gfx_write", "word_addr": 57, "data": 22136, "note": "tile3 row4 word1=0x5678"}
+{"op": "gfx_write", "word_addr": 58, "data": 4660, "note": "tile3 row5 word0=0x1234"}
+{"op": "gfx_write", "word_addr": 59, "data": 22136, "note": "tile3 row5 word1=0x5678"}
+{"op": "gfx_write", "word_addr": 60, "data": 4660, "note": "tile3 row6 word0=0x1234"}
+{"op": "gfx_write", "word_addr": 61, "data": 22136, "note": "tile3 row6 word1=0x5678"}
+{"op": "gfx_write", "word_addr": 62, "data": 4660, "note": "tile3 row7 word0=0x1234"}
+{"op": "gfx_write", "word_addr": 63, "data": 22136, "note": "tile3 row7 word1=0x5678"}
+{"op": "map_write_fg", "tile_x": 2, "tile_y": 0, "data": 16387, "note": "FG map(2,0)=tile3 color=0 flipx=1 flipy=0"}
+{"op": "check_pixel", "screen_x": 17, "screen_y": 0, "exp": 7, "note": "flipX tile: screen_x=17 \u2192 pen=7: expect 0x0007"}
+{"op": "gfx_write", "word_addr": 64, "data": 4369, "note": "tile4 row0 word0=0x1111"}
+{"op": "gfx_write", "word_addr": 65, "data": 4369, "note": "tile4 row0 word1=0x1111"}
+{"op": "gfx_write", "word_addr": 66, "data": 8738, "note": "tile4 row1 word0=0x2222"}
+{"op": "gfx_write", "word_addr": 67, "data": 8738, "note": "tile4 row1 word1=0x2222"}
+{"op": "gfx_write", "word_addr": 68, "data": 13107, "note": "tile4 row2 word0=0x3333"}
+{"op": "gfx_write", "word_addr": 69, "data": 13107, "note": "tile4 row2 word1=0x3333"}
+{"op": "gfx_write", "word_addr": 70, "data": 17476, "note": "tile4 row3 word0=0x4444"}
+{"op": "gfx_write", "word_addr": 71, "data": 17476, "note": "tile4 row3 word1=0x4444"}
+{"op": "gfx_write", "word_addr": 72, "data": 21845, "note": "tile4 row4 word0=0x5555"}
+{"op": "gfx_write", "word_addr": 73, "data": 21845, "note": "tile4 row4 word1=0x5555"}
+{"op": "gfx_write", "word_addr": 74, "data": 26214, "note": "tile4 row5 word0=0x6666"}
+{"op": "gfx_write", "word_addr": 75, "data": 26214, "note": "tile4 row5 word1=0x6666"}
+{"op": "gfx_write", "word_addr": 76, "data": 30583, "note": "tile4 row6 word0=0x7777"}
+{"op": "gfx_write", "word_addr": 77, "data": 30583, "note": "tile4 row6 word1=0x7777"}
+{"op": "gfx_write", "word_addr": 78, "data": 34952, "note": "tile4 row7 word0=0x8888"}
+{"op": "gfx_write", "word_addr": 79, "data": 34952, "note": "tile4 row7 word1=0x8888"}
+{"op": "map_write_fg", "tile_x": 2, "tile_y": 1, "data": 32772, "note": "FG map(2,1)=tile4 color=0 flipx=0 flipy=1"}
+{"op": "check_pixel", "screen_x": 16, "screen_y": 8, "exp": 8, "note": "flipY tile at (2,1): screen_y=8 \u2192 tile_row=7 \u2192 pen=8: expect 0x0008"}
+{"op": "check_pixel", "screen_x": 16, "screen_y": 15, "exp": 1, "note": "flipY tile at (2,1): screen_y=15 \u2192 tile_row=0 \u2192 pen=1: expect 0x0001"}
+{"op": "write", "addr": 12, "data": 8, "be": 3, "note": "TEXT_XSCROLL=8 (shift left 1 tile)"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 0, "exp": 0, "note": "X scroll=8: screen_x=0 \u2192 canvas_x=8 \u2192 tile(1,0) = transparent \u2192 0x0000"}
+{"op": "write", "addr": 12, "data": 0, "be": 3, "note": "TEXT_XSCROLL=0 (restore)"}
+{"op": "write", "addr": 13, "data": 8, "be": 3, "note": "TEXT_YSCROLL=8 (shift up 1 tile)"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 0, "exp": 0, "note": "Y scroll=8: screen_y=0 \u2192 canvas_y=8 \u2192 tile(0,1)=untouched \u2192 transparent"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 232, "exp": 0, "note": "Y scroll=8: screen_y=232 \u2192 canvas_y=240 \u2192 tile(0,30)=untouched \u2192 transparent"}
+{"op": "write", "addr": 13, "data": 0, "be": 3, "note": "TEXT_YSCROLL=0 (restore)"}
+{"op": "gfx_write", "word_addr": 80, "data": 4660, "note": "tile5 row0 word0=0x1234"}
+{"op": "gfx_write", "word_addr": 81, "data": 22136, "note": "tile5 row0 word1=0x5678"}
+{"op": "gfx_write", "word_addr": 82, "data": 0, "note": "tile5 row1 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 83, "data": 0, "note": "tile5 row1 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 84, "data": 0, "note": "tile5 row2 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 85, "data": 0, "note": "tile5 row2 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 86, "data": 0, "note": "tile5 row3 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 87, "data": 0, "note": "tile5 row3 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 88, "data": 0, "note": "tile5 row4 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 89, "data": 0, "note": "tile5 row4 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 90, "data": 0, "note": "tile5 row5 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 91, "data": 0, "note": "tile5 row5 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 92, "data": 0, "note": "tile5 row6 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 93, "data": 0, "note": "tile5 row6 word1=0x0000"}
+{"op": "gfx_write", "word_addr": 94, "data": 0, "note": "tile5 row7 word0=0x0000"}
+{"op": "gfx_write", "word_addr": 95, "data": 0, "note": "tile5 row7 word1=0x0000"}
+{"op": "map_write_fg", "tile_x": 10, "tile_y": 0, "data": 517, "note": "FG map(10,0)=tile5 color=2 flipx=0 flipy=0"}
+{"op": "check_pixel", "screen_x": 80, "screen_y": 0, "exp": 33, "note": "pixel layout: (80,0) \u2192 pen=1, expect 0x21"}
+{"op": "check_pixel", "screen_x": 81, "screen_y": 0, "exp": 34, "note": "pixel layout: (81,0) \u2192 pen=2, expect 0x22"}
+{"op": "check_pixel", "screen_x": 82, "screen_y": 0, "exp": 35, "note": "pixel layout: (82,0) \u2192 pen=3, expect 0x23"}
+{"op": "check_pixel", "screen_x": 83, "screen_y": 0, "exp": 36, "note": "pixel layout: (83,0) \u2192 pen=4, expect 0x24"}
+{"op": "check_pixel", "screen_x": 84, "screen_y": 0, "exp": 37, "note": "pixel layout: (84,0) \u2192 pen=5, expect 0x25"}
+{"op": "check_pixel", "screen_x": 85, "screen_y": 0, "exp": 38, "note": "pixel layout: (85,0) \u2192 pen=6, expect 0x26"}
+{"op": "check_pixel", "screen_x": 86, "screen_y": 0, "exp": 39, "note": "pixel layout: (86,0) \u2192 pen=7, expect 0x27"}
+{"op": "check_pixel", "screen_x": 87, "screen_y": 0, "exp": 40, "note": "pixel layout: (87,0) \u2192 pen=8, expect 0x28"}

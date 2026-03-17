@@ -1,53 +1,63 @@
 // =============================================================================
-// TC0480SCP — Verilator testbench (Step 1: skeleton + timing + control regs)
+// TC0480SCP — Verilator testbench
 //
 // Reads one or more JSONL vector files.  Each line is a JSON object with "op":
 //
 // Step 1 ops:
 //   op="reset"
-//       Assert async_rst_n=0 for 4 ticks, release, settle.
+//   op="write"        Fields: "addr" (word 0–23), "data" (16-bit), "be"
+//   op="read"         Fields: "addr", "exp_dout"
+//   op="check_bgscrollx"  Fields: "layer" (0–3), "exp"
+//   op="check_bgscrolly"  Fields: "layer", "exp"
+//   op="check_dblwidth"   Fields: "exp"
+//   op="check_flipscreen" Fields: "exp"
+//   op="check_bg_priority" Fields: "exp"
+//   op="check_rowzoom_en" Fields: "layer" (2 or 3), "exp"
+//   op="check_bg_dx"  Fields: "layer", "exp"
+//   op="check_bg_dy"  Fields: "layer", "exp"
+//   op="timing_frame" Fields: "exp_pv"
+//   op="timing_check" Fields: "hpos","vpos","exp_hblank","exp_vblank","exp_pixel_active"
 //
-//   op="write"
-//       CPU write to control register.
-//       Fields: "addr" (word 0–23), "data" (16-bit), "be" (byte enables, default 3)
+// Step 2 ops:
+//   op="vram_write"
+//       CPU write to VRAM.
+//       Fields: "addr" (word address 0x0000–0x7FFF), "data" (16-bit), "be" (byte enables)
 //
-//   op="read"
-//       CPU read from control register; compare to "exp_dout".
-//       Fields: "addr", "exp_dout"
+//   op="vram_read"
+//       CPU read from VRAM; compare to "exp_data".
+//       Fields: "addr" (word address), "exp_data" (16-bit)
 //
-//   op="check_bgscrollx"
-//       After a write cycle, sample bgscrollx[layer] output.
-//       Fields: "layer" (0–3), "exp" (16-bit expected value, signed 2's-complement as uint16)
+//   op="vram_zero"
+//       Zero a range of VRAM words. Fields: "base" (word addr), "count" (# words).
+//       Used to ensure BRAM persistence doesn't affect tests.
 //
-//   op="check_bgscrolly"
-//       Fields: "layer" (0–3), "exp" (16-bit)
+// Step 3 ops:
+//   op="gfx_write"
+//       Write FG0 gfx tile data to VRAM (byte 0xE000–0xFFFF = word 0x7000–0x7FFF).
+//       Fields: "word_addr" (offset within gfx region, 0..0xFFF), "data" (16-bit)
 //
-//   op="check_dblwidth"
-//       Fields: "exp" (0 or 1)
+//   op="map_write_fg"
+//       Write FG0 tile map entry.
+//       Fields: "tile_x" (0..63), "tile_y" (0..63), "data" (16-bit tile word)
 //
-//   op="check_flipscreen"
-//       Fields: "exp" (0 or 1)
+//   op="run_frame"
+//       Simulate one full frame (H_TOTAL × V_TOTAL cycles).
+//       Collects nothing — just advances simulation time.
 //
-//   op="check_bg_priority"
-//       Fields: "exp" (16-bit priority word)
+//   op="check_pixel"
+//       Sample pixel_out at the given screen position.
+//       The testbench advances to that position and reads pixel_out.
+//       Fields: "screen_x" (0..319), "screen_y" (0..239), "exp" (16-bit palette index)
 //
-//   op="check_rowzoom_en"
-//       Fields: "layer" (2 or 3), "exp" (0 or 1)
+// Step 4 ops:
+//   op="gfx_rom_write"
+//       Write to the simulated GFX ROM array (word-addressed 32-bit words).
+//       Fields: "word_addr" (21-bit), "data" (32-bit as two 16-bit fields "data_hi","data_lo")
 //
-//   op="check_bg_dx"
-//       Fields: "layer" (0–3), "exp" (8-bit)
-//
-//   op="check_bg_dy"
-//       Fields: "layer" (0–3), "exp" (8-bit)
-//
-//   op="timing_frame"
-//       Run one full H_TOTAL×V_TOTAL frame (424×262 = 111,088 cycles).
-//       Count cycles where pixel_active==1.
-//       Fields: "exp_pv" (expected pixel_active count)
-//
-//   op="timing_check"
-//       Advance to (hpos, vpos), then sample hblank/vblank/pixel_active.
-//       Fields: "hpos", "vpos", "exp_hblank", "exp_vblank", "exp_pixel_active"
+//   op="map_write_bg"
+//       Write BG tile map entry (attr or code word) directly to VRAM.
+//       Fields: "layer" (0..3), "tile_x", "tile_y", "attr" (16-bit), "code" (16-bit)
+//       Writes both attr and code words for the tile.
 //
 // All passing tests: prints "PASS [note]"
 // Any failure:       prints "FAIL [note]: got=X exp=Y"
@@ -68,11 +78,11 @@
 // ---------------------------------------------------------------------------
 // Timing constants — must match RTL localparam and Python model
 // ---------------------------------------------------------------------------
-static const int H_TOTAL = 424;
-static const int H_END   = 320;   // hblank starts here
-static const int V_TOTAL = 262;
-static const int V_START = 16;
-static const int V_END   = 256;
+static const int H_TOTAL  = 424;
+static const int H_END    = 320;   // hblank starts here
+static const int V_TOTAL  = 262;
+static const int V_START  = 16;
+static const int V_END    = 256;
 
 // ---------------------------------------------------------------------------
 // Minimal JSON field extractors
@@ -92,6 +102,12 @@ static int jint(const std::string& s, const std::string& key, int dflt = 0) {
     return (int)strtol(s.c_str() + p, nullptr, 0);
 }
 
+static uint32_t juint(const std::string& s, const std::string& key, uint32_t dflt = 0) {
+    auto p = jfind(s, key);
+    if (p == std::string::npos) return dflt;
+    return (uint32_t)strtoul(s.c_str() + p, nullptr, 0);
+}
+
 static std::string jstr(const std::string& s, const std::string& key) {
     auto p = jfind(s, key);
     if (p == std::string::npos || s[p] != '"') return "";
@@ -107,7 +123,21 @@ static Vtc0480scp* dut = nullptr;
 static int g_pass = 0;
 static int g_fail = 0;
 
+// GFX ROM simulation array (Step 4): 2^21 words × 32-bit
+// Allocated on heap to avoid stack overflow.
+static uint32_t* gfx_rom = nullptr;
+static const int GFX_ROM_WORDS = (1 << 21);
+
 static void tick() {
+    // Drive GFX ROM output to DUT (Step 4: combinational async read)
+    // The DUT drives gfx_addr and gfx_rd; we respond with gfx_data.
+    // We do this before the clock edge so the FSM reads correct data.
+    if (gfx_rom) {
+        uint32_t addr = dut->gfx_addr & (GFX_ROM_WORDS - 1);
+        dut->gfx_data = gfx_rom[addr];
+    } else {
+        dut->gfx_data = 0;
+    }
     dut->clk = 0; dut->eval();
     dut->clk = 1; dut->eval();
 }
@@ -118,6 +148,11 @@ static void idle_bus() {
     dut->cpu_addr = 0;
     dut->cpu_din  = 0;
     dut->cpu_be   = 0;
+    dut->vram_cs  = 0;
+    dut->vram_we  = 0;
+    dut->vram_addr = 0;
+    dut->vram_din  = 0;
+    dut->vram_be   = 0;
 }
 
 static void do_reset() {
@@ -141,12 +176,18 @@ static void check(bool ok, const std::string& note, int got, int exp) {
     }
 }
 
+static void check32(bool ok, const std::string& note, uint32_t got, uint32_t exp) {
+    if (ok) {
+        printf("PASS %s\n", note.c_str());
+        g_pass++;
+    } else {
+        printf("FAIL %s: got=0x%08X exp=0x%08X\n", note.c_str(), got, exp);
+        g_fail++;
+    }
+}
+
 // ---------------------------------------------------------------------------
 // CPU bus operations (control register window)
-//
-// cpu_addr[4:0] = word index 0–23 within the control register window.
-// NOTE: TC0480SCP cpu_addr port is [4:0] (5 bits, word index).
-// There is NO [18:1] offset here — this is the ctrl window only.
 // ---------------------------------------------------------------------------
 static void cpu_write(int word_addr, int data, int be) {
     dut->cpu_cs   = 1;
@@ -172,10 +213,41 @@ static int cpu_read(int word_addr) {
 }
 
 // ---------------------------------------------------------------------------
+// VRAM bus operations (Step 2)
+// vram_addr[14:0] = word address within 64KB VRAM (byte_addr >> 1)
+// ---------------------------------------------------------------------------
+static void vram_write(int word_addr, int data, int be) {
+    dut->vram_cs   = 1;
+    dut->vram_we   = 1;
+    dut->vram_addr = (uint32_t)(word_addr & 0x7FFF);
+    dut->vram_din  = (uint16_t)(data & 0xFFFF);
+    dut->vram_be   = (uint8_t)(be & 0x3);
+    tick();
+    idle_bus();
+    tick();
+}
+
+// Returns the registered read result (one-cycle latency).
+static int vram_read(int word_addr) {
+    dut->vram_cs   = 1;
+    dut->vram_we   = 0;
+    dut->vram_addr = (uint32_t)(word_addr & 0x7FFF);
+    dut->vram_be   = 0x3;
+    tick();                          // posedge: VRAM latches address
+    idle_bus();
+    tick();                          // posedge: cpu_dout updated with VRAM[addr]
+    return (int)(dut->vram_dout & 0xFFFF);
+}
+
+// Zero a range of VRAM words [base .. base+count-1]
+static void vram_zero_range(int base, int count) {
+    for (int i = 0; i < count; i++)
+        vram_write(base + i, 0, 3);
+}
+
+// ---------------------------------------------------------------------------
 // Timing helpers
 // ---------------------------------------------------------------------------
-
-// Run one complete frame (H_TOTAL × V_TOTAL cycles), counting pixel_active.
 static void run_timing_frame(int exp_pv, const std::string& note) {
     int pv_count = 0;
     int total    = H_TOTAL * V_TOTAL;
@@ -186,13 +258,6 @@ static void run_timing_frame(int exp_pv, const std::string& note) {
     check(pv_count == exp_pv, note + " [pixel_active_count]", pv_count, exp_pv);
 }
 
-// Advance to (target_hpos, target_vpos), then sample timing signals.
-//
-// hblank, vblank, and pixel_active are registered outputs: they are updated
-// on the posedge *after* hpos/vpos update.  Strategy:
-//   1. Tick until hpos/vpos == target (they update on the posedge).
-//   2. Then tick one more time so the registered timing outputs catch up.
-//   3. Sample after that tick.
 static void run_timing_check(int target_hpos, int target_vpos,
                               int exp_hblank, int exp_vblank, int exp_pv,
                               const std::string& note) {
@@ -202,8 +267,6 @@ static void run_timing_check(int target_hpos, int target_vpos,
             break;
         tick();
     }
-    // One additional tick: lets the registered hblank/vblank/pixel_active
-    // reflect the combinational decode for the current (hpos, vpos).
     tick();
     bool got_hb = dut->hblank       != 0;
     bool got_vb = dut->vblank       != 0;
@@ -215,6 +278,51 @@ static void run_timing_check(int target_hpos, int target_vpos,
 }
 
 // ---------------------------------------------------------------------------
+// Pixel-capture helper (Step 3+)
+// Advance to the given screen position and sample pixel_out.
+// screen_y is 0-based (first visible line = V_START = 16, so vpos = V_START + screen_y).
+// screen_x is 0-based hpos (active display starts at hpos=0).
+// ---------------------------------------------------------------------------
+static int capture_pixel(int screen_x, int screen_y) {
+    // Target vpos and hpos
+    int target_vpos = V_START + screen_y;
+    int target_hpos = screen_x;
+
+    // Advance until we reach the target position
+    int limit = 2 * H_TOTAL * V_TOTAL;
+    for (int i = 0; i < limit; i++) {
+        if ((int)dut->hpos == target_hpos && (int)dut->vpos == target_vpos)
+            break;
+        tick();
+    }
+    // Tick once more so registered pixel_out is valid for this position
+    tick();
+    return (int)(dut->pixel_out & 0xFFFF);
+}
+
+// Run one full frame then check a pixel on the NEXT frame.
+// This gives the fill FSM a full frame to populate the line buffer before reading.
+static int capture_pixel_next_frame(int screen_x, int screen_y) {
+    // Run to VBLANK first to let the engines fill buffers cleanly
+    int limit = H_TOTAL * V_TOTAL;
+    for (int i = 0; i < limit; i++) tick();
+    return capture_pixel(screen_x, screen_y);
+}
+
+// ---------------------------------------------------------------------------
+// BG tile map write helper (Step 4)
+// Writes attr + code word pair for tile (tile_x, tile_y) on layer L.
+// Standard mode assumed (dblwidth=0).
+// ---------------------------------------------------------------------------
+static void bg_map_write(int layer, int tile_x, int tile_y, int attr, int code) {
+    // Word address = layer * 0x0400 + (tile_y * 32 + tile_x) * 2
+    int tile_idx = tile_y * 32 + tile_x;
+    int word_base = layer * 0x0400 + tile_idx * 2;
+    vram_write(word_base,     attr & 0xFFFF, 3);
+    vram_write(word_base + 1, code & 0x7FFF, 3);
+}
+
+// ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
 int main(int argc, char** argv) {
@@ -223,11 +331,15 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    // Allocate GFX ROM
+    gfx_rom = new uint32_t[GFX_ROM_WORDS]();  // zero-initialized
+
     Verilated::commandArgs(argc, argv);
     dut = new Vtc0480scp;
 
     // Initial power-on state
     dut->async_rst_n = 0;
+    dut->gfx_data    = 0;
     idle_bus();
     for (int i = 0; i < 4; i++) tick();
     dut->async_rst_n = 1;
@@ -362,6 +474,73 @@ int main(int argc, char** argv) {
                                  jint(line, "exp_pixel_active"),
                                  note);
 
+            // ── Step 2 ops ──────────────────────────────────────────────────
+
+            } else if (op == "vram_write") {
+                vram_write(jint(line, "addr"), jint(line, "data"), jint(line, "be", 3));
+                // No PASS output for writes — they are setup ops
+
+            } else if (op == "vram_read") {
+                int exp = jint(line, "exp_data") & 0xFFFF;
+                int got = vram_read(jint(line, "addr"));
+                check(got == exp, note, got, exp);
+
+            } else if (op == "vram_zero") {
+                int base  = jint(line, "base");
+                int count = jint(line, "count");
+                vram_zero_range(base, count);
+                // No PASS output — setup op
+
+            // ── Step 3 ops ──────────────────────────────────────────────────
+
+            } else if (op == "gfx_write") {
+                // Write FG0 gfx data to VRAM (word 0x7000 + word_addr)
+                int waddr = 0x7000 + jint(line, "word_addr");
+                vram_write(waddr, jint(line, "data"), 3);
+
+            } else if (op == "map_write_fg") {
+                // Write FG0 tile map entry at (tile_x, tile_y)
+                // Map word addr = 0x6000 + tile_y * 64 + tile_x
+                int tile_x = jint(line, "tile_x");
+                int tile_y = jint(line, "tile_y");
+                int waddr  = 0x6000 + tile_y * 64 + tile_x;
+                vram_write(waddr, jint(line, "data"), 3);
+
+            } else if (op == "run_frame") {
+                // Run one full frame
+                for (int i = 0; i < H_TOTAL * V_TOTAL; i++) tick();
+
+            } else if (op == "check_pixel") {
+                // Sample pixel_out at screen position (screen_x, screen_y).
+                // Run 2 full frames first to ensure line buffers are filled.
+                int screen_x = jint(line, "screen_x");
+                int screen_y = jint(line, "screen_y");
+                int exp      = jint(line, "exp") & 0xFFFF;
+                // Run 2 frames to warm up the fill FSMs
+                for (int i = 0; i < 2 * H_TOTAL * V_TOTAL; i++) tick();
+                int got = capture_pixel(screen_x, screen_y);
+                check(got == exp, note, got, exp);
+
+            // ── Step 4 ops ──────────────────────────────────────────────────
+
+            } else if (op == "gfx_rom_write") {
+                // Write a 32-bit word to the GFX ROM simulation array
+                uint32_t waddr = juint(line, "word_addr");
+                uint32_t hi    = juint(line, "data_hi");
+                uint32_t lo    = juint(line, "data_lo");
+                uint32_t data  = (hi << 16) | (lo & 0xFFFF);
+                if (waddr < (uint32_t)GFX_ROM_WORDS)
+                    gfx_rom[waddr] = data;
+
+            } else if (op == "map_write_bg") {
+                // Write BG tile map entry (both attr and code words) for layer L
+                int layer  = jint(line, "layer");
+                int tile_x = jint(line, "tile_x");
+                int tile_y = jint(line, "tile_y");
+                int attr   = jint(line, "attr") & 0xFFFF;
+                int code   = jint(line, "code") & 0x7FFF;
+                bg_map_write(layer, tile_x, tile_y, attr, code);
+
             } else {
                 printf("WARN unknown op='%s'\n", op.c_str());
             }
@@ -371,5 +550,6 @@ int main(int argc, char** argv) {
 
     printf("\nTESTS: %d passed, %d failed\n", g_pass, g_fail);
     delete dut;
+    delete[] gfx_rom;
     return (g_fail == 0) ? 0 : 1;
 }
