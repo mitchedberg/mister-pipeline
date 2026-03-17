@@ -13,11 +13,8 @@
 //      32-bit access whenever the 68020 performs a long-word read or write.
 //   3. Passes word (16-bit) and byte accesses through with a single cycle.
 //
-// NOTE: TG68K is a VHDL core (four files).  It is NOT included in this repo
-//       yet.  This adapter is written as a stub — the TG68K sub-module
-//       instantiation is present but commented out.  When TG68K VHDL is
-//       dropped into chips/m68020/hdl/tg68k/, remove the stub signals and
-//       uncomment the instantiation block.
+// TG68K VHDL files are in chips/m68020/hdl/tg68k/ (downloaded 2026-03-16).
+// The TG68KdotC_Kernel instantiation is ACTIVE below.
 //
 // See chips/m68020/README.md for full TG68K integration notes.
 //
@@ -122,79 +119,96 @@ logic rst_n;
 assign rst_n = rst_pipe[1];
 
 // =============================================================================
-// TG68K sub-signals
-// (Driven from the stub when TG68K is not yet instantiated; replaced by real
-//  instance outputs when TG68K VHDL is available.)
+// TG68K interface signals
 // =============================================================================
 
-// --- Stub outputs (what TG68K would drive) ---
-// These are all driven '0 / safe-idle so the system compiles and simulates
-// cleanly without TG68K.  Replace with wire connections once TG68K is wired.
+// --- Outputs driven by TG68KdotC_Kernel ---
+logic [31:0] tg_addr;         // byte address (addr_out)
+logic [15:0] tg_data_write;   // write data
+logic        tg_nWr;          // write strobe: 0=write, 1=read  (nWr port)
+logic        tg_uds_n;        // upper data strobe active-low    (nUDS port)
+logic        tg_lds_n;        // lower data strobe active-low    (nLDS port)
+logic        tg_reset_out_n;  // CPU reset output                (nResetOut port)
+logic [1:0]  tg_busstate;     // bus state: 00=fetch,10=rd,11=wr,01=idle (busstate port)
+logic [2:0]  tg_fc;           // function codes                  (FC port)
+logic        tg_skipFetch;    // internal skip-fetch hint        (skipFetch port)
+logic        tg_clr_berr;     // bus error clear (unused here)   (clr_berr port)
 
-logic [31:0] tg_addr;        // TG68K byte address out
-logic [15:0] tg_data_write;  // TG68K write data
-logic        tg_as_n;        // TG68K address strobe (active-low)
-logic        tg_uds_n;       // TG68K upper data strobe (active-low)
-logic        tg_lds_n;       // TG68K lower data strobe (active-low)
-logic        tg_rw;          // TG68K R/W (1=read)
-logic        tg_reset_out_n; // TG68K reset output
+// tg_rw: 1=read, 0=write — directly matches nWr polarity (nWr=0 means write)
+// tg_as_n: derived from busstate; AS is active whenever the CPU is doing a
+//          memory access (state != "01" which means no-memaccess/idle).
+logic tg_rw;
+assign tg_rw  = tg_nWr;
+logic tg_as_n;
+assign tg_as_n = (tg_busstate == 2'b01);   // 1=idle (no strobe), 0=active
 
-// --- Inputs to TG68K ---
-logic [15:0] tg_data_read;   // 16-bit data fed back to TG68K
-logic        tg_dtack;       // DTACK to TG68K (active-low)
+// --- Inputs to TG68KdotC_Kernel ---
+logic [15:0] tg_data_read;    // 16-bit read data fed to kernel  (data_in port)
+
+// clkena_in: gate CPU advancement.
+// Three conditions must all be satisfied to allow the CPU to advance:
+//   1. Not in a memory access state (busstate != "01" means active access).
+//   2. Not stalled waiting for the second 16-bit half (coalesce_stall).
+//   3. The system bus has acknowledged (cpu_dtack_n = 0).
+// coalesce_stall is driven by the state machine below; declared here as a wire
+// and assigned after the state machine typedef so the signal is in scope.
+logic tg_clkena;
+logic coalesce_stall;   // 1 = adapter is between the two 16-bit halves; hold CPU
+assign tg_clkena = (tg_busstate == 2'b01) ? 1'b1              // CPU idle — always advance
+                 : coalesce_stall         ? 1'b0              // coalescing gap stall
+                 : !cpu_dtack_n;                               // wait for bus ack
 
 // -------------------------------------------------------------------------
-// STUB BLOCK — remove this section and uncomment TG68K instantiation below
-// when chips/m68020/hdl/tg68k/TG68K.vhd is present in the project.
+// TG68KdotC_Kernel instantiation
+// Port name mapping (stub expectation → actual kernel port):
+//   reset        → nReset        (active-low reset)
+//   data_read    → data_in       (16-bit read data input)
+//   addr         → addr_out      (32-bit byte address output)
+//   as_n         → NOT A PORT    (derived from busstate above)
+//   uds_n        → nUDS          (active-low upper data strobe)
+//   lds_n        → nLDS          (active-low lower data strobe)
+//   rw           → nWr           (0=write, 1=read — same polarity)
+//   reset_cpu_n  → nResetOut     (CPU RESET instruction output)
+//   dtack        → NOT A PORT    (consumed via clkena_in above)
+//   IPL          → IPL           (no rename)
+//   data_write   → data_write    (no rename)
+//   busstate     → busstate      (no rename)
+//   FC           → FC            (no rename)
+// Additional kernel ports not in original stub:
+//   IPL_autovector → tied 0      (not used; auto-vector via VPA/VMA in TG68K.vhd top)
+//   berr           → tied 0      (bus error; handled at integration level)
+//   clr_berr       → ignored
+//   skipFetch      → ignored
 // -------------------------------------------------------------------------
-always_ff @(posedge clk) begin
-    if (!rst_n) begin
-        tg_addr        <= 32'h0;
-        tg_data_write  <= 16'h0;
-        tg_as_n        <= 1'b1;
-        tg_uds_n       <= 1'b1;
-        tg_lds_n       <= 1'b1;
-        tg_rw          <= 1'b1;
-        tg_reset_out_n <= 1'b0;
-    end else begin
-        // CPU is held in idle reset state — outputs remain at safe defaults.
-        // Real TG68K will drive these during normal operation.
-        tg_as_n        <= 1'b1;
-        tg_uds_n       <= 1'b1;
-        tg_lds_n       <= 1'b1;
-        tg_rw          <= 1'b1;
-        tg_reset_out_n <= rst_n;
-    end
-end
-// -------------------------------------------------------------------------
-// END STUB — TG68K instantiation (uncomment when VHDL files are available)
-// -------------------------------------------------------------------------
-//
-// TG68KdotC_Kernel #(
-//     .sr_read       (2),
-//     .vbr_stackframe(2),
-//     .extaddr_mode  (2),
-//     .mul_mode      (2),
-//     .div_mode      (2),
-//     .bitfield      (2)
-// ) u_tg68k (
-//     .clk           (clk),
-//     .reset         (rst_n),          // TG68K reset is active-low
-//     .clkena_in     (1'b1),           // always enabled; throttle via DTACK instead
-//     .CPU           (2'b11),          // 68020 mode
-//     .IPL           (ipl_n),
-//     .dtack         (tg_dtack),       // active-low DTACK to CPU
-//     .data_read     (tg_data_read),
-//     .addr          (tg_addr),
-//     .data_write    (tg_data_write),
-//     .as_n          (tg_as_n),
-//     .uds_n         (tg_uds_n),
-//     .lds_n         (tg_lds_n),
-//     .rw            (tg_rw),
-//     .reset_cpu_n   (tg_reset_out_n),
-//     .busstate      (),               // not used externally
-//     .FC            ()                // not used (no IACK decode at this level)
-// );
+TG68KdotC_Kernel #(
+    .SR_Read       (2),    // switchable with CPU(0) → 68020 privileged SR reads
+    .VBR_Stackframe(2),    // switchable with CPU(0) → 68020 extended stack frames
+    .extAddr_Mode  (2),    // switchable with CPU(1) → 68020 extended addressing
+    .MUL_Mode      (2),    // switchable with CPU(1) → 32-bit multiply
+    .DIV_Mode      (2),    // switchable with CPU(1) → 32-bit divide
+    .BitField      (2),    // switchable with CPU(1) → bitfield instructions
+    .BarrelShifter (2),    // switchable with CPU(1) → barrel shifter
+    .MUL_Hardware  (1)     // use hardware multiplier
+) u_tg68k (
+    .CPU           (2'b11),          // 68020 mode
+    .clk           (clk),
+    .nReset        (rst_n),          // active-low reset (from sync'd rst_n)
+    .clkena_in     (tg_clkena),      // DTACK-derived clock enable
+    .data_in       (tg_data_read),   // 16-bit read data from bus coalescer
+    .IPL           (ipl_n),          // interrupt priority level (active-low)
+    .IPL_autovector(1'b0),           // no auto-vector (IACK handled at integration level)
+    .berr          (1'b0),           // bus error: not used at this level
+    .addr_out      (tg_addr),        // 32-bit byte address
+    .FC            (tg_fc),          // function codes (unused at this level)
+    .data_write    (tg_data_write),  // 16-bit write data
+    .busstate      (tg_busstate),    // bus state: 00=fetch,10=rd,11=wr,01=idle
+    .nWr           (tg_nWr),         // 0=write, 1=read
+    .nUDS          (tg_uds_n),       // upper data strobe (active-low)
+    .nLDS          (tg_lds_n),       // lower data strobe (active-low)
+    .nResetOut     (tg_reset_out_n), // CPU RESET instruction output
+    .clr_berr      (tg_clr_berr),    // bus error clear (ignored)
+    .skipFetch     (tg_skipFetch)    // skip fetch hint (ignored)
+);
 
 // =============================================================================
 // 16 → 32-bit bus coalescing state machine
@@ -242,6 +256,11 @@ typedef enum logic [1:0] {
 } state_t;
 
 state_t state;
+
+// coalesce_stall: high during FIRST16 — adapter has accepted the first 16-bit
+// half and is waiting for TG68K to deassert/reassert AS for the second half.
+// Holds tg_clkena=0 so the CPU does not advance while the bus gap is open.
+assign coalesce_stall = (state == FIRST16);
 
 // Latched values from the first 16-bit cycle
 logic [31:0] saved_addr;
@@ -323,17 +342,6 @@ always_comb begin
         tg_data_read = cpu_din[15:0];               // TG68K accessing lower word directly
     else
         tg_data_read = cpu_din[31:16];              // TG68K accessing upper word
-end
-
-// tg_dtack: throttle TG68K during the inter-cycle gap
-// In FIRST16, hold DTACK high (not ready) until the 32-bit cycle completes.
-// In all other states, pass cpu_dtack_n through.
-always_comb begin
-    case (state)
-        FIRST16:  tg_dtack = 1'b1;    // not ready — waiting for second half
-        SECOND16: tg_dtack = cpu_dtack_n;
-        default:  tg_dtack = cpu_dtack_n;
-    endcase
 end
 
 // =============================================================================
@@ -425,7 +433,7 @@ end
 // =============================================================================
 /* verilator lint_off UNUSED */
 logic _unused;
-assign _unused = ^{ipl_n, read_hi, saved_rw, active_addr};
+assign _unused = ^{ipl_n, read_hi, saved_rw, active_addr, tg_fc, tg_skipFetch, tg_clr_berr};
 /* verilator lint_on UNUSED */
 
 endmodule

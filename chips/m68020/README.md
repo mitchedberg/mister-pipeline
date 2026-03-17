@@ -2,17 +2,16 @@
 
 ## Implementation Status
 
-**`chips/m68020/rtl/tg68k_adapter.sv`** — 32-bit bus adapter for TG68K (created 2026-03-16)
+**ACTIVE — TG68K VHDL downloaded and wired** (2026-03-16)
 
-- TG68K VHDL source was **not found locally** — searched all of `/Volumes/2TB_20260220/Projects/`.
-  Only fx68k (68000-only) and HUC6280 VHDL were present in jtcores.
-- The adapter is a **stub wrapper**: TG68K is instantiated in commented-out form.
-  The full 16→32-bit coalescing state machine is implemented and correct.
-- To activate: copy the four TG68K VHDL files (`TG68K.vhd`, `TG68KdotC_Kernel.vhd`,
-  `TG68K_ALU.vhd`, `TG68K_Pack.vhd`) from https://github.com/TobiFlex/TG68K.C
-  into `chips/m68020/hdl/tg68k/`, then uncomment the `u_tg68k` instantiation block
-  in `tg68k_adapter.sv` and remove the stub `always_ff` block above it.
-- The stub safely compiles and presents a 32-bit idle bus (cpu_as_n=1, tg_rw=1).
+**`chips/m68020/rtl/tg68k_adapter.sv`** — 32-bit bus adapter for TG68K
+
+- TG68K VHDL files downloaded from https://github.com/TobiFlex/TG68K.C into
+  `chips/m68020/hdl/tg68k/` (`TG68K.vhd`, `TG68KdotC_Kernel.vhd`, `TG68K_ALU.vhd`, `TG68K_Pack.vhd`).
+- `TG68KdotC_Kernel` is **instantiated and active** — stub `always_ff` block removed.
+- Verilator lint passes clean (`-Wno-MODMISSING` required because Verilator cannot parse VHDL;
+  the only error is the expected "can't find module TG68KdotC_Kernel" for the VHDL entity).
+- Will be tested at F3 integration level (no dedicated testbench at adapter level).
 
 **Adapter design notes:**
 - Presents `[23:1]` word address (not full 32-bit) — F3 only needs 24-bit space
