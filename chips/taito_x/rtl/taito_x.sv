@@ -264,6 +264,7 @@ logic [15:0] ctrl_dout_raw;
 logic        spr_pix_valid;
 logic [8:0]  spr_pix_x;
 logic [4:0]  spr_pix_color;
+logic [8:0]  spr_pix_pal_index;
 /* verilator lint_off UNUSED */
 logic        spr_scan_active;
 /* verilator lint_on UNUSED */
@@ -284,47 +285,12 @@ logic [15:0] spr_col_upper_mask;
 //
 // NOTE: pix_x from X1-001A reflects hpos at pixel output time. The colmix
 // selects between sprite and tile pixels based on pix_valid alone.
-
-// Pen value: X1-001A internally tracks pen (4-bit nibble from GFX ROM).
-// The module exposes pix_color (5-bit palette selector) but not the raw pen.
-// For the colmix we need pen separately. x1_001a currently exposes only
-// pix_color (palette selector); the pen transparency check is done internally
-// (pix_valid=0 when pen==0). So colmix receives pix_valid + pix_color without
-// needing the raw pen — pen is implicitly 0..15 selected by palette.
 //
-// However taito_x_colmix needs spr_pix_pen for the full index construction
-// {color[4:0], pen[3:0]}. Since x1_001a does not expose the raw nibble value,
-// we need a mechanism to pass it. The simplest correct approach: x1_001a
-// already knows the pen value when writing to the line buffer; we need it
-// exported. x1_001a currently stores {valid(1), color[4:0]} in the line buffer,
-// discarding the pen distinction.
-//
-// Resolution: the colmix only needs a FULL 9-bit palette index
-// ({color, pen} = 9 bits). x1_001a can export a 9-bit index directly:
-//   pix_pal_index[8:0] = {color[4:0], pen[3:0]}
-//   pix_valid = (pen != 0) && in_display
-//
-// This requires x1_001a to expose pix_pal_index instead of just pix_color.
-// HOWEVER — to avoid modifying x1_001a (which has a testbench), we use the
-// existing pix_color port and reconstruct the palette index with pen=0xF
-// (maximum pen, always opaque) as a conservative placeholder until x1_001a
-// is extended to export the full pen value.
-//
-// Correct long-term fix: add pix_pal_index[8:0] to x1_001a.sv, replacing
-// the {color[4:0], 4'hF} approximation below.
-//
-// This is documented as a Phase 3 improvement item.
-
-logic [8:0] spr_pal_index;   // {color[4:0], pen[3:0]} placeholder
-assign spr_pal_index = {spr_pix_color, 4'hF};  // pen approximated as 0xF
-
-// Colmix adaptor: separate color and pen from the 9-bit index
-// Since we approximate pen=0xF, the colmix receives pen=0xF for all opaque pixels.
-// This is valid: pen 0xF is always opaque in MAME (transparent is only pen 0).
-logic [4:0] spr_color_for_mix;
-logic [3:0] spr_pen_for_mix;
-assign spr_color_for_mix = spr_pal_index[8:4];
-assign spr_pen_for_mix   = spr_pal_index[3:0];
+// X1-001A exports the full 9-bit palette index via pix_pal_index[8:0]:
+//   [8:4] = spr_color[4:0]  (5-bit palette selector from x_pointer[15:11])
+//   [3:0] = pen[3:0]        (4-bit GFX ROM nibble, 0 = transparent)
+// pix_valid is asserted when pen != 0 (transparent pixels are suppressed).
+// spr_pix_pal_index is passed directly to colmix for the palette lookup.
 
 x1_001a #(
     .FG_NOFLIP_YOFFS (FG_NOFLIP_YOFFS),
@@ -393,6 +359,7 @@ x1_001a #(
     .pix_valid       (spr_pix_valid),
     .pix_x           (spr_pix_x),
     .pix_color       (spr_pix_color),
+    .pix_pal_index   (spr_pix_pal_index),
 
     .scan_active     (spr_scan_active)
 );
@@ -433,9 +400,8 @@ taito_x_colmix #(
     .vblank         (vblank),
 
     // Sprite pixel from X1-001A
-    .spr_pix_valid  (spr_pix_valid),
-    .spr_pix_color  (spr_color_for_mix),
-    .spr_pix_pen    (spr_pen_for_mix),
+    .spr_pix_valid     (spr_pix_valid),
+    .spr_pix_pal_index (spr_pix_pal_index),
 
     // BG tile pixel — tied off (BG composited inside X1-001A line buffer)
     .tile_pix_valid (1'b0),
@@ -645,6 +611,7 @@ assign sdr_req  = 1'b0;
 /* verilator lint_off UNUSED */
 logic _unused;
 assign _unused = ^{spr_pix_x,      // pix_x not needed (colmix reads from timing)
+                   spr_pix_color,  // 5-bit selector; full index via spr_pix_pal_index
                    sdr_data};
 /* verilator lint_on UNUSED */
 

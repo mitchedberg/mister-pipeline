@@ -13,8 +13,8 @@
 //
 // Priority model:
 //   Taito X has a sprite-over-BG model with transparency via pen 0.
-//   From section2_x1001a_detail.md §5a: X1-001A outputs a 5-bit color palette
-//   index (spr_color[4:0]) and pix_valid=1 when the pixel is opaque (pen ≠ 0).
+//   X1-001A outputs a 9-bit palette index (spr_pix_pal_index[8:0] =
+//   {color[4:0], pen[3:0]}) and pix_valid=1 when the pixel is opaque (pen ≠ 0).
 //   When pix_valid=0 the BG tile pixel is used.
 //
 // Palette format: xRGB_555  (from README.md §Core Specifications)
@@ -73,11 +73,11 @@ module taito_x_colmix #(
 
     // ── X1-001A foreground sprite output ─────────────────────────────────────
     // pix_valid=1: sprite pixel is opaque — pen != 0.
-    // pix_color[4:0]: 5-bit palette index from x_pointer[15:11].
-    // pix_pen[3:0]:   4-bit pen within selected palette (from GFX ROM nibble).
+    // pix_pal_index[8:0]: full 9-bit palette index = {color[4:0], pen[3:0]}.
+    //   [8:4] = 5-bit palette selector from x_pointer[15:11].
+    //   [3:0] = 4-bit pen within selected palette (from GFX ROM nibble).
     input  logic        spr_pix_valid,
-    input  logic [4:0]  spr_pix_color,  // palette selector
-    input  logic [3:0]  spr_pix_pen,    // pen within palette
+    input  logic [8:0]  spr_pix_pal_index,  // full 9-bit palette index
 
     // ── Background tilemap pixel ───────────────────────────────────────────────
     // tile_valid=1: there is an active tilemap pixel at this position.
@@ -145,8 +145,8 @@ always_comb begin
 
     if (in_display) begin
         if (spr_pix_valid) begin
-            // Sprite wins: index = COLOR_BASE + (color << 4) + pen
-            win_index = 11'(COLOR_BASE) + 11'({spr_pix_color, spr_pix_pen});
+            // Sprite wins: index = COLOR_BASE + {color[4:0], pen[3:0]}
+            win_index = 11'(COLOR_BASE) + 11'(spr_pix_pal_index);
         end else if (tile_pix_valid && (tile_pix_pen != 4'd0)) begin
             // Tile wins: same construction
             win_index = 11'(COLOR_BASE) + 11'({tile_pix_color, tile_pix_pen});

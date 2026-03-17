@@ -48,7 +48,7 @@
 //   Testbench uses zero-latency: ack toggles same cycle as req is seen.
 //
 // Line buffer ping-pong:
-//   linebuf[bank][y][x] = {valid(1), color[4:0]} = 6 bits
+//   linebuf[bank][y][x] = {valid(1), color[4:0], pen[3:0]} = 10 bits
 //   Scanner writes to ~linebuf_bank.  Display reads from linebuf_bank.
 //   Bank swap on vblank rising edge.
 //   Clear sweep: at start of each hblank, zero the write-bank for this scanline.
@@ -125,7 +125,8 @@ module x1_001a #(
     // ── Pixel output ─────────────────────────────────────────────────────────
     output logic        pix_valid,
     output logic  [8:0] pix_x,
-    output logic  [4:0] pix_color,
+    output logic  [4:0] pix_color,     // 5-bit palette selector (color[4:0])
+    output logic  [8:0] pix_pal_index, // full 9-bit palette index = {color[4:0], pen[3:0]}
 
     // ── Status ───────────────────────────────────────────────────────────────
     output logic        scan_active
@@ -297,8 +298,8 @@ module x1_001a #(
 
     localparam int LB_W = 512;
 
-    // 6-bit entry: [5]=valid, [4:0]=color
-    logic [5:0] linebuf [0:1][0:SCREEN_H-1][0:LB_W-1];
+    // 10-bit entry: [9]=valid, [8:4]=color[4:0], [3:0]=pen[3:0]
+    logic [9:0] linebuf [0:1][0:SCREEN_H-1][0:LB_W-1];
 
     // linebuf_bank: currently DISPLAYED bank (scanner writes to ~linebuf_bank)
     logic linebuf_bank;
@@ -400,23 +401,24 @@ module x1_001a #(
         end else begin
             // HBlank clear sweep (priority)
             if (clearing)
-                linebuf[~linebuf_bank][clear_y][clear_x] <= 6'd0;
+                linebuf[~linebuf_bank][clear_y][clear_x] <= 10'd0;
 
             // Sprite pixel writes (16 pixels per row, unrolled)
             for (int q = 0; q < 16; q++) begin
                 if (pix_en[q])
-                    linebuf[~linebuf_bank][wr_y][pix_x_arr[q]] <= {1'b1, spr_color};
+                    linebuf[~linebuf_bank][wr_y][pix_x_arr[q]] <= {1'b1, spr_color, pix_nib[q]};
             end
         end
     end
 
     // ── Active display pixel output ───────────────────────────────────────────
     always_comb begin
-        logic [5:0] entry;
-        entry     = linebuf[linebuf_bank][vpos][hpos];
-        pix_valid = entry[5] & ~hblank & ~vblank;
-        pix_color = entry[4:0];
-        pix_x     = hpos;
+        logic [9:0] entry;
+        entry         = linebuf[linebuf_bank][vpos][hpos];
+        pix_valid     = entry[9] & ~hblank & ~vblank;
+        pix_color     = entry[8:4];      // 5-bit palette selector
+        pix_pal_index = entry[8:0];      // full 9-bit index = {color[4:0], pen[3:0]}
+        pix_x         = hpos;
     end
 
     // =========================================================================
