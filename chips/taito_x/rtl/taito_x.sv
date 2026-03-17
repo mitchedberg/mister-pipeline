@@ -217,17 +217,17 @@ assign vblank_rise = vblank & ~vblank_r;
 // Work RAM: 0x100000–0x10FFFF  (64KB = 32K words, 15-bit index)
 //   word base 0x080000; top 8 bits from [23:15] == 8'h10
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:15] == 8'h10) && !cpu_as_n;
+assign wram_cs = (cpu_addr[23:15] == 9'h010) && !cpu_as_n;
 
 // Palette RAM: 0xB00000–0xB00FFF  (4KB = 2048 × 16-bit, 11-bit index)
 //   word base 0x580000; top 12 bits from [23:11] == 12'hB00
 logic pal_cs;
-assign pal_cs  = (cpu_addr[23:11] == 12'hB00) && !cpu_as_n;
+assign pal_cs  = (cpu_addr[23:11] == 13'hB00) && !cpu_as_n;
 
 // Sprite Y RAM: 0xD00000–0xD005FF  (768 bytes = 384 × 16-bit, 9-bit index)
 //   word base 0x680000; top 14 bits from [23:9] == 14'h3400, then sub-range check
 logic yram_cs;
-assign yram_cs = (cpu_addr[23:9] == 14'h3400) && !cpu_as_n
+assign yram_cs = (cpu_addr[23:9] == 15'h3400) && !cpu_as_n
                  && (cpu_addr[8:0] < 9'h180);  // 0x180 word entries (0x300 bytes / 2)
 
 // Sprite ctrl: 0xD00600–0xD00607  (4 × 16-bit registers, 2-bit index)
@@ -238,7 +238,7 @@ assign ctrl_cs = (cpu_addr[23:2] == 22'h1A00C0) && !cpu_as_n;
 // Sprite code RAM: 0xE00000–0xE03FFF  (16KB = 8K words, 13-bit index)
 //   word base 0x700000; top 10 bits from [23:13] == 10'h380
 logic cram_cs;
-assign cram_cs = (cpu_addr[23:13] == 10'h380) && !cpu_as_n;
+assign cram_cs = (cpu_addr[23:13] == 11'h380) && !cpu_as_n;
 
 // I/O ports: 0x500000–0x50000F  (8 × 16-bit words, 3-bit index)
 //   word base 0x280000; [23:3] = 21 bits == 21'h50000

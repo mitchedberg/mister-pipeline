@@ -39,4 +39,7 @@ module pll (
     assign outclk_1 = refclk;
     assign locked   = 1'b1;
 
+    // Suppress lint warnings for stub inputs
+    logic _unused = &{rst, 1'b0};
+
 endmodule

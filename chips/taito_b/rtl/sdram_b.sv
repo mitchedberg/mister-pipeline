@@ -168,4 +168,8 @@ module sdram_b (
     // Data bus (high-Z in stub; real controller will drive/read)
     assign SDRAM_DQ = 16'hZZZZ;
 
+    // Suppress lint warnings for stub inputs
+    logic _unused = &{clk_sys, ioctl_wr, ioctl_addr, ioctl_dout, cpu_addr[26:17], cpu_addr[0],
+                       gfx_addr[26:17], gfx_addr[0], adpcm_addr[26:17], adpcm_addr[0], 1'b0};
+
 endmodule

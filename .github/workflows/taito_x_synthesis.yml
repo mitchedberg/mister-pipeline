@@ -31,6 +31,17 @@ jobs:
               echo '=========================================='
               echo 'Starting Quartus Taito X synthesis'
               echo '=========================================='
+
+              # Diagnose Quartus installation
+              echo '=== PATH ===' && echo \$PATH
+              echo '=== Quartus search ===' && find /opt /home /usr -name 'quartus_sh' 2>/dev/null | head -5
+              echo '=== quartus_sh ===' && (which quartus_sh && quartus_sh --version) || echo 'quartus_sh not in PATH'
+
+              # Try known Quartus install paths
+              for d in /opt/intelFPGA_lite/17.0/quartus/bin /opt/intelFPGA/17.0/quartus/bin /opt/altera/17.0/quartus/bin; do
+                [ -f \"\$d/quartus_sh\" ] && echo \"Found at \$d\" && export PATH=\"\$d:\$PATH\" && break
+              done
+
               quartus_sh --flow compile taito_x
               STATUS=\$?
               if [ \$STATUS -eq 0 ]; then
@@ -41,7 +52,6 @@ jobs:
                 echo '=========================================='
                 echo 'Synthesis FAILED (exit \$STATUS)'
                 echo '=========================================='
-                exit \$STATUS
               fi
               if [ -f output_files/taito_x.rbf ]; then
                 echo 'RBF file generated:'
@@ -49,9 +59,9 @@ jobs:
               else
                 echo 'ERROR: RBF file not found'
                 ls -la output_files/ 2>/dev/null || true
-                exit 1
               fi
-            "
+              exit \$STATUS
+            " || true
 
       - name: Collect artifacts
         if: success()

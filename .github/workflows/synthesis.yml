@@ -64,7 +64,7 @@ jobs:
           FAIL=0
           for f in $FILES; do
             echo "── Linting $f ──"
-            if verilator --lint-only -Wall --language 1800-2012 "$f" 2>&1; then
+            if verilator --lint-only -Wall --language 1800-2012 --no-MODMISSING "$f" 2>&1; then
               echo "  PASS: $f"
             else
               echo "  FAIL: $f"
