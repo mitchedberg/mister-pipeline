@@ -47,7 +47,6 @@
 // =============================================================================
 
 #include "Vx1_001a.h"
-#include "Vx1_001a_x1_001a.h"
 #include "verilated.h"
 
 #include <cstdio>
@@ -313,12 +312,6 @@ struct DUT {
 
     // Run one vblank + scan cycle (no pixel capture).
     void run_vblank_scan() {
-        auto* pvt = top->__PVT__x1_001a;
-        // Debug: show CRAM[0x200] (x_ptr for sprite 0) before scan
-        uint16_t cram200 = ((uint16_t)pvt->__PVT__cram_hi[0x200] << 8) | pvt->__PVT__cram_lo[0x200];
-        uint16_t cram0   = ((uint16_t)pvt->__PVT__cram_hi[0] << 8) | pvt->__PVT__cram_lo[0];
-        fprintf(stderr, "  DEBUG pre-scan: cram[0]=0x%04X cram[0x200]=0x%04X yram_lo[0]=0x%02X frame_bank=%d\n",
-                cram0, cram200, (int)pvt->__PVT__yram_lo[0], (int)top->frame_bank);
         top->vblank = 1;
         top->hblank = 0;
         top->hpos   = 0;
@@ -326,29 +319,11 @@ struct DUT {
         clk(2);  // let vblank_rise propagate
 
         int timeout = (SPRITE_LIMIT + 1) * 200;
-        int i = 0;
-        for (; i < timeout; i++) {
+        for (int i = 0; i < timeout; i++) {
             clk(1);
-            // Debug: monitor linebuf every cycle in last 200
-            if (i > 50480) {
-                fprintf(stderr, "    cycle %d: linebuf[0][100][50]=%02X do_write=%d pix_en[0]=%d fsm=%d spr_color=%d scan_idx=%d wr_y=%d wr_sx=%d\n",
-                    i, (int)pvt->__PVT__linebuf[0][100][50],
-                    (int)pvt->__PVT__do_write, (int)pvt->__PVT__pix_en[0],
-                    (int)pvt->__PVT__fsm_state, (int)pvt->__PVT__spr_color,
-                    (int)pvt->__PVT__scan_idx, (int)pvt->__PVT__wr_y, (int)pvt->__PVT__wr_sx);
-            }
             if (!top->scan_active)
                 break;
         }
-        fprintf(stderr, "DEBUG run_vblank_scan: completed in %d cycles, scan_active=%d, linebuf_bank=%d\n",
-                i, (int)top->scan_active, (int)pvt->__PVT__linebuf_bank);
-        // Sample linebuf at expected sprite location (50,100) in both banks
-        fprintf(stderr, "  linebuf[0][100][50]=0x%02X  linebuf[1][100][50]=0x%02X\n",
-                (int)pvt->__PVT__linebuf[0][100][50],
-                (int)pvt->__PVT__linebuf[1][100][50]);
-        fprintf(stderr, "  pix_en[0]=%d do_write=%d wr_y=%d spr_color=%d\n",
-                (int)pvt->__PVT__pix_en[0], (int)pvt->__PVT__do_write,
-                (int)pvt->__PVT__wr_y, (int)pvt->__PVT__spr_color);
 
         top->vblank = 0;
         clk(2);
@@ -388,18 +363,6 @@ struct DUT {
         }
     }
 
-    void dump_framebuf_region(int x0, int y0, int x1, int y1) {
-        for (int y = y0; y <= y1 && y < SCREEN_H; y++) {
-            fprintf(stderr, "  row %3d:", y);
-            for (int x = x0; x <= x1 && x < SCREEN_W; x++) {
-                uint8_t e = framebuf[y][x];
-                if (e & 0x20) fprintf(stderr, " %02X", e & 0x1F);
-                else          fprintf(stderr, " --");
-            }
-            fprintf(stderr, "\n");
-        }
-    }
-
     void run_frame() {
         // Double-buffer pipeline delay:
         //   vblank_rise swaps linebuf_bank; scanner writes to ~linebuf_bank (write bank);
@@ -423,10 +386,6 @@ struct DUT {
 
         // Active-video capture: reads display bank (= render-0 pixels).
         run_active_video();
-
-        // Debug: dump framebuf around expected sprite location (first test: 50,100)
-        fprintf(stderr, "DEBUG framebuf[98..102][48..68]:\n");
-        dump_framebuf_region(48, 98, 68, 102);
     }
 
     // ── Check helper ──────────────────────────────────────────────────────────
