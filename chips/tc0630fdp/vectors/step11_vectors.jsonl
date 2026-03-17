@@ -1,0 +1,1375 @@
+{"op": "write_gfx", "gfx_addr": 32, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 33, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 34, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 35, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 36, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 37, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 38, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 39, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 40, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 41, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 42, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 43, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 44, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 45, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 46, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 47, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 48, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 49, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 50, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 51, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 52, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 53, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 54, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 55, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 56, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 57, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 58, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 59, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 60, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 61, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 62, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 63, "gfx_data": 286331153, "note": "init: solid tile 0x1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 64, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 65, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 66, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 67, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 68, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 69, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 70, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 71, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 72, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 73, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 74, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 75, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 76, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 77, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 78, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 79, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 80, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 81, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 82, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 83, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 84, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 85, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 86, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 87, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 88, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 89, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 90, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 91, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 92, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 93, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 94, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 95, "gfx_data": 572662306, "note": "init: solid tile 0x2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 96, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 97, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 98, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 99, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 100, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 101, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 102, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 103, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 104, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 105, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 106, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 107, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 108, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 109, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 110, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 111, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 112, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 113, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 114, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 115, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 116, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 117, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 118, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 119, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 120, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 121, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 122, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 123, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 124, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 125, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 126, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 127, "gfx_data": 858993459, "note": "init: solid tile 0x3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 128, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 129, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 130, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 131, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 132, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 133, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 134, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 135, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 136, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 137, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 138, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 139, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 140, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 141, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 142, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 143, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 144, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 145, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 146, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 147, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 148, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 149, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 150, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 151, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 152, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 153, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 154, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 155, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 156, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 157, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 158, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 159, "gfx_data": 1145324612, "note": "init: solid tile 0x4 pen=0x4"}
+{"op": "write_gfx", "gfx_addr": 160, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 161, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 162, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 163, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 164, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 165, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 166, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 167, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 168, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 169, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 170, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 171, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 172, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 173, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 174, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 175, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 176, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 177, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 178, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 179, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 180, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 181, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 182, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 183, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 184, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 185, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 186, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 187, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 188, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 189, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 190, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 191, "gfx_data": 1431655765, "note": "init: solid tile 0x5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 192, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 193, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 194, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 195, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 196, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 197, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 198, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 199, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 200, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 201, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 202, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 203, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 204, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 205, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 206, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 207, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 208, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 209, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 210, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 211, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 212, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 213, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 214, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 215, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 216, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 217, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 218, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 219, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 220, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 221, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 222, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 223, "gfx_data": 1717986918, "note": "init: solid tile 0x6 pen=0x6"}
+{"op": "write_gfx", "gfx_addr": 224, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 225, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 226, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 227, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 228, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 229, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 230, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 231, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 232, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 233, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 234, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 235, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 236, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 237, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 238, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 239, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 240, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 241, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 242, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 243, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 244, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 245, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 246, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 247, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 248, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 249, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 250, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 251, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 252, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 253, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 254, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 255, "gfx_data": 2004318071, "note": "init: solid tile 0x7 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 256, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 257, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 258, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 259, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 260, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 261, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 262, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 263, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 264, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 265, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 266, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 267, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 268, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 269, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 270, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 271, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 272, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 273, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 274, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 275, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 276, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 277, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 278, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 279, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 280, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 281, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 282, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 283, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 284, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 285, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 286, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 287, "gfx_data": 2290649224, "note": "init: solid tile 0x8 pen=0x8"}
+{"op": "write_gfx", "gfx_addr": 288, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 289, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 290, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 291, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 292, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 293, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 294, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 295, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 296, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 297, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 298, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 299, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 300, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 301, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 302, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 303, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 304, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 305, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 306, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 307, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 308, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 309, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 310, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 311, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 312, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 313, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 314, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 315, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 316, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 317, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 318, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 319, "gfx_data": 2576980377, "note": "init: solid tile 0x9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 320, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 321, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 322, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 323, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 324, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 325, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 326, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 327, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 328, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 329, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 330, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 331, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 332, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 333, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 334, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 335, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 336, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 337, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 338, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 339, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 340, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 341, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 342, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 343, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 344, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 345, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 346, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 347, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 348, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 349, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 350, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 351, "gfx_data": 2863311530, "note": "init: solid tile 0xa pen=0xa"}
+{"op": "write_gfx", "gfx_addr": 352, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 353, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 354, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 355, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 356, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 357, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 358, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 359, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 360, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 361, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 362, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 363, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 364, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 365, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 366, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 367, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 368, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 369, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 370, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 371, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 372, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 373, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 374, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 375, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 376, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 377, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 378, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 379, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 380, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 381, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 382, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 383, "gfx_data": 3149642683, "note": "init: solid tile 0xb pen=0xb"}
+{"op": "write_gfx", "gfx_addr": 384, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 385, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 386, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 387, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 388, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 389, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 390, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 391, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 392, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 393, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 394, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 395, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 396, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 397, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 398, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 399, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 400, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 401, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 402, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 403, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 404, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 405, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 406, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 407, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 408, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 409, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 410, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 411, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 412, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 413, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 414, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 415, "gfx_data": 3435973836, "note": "init: solid tile 0xc pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 416, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 417, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 418, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 419, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 420, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 421, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 422, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 423, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 424, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 425, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 426, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 427, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 428, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 429, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 430, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 431, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 432, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 433, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 434, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 435, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 436, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 437, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 438, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 439, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 440, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 441, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 442, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 443, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 444, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 445, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 446, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 447, "gfx_data": 3722304989, "note": "init: solid tile 0xd pen=0xd"}
+{"op": "write_gfx", "gfx_addr": 448, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 449, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 450, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 451, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 452, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 453, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 454, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 455, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 456, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 457, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 458, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 459, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 460, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 461, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 462, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 463, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 464, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 465, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 466, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 467, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 468, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 469, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 470, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 471, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 472, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 473, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 474, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 475, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 476, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 477, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 478, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 479, "gfx_data": 4008636142, "note": "init: solid tile 0xe pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 480, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 481, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 482, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 483, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 484, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 485, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 486, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 487, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 488, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 489, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 490, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 491, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 492, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 493, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 494, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 495, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 496, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 497, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 498, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 499, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 500, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 501, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 502, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 503, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 504, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 505, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 506, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 507, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 508, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 509, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 510, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 511, "gfx_data": 4294967295, "note": "init: solid tile 0xf pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 0, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 1, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 2, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 3, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 4, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 5, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 6, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 7, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 8, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 9, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 10, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 11, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 12, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 13, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 14, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 15, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 16, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 17, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 18, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 19, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 20, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 21, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 22, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 23, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 24, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 25, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 26, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 27, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 28, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 29, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 30, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 31, "gfx_data": 0, "note": "init: tile 0x00 pen=0 (transparent, re-init after step5/6 GFX corruption)"}
+{"op": "write_gfx", "gfx_addr": 512, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 513, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 514, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 515, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 516, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 517, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 518, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 519, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 520, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 521, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 522, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 523, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 524, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 525, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 526, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 527, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 528, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 529, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 530, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 531, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 532, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 533, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 534, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 535, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 536, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 537, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 538, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 539, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 540, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 541, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 542, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 543, "gfx_data": 286331153, "note": "init: tile 0x10 pen=1 (PF1 bg)"}
+{"op": "write_gfx", "gfx_addr": 544, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 545, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 546, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 547, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 548, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 549, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 550, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 551, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 552, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 553, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 554, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 555, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 556, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 557, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 558, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 559, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 560, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 561, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 562, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 563, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 564, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 565, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 566, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 567, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 568, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 569, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 570, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 571, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 572, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 573, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 574, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 575, "gfx_data": 572662306, "note": "init: tile 0x11 pen=2 (PF2 bg)"}
+{"op": "write_gfx", "gfx_addr": 576, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 577, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 578, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 579, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 580, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 581, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 582, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 583, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 584, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 585, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 586, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 587, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 588, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 589, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 590, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 591, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 592, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 593, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 594, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 595, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 596, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 597, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 598, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 599, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 600, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 601, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 602, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 603, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 604, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 605, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 606, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 607, "gfx_data": 858993459, "note": "init: tile 0x12 pen=3 (PF3 bg)"}
+{"op": "write_gfx", "gfx_addr": 608, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 609, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 610, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 611, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 612, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 613, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 614, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 615, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 616, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 617, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 618, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 619, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 620, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 621, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 622, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 623, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 624, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 625, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 626, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 627, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 628, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 629, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 630, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 631, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 632, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 633, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 634, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 635, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 636, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 637, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 638, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_gfx", "gfx_addr": 639, "gfx_data": 1145324612, "note": "init: tile 0x13 pen=4 (PF4 bg)"}
+{"op": "write_char", "addr": 61456, "data": 4369, "be": 3, "note": "char[1] row=0 byte=0"}
+{"op": "write_char", "addr": 61457, "data": 4369, "be": 3, "note": "char[1] row=0 byte=2"}
+{"op": "write_char", "addr": 61458, "data": 4369, "be": 3, "note": "char[1] row=1 byte=0"}
+{"op": "write_char", "addr": 61459, "data": 4369, "be": 3, "note": "char[1] row=1 byte=2"}
+{"op": "write_char", "addr": 61460, "data": 4369, "be": 3, "note": "char[1] row=2 byte=0"}
+{"op": "write_char", "addr": 61461, "data": 4369, "be": 3, "note": "char[1] row=2 byte=2"}
+{"op": "write_char", "addr": 61462, "data": 4369, "be": 3, "note": "char[1] row=3 byte=0"}
+{"op": "write_char", "addr": 61463, "data": 4369, "be": 3, "note": "char[1] row=3 byte=2"}
+{"op": "write_char", "addr": 61464, "data": 4369, "be": 3, "note": "char[1] row=4 byte=0"}
+{"op": "write_char", "addr": 61465, "data": 4369, "be": 3, "note": "char[1] row=4 byte=2"}
+{"op": "write_char", "addr": 61466, "data": 4369, "be": 3, "note": "char[1] row=5 byte=0"}
+{"op": "write_char", "addr": 61467, "data": 4369, "be": 3, "note": "char[1] row=5 byte=2"}
+{"op": "write_char", "addr": 61468, "data": 4369, "be": 3, "note": "char[1] row=6 byte=0"}
+{"op": "write_char", "addr": 61469, "data": 4369, "be": 3, "note": "char[1] row=6 byte=2"}
+{"op": "write_char", "addr": 61470, "data": 4369, "be": 3, "note": "char[1] row=7 byte=0"}
+{"op": "write_char", "addr": 61471, "data": 4369, "be": 3, "note": "char[1] row=7 byte=2"}
+{"op": "write_char", "addr": 61472, "data": 8738, "be": 3, "note": "char[2] row=0 byte=0"}
+{"op": "write_char", "addr": 61473, "data": 8738, "be": 3, "note": "char[2] row=0 byte=2"}
+{"op": "write_char", "addr": 61474, "data": 8738, "be": 3, "note": "char[2] row=1 byte=0"}
+{"op": "write_char", "addr": 61475, "data": 8738, "be": 3, "note": "char[2] row=1 byte=2"}
+{"op": "write_char", "addr": 61476, "data": 8738, "be": 3, "note": "char[2] row=2 byte=0"}
+{"op": "write_char", "addr": 61477, "data": 8738, "be": 3, "note": "char[2] row=2 byte=2"}
+{"op": "write_char", "addr": 61478, "data": 8738, "be": 3, "note": "char[2] row=3 byte=0"}
+{"op": "write_char", "addr": 61479, "data": 8738, "be": 3, "note": "char[2] row=3 byte=2"}
+{"op": "write_char", "addr": 61480, "data": 8738, "be": 3, "note": "char[2] row=4 byte=0"}
+{"op": "write_char", "addr": 61481, "data": 8738, "be": 3, "note": "char[2] row=4 byte=2"}
+{"op": "write_char", "addr": 61482, "data": 8738, "be": 3, "note": "char[2] row=5 byte=0"}
+{"op": "write_char", "addr": 61483, "data": 8738, "be": 3, "note": "char[2] row=5 byte=2"}
+{"op": "write_char", "addr": 61484, "data": 8738, "be": 3, "note": "char[2] row=6 byte=0"}
+{"op": "write_char", "addr": 61485, "data": 8738, "be": 3, "note": "char[2] row=6 byte=2"}
+{"op": "write_char", "addr": 61486, "data": 8738, "be": 3, "note": "char[2] row=7 byte=0"}
+{"op": "write_char", "addr": 61487, "data": 8738, "be": 3, "note": "char[2] row=7 byte=2"}
+{"op": "write_char", "addr": 61488, "data": 13107, "be": 3, "note": "char[3] row=0 byte=0"}
+{"op": "write_char", "addr": 61489, "data": 13107, "be": 3, "note": "char[3] row=0 byte=2"}
+{"op": "write_char", "addr": 61490, "data": 13107, "be": 3, "note": "char[3] row=1 byte=0"}
+{"op": "write_char", "addr": 61491, "data": 13107, "be": 3, "note": "char[3] row=1 byte=2"}
+{"op": "write_char", "addr": 61492, "data": 13107, "be": 3, "note": "char[3] row=2 byte=0"}
+{"op": "write_char", "addr": 61493, "data": 13107, "be": 3, "note": "char[3] row=2 byte=2"}
+{"op": "write_char", "addr": 61494, "data": 13107, "be": 3, "note": "char[3] row=3 byte=0"}
+{"op": "write_char", "addr": 61495, "data": 13107, "be": 3, "note": "char[3] row=3 byte=2"}
+{"op": "write_char", "addr": 61496, "data": 13107, "be": 3, "note": "char[3] row=4 byte=0"}
+{"op": "write_char", "addr": 61497, "data": 13107, "be": 3, "note": "char[3] row=4 byte=2"}
+{"op": "write_char", "addr": 61498, "data": 13107, "be": 3, "note": "char[3] row=5 byte=0"}
+{"op": "write_char", "addr": 61499, "data": 13107, "be": 3, "note": "char[3] row=5 byte=2"}
+{"op": "write_char", "addr": 61500, "data": 13107, "be": 3, "note": "char[3] row=6 byte=0"}
+{"op": "write_char", "addr": 61501, "data": 13107, "be": 3, "note": "char[3] row=6 byte=2"}
+{"op": "write_char", "addr": 61502, "data": 13107, "be": 3, "note": "char[3] row=7 byte=0"}
+{"op": "write_char", "addr": 61503, "data": 13107, "be": 3, "note": "char[3] row=7 byte=2"}
+{"op": "write_char", "addr": 61504, "data": 17476, "be": 3, "note": "char[4] row=0 byte=0"}
+{"op": "write_char", "addr": 61505, "data": 17476, "be": 3, "note": "char[4] row=0 byte=2"}
+{"op": "write_char", "addr": 61506, "data": 17476, "be": 3, "note": "char[4] row=1 byte=0"}
+{"op": "write_char", "addr": 61507, "data": 17476, "be": 3, "note": "char[4] row=1 byte=2"}
+{"op": "write_char", "addr": 61508, "data": 17476, "be": 3, "note": "char[4] row=2 byte=0"}
+{"op": "write_char", "addr": 61509, "data": 17476, "be": 3, "note": "char[4] row=2 byte=2"}
+{"op": "write_char", "addr": 61510, "data": 17476, "be": 3, "note": "char[4] row=3 byte=0"}
+{"op": "write_char", "addr": 61511, "data": 17476, "be": 3, "note": "char[4] row=3 byte=2"}
+{"op": "write_char", "addr": 61512, "data": 17476, "be": 3, "note": "char[4] row=4 byte=0"}
+{"op": "write_char", "addr": 61513, "data": 17476, "be": 3, "note": "char[4] row=4 byte=2"}
+{"op": "write_char", "addr": 61514, "data": 17476, "be": 3, "note": "char[4] row=5 byte=0"}
+{"op": "write_char", "addr": 61515, "data": 17476, "be": 3, "note": "char[4] row=5 byte=2"}
+{"op": "write_char", "addr": 61516, "data": 17476, "be": 3, "note": "char[4] row=6 byte=0"}
+{"op": "write_char", "addr": 61517, "data": 17476, "be": 3, "note": "char[4] row=6 byte=2"}
+{"op": "write_char", "addr": 61518, "data": 17476, "be": 3, "note": "char[4] row=7 byte=0"}
+{"op": "write_char", "addr": 61519, "data": 17476, "be": 3, "note": "char[4] row=7 byte=2"}
+{"op": "write_char", "addr": 61520, "data": 21845, "be": 3, "note": "char[5] row=0 byte=0"}
+{"op": "write_char", "addr": 61521, "data": 21845, "be": 3, "note": "char[5] row=0 byte=2"}
+{"op": "write_char", "addr": 61522, "data": 21845, "be": 3, "note": "char[5] row=1 byte=0"}
+{"op": "write_char", "addr": 61523, "data": 21845, "be": 3, "note": "char[5] row=1 byte=2"}
+{"op": "write_char", "addr": 61524, "data": 21845, "be": 3, "note": "char[5] row=2 byte=0"}
+{"op": "write_char", "addr": 61525, "data": 21845, "be": 3, "note": "char[5] row=2 byte=2"}
+{"op": "write_char", "addr": 61526, "data": 21845, "be": 3, "note": "char[5] row=3 byte=0"}
+{"op": "write_char", "addr": 61527, "data": 21845, "be": 3, "note": "char[5] row=3 byte=2"}
+{"op": "write_char", "addr": 61528, "data": 21845, "be": 3, "note": "char[5] row=4 byte=0"}
+{"op": "write_char", "addr": 61529, "data": 21845, "be": 3, "note": "char[5] row=4 byte=2"}
+{"op": "write_char", "addr": 61530, "data": 21845, "be": 3, "note": "char[5] row=5 byte=0"}
+{"op": "write_char", "addr": 61531, "data": 21845, "be": 3, "note": "char[5] row=5 byte=2"}
+{"op": "write_char", "addr": 61532, "data": 21845, "be": 3, "note": "char[5] row=6 byte=0"}
+{"op": "write_char", "addr": 61533, "data": 21845, "be": 3, "note": "char[5] row=6 byte=2"}
+{"op": "write_char", "addr": 61534, "data": 21845, "be": 3, "note": "char[5] row=7 byte=0"}
+{"op": "write_char", "addr": 61535, "data": 21845, "be": 3, "note": "char[5] row=7 byte=2"}
+{"op": "write_char", "addr": 61536, "data": 26214, "be": 3, "note": "char[6] row=0 byte=0"}
+{"op": "write_char", "addr": 61537, "data": 26214, "be": 3, "note": "char[6] row=0 byte=2"}
+{"op": "write_char", "addr": 61538, "data": 26214, "be": 3, "note": "char[6] row=1 byte=0"}
+{"op": "write_char", "addr": 61539, "data": 26214, "be": 3, "note": "char[6] row=1 byte=2"}
+{"op": "write_char", "addr": 61540, "data": 26214, "be": 3, "note": "char[6] row=2 byte=0"}
+{"op": "write_char", "addr": 61541, "data": 26214, "be": 3, "note": "char[6] row=2 byte=2"}
+{"op": "write_char", "addr": 61542, "data": 26214, "be": 3, "note": "char[6] row=3 byte=0"}
+{"op": "write_char", "addr": 61543, "data": 26214, "be": 3, "note": "char[6] row=3 byte=2"}
+{"op": "write_char", "addr": 61544, "data": 26214, "be": 3, "note": "char[6] row=4 byte=0"}
+{"op": "write_char", "addr": 61545, "data": 26214, "be": 3, "note": "char[6] row=4 byte=2"}
+{"op": "write_char", "addr": 61546, "data": 26214, "be": 3, "note": "char[6] row=5 byte=0"}
+{"op": "write_char", "addr": 61547, "data": 26214, "be": 3, "note": "char[6] row=5 byte=2"}
+{"op": "write_char", "addr": 61548, "data": 26214, "be": 3, "note": "char[6] row=6 byte=0"}
+{"op": "write_char", "addr": 61549, "data": 26214, "be": 3, "note": "char[6] row=6 byte=2"}
+{"op": "write_char", "addr": 61550, "data": 26214, "be": 3, "note": "char[6] row=7 byte=0"}
+{"op": "write_char", "addr": 61551, "data": 26214, "be": 3, "note": "char[6] row=7 byte=2"}
+{"op": "write_char", "addr": 61552, "data": 30583, "be": 3, "note": "char[7] row=0 byte=0"}
+{"op": "write_char", "addr": 61553, "data": 30583, "be": 3, "note": "char[7] row=0 byte=2"}
+{"op": "write_char", "addr": 61554, "data": 30583, "be": 3, "note": "char[7] row=1 byte=0"}
+{"op": "write_char", "addr": 61555, "data": 30583, "be": 3, "note": "char[7] row=1 byte=2"}
+{"op": "write_char", "addr": 61556, "data": 30583, "be": 3, "note": "char[7] row=2 byte=0"}
+{"op": "write_char", "addr": 61557, "data": 30583, "be": 3, "note": "char[7] row=2 byte=2"}
+{"op": "write_char", "addr": 61558, "data": 30583, "be": 3, "note": "char[7] row=3 byte=0"}
+{"op": "write_char", "addr": 61559, "data": 30583, "be": 3, "note": "char[7] row=3 byte=2"}
+{"op": "write_char", "addr": 61560, "data": 30583, "be": 3, "note": "char[7] row=4 byte=0"}
+{"op": "write_char", "addr": 61561, "data": 30583, "be": 3, "note": "char[7] row=4 byte=2"}
+{"op": "write_char", "addr": 61562, "data": 30583, "be": 3, "note": "char[7] row=5 byte=0"}
+{"op": "write_char", "addr": 61563, "data": 30583, "be": 3, "note": "char[7] row=5 byte=2"}
+{"op": "write_char", "addr": 61564, "data": 30583, "be": 3, "note": "char[7] row=6 byte=0"}
+{"op": "write_char", "addr": 61565, "data": 30583, "be": 3, "note": "char[7] row=6 byte=2"}
+{"op": "write_char", "addr": 61566, "data": 30583, "be": 3, "note": "char[7] row=7 byte=0"}
+{"op": "write_char", "addr": 61567, "data": 30583, "be": 3, "note": "char[7] row=7 byte=2"}
+{"op": "reset", "note": "reset for test1 all 6 layers"}
+{"op": "write_line", "addr": 65617, "data": 0, "be": 3, "note": "test1 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66641, "data": 0, "be": 3, "note": "test1 clear zoom enable"}
+{"op": "write_line", "addr": 66897, "data": 0, "be": 3, "note": "test1 clear pal-add enable"}
+{"op": "write_line", "addr": 67153, "data": 0, "be": 3, "note": "test1 clear rowscroll enable"}
+{"op": "write_line", "addr": 67409, "data": 0, "be": 3, "note": "test1 clear pf-priority enable"}
+{"op": "write_line", "addr": 86097, "data": 0, "be": 3, "note": "test1 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73809, "data": 0, "be": 3, "note": "test1 clear colscroll PF1"}
+{"op": "write_line", "addr": 84049, "data": 0, "be": 3, "note": "test1 clear pal-add PF1"}
+{"op": "write_line", "addr": 88145, "data": 0, "be": 3, "note": "test1 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86353, "data": 0, "be": 3, "note": "test1 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74065, "data": 0, "be": 3, "note": "test1 clear colscroll PF2"}
+{"op": "write_line", "addr": 84305, "data": 0, "be": 3, "note": "test1 clear pal-add PF2"}
+{"op": "write_line", "addr": 88401, "data": 0, "be": 3, "note": "test1 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86609, "data": 0, "be": 3, "note": "test1 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74321, "data": 0, "be": 3, "note": "test1 clear colscroll PF3"}
+{"op": "write_line", "addr": 84561, "data": 0, "be": 3, "note": "test1 clear pal-add PF3"}
+{"op": "write_line", "addr": 88657, "data": 0, "be": 3, "note": "test1 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86865, "data": 0, "be": 3, "note": "test1 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74577, "data": 0, "be": 3, "note": "test1 clear colscroll PF4"}
+{"op": "write_line", "addr": 84817, "data": 0, "be": 3, "note": "test1 clear pal-add PF4"}
+{"op": "write_line", "addr": 88913, "data": 0, "be": 3, "note": "test1 clear pf-prio PF4"}
+{"op": "write_line", "addr": 82001, "data": 32768, "be": 3, "note": "test1 clear zoom PF1"}
+{"op": "write_line", "addr": 82257, "data": 32768, "be": 3, "note": "test1 clear zoom PF3"}
+{"op": "write_line", "addr": 82513, "data": 32768, "be": 3, "note": "test1 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82769, "data": 32768, "be": 3, "note": "test1 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80721, "data": 0, "be": 3, "note": "test1 clear spr-prio"}
+{"op": "write_pf", "addr": 16716, "data": 16, "be": 3, "plane": 0, "note": "pf1 tile(6,5) attr=0x0010"}
+{"op": "write_pf", "addr": 16717, "data": 16, "be": 3, "plane": 0, "note": "pf1 tile(6,5) code=0x0010"}
+{"op": "write_pf", "addr": 24908, "data": 17, "be": 3, "plane": 1, "note": "pf2 tile(6,5) attr=0x0011"}
+{"op": "write_pf", "addr": 24909, "data": 17, "be": 3, "plane": 1, "note": "pf2 tile(6,5) code=0x0011"}
+{"op": "write_pf", "addr": 33100, "data": 18, "be": 3, "plane": 2, "note": "pf3 tile(6,5) attr=0x0012"}
+{"op": "write_pf", "addr": 33101, "data": 18, "be": 3, "plane": 2, "note": "pf3 tile(6,5) code=0x0012"}
+{"op": "write_pf", "addr": 41292, "data": 19, "be": 3, "plane": 3, "note": "pf4 tile(6,5) attr=0x0013"}
+{"op": "write_pf", "addr": 41293, "data": 19, "be": 3, "plane": 3, "note": "pf4 tile(6,5) code=0x0013"}
+{"op": "write_line", "addr": 67409, "data": 1, "be": 3, "note": "pf_prio_en scan=81 plane=0"}
+{"op": "write_line", "addr": 88145, "data": 2, "be": 3, "note": "pf_prio data scan=81 plane=0 prio=2"}
+{"op": "write_line", "addr": 67409, "data": 3, "be": 3, "note": "pf_prio_en scan=81 plane=1"}
+{"op": "write_line", "addr": 88401, "data": 4, "be": 3, "note": "pf_prio data scan=81 plane=1 prio=4"}
+{"op": "write_line", "addr": 67409, "data": 7, "be": 3, "note": "pf_prio_en scan=81 plane=2"}
+{"op": "write_line", "addr": 88657, "data": 6, "be": 3, "note": "pf_prio data scan=81 plane=2 prio=6"}
+{"op": "write_line", "addr": 67409, "data": 15, "be": 3, "note": "pf_prio_en scan=81 plane=3"}
+{"op": "write_line", "addr": 88913, "data": 10, "be": 3, "note": "pf_prio data scan=81 plane=3 prio=10"}
+{"op": "write_sprite", "addr": 131072, "data": 5, "be": 3, "note": "test1 sprite grp0 at col=100 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test1 sprite grp0 at col=100 word1=zoom"}
+{"op": "write_sprite", "addr": 131074, "data": 100, "be": 3, "note": "test1 sprite grp0 at col=100 word2=sx=100"}
+{"op": "write_sprite", "addr": 131075, "data": 80, "be": 3, "note": "test1 sprite grp0 at col=100 word3=sy=80"}
+{"op": "write_sprite", "addr": 131076, "data": 2, "be": 3, "note": "test1 sprite grp0 at col=100 word4=ctrl color=0x02"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test1 sprite grp0 at col=100 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test1 sprite grp0 at col=100 word6=no_jump"}
+{"op": "write_line", "addr": 80721, "data": 8, "be": 3, "note": "spr_prio scan=81 g0=8 g1=0 g2=0 g3=0"}
+{"op": "write_text", "addr": 57670, "data": 0, "be": 3, "note": "text tile(6,5) char=0 color=0"}
+{"op": "check_colmix_pixel", "vpos": 80, "screen_col": 100, "exp_pixel": 308, "note": "test1 all6 PF4 wins prio=10 exp=0x0134"}
+{"op": "reset", "note": "reset for test2 PF1 priority sweep"}
+{"op": "write_line", "addr": 65637, "data": 0, "be": 3, "note": "test2 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66661, "data": 0, "be": 3, "note": "test2 clear zoom enable"}
+{"op": "write_line", "addr": 66917, "data": 0, "be": 3, "note": "test2 clear pal-add enable"}
+{"op": "write_line", "addr": 67173, "data": 0, "be": 3, "note": "test2 clear rowscroll enable"}
+{"op": "write_line", "addr": 67429, "data": 0, "be": 3, "note": "test2 clear pf-priority enable"}
+{"op": "write_line", "addr": 86117, "data": 0, "be": 3, "note": "test2 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73829, "data": 0, "be": 3, "note": "test2 clear colscroll PF1"}
+{"op": "write_line", "addr": 84069, "data": 0, "be": 3, "note": "test2 clear pal-add PF1"}
+{"op": "write_line", "addr": 88165, "data": 0, "be": 3, "note": "test2 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86373, "data": 0, "be": 3, "note": "test2 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74085, "data": 0, "be": 3, "note": "test2 clear colscroll PF2"}
+{"op": "write_line", "addr": 84325, "data": 0, "be": 3, "note": "test2 clear pal-add PF2"}
+{"op": "write_line", "addr": 88421, "data": 0, "be": 3, "note": "test2 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86629, "data": 0, "be": 3, "note": "test2 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74341, "data": 0, "be": 3, "note": "test2 clear colscroll PF3"}
+{"op": "write_line", "addr": 84581, "data": 0, "be": 3, "note": "test2 clear pal-add PF3"}
+{"op": "write_line", "addr": 88677, "data": 0, "be": 3, "note": "test2 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86885, "data": 0, "be": 3, "note": "test2 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74597, "data": 0, "be": 3, "note": "test2 clear colscroll PF4"}
+{"op": "write_line", "addr": 84837, "data": 0, "be": 3, "note": "test2 clear pal-add PF4"}
+{"op": "write_line", "addr": 88933, "data": 0, "be": 3, "note": "test2 clear pf-prio PF4"}
+{"op": "write_line", "addr": 82021, "data": 32768, "be": 3, "note": "test2 clear zoom PF1"}
+{"op": "write_line", "addr": 82277, "data": 32768, "be": 3, "note": "test2 clear zoom PF3"}
+{"op": "write_line", "addr": 82533, "data": 32768, "be": 3, "note": "test2 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82789, "data": 32768, "be": 3, "note": "test2 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80741, "data": 0, "be": 3, "note": "test2 clear spr-prio"}
+{"op": "write_sprite", "addr": 131072, "data": 0, "be": 3, "note": "test2 no-sprite clear word0"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test2 no-sprite clear word1"}
+{"op": "write_sprite", "addr": 131074, "data": 0, "be": 3, "note": "test2 no-sprite clear word2"}
+{"op": "write_sprite", "addr": 131075, "data": 0, "be": 3, "note": "test2 no-sprite clear word3"}
+{"op": "write_sprite", "addr": 131076, "data": 0, "be": 3, "note": "test2 no-sprite clear word4"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test2 no-sprite clear word5"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test2 no-sprite clear word6"}
+{"op": "write_sprite", "addr": 131079, "data": 0, "be": 3, "note": "test2 no-sprite clear word7"}
+{"op": "write_pf", "addr": 16774, "data": 1, "be": 3, "plane": 0, "note": "pf1 tile(3,6) attr=0x0001"}
+{"op": "write_pf", "addr": 16775, "data": 1, "be": 3, "plane": 0, "note": "pf1 tile(3,6) code=0x0001"}
+{"op": "write_pf", "addr": 24966, "data": 2, "be": 3, "plane": 1, "note": "pf2 tile(3,6) attr=0x0002"}
+{"op": "write_pf", "addr": 24967, "data": 2, "be": 3, "plane": 1, "note": "pf2 tile(3,6) code=0x0002"}
+{"op": "write_line", "addr": 67429, "data": 2, "be": 3, "note": "pf_prio_en scan=101 plane=1"}
+{"op": "write_line", "addr": 88421, "data": 8, "be": 3, "note": "pf_prio data scan=101 plane=1 prio=8"}
+{"op": "write_line", "addr": 67429, "data": 3, "be": 3, "note": "pf_prio_en scan=101 plane=0"}
+{"op": "write_line", "addr": 88165, "data": 0, "be": 3, "note": "pf_prio data scan=101 plane=0 prio=0"}
+{"op": "check_colmix_pixel", "vpos": 100, "screen_col": 50, "exp_pixel": 34, "note": "test2a PF1prio=0 PF2prio=8 \u2192 PF2 wins exp=0x0022"}
+{"op": "write_line", "addr": 67429, "data": 3, "be": 3, "note": "pf_prio_en scan=101 plane=0"}
+{"op": "write_line", "addr": 88165, "data": 7, "be": 3, "note": "pf_prio data scan=101 plane=0 prio=7"}
+{"op": "check_colmix_pixel", "vpos": 100, "screen_col": 50, "exp_pixel": 34, "note": "test2b PF1prio=7 PF2prio=8 \u2192 PF2 wins exp=0x0022"}
+{"op": "write_line", "addr": 67429, "data": 3, "be": 3, "note": "pf_prio_en scan=101 plane=0"}
+{"op": "write_line", "addr": 88165, "data": 8, "be": 3, "note": "pf_prio data scan=101 plane=0 prio=8"}
+{"op": "check_colmix_pixel", "vpos": 100, "screen_col": 50, "exp_pixel": 17, "note": "test2c PF1prio=8 PF2prio=8 tie \u2192 PF1 wins (first) exp=0x0011"}
+{"op": "write_line", "addr": 67429, "data": 3, "be": 3, "note": "pf_prio_en scan=101 plane=0"}
+{"op": "write_line", "addr": 88165, "data": 9, "be": 3, "note": "pf_prio data scan=101 plane=0 prio=9"}
+{"op": "check_colmix_pixel", "vpos": 100, "screen_col": 50, "exp_pixel": 17, "note": "test2d PF1prio=9 PF2prio=8 \u2192 PF1 wins exp=0x0011"}
+{"op": "write_line", "addr": 67429, "data": 3, "be": 3, "note": "pf_prio_en scan=101 plane=0"}
+{"op": "write_line", "addr": 88165, "data": 15, "be": 3, "note": "pf_prio data scan=101 plane=0 prio=15"}
+{"op": "check_colmix_pixel", "vpos": 100, "screen_col": 50, "exp_pixel": 17, "note": "test2e PF1prio=15 PF2prio=8 \u2192 PF1 wins exp=0x0011"}
+{"op": "reset", "note": "reset for test3 sprite prio 3 vs PF2 prio 4"}
+{"op": "write_line", "addr": 65597, "data": 0, "be": 3, "note": "test3 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66621, "data": 0, "be": 3, "note": "test3 clear zoom enable"}
+{"op": "write_line", "addr": 66877, "data": 0, "be": 3, "note": "test3 clear pal-add enable"}
+{"op": "write_line", "addr": 67133, "data": 0, "be": 3, "note": "test3 clear rowscroll enable"}
+{"op": "write_line", "addr": 67389, "data": 0, "be": 3, "note": "test3 clear pf-priority enable"}
+{"op": "write_line", "addr": 86077, "data": 0, "be": 3, "note": "test3 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73789, "data": 0, "be": 3, "note": "test3 clear colscroll PF1"}
+{"op": "write_line", "addr": 84029, "data": 0, "be": 3, "note": "test3 clear pal-add PF1"}
+{"op": "write_line", "addr": 88125, "data": 0, "be": 3, "note": "test3 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86333, "data": 0, "be": 3, "note": "test3 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74045, "data": 0, "be": 3, "note": "test3 clear colscroll PF2"}
+{"op": "write_line", "addr": 84285, "data": 0, "be": 3, "note": "test3 clear pal-add PF2"}
+{"op": "write_line", "addr": 88381, "data": 0, "be": 3, "note": "test3 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86589, "data": 0, "be": 3, "note": "test3 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74301, "data": 0, "be": 3, "note": "test3 clear colscroll PF3"}
+{"op": "write_line", "addr": 84541, "data": 0, "be": 3, "note": "test3 clear pal-add PF3"}
+{"op": "write_line", "addr": 88637, "data": 0, "be": 3, "note": "test3 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86845, "data": 0, "be": 3, "note": "test3 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74557, "data": 0, "be": 3, "note": "test3 clear colscroll PF4"}
+{"op": "write_line", "addr": 84797, "data": 0, "be": 3, "note": "test3 clear pal-add PF4"}
+{"op": "write_line", "addr": 88893, "data": 0, "be": 3, "note": "test3 clear pf-prio PF4"}
+{"op": "write_line", "addr": 81981, "data": 32768, "be": 3, "note": "test3 clear zoom PF1"}
+{"op": "write_line", "addr": 82237, "data": 32768, "be": 3, "note": "test3 clear zoom PF3"}
+{"op": "write_line", "addr": 82493, "data": 32768, "be": 3, "note": "test3 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82749, "data": 32768, "be": 3, "note": "test3 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80701, "data": 0, "be": 3, "note": "test3 clear spr-prio"}
+{"op": "write_pf", "addr": 24778, "data": 32, "be": 3, "plane": 1, "note": "pf2 tile(5,3) attr=0x0020"}
+{"op": "write_pf", "addr": 24779, "data": 2, "be": 3, "plane": 1, "note": "pf2 tile(5,3) code=0x0002"}
+{"op": "write_line", "addr": 67389, "data": 2, "be": 3, "note": "pf_prio_en scan=61 plane=1"}
+{"op": "write_line", "addr": 88381, "data": 4, "be": 3, "note": "pf_prio data scan=61 plane=1 prio=4"}
+{"op": "write_sprite", "addr": 131072, "data": 7, "be": 3, "note": "test3 sprite grp0 prio=3 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test3 sprite grp0 prio=3 word1=zoom"}
+{"op": "write_sprite", "addr": 131074, "data": 80, "be": 3, "note": "test3 sprite grp0 prio=3 word2=sx=80"}
+{"op": "write_sprite", "addr": 131075, "data": 60, "be": 3, "note": "test3 sprite grp0 prio=3 word3=sy=60"}
+{"op": "write_sprite", "addr": 131076, "data": 7, "be": 3, "note": "test3 sprite grp0 prio=3 word4=ctrl color=0x07"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test3 sprite grp0 prio=3 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test3 sprite grp0 prio=3 word6=no_jump"}
+{"op": "write_line", "addr": 80701, "data": 3, "be": 3, "note": "spr_prio scan=61 g0=3 g1=0 g2=0 g3=0"}
+{"op": "check_colmix_pixel", "vpos": 60, "screen_col": 80, "exp_pixel": 514, "note": "test3 SPRprio=3 PF2prio=4 \u2192 PF2 wins exp=0x0202"}
+{"op": "reset", "note": "reset for test4 sprite prio 14 vs PF4 prio 15"}
+{"op": "write_line", "addr": 65607, "data": 0, "be": 3, "note": "test4 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66631, "data": 0, "be": 3, "note": "test4 clear zoom enable"}
+{"op": "write_line", "addr": 66887, "data": 0, "be": 3, "note": "test4 clear pal-add enable"}
+{"op": "write_line", "addr": 67143, "data": 0, "be": 3, "note": "test4 clear rowscroll enable"}
+{"op": "write_line", "addr": 67399, "data": 0, "be": 3, "note": "test4 clear pf-priority enable"}
+{"op": "write_line", "addr": 86087, "data": 0, "be": 3, "note": "test4 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73799, "data": 0, "be": 3, "note": "test4 clear colscroll PF1"}
+{"op": "write_line", "addr": 84039, "data": 0, "be": 3, "note": "test4 clear pal-add PF1"}
+{"op": "write_line", "addr": 88135, "data": 0, "be": 3, "note": "test4 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86343, "data": 0, "be": 3, "note": "test4 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74055, "data": 0, "be": 3, "note": "test4 clear colscroll PF2"}
+{"op": "write_line", "addr": 84295, "data": 0, "be": 3, "note": "test4 clear pal-add PF2"}
+{"op": "write_line", "addr": 88391, "data": 0, "be": 3, "note": "test4 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86599, "data": 0, "be": 3, "note": "test4 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74311, "data": 0, "be": 3, "note": "test4 clear colscroll PF3"}
+{"op": "write_line", "addr": 84551, "data": 0, "be": 3, "note": "test4 clear pal-add PF3"}
+{"op": "write_line", "addr": 88647, "data": 0, "be": 3, "note": "test4 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86855, "data": 0, "be": 3, "note": "test4 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74567, "data": 0, "be": 3, "note": "test4 clear colscroll PF4"}
+{"op": "write_line", "addr": 84807, "data": 0, "be": 3, "note": "test4 clear pal-add PF4"}
+{"op": "write_line", "addr": 88903, "data": 0, "be": 3, "note": "test4 clear pf-prio PF4"}
+{"op": "write_line", "addr": 81991, "data": 32768, "be": 3, "note": "test4 clear zoom PF1"}
+{"op": "write_line", "addr": 82247, "data": 32768, "be": 3, "note": "test4 clear zoom PF3"}
+{"op": "write_line", "addr": 82503, "data": 32768, "be": 3, "note": "test4 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82759, "data": 32768, "be": 3, "note": "test4 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80711, "data": 0, "be": 3, "note": "test4 clear spr-prio"}
+{"op": "write_pf", "addr": 41230, "data": 64, "be": 3, "plane": 3, "note": "pf4 tile(7,4) attr=0x0040"}
+{"op": "write_pf", "addr": 41231, "data": 4, "be": 3, "plane": 3, "note": "pf4 tile(7,4) code=0x0004"}
+{"op": "write_line", "addr": 67399, "data": 8, "be": 3, "note": "pf_prio_en scan=71 plane=3"}
+{"op": "write_line", "addr": 88903, "data": 15, "be": 3, "note": "pf_prio data scan=71 plane=3 prio=15"}
+{"op": "write_sprite", "addr": 131072, "data": 9, "be": 3, "note": "test4 sprite grpC0 prio=14 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test4 sprite grpC0 prio=14 word1=zoom"}
+{"op": "write_sprite", "addr": 131074, "data": 120, "be": 3, "note": "test4 sprite grpC0 prio=14 word2=sx=120"}
+{"op": "write_sprite", "addr": 131075, "data": 70, "be": 3, "note": "test4 sprite grpC0 prio=14 word3=sy=70"}
+{"op": "write_sprite", "addr": 131076, "data": 201, "be": 3, "note": "test4 sprite grpC0 prio=14 word4=ctrl color=0xc9"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test4 sprite grpC0 prio=14 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test4 sprite grpC0 prio=14 word6=no_jump"}
+{"op": "write_line", "addr": 80711, "data": 57344, "be": 3, "note": "spr_prio scan=71 g0=0 g1=0 g2=0 g3=14"}
+{"op": "check_colmix_pixel", "vpos": 70, "screen_col": 120, "exp_pixel": 1028, "note": "test4 SPRgrpC0 prio=14 PF4prio=15 \u2192 PF4 wins exp=0x0404"}
+{"op": "reset", "note": "reset for test5 text beats prio-15 sprite"}
+{"op": "write_line", "addr": 65627, "data": 0, "be": 3, "note": "test5 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66651, "data": 0, "be": 3, "note": "test5 clear zoom enable"}
+{"op": "write_line", "addr": 66907, "data": 0, "be": 3, "note": "test5 clear pal-add enable"}
+{"op": "write_line", "addr": 67163, "data": 0, "be": 3, "note": "test5 clear rowscroll enable"}
+{"op": "write_line", "addr": 67419, "data": 0, "be": 3, "note": "test5 clear pf-priority enable"}
+{"op": "write_line", "addr": 86107, "data": 0, "be": 3, "note": "test5 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73819, "data": 0, "be": 3, "note": "test5 clear colscroll PF1"}
+{"op": "write_line", "addr": 84059, "data": 0, "be": 3, "note": "test5 clear pal-add PF1"}
+{"op": "write_line", "addr": 88155, "data": 0, "be": 3, "note": "test5 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86363, "data": 0, "be": 3, "note": "test5 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74075, "data": 0, "be": 3, "note": "test5 clear colscroll PF2"}
+{"op": "write_line", "addr": 84315, "data": 0, "be": 3, "note": "test5 clear pal-add PF2"}
+{"op": "write_line", "addr": 88411, "data": 0, "be": 3, "note": "test5 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86619, "data": 0, "be": 3, "note": "test5 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74331, "data": 0, "be": 3, "note": "test5 clear colscroll PF3"}
+{"op": "write_line", "addr": 84571, "data": 0, "be": 3, "note": "test5 clear pal-add PF3"}
+{"op": "write_line", "addr": 88667, "data": 0, "be": 3, "note": "test5 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86875, "data": 0, "be": 3, "note": "test5 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74587, "data": 0, "be": 3, "note": "test5 clear colscroll PF4"}
+{"op": "write_line", "addr": 84827, "data": 0, "be": 3, "note": "test5 clear pal-add PF4"}
+{"op": "write_line", "addr": 88923, "data": 0, "be": 3, "note": "test5 clear pf-prio PF4"}
+{"op": "write_line", "addr": 82011, "data": 32768, "be": 3, "note": "test5 clear zoom PF1"}
+{"op": "write_line", "addr": 82267, "data": 32768, "be": 3, "note": "test5 clear zoom PF3"}
+{"op": "write_line", "addr": 82523, "data": 32768, "be": 3, "note": "test5 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82779, "data": 32768, "be": 3, "note": "test5 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80731, "data": 0, "be": 3, "note": "test5 clear spr-prio"}
+{"op": "write_text", "addr": 58068, "data": 10241, "be": 3, "note": "text tile(20,11) char=1 color=5"}
+{"op": "write_sprite", "addr": 131072, "data": 10, "be": 3, "note": "test5 sprite prio=15 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test5 sprite prio=15 word1=zoom"}
+{"op": "write_sprite", "addr": 131074, "data": 160, "be": 3, "note": "test5 sprite prio=15 word2=sx=160"}
+{"op": "write_sprite", "addr": 131075, "data": 90, "be": 3, "note": "test5 sprite prio=15 word3=sy=90"}
+{"op": "write_sprite", "addr": 131076, "data": 202, "be": 3, "note": "test5 sprite prio=15 word4=ctrl color=0xca"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test5 sprite prio=15 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test5 sprite prio=15 word6=no_jump"}
+{"op": "write_line", "addr": 80731, "data": 61440, "be": 3, "note": "spr_prio scan=91 g0=0 g1=0 g2=0 g3=15"}
+{"op": "check_colmix_pixel", "vpos": 90, "screen_col": 160, "exp_pixel": 81, "note": "test5 text beats prio-15 sprite exp=0x0051"}
+{"op": "reset", "note": "reset for test6 prio-0 sprite below prio-1 PF"}
+{"op": "write_line", "addr": 65587, "data": 0, "be": 3, "note": "test6 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66611, "data": 0, "be": 3, "note": "test6 clear zoom enable"}
+{"op": "write_line", "addr": 66867, "data": 0, "be": 3, "note": "test6 clear pal-add enable"}
+{"op": "write_line", "addr": 67123, "data": 0, "be": 3, "note": "test6 clear rowscroll enable"}
+{"op": "write_line", "addr": 67379, "data": 0, "be": 3, "note": "test6 clear pf-priority enable"}
+{"op": "write_line", "addr": 86067, "data": 0, "be": 3, "note": "test6 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73779, "data": 0, "be": 3, "note": "test6 clear colscroll PF1"}
+{"op": "write_line", "addr": 84019, "data": 0, "be": 3, "note": "test6 clear pal-add PF1"}
+{"op": "write_line", "addr": 88115, "data": 0, "be": 3, "note": "test6 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86323, "data": 0, "be": 3, "note": "test6 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74035, "data": 0, "be": 3, "note": "test6 clear colscroll PF2"}
+{"op": "write_line", "addr": 84275, "data": 0, "be": 3, "note": "test6 clear pal-add PF2"}
+{"op": "write_line", "addr": 88371, "data": 0, "be": 3, "note": "test6 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86579, "data": 0, "be": 3, "note": "test6 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74291, "data": 0, "be": 3, "note": "test6 clear colscroll PF3"}
+{"op": "write_line", "addr": 84531, "data": 0, "be": 3, "note": "test6 clear pal-add PF3"}
+{"op": "write_line", "addr": 88627, "data": 0, "be": 3, "note": "test6 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86835, "data": 0, "be": 3, "note": "test6 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74547, "data": 0, "be": 3, "note": "test6 clear colscroll PF4"}
+{"op": "write_line", "addr": 84787, "data": 0, "be": 3, "note": "test6 clear pal-add PF4"}
+{"op": "write_line", "addr": 88883, "data": 0, "be": 3, "note": "test6 clear pf-prio PF4"}
+{"op": "write_line", "addr": 81971, "data": 32768, "be": 3, "note": "test6 clear zoom PF1"}
+{"op": "write_line", "addr": 82227, "data": 32768, "be": 3, "note": "test6 clear zoom PF3"}
+{"op": "write_line", "addr": 82483, "data": 32768, "be": 3, "note": "test6 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82739, "data": 32768, "be": 3, "note": "test6 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80691, "data": 0, "be": 3, "note": "test6 clear spr-prio"}
+{"op": "write_pf", "addr": 16600, "data": 1, "be": 3, "plane": 0, "note": "pf1 tile(12,3) attr=0x0001"}
+{"op": "write_pf", "addr": 16601, "data": 1, "be": 3, "plane": 0, "note": "pf1 tile(12,3) code=0x0001"}
+{"op": "write_line", "addr": 67379, "data": 1, "be": 3, "note": "pf_prio_en scan=51 plane=0"}
+{"op": "write_line", "addr": 88115, "data": 1, "be": 3, "note": "pf_prio data scan=51 plane=0 prio=1"}
+{"op": "write_sprite", "addr": 131072, "data": 5, "be": 3, "note": "test6 sprite prio=0 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test6 sprite prio=0 word1=zoom"}
+{"op": "write_sprite", "addr": 131074, "data": 200, "be": 3, "note": "test6 sprite prio=0 word2=sx=200"}
+{"op": "write_sprite", "addr": 131075, "data": 50, "be": 3, "note": "test6 sprite prio=0 word3=sy=50"}
+{"op": "write_sprite", "addr": 131076, "data": 5, "be": 3, "note": "test6 sprite prio=0 word4=ctrl color=0x05"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test6 sprite prio=0 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test6 sprite prio=0 word6=no_jump"}
+{"op": "write_line", "addr": 80691, "data": 0, "be": 3, "note": "spr_prio scan=51 g0=0 g1=0 g2=0 g3=0"}
+{"op": "check_colmix_pixel", "vpos": 50, "screen_col": 200, "exp_pixel": 17, "note": "test6 PF1prio=1 beats sprite prio=0 exp=0x0011"}
+{"op": "reset", "note": "reset for test7 transparent PF3 shows PF4"}
+{"op": "write_line", "addr": 65657, "data": 0, "be": 3, "note": "test7 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66681, "data": 0, "be": 3, "note": "test7 clear zoom enable"}
+{"op": "write_line", "addr": 66937, "data": 0, "be": 3, "note": "test7 clear pal-add enable"}
+{"op": "write_line", "addr": 67193, "data": 0, "be": 3, "note": "test7 clear rowscroll enable"}
+{"op": "write_line", "addr": 67449, "data": 0, "be": 3, "note": "test7 clear pf-priority enable"}
+{"op": "write_line", "addr": 86137, "data": 0, "be": 3, "note": "test7 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73849, "data": 0, "be": 3, "note": "test7 clear colscroll PF1"}
+{"op": "write_line", "addr": 84089, "data": 0, "be": 3, "note": "test7 clear pal-add PF1"}
+{"op": "write_line", "addr": 88185, "data": 0, "be": 3, "note": "test7 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86393, "data": 0, "be": 3, "note": "test7 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74105, "data": 0, "be": 3, "note": "test7 clear colscroll PF2"}
+{"op": "write_line", "addr": 84345, "data": 0, "be": 3, "note": "test7 clear pal-add PF2"}
+{"op": "write_line", "addr": 88441, "data": 0, "be": 3, "note": "test7 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86649, "data": 0, "be": 3, "note": "test7 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74361, "data": 0, "be": 3, "note": "test7 clear colscroll PF3"}
+{"op": "write_line", "addr": 84601, "data": 0, "be": 3, "note": "test7 clear pal-add PF3"}
+{"op": "write_line", "addr": 88697, "data": 0, "be": 3, "note": "test7 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86905, "data": 0, "be": 3, "note": "test7 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74617, "data": 0, "be": 3, "note": "test7 clear colscroll PF4"}
+{"op": "write_line", "addr": 84857, "data": 0, "be": 3, "note": "test7 clear pal-add PF4"}
+{"op": "write_line", "addr": 88953, "data": 0, "be": 3, "note": "test7 clear pf-prio PF4"}
+{"op": "write_line", "addr": 82041, "data": 32768, "be": 3, "note": "test7 clear zoom PF1"}
+{"op": "write_line", "addr": 82297, "data": 32768, "be": 3, "note": "test7 clear zoom PF3"}
+{"op": "write_line", "addr": 82553, "data": 32768, "be": 3, "note": "test7 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82809, "data": 32768, "be": 3, "note": "test7 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80761, "data": 0, "be": 3, "note": "test7 clear spr-prio"}
+{"op": "write_sprite", "addr": 131072, "data": 0, "be": 3, "note": "test7 no-sprite clear word0"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test7 no-sprite clear word1"}
+{"op": "write_sprite", "addr": 131074, "data": 0, "be": 3, "note": "test7 no-sprite clear word2"}
+{"op": "write_sprite", "addr": 131075, "data": 0, "be": 3, "note": "test7 no-sprite clear word3"}
+{"op": "write_sprite", "addr": 131076, "data": 0, "be": 3, "note": "test7 no-sprite clear word4"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test7 no-sprite clear word5"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test7 no-sprite clear word6"}
+{"op": "write_sprite", "addr": 131079, "data": 0, "be": 3, "note": "test7 no-sprite clear word7"}
+{"op": "write_pf", "addr": 33246, "data": 48, "be": 3, "plane": 2, "note": "pf3 tile(15,7) attr=0x0030"}
+{"op": "write_pf", "addr": 33247, "data": 0, "be": 3, "plane": 2, "note": "pf3 tile(15,7) code=0x0000"}
+{"op": "write_line", "addr": 67449, "data": 4, "be": 3, "note": "pf_prio_en scan=121 plane=2"}
+{"op": "write_line", "addr": 88697, "data": 10, "be": 3, "note": "pf_prio data scan=121 plane=2 prio=10"}
+{"op": "write_pf", "addr": 41438, "data": 64, "be": 3, "plane": 3, "note": "pf4 tile(15,7) attr=0x0040"}
+{"op": "write_pf", "addr": 41439, "data": 4, "be": 3, "plane": 3, "note": "pf4 tile(15,7) code=0x0004"}
+{"op": "write_line", "addr": 67449, "data": 12, "be": 3, "note": "pf_prio_en scan=121 plane=3"}
+{"op": "write_line", "addr": 88953, "data": 8, "be": 3, "note": "pf_prio data scan=121 plane=3 prio=8"}
+{"op": "check_colmix_pixel", "vpos": 120, "screen_col": 240, "exp_pixel": 1028, "note": "test7 transparent PF3 \u2192 PF4 shows exp=0x0404"}
+{"op": "reset", "note": "reset for test8 single PF passthrough"}
+{"op": "write_line", "addr": 65577, "data": 0, "be": 3, "note": "test8 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66601, "data": 0, "be": 3, "note": "test8 clear zoom enable"}
+{"op": "write_line", "addr": 66857, "data": 0, "be": 3, "note": "test8 clear pal-add enable"}
+{"op": "write_line", "addr": 67113, "data": 0, "be": 3, "note": "test8 clear rowscroll enable"}
+{"op": "write_line", "addr": 67369, "data": 0, "be": 3, "note": "test8 clear pf-priority enable"}
+{"op": "write_line", "addr": 86057, "data": 0, "be": 3, "note": "test8 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73769, "data": 0, "be": 3, "note": "test8 clear colscroll PF1"}
+{"op": "write_line", "addr": 84009, "data": 0, "be": 3, "note": "test8 clear pal-add PF1"}
+{"op": "write_line", "addr": 88105, "data": 0, "be": 3, "note": "test8 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86313, "data": 0, "be": 3, "note": "test8 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74025, "data": 0, "be": 3, "note": "test8 clear colscroll PF2"}
+{"op": "write_line", "addr": 84265, "data": 0, "be": 3, "note": "test8 clear pal-add PF2"}
+{"op": "write_line", "addr": 88361, "data": 0, "be": 3, "note": "test8 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86569, "data": 0, "be": 3, "note": "test8 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74281, "data": 0, "be": 3, "note": "test8 clear colscroll PF3"}
+{"op": "write_line", "addr": 84521, "data": 0, "be": 3, "note": "test8 clear pal-add PF3"}
+{"op": "write_line", "addr": 88617, "data": 0, "be": 3, "note": "test8 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86825, "data": 0, "be": 3, "note": "test8 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74537, "data": 0, "be": 3, "note": "test8 clear colscroll PF4"}
+{"op": "write_line", "addr": 84777, "data": 0, "be": 3, "note": "test8 clear pal-add PF4"}
+{"op": "write_line", "addr": 88873, "data": 0, "be": 3, "note": "test8 clear pf-prio PF4"}
+{"op": "write_line", "addr": 81961, "data": 32768, "be": 3, "note": "test8 clear zoom PF1"}
+{"op": "write_line", "addr": 82217, "data": 32768, "be": 3, "note": "test8 clear zoom PF3"}
+{"op": "write_line", "addr": 82473, "data": 32768, "be": 3, "note": "test8 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82729, "data": 32768, "be": 3, "note": "test8 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80681, "data": 0, "be": 3, "note": "test8 clear spr-prio"}
+{"op": "write_sprite", "addr": 131072, "data": 0, "be": 3, "note": "test8 no-sprite clear word0"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test8 no-sprite clear word1"}
+{"op": "write_sprite", "addr": 131074, "data": 0, "be": 3, "note": "test8 no-sprite clear word2"}
+{"op": "write_sprite", "addr": 131075, "data": 0, "be": 3, "note": "test8 no-sprite clear word3"}
+{"op": "write_sprite", "addr": 131076, "data": 0, "be": 3, "note": "test8 no-sprite clear word4"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test8 no-sprite clear word5"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test8 no-sprite clear word6"}
+{"op": "write_sprite", "addr": 131079, "data": 0, "be": 3, "note": "test8 no-sprite clear word7"}
+{"op": "write_pf", "addr": 16516, "data": 3, "be": 3, "plane": 0, "note": "pf1 tile(2,2) attr=0x0003"}
+{"op": "write_pf", "addr": 16517, "data": 3, "be": 3, "plane": 0, "note": "pf1 tile(2,2) code=0x0003"}
+{"op": "write_line", "addr": 67369, "data": 1, "be": 3, "note": "pf_prio_en scan=41 plane=0"}
+{"op": "write_line", "addr": 88105, "data": 5, "be": 3, "note": "pf_prio data scan=41 plane=0 prio=5"}
+{"op": "check_colmix_pixel", "vpos": 40, "screen_col": 32, "exp_pixel": 51, "note": "test8 single PF1 passthrough exp=0x0033"}
+{"op": "reset", "note": "reset for test9 sprite tie-break prio=0"}
+{"op": "write_line", "addr": 65594, "data": 0, "be": 3, "note": "test9 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66618, "data": 0, "be": 3, "note": "test9 clear zoom enable"}
+{"op": "write_line", "addr": 66874, "data": 0, "be": 3, "note": "test9 clear pal-add enable"}
+{"op": "write_line", "addr": 67130, "data": 0, "be": 3, "note": "test9 clear rowscroll enable"}
+{"op": "write_line", "addr": 67386, "data": 0, "be": 3, "note": "test9 clear pf-priority enable"}
+{"op": "write_line", "addr": 86074, "data": 0, "be": 3, "note": "test9 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73786, "data": 0, "be": 3, "note": "test9 clear colscroll PF1"}
+{"op": "write_line", "addr": 84026, "data": 0, "be": 3, "note": "test9 clear pal-add PF1"}
+{"op": "write_line", "addr": 88122, "data": 0, "be": 3, "note": "test9 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86330, "data": 0, "be": 3, "note": "test9 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74042, "data": 0, "be": 3, "note": "test9 clear colscroll PF2"}
+{"op": "write_line", "addr": 84282, "data": 0, "be": 3, "note": "test9 clear pal-add PF2"}
+{"op": "write_line", "addr": 88378, "data": 0, "be": 3, "note": "test9 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86586, "data": 0, "be": 3, "note": "test9 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74298, "data": 0, "be": 3, "note": "test9 clear colscroll PF3"}
+{"op": "write_line", "addr": 84538, "data": 0, "be": 3, "note": "test9 clear pal-add PF3"}
+{"op": "write_line", "addr": 88634, "data": 0, "be": 3, "note": "test9 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86842, "data": 0, "be": 3, "note": "test9 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74554, "data": 0, "be": 3, "note": "test9 clear colscroll PF4"}
+{"op": "write_line", "addr": 84794, "data": 0, "be": 3, "note": "test9 clear pal-add PF4"}
+{"op": "write_line", "addr": 88890, "data": 0, "be": 3, "note": "test9 clear pf-prio PF4"}
+{"op": "write_line", "addr": 81978, "data": 32768, "be": 3, "note": "test9 clear zoom PF1"}
+{"op": "write_line", "addr": 82234, "data": 32768, "be": 3, "note": "test9 clear zoom PF3"}
+{"op": "write_line", "addr": 82490, "data": 32768, "be": 3, "note": "test9 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82746, "data": 32768, "be": 3, "note": "test9 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80698, "data": 0, "be": 3, "note": "test9 clear spr-prio"}
+{"op": "write_text", "addr": 57800, "data": 0, "be": 3, "note": "text tile(8,7) char=0 color=0"}
+{"op": "write_pf", "addr": 16584, "data": 0, "be": 3, "plane": 0, "note": "pf1 tile(4,3) attr=0x0000"}
+{"op": "write_pf", "addr": 16585, "data": 0, "be": 3, "plane": 0, "note": "pf1 tile(4,3) code=0x0000"}
+{"op": "write_pf", "addr": 24776, "data": 0, "be": 3, "plane": 1, "note": "pf2 tile(4,3) attr=0x0000"}
+{"op": "write_pf", "addr": 24777, "data": 0, "be": 3, "plane": 1, "note": "pf2 tile(4,3) code=0x0000"}
+{"op": "write_pf", "addr": 32968, "data": 0, "be": 3, "plane": 2, "note": "pf3 tile(4,3) attr=0x0000"}
+{"op": "write_pf", "addr": 32969, "data": 0, "be": 3, "plane": 2, "note": "pf3 tile(4,3) code=0x0000"}
+{"op": "write_pf", "addr": 41160, "data": 0, "be": 3, "plane": 3, "note": "pf4 tile(4,3) attr=0x0000"}
+{"op": "write_pf", "addr": 41161, "data": 0, "be": 3, "plane": 3, "note": "pf4 tile(4,3) code=0x0000"}
+{"op": "write_pf", "addr": 16584, "data": 1, "be": 3, "plane": 0, "note": "pf1 tile(4,3) attr=0x0001"}
+{"op": "write_pf", "addr": 16585, "data": 1, "be": 3, "plane": 0, "note": "pf1 tile(4,3) code=0x0001"}
+{"op": "write_line", "addr": 67386, "data": 1, "be": 3, "note": "pf_prio_en scan=58 plane=0"}
+{"op": "write_line", "addr": 88122, "data": 0, "be": 3, "note": "pf_prio data scan=58 plane=0 prio=0"}
+{"op": "write_sprite", "addr": 131072, "data": 14, "be": 3, "note": "test9 sprite prio=0 tie word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test9 sprite prio=0 tie word1=zoom"}
+{"op": "write_sprite", "addr": 131074, "data": 64, "be": 3, "note": "test9 sprite prio=0 tie word2=sx=64"}
+{"op": "write_sprite", "addr": 131075, "data": 57, "be": 3, "note": "test9 sprite prio=0 tie word3=sy=57"}
+{"op": "write_sprite", "addr": 131076, "data": 14, "be": 3, "note": "test9 sprite prio=0 tie word4=ctrl color=0x0e"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test9 sprite prio=0 tie word5=tile_hi"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test9 sprite prio=0 tie word6=no_jump"}
+{"op": "write_line", "addr": 80698, "data": 0, "be": 3, "note": "spr_prio scan=58 g0=0 g1=0 g2=0 g3=0"}
+{"op": "check_colmix_pixel", "vpos": 57, "screen_col": 64, "exp_pixel": 238, "note": "test9 sprite prio=0 tie-break wins exp=0x00ee"}
+{"op": "reset", "note": "reset for test10 transparent text shows PF"}
+{"op": "write_line", "addr": 65602, "data": 0, "be": 3, "note": "test10 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66626, "data": 0, "be": 3, "note": "test10 clear zoom enable"}
+{"op": "write_line", "addr": 66882, "data": 0, "be": 3, "note": "test10 clear pal-add enable"}
+{"op": "write_line", "addr": 67138, "data": 0, "be": 3, "note": "test10 clear rowscroll enable"}
+{"op": "write_line", "addr": 67394, "data": 0, "be": 3, "note": "test10 clear pf-priority enable"}
+{"op": "write_line", "addr": 86082, "data": 0, "be": 3, "note": "test10 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73794, "data": 0, "be": 3, "note": "test10 clear colscroll PF1"}
+{"op": "write_line", "addr": 84034, "data": 0, "be": 3, "note": "test10 clear pal-add PF1"}
+{"op": "write_line", "addr": 88130, "data": 0, "be": 3, "note": "test10 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86338, "data": 0, "be": 3, "note": "test10 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74050, "data": 0, "be": 3, "note": "test10 clear colscroll PF2"}
+{"op": "write_line", "addr": 84290, "data": 0, "be": 3, "note": "test10 clear pal-add PF2"}
+{"op": "write_line", "addr": 88386, "data": 0, "be": 3, "note": "test10 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86594, "data": 0, "be": 3, "note": "test10 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74306, "data": 0, "be": 3, "note": "test10 clear colscroll PF3"}
+{"op": "write_line", "addr": 84546, "data": 0, "be": 3, "note": "test10 clear pal-add PF3"}
+{"op": "write_line", "addr": 88642, "data": 0, "be": 3, "note": "test10 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86850, "data": 0, "be": 3, "note": "test10 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74562, "data": 0, "be": 3, "note": "test10 clear colscroll PF4"}
+{"op": "write_line", "addr": 84802, "data": 0, "be": 3, "note": "test10 clear pal-add PF4"}
+{"op": "write_line", "addr": 88898, "data": 0, "be": 3, "note": "test10 clear pf-prio PF4"}
+{"op": "write_line", "addr": 81986, "data": 32768, "be": 3, "note": "test10 clear zoom PF1"}
+{"op": "write_line", "addr": 82242, "data": 32768, "be": 3, "note": "test10 clear zoom PF3"}
+{"op": "write_line", "addr": 82498, "data": 32768, "be": 3, "note": "test10 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82754, "data": 32768, "be": 3, "note": "test10 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80706, "data": 0, "be": 3, "note": "test10 clear spr-prio"}
+{"op": "write_sprite", "addr": 131072, "data": 0, "be": 3, "note": "test10 no-sprite clear word0"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test10 no-sprite clear word1"}
+{"op": "write_sprite", "addr": 131074, "data": 0, "be": 3, "note": "test10 no-sprite clear word2"}
+{"op": "write_sprite", "addr": 131075, "data": 0, "be": 3, "note": "test10 no-sprite clear word3"}
+{"op": "write_sprite", "addr": 131076, "data": 0, "be": 3, "note": "test10 no-sprite clear word4"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test10 no-sprite clear word5"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test10 no-sprite clear word6"}
+{"op": "write_sprite", "addr": 131079, "data": 0, "be": 3, "note": "test10 no-sprite clear word7"}
+{"op": "write_pf", "addr": 16646, "data": 6, "be": 3, "plane": 0, "note": "pf1 tile(3,4) attr=0x0006"}
+{"op": "write_pf", "addr": 16647, "data": 6, "be": 3, "plane": 0, "note": "pf1 tile(3,4) code=0x0006"}
+{"op": "write_line", "addr": 67394, "data": 1, "be": 3, "note": "pf_prio_en scan=66 plane=0"}
+{"op": "write_line", "addr": 88130, "data": 7, "be": 3, "note": "pf_prio data scan=66 plane=0 prio=7"}
+{"op": "write_text", "addr": 57862, "data": 0, "be": 3, "note": "text tile(6,8) char=0 color=0"}
+{"op": "check_colmix_pixel", "vpos": 65, "screen_col": 48, "exp_pixel": 102, "note": "test10 text transparent \u2192 PF1 shows exp=0x0066"}
+{"op": "reset", "note": "reset for test11 all transparent"}
+{"op": "write_line", "addr": 65612, "data": 0, "be": 3, "note": "test11 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66636, "data": 0, "be": 3, "note": "test11 clear zoom enable"}
+{"op": "write_line", "addr": 66892, "data": 0, "be": 3, "note": "test11 clear pal-add enable"}
+{"op": "write_line", "addr": 67148, "data": 0, "be": 3, "note": "test11 clear rowscroll enable"}
+{"op": "write_line", "addr": 67404, "data": 0, "be": 3, "note": "test11 clear pf-priority enable"}
+{"op": "write_line", "addr": 86092, "data": 0, "be": 3, "note": "test11 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73804, "data": 0, "be": 3, "note": "test11 clear colscroll PF1"}
+{"op": "write_line", "addr": 84044, "data": 0, "be": 3, "note": "test11 clear pal-add PF1"}
+{"op": "write_line", "addr": 88140, "data": 0, "be": 3, "note": "test11 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86348, "data": 0, "be": 3, "note": "test11 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74060, "data": 0, "be": 3, "note": "test11 clear colscroll PF2"}
+{"op": "write_line", "addr": 84300, "data": 0, "be": 3, "note": "test11 clear pal-add PF2"}
+{"op": "write_line", "addr": 88396, "data": 0, "be": 3, "note": "test11 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86604, "data": 0, "be": 3, "note": "test11 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74316, "data": 0, "be": 3, "note": "test11 clear colscroll PF3"}
+{"op": "write_line", "addr": 84556, "data": 0, "be": 3, "note": "test11 clear pal-add PF3"}
+{"op": "write_line", "addr": 88652, "data": 0, "be": 3, "note": "test11 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86860, "data": 0, "be": 3, "note": "test11 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74572, "data": 0, "be": 3, "note": "test11 clear colscroll PF4"}
+{"op": "write_line", "addr": 84812, "data": 0, "be": 3, "note": "test11 clear pal-add PF4"}
+{"op": "write_line", "addr": 88908, "data": 0, "be": 3, "note": "test11 clear pf-prio PF4"}
+{"op": "write_line", "addr": 81996, "data": 32768, "be": 3, "note": "test11 clear zoom PF1"}
+{"op": "write_line", "addr": 82252, "data": 32768, "be": 3, "note": "test11 clear zoom PF3"}
+{"op": "write_line", "addr": 82508, "data": 32768, "be": 3, "note": "test11 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82764, "data": 32768, "be": 3, "note": "test11 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80716, "data": 0, "be": 3, "note": "test11 clear spr-prio"}
+{"op": "write_sprite", "addr": 131072, "data": 0, "be": 3, "note": "test11 ensure transparent word0"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test11 ensure transparent word1"}
+{"op": "write_sprite", "addr": 131074, "data": 0, "be": 3, "note": "test11 ensure transparent word2"}
+{"op": "write_sprite", "addr": 131075, "data": 0, "be": 3, "note": "test11 ensure transparent word3"}
+{"op": "write_sprite", "addr": 131076, "data": 0, "be": 3, "note": "test11 ensure transparent word4"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test11 ensure transparent word5"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test11 ensure transparent word6"}
+{"op": "write_sprite", "addr": 131079, "data": 0, "be": 3, "note": "test11 ensure transparent word7"}
+{"op": "write_pf", "addr": 16664, "data": 0, "be": 3, "plane": 0, "note": "pf1 tile(12,4) attr=0x0000"}
+{"op": "write_pf", "addr": 16665, "data": 0, "be": 3, "plane": 0, "note": "pf1 tile(12,4) code=0x0000"}
+{"op": "write_pf", "addr": 24856, "data": 0, "be": 3, "plane": 1, "note": "pf2 tile(12,4) attr=0x0000"}
+{"op": "write_pf", "addr": 24857, "data": 0, "be": 3, "plane": 1, "note": "pf2 tile(12,4) code=0x0000"}
+{"op": "write_pf", "addr": 33048, "data": 0, "be": 3, "plane": 2, "note": "pf3 tile(12,4) attr=0x0000"}
+{"op": "write_pf", "addr": 33049, "data": 0, "be": 3, "plane": 2, "note": "pf3 tile(12,4) code=0x0000"}
+{"op": "write_pf", "addr": 41240, "data": 0, "be": 3, "plane": 3, "note": "pf4 tile(12,4) attr=0x0000"}
+{"op": "write_pf", "addr": 41241, "data": 0, "be": 3, "plane": 3, "note": "pf4 tile(12,4) code=0x0000"}
+{"op": "write_text", "addr": 57944, "data": 0, "be": 3, "note": "text tile(24,9) char=0 color=0"}
+{"op": "check_colmix_pixel", "vpos": 75, "screen_col": 192, "exp_pixel": 0, "note": "test11 all transparent \u2192 pen=0"}
+{"op": "reset", "note": "reset for test12 all 4 PFs ordered"}
+{"op": "write_line", "addr": 65667, "data": 0, "be": 3, "note": "test12 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66691, "data": 0, "be": 3, "note": "test12 clear zoom enable"}
+{"op": "write_line", "addr": 66947, "data": 0, "be": 3, "note": "test12 clear pal-add enable"}
+{"op": "write_line", "addr": 67203, "data": 0, "be": 3, "note": "test12 clear rowscroll enable"}
+{"op": "write_line", "addr": 67459, "data": 0, "be": 3, "note": "test12 clear pf-priority enable"}
+{"op": "write_line", "addr": 86147, "data": 0, "be": 3, "note": "test12 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73859, "data": 0, "be": 3, "note": "test12 clear colscroll PF1"}
+{"op": "write_line", "addr": 84099, "data": 0, "be": 3, "note": "test12 clear pal-add PF1"}
+{"op": "write_line", "addr": 88195, "data": 0, "be": 3, "note": "test12 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86403, "data": 0, "be": 3, "note": "test12 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74115, "data": 0, "be": 3, "note": "test12 clear colscroll PF2"}
+{"op": "write_line", "addr": 84355, "data": 0, "be": 3, "note": "test12 clear pal-add PF2"}
+{"op": "write_line", "addr": 88451, "data": 0, "be": 3, "note": "test12 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86659, "data": 0, "be": 3, "note": "test12 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74371, "data": 0, "be": 3, "note": "test12 clear colscroll PF3"}
+{"op": "write_line", "addr": 84611, "data": 0, "be": 3, "note": "test12 clear pal-add PF3"}
+{"op": "write_line", "addr": 88707, "data": 0, "be": 3, "note": "test12 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86915, "data": 0, "be": 3, "note": "test12 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74627, "data": 0, "be": 3, "note": "test12 clear colscroll PF4"}
+{"op": "write_line", "addr": 84867, "data": 0, "be": 3, "note": "test12 clear pal-add PF4"}
+{"op": "write_line", "addr": 88963, "data": 0, "be": 3, "note": "test12 clear pf-prio PF4"}
+{"op": "write_line", "addr": 82051, "data": 32768, "be": 3, "note": "test12 clear zoom PF1"}
+{"op": "write_line", "addr": 82307, "data": 32768, "be": 3, "note": "test12 clear zoom PF3"}
+{"op": "write_line", "addr": 82563, "data": 32768, "be": 3, "note": "test12 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82819, "data": 32768, "be": 3, "note": "test12 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80771, "data": 0, "be": 3, "note": "test12 clear spr-prio"}
+{"op": "write_sprite", "addr": 131072, "data": 0, "be": 3, "note": "test12 no-sprite clear word0"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test12 no-sprite clear word1"}
+{"op": "write_sprite", "addr": 131074, "data": 0, "be": 3, "note": "test12 no-sprite clear word2"}
+{"op": "write_sprite", "addr": 131075, "data": 0, "be": 3, "note": "test12 no-sprite clear word3"}
+{"op": "write_sprite", "addr": 131076, "data": 0, "be": 3, "note": "test12 no-sprite clear word4"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test12 no-sprite clear word5"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test12 no-sprite clear word6"}
+{"op": "write_sprite", "addr": 131079, "data": 0, "be": 3, "note": "test12 no-sprite clear word7"}
+{"op": "write_pf", "addr": 16904, "data": 1, "be": 3, "plane": 0, "note": "pf1 tile(4,8) attr=0x0001"}
+{"op": "write_pf", "addr": 16905, "data": 1, "be": 3, "plane": 0, "note": "pf1 tile(4,8) code=0x0001"}
+{"op": "write_pf", "addr": 25096, "data": 2, "be": 3, "plane": 1, "note": "pf2 tile(4,8) attr=0x0002"}
+{"op": "write_pf", "addr": 25097, "data": 2, "be": 3, "plane": 1, "note": "pf2 tile(4,8) code=0x0002"}
+{"op": "write_pf", "addr": 33288, "data": 3, "be": 3, "plane": 2, "note": "pf3 tile(4,8) attr=0x0003"}
+{"op": "write_pf", "addr": 33289, "data": 3, "be": 3, "plane": 2, "note": "pf3 tile(4,8) code=0x0003"}
+{"op": "write_pf", "addr": 41480, "data": 4, "be": 3, "plane": 3, "note": "pf4 tile(4,8) attr=0x0004"}
+{"op": "write_pf", "addr": 41481, "data": 4, "be": 3, "plane": 3, "note": "pf4 tile(4,8) code=0x0004"}
+{"op": "write_line", "addr": 67459, "data": 1, "be": 3, "note": "pf_prio_en scan=131 plane=0"}
+{"op": "write_line", "addr": 88195, "data": 1, "be": 3, "note": "pf_prio data scan=131 plane=0 prio=1"}
+{"op": "write_line", "addr": 67459, "data": 3, "be": 3, "note": "pf_prio_en scan=131 plane=1"}
+{"op": "write_line", "addr": 88451, "data": 3, "be": 3, "note": "pf_prio data scan=131 plane=1 prio=3"}
+{"op": "write_line", "addr": 67459, "data": 7, "be": 3, "note": "pf_prio_en scan=131 plane=2"}
+{"op": "write_line", "addr": 88707, "data": 5, "be": 3, "note": "pf_prio data scan=131 plane=2 prio=5"}
+{"op": "write_line", "addr": 67459, "data": 15, "be": 3, "note": "pf_prio_en scan=131 plane=3"}
+{"op": "write_line", "addr": 88963, "data": 7, "be": 3, "note": "pf_prio data scan=131 plane=3 prio=7"}
+{"op": "check_colmix_pixel", "vpos": 130, "screen_col": 64, "exp_pixel": 68, "note": "test12 PF4 wins 4-way prio contest exp=0x0044"}
+{"op": "reset", "note": "reset for test13 sprite tie-break over PF at prio=5"}
+{"op": "write_line", "addr": 65677, "data": 0, "be": 3, "note": "test13 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66701, "data": 0, "be": 3, "note": "test13 clear zoom enable"}
+{"op": "write_line", "addr": 66957, "data": 0, "be": 3, "note": "test13 clear pal-add enable"}
+{"op": "write_line", "addr": 67213, "data": 0, "be": 3, "note": "test13 clear rowscroll enable"}
+{"op": "write_line", "addr": 67469, "data": 0, "be": 3, "note": "test13 clear pf-priority enable"}
+{"op": "write_line", "addr": 86157, "data": 0, "be": 3, "note": "test13 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73869, "data": 0, "be": 3, "note": "test13 clear colscroll PF1"}
+{"op": "write_line", "addr": 84109, "data": 0, "be": 3, "note": "test13 clear pal-add PF1"}
+{"op": "write_line", "addr": 88205, "data": 0, "be": 3, "note": "test13 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86413, "data": 0, "be": 3, "note": "test13 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74125, "data": 0, "be": 3, "note": "test13 clear colscroll PF2"}
+{"op": "write_line", "addr": 84365, "data": 0, "be": 3, "note": "test13 clear pal-add PF2"}
+{"op": "write_line", "addr": 88461, "data": 0, "be": 3, "note": "test13 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86669, "data": 0, "be": 3, "note": "test13 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74381, "data": 0, "be": 3, "note": "test13 clear colscroll PF3"}
+{"op": "write_line", "addr": 84621, "data": 0, "be": 3, "note": "test13 clear pal-add PF3"}
+{"op": "write_line", "addr": 88717, "data": 0, "be": 3, "note": "test13 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86925, "data": 0, "be": 3, "note": "test13 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74637, "data": 0, "be": 3, "note": "test13 clear colscroll PF4"}
+{"op": "write_line", "addr": 84877, "data": 0, "be": 3, "note": "test13 clear pal-add PF4"}
+{"op": "write_line", "addr": 88973, "data": 0, "be": 3, "note": "test13 clear pf-prio PF4"}
+{"op": "write_line", "addr": 82061, "data": 32768, "be": 3, "note": "test13 clear zoom PF1"}
+{"op": "write_line", "addr": 82317, "data": 32768, "be": 3, "note": "test13 clear zoom PF3"}
+{"op": "write_line", "addr": 82573, "data": 32768, "be": 3, "note": "test13 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82829, "data": 32768, "be": 3, "note": "test13 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80781, "data": 0, "be": 3, "note": "test13 clear spr-prio"}
+{"op": "write_pf", "addr": 16908, "data": 1, "be": 3, "plane": 0, "note": "pf1 tile(6,8) attr=0x0001"}
+{"op": "write_pf", "addr": 16909, "data": 1, "be": 3, "plane": 0, "note": "pf1 tile(6,8) code=0x0001"}
+{"op": "write_pf", "addr": 33292, "data": 3, "be": 3, "plane": 2, "note": "pf3 tile(6,8) attr=0x0003"}
+{"op": "write_pf", "addr": 33293, "data": 3, "be": 3, "plane": 2, "note": "pf3 tile(6,8) code=0x0003"}
+{"op": "write_line", "addr": 67469, "data": 1, "be": 3, "note": "pf_prio_en scan=141 plane=0"}
+{"op": "write_line", "addr": 88205, "data": 5, "be": 3, "note": "pf_prio data scan=141 plane=0 prio=5"}
+{"op": "write_line", "addr": 67469, "data": 5, "be": 3, "note": "pf_prio_en scan=141 plane=2"}
+{"op": "write_line", "addr": 88717, "data": 5, "be": 3, "note": "pf_prio data scan=141 plane=2 prio=5"}
+{"op": "write_sprite", "addr": 131072, "data": 8, "be": 3, "note": "test13 sprite grp0x40 prio=5 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test13 sprite grp0x40 prio=5 word1=zoom"}
+{"op": "write_sprite", "addr": 131074, "data": 96, "be": 3, "note": "test13 sprite grp0x40 prio=5 word2=sx=96"}
+{"op": "write_sprite", "addr": 131075, "data": 140, "be": 3, "note": "test13 sprite grp0x40 prio=5 word3=sy=140"}
+{"op": "write_sprite", "addr": 131076, "data": 72, "be": 3, "note": "test13 sprite grp0x40 prio=5 word4=ctrl color=0x48"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test13 sprite grp0x40 prio=5 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test13 sprite grp0x40 prio=5 word6=no_jump"}
+{"op": "write_line", "addr": 80781, "data": 80, "be": 3, "note": "spr_prio scan=141 g0=0 g1=5 g2=0 g3=0"}
+{"op": "check_colmix_pixel", "vpos": 140, "screen_col": 96, "exp_pixel": 136, "note": "test13 sprite prio=5 tie-break over PF prio=5 exp=0x0088"}
+{"op": "reset", "note": "reset for test14 disabled PF prio defaults to 0"}
+{"op": "write_line", "addr": 65687, "data": 0, "be": 3, "note": "test14 clear colscroll/alt-tilemap enable"}
+{"op": "write_line", "addr": 66711, "data": 0, "be": 3, "note": "test14 clear zoom enable"}
+{"op": "write_line", "addr": 66967, "data": 0, "be": 3, "note": "test14 clear pal-add enable"}
+{"op": "write_line", "addr": 67223, "data": 0, "be": 3, "note": "test14 clear rowscroll enable"}
+{"op": "write_line", "addr": 67479, "data": 0, "be": 3, "note": "test14 clear pf-priority enable"}
+{"op": "write_line", "addr": 86167, "data": 0, "be": 3, "note": "test14 clear rowscroll PF1"}
+{"op": "write_line", "addr": 73879, "data": 0, "be": 3, "note": "test14 clear colscroll PF1"}
+{"op": "write_line", "addr": 84119, "data": 0, "be": 3, "note": "test14 clear pal-add PF1"}
+{"op": "write_line", "addr": 88215, "data": 0, "be": 3, "note": "test14 clear pf-prio PF1"}
+{"op": "write_line", "addr": 86423, "data": 0, "be": 3, "note": "test14 clear rowscroll PF2"}
+{"op": "write_line", "addr": 74135, "data": 0, "be": 3, "note": "test14 clear colscroll PF2"}
+{"op": "write_line", "addr": 84375, "data": 0, "be": 3, "note": "test14 clear pal-add PF2"}
+{"op": "write_line", "addr": 88471, "data": 0, "be": 3, "note": "test14 clear pf-prio PF2"}
+{"op": "write_line", "addr": 86679, "data": 0, "be": 3, "note": "test14 clear rowscroll PF3"}
+{"op": "write_line", "addr": 74391, "data": 0, "be": 3, "note": "test14 clear colscroll PF3"}
+{"op": "write_line", "addr": 84631, "data": 0, "be": 3, "note": "test14 clear pal-add PF3"}
+{"op": "write_line", "addr": 88727, "data": 0, "be": 3, "note": "test14 clear pf-prio PF3"}
+{"op": "write_line", "addr": 86935, "data": 0, "be": 3, "note": "test14 clear rowscroll PF4"}
+{"op": "write_line", "addr": 74647, "data": 0, "be": 3, "note": "test14 clear colscroll PF4"}
+{"op": "write_line", "addr": 84887, "data": 0, "be": 3, "note": "test14 clear pal-add PF4"}
+{"op": "write_line", "addr": 88983, "data": 0, "be": 3, "note": "test14 clear pf-prio PF4"}
+{"op": "write_line", "addr": 82071, "data": 32768, "be": 3, "note": "test14 clear zoom PF1"}
+{"op": "write_line", "addr": 82327, "data": 32768, "be": 3, "note": "test14 clear zoom PF3"}
+{"op": "write_line", "addr": 82583, "data": 32768, "be": 3, "note": "test14 clear zoom PF2/PF4-Y"}
+{"op": "write_line", "addr": 82839, "data": 32768, "be": 3, "note": "test14 clear zoom PF4/PF2-Y"}
+{"op": "write_line", "addr": 80791, "data": 0, "be": 3, "note": "test14 clear spr-prio"}
+{"op": "write_sprite", "addr": 131072, "data": 0, "be": 3, "note": "test14 no-sprite clear word0"}
+{"op": "write_sprite", "addr": 131073, "data": 0, "be": 3, "note": "test14 no-sprite clear word1"}
+{"op": "write_sprite", "addr": 131074, "data": 0, "be": 3, "note": "test14 no-sprite clear word2"}
+{"op": "write_sprite", "addr": 131075, "data": 0, "be": 3, "note": "test14 no-sprite clear word3"}
+{"op": "write_sprite", "addr": 131076, "data": 0, "be": 3, "note": "test14 no-sprite clear word4"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "test14 no-sprite clear word5"}
+{"op": "write_sprite", "addr": 131078, "data": 0, "be": 3, "note": "test14 no-sprite clear word6"}
+{"op": "write_sprite", "addr": 131079, "data": 0, "be": 3, "note": "test14 no-sprite clear word7"}
+{"op": "write_pf", "addr": 25168, "data": 2, "be": 3, "plane": 1, "note": "pf2 tile(8,9) attr=0x0002"}
+{"op": "write_pf", "addr": 25169, "data": 2, "be": 3, "plane": 1, "note": "pf2 tile(8,9) code=0x0002"}
+{"op": "write_pf", "addr": 41552, "data": 4, "be": 3, "plane": 3, "note": "pf4 tile(8,9) attr=0x0004"}
+{"op": "write_pf", "addr": 41553, "data": 4, "be": 3, "plane": 3, "note": "pf4 tile(8,9) code=0x0004"}
+{"op": "write_line", "addr": 67479, "data": 8, "be": 3, "note": "pf_prio_en scan=151 plane=3"}
+{"op": "write_line", "addr": 88983, "data": 1, "be": 3, "note": "pf_prio data scan=151 plane=3 prio=1"}
+{"op": "check_colmix_pixel", "vpos": 150, "screen_col": 128, "exp_pixel": 68, "note": "test14 PF4 prio=1 beats disabled-PF2 prio=0 exp=0x0044"}

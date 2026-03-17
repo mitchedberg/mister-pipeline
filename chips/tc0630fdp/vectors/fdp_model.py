@@ -1,5 +1,5 @@
 """
-TC0630FDP behavioral model — Python reference implementation (Steps 1–10).
+TC0630FDP behavioral model — Python reference implementation (Steps 1–11).
 
 Step 1 scope:
   - Display control register bank (16 × 16-bit registers)
@@ -64,6 +64,34 @@ Step 10 scope (added):
       When w6[15] == 1: jump to index w6[9:0]; cancel in_block.
       Next iteration starts at jump target index instead of idx+1.
   - write_sprite_entry() extended with block_ctrl and jump_target parameters.
+
+Step 11 scope (added):
+  - composite_scanline(): priority-resolves 6 layers (text, PF1–PF4, sprite) per pixel.
+  - _line_pf_prio(plane, scan): returns PF priority 0–15 from §9.12 bits[3:0].
+  - _line_spr_prio(group, scan): returns sprite group priority 0–15 from §9.8.
+  - Priority enable: PF priority enabled when line_ram[0x0700 + scan8][plane] set.
+  - Sprite priority always active (no separate enable in §9.1).
+  - Text layer is fixed highest priority (beats all 0–15 layers).
+  - Tie-breaking: sprite wins over PF at equal priority.
+  - Output: 13-bit {palette[8:0], pen[3:0]}.  pen==0 = all transparent.
+
+Step 12 scope (added):
+  - _eval_clip(clip_en, clip_inv, clip_sense, screen_x, clip_left, clip_right):
+      Evaluates 4 clip planes for a layer. Returns True if pixel is visible.
+      For each enabled plane p:
+        inside_p = screen_x >= clip_left[p] and screen_x <= clip_right[p]
+        eff_inv_p = clip_inv[p] XOR clip_sense
+        vis_p = not inside_p if eff_inv_p else inside_p
+      visible = AND of all enabled vis_p (True if no planes enabled)
+  - _line_clip_plane(plane_idx, scan): returns (left8, right8) for clip plane plane_idx.
+      Data from §9.3 words at 0x2800 + plane*0x100 + scan.
+      bits[7:0]=left, bits[15:8]=right.
+  - _line_pf_clip(plane, scan): returns (clip_en4, clip_inv4, clip_sense) for PF plane.
+      From §9.12 pp_word: bits[11:8]=enable, bits[7:4]=invert, bit[12]=sense.
+  - _line_spr_clip(scan): returns (clip_en4, clip_inv4, clip_sense) for sprite layer.
+      From §9.7 sm_word at 0x3A00 + scan: bits[11:8]=enable, bits[7:4]=invert, bit[0]=sense.
+  - composite_scanline() updated to apply clip evaluation per layer per pixel.
+  - Text layer has no clip planes (never clipped).
 
 Step 7 scope (added):
   - _line_colscroll(plane, scan): returns 9-bit column scroll offset (§9.2 bits[8:0])
@@ -888,6 +916,253 @@ class TaitoF3Model:
                     linebuf[screen_x] = (color << 4) | pen
 
         return linebuf
+
+    # ── Line RAM priority helpers (Step 11) ─────────────────────────────────
+
+    def _line_pf_prio(self, plane: int, scan: int) -> int:
+        """Return priority value (0–15) for PF(plane+1) on scanline scan (Step 11).
+
+        Returns 0 if PF priority is disabled for this PF/scanline.
+
+        section1 §9.12 + §9.1:
+          enable word: line_ram[0x0700 + (scan & 0xFF)], bit[plane] = enable
+          data   word: line_ram[0x5800 + plane*0x100 + (scan & 0xFF)], bits[3:0] = prio
+        """
+        scan8 = scan & 0xFF
+        en_word = self.line_ram[0x0700 + scan8]
+        if not (en_word >> plane) & 1:
+            return 0
+        pp_word = self.line_ram[0x5800 + plane * 0x100 + scan8]
+        return pp_word & 0xF
+
+    def _line_spr_prio(self, group: int, scan: int) -> int:
+        """Return priority value (0–15) for sprite priority group on scanline scan (Step 11).
+
+        group: 0=0x00, 1=0x40, 2=0x80, 3=0xC0  (matches spr_pixel bits[11:10])
+
+        section1 §9.8:
+          data word: line_ram[0x3B00 + (scan & 0xFF)]
+          bits[3:0]   = group 0x00 priority
+          bits[7:4]   = group 0x40 priority
+          bits[11:8]  = group 0x80 priority
+          bits[15:12] = group 0xC0 priority
+        No separate enable bit — always latched.
+        """
+        scan8 = scan & 0xFF
+        sp_word = self.line_ram[0x3B00 + scan8]
+        shift = (group & 3) * 4
+        return (sp_word >> shift) & 0xF
+
+    # ── Line RAM clip helpers (Step 12) ─────────────────────────────────────
+
+    def _line_clip_plane(self, plane_idx: int, scan: int) -> tuple:
+        """Return (left8, right8) for clip plane plane_idx on scanline scan (Step 12).
+
+        section1 §9.3:
+          Plane 0: word 0x2800 + (scan & 0xFF)
+          Plane 1: word 0x2900 + (scan & 0xFF)
+          Plane 2: word 0x2A00 + (scan & 0xFF)
+          Plane 3: word 0x2B00 + (scan & 0xFF)
+          Word format: bits[7:0]=left, bits[15:8]=right  (8-bit coordinates)
+        """
+        scan8 = scan & 0xFF
+        base = [0x2800, 0x2900, 0x2A00, 0x2B00]
+        word = self.line_ram[base[plane_idx & 3] + scan8]
+        left8  = word & 0xFF
+        right8 = (word >> 8) & 0xFF
+        return left8, right8
+
+    def _line_pf_clip(self, plane: int, scan: int) -> tuple:
+        """Return (clip_en4, clip_inv4, clip_sense) for PF plane on scanline scan (Step 12).
+
+        section1 §9.12 pp_word:
+          bits[11:8] = clip enable per plane (4 bits)
+          bits[7:4]  = clip invert per plane (4 bits)
+          bit[12]    = inversion sense
+        PFn: word 0x5800 + plane*0x100 + (scan & 0xFF)
+        """
+        scan8 = scan & 0xFF
+        pp_word = self.line_ram[0x5800 + plane * 0x100 + scan8]
+        clip_en4    = (pp_word >> 8)  & 0xF
+        clip_inv4   = (pp_word >> 4)  & 0xF
+        clip_sense  = (pp_word >> 12) & 0x1
+        return clip_en4, clip_inv4, clip_sense
+
+    def _line_spr_clip(self, scan: int) -> tuple:
+        """Return (clip_en4, clip_inv4, clip_sense) for sprite layer on scanline scan (Step 12).
+
+        section1 §9.7 sm_word at byte 0x7400–0x75FF → word 0x3A00 + (scan & 0xFF):
+          bits[11:8] = clip enable per plane (4 bits)
+          bits[7:4]  = clip invert per plane (4 bits)
+          bit[0]     = inversion sense
+        """
+        scan8 = scan & 0xFF
+        sm_word = self.line_ram[0x3A00 + scan8]
+        clip_en4   = (sm_word >> 8) & 0xF
+        clip_inv4  = (sm_word >> 4) & 0xF
+        clip_sense = sm_word & 0x1
+        return clip_en4, clip_inv4, clip_sense
+
+    @staticmethod
+    def _eval_clip(clip_en4: int, clip_inv4: int, clip_sense: int,
+                   screen_x: int,
+                   clip_left: list, clip_right: list) -> bool:
+        """Evaluate 4 clip planes for a layer. Returns True if pixel is VISIBLE.
+
+        Parameters:
+          clip_en4   : 4-bit enable mask (bit p = 1 means plane p is active)
+          clip_inv4  : 4-bit invert mask (bit p = 1 means plane p inverts)
+          clip_sense : inversion sense bit (when 1, flip clip_inv interpretation)
+          screen_x   : 8-bit screen X coordinate (0–255)
+          clip_left  : list of 4 left boundary values (8-bit each)
+          clip_right : list of 4 right boundary values (8-bit each)
+
+        Algorithm:
+          For each enabled plane p:
+            inside_p = screen_x >= clip_left[p] and screen_x <= clip_right[p]
+            eff_inv_p = bool(clip_inv4 bit p) XOR bool(clip_sense)
+            vis_p = (not inside_p) if eff_inv_p else inside_p
+          visible = AND of all enabled vis_p
+          If no planes enabled: return True (no clip)
+        """
+        result = True
+        any_en = False
+        for p in range(4):
+            if (clip_en4 >> p) & 1:
+                any_en = True
+                inside_p = (screen_x >= clip_left[p]) and (screen_x <= clip_right[p])
+                eff_inv  = bool((clip_inv4 >> p) & 1) ^ bool(clip_sense)
+                vis_p    = (not inside_p) if eff_inv else inside_p
+                result   = result and vis_p
+        return result if any_en else True
+
+    def composite_scanline(self, vpos: int,
+                           spr_linebuf: list = None) -> list:
+        """Composite all 6 layers for the scanline AFTER vpos.
+
+        Returns 320-entry list of 13-bit composited pixels:
+          {palette[8:0], pen[3:0]}
+          pen==0 means all transparent (background).
+
+        Compositing rules (Step 12 — with clip planes, no alpha blend):
+          0. Clip evaluation: layers outside their clip windows are blanked (pen→0).
+          1. Text layer always wins if pen != 0 (no clip for text).
+          2. Among PF and sprite layers, higher numeric priority wins.
+          3. Equal priority: sprite wins over PF.
+          4. pen == 0: transparent, layer skipped.
+
+        Parameters:
+          vpos        : current scanline (renders vpos+1)
+          spr_linebuf : pre-rendered sprite line buffer from render_sprite_scanline()
+                        If None, sprite contribution is all-zero (transparent).
+
+        PF scroll uses current ctrl registers (self.pf_xscroll / pf_yscroll).
+        """
+        render_scan = vpos + 1
+
+        if render_scan < V_START or render_scan >= V_END:
+            return [0] * 320
+
+        # ── Render each layer ────────────────────────────────────────────────
+        # Text layer (pen from bits[3:0], color from bits[8:4])
+        text_buf = self.render_text_scanline(vpos)   # 9-bit: {color[4:0], pen[3:0]}
+
+        # PF layers (13-bit each: {palette[8:0], pen[3:0]})
+        pf_bufs = []
+        for plane in range(4):
+            pf_bufs.append(
+                self.render_bg_scanline(
+                    vpos, plane,
+                    self.pf_xscroll[plane],
+                    self.pf_yscroll[plane],
+                    self.extend_mode,
+                )
+            )
+
+        # Sprite layer (12-bit: {prio[1:0], palette[5:0], pen[3:0]})
+        if spr_linebuf is None:
+            spr_buf = [0] * 320
+        else:
+            spr_buf = spr_linebuf
+
+        # ── Per-scanline priority and clip values ─────────────────────────────
+        pf_prio  = [self._line_pf_prio(n, render_scan) for n in range(4)]
+        spr_prio = [self._line_spr_prio(g, render_scan) for g in range(4)]
+
+        # Clip plane boundaries for this scanline
+        clip_left  = []
+        clip_right = []
+        for p in range(4):
+            l, r = self._line_clip_plane(p, render_scan)
+            clip_left.append(l)
+            clip_right.append(r)
+
+        # Per-layer clip config
+        pf_clip_en    = []
+        pf_clip_inv   = []
+        pf_clip_sense = []
+        for n in range(4):
+            en, inv, sense = self._line_pf_clip(n, render_scan)
+            pf_clip_en.append(en)
+            pf_clip_inv.append(inv)
+            pf_clip_sense.append(sense)
+
+        spr_en, spr_inv, spr_sense = self._line_spr_clip(render_scan)
+
+        # ── Composite each pixel ─────────────────────────────────────────────
+        result = [0] * 320
+        for col in range(320):
+            # Screen X coordinate: col maps to hpos = H_START + col.
+            # Clip evaluation uses hpos - H_START = col (lower 8 bits).
+            sx = col & 0xFF
+
+            win_prio   = -1    # -1 = no winner yet
+            win_val    = 0     # 13-bit: {palette[8:0], pen[3:0]}
+
+            # PF layers — evaluate clip then priority
+            for n in range(4):
+                px = pf_bufs[n][col]
+                pen = px & 0xF
+                if pen == 0:
+                    continue   # transparent
+                # Clip evaluation
+                visible = self._eval_clip(pf_clip_en[n], pf_clip_inv[n],
+                                          pf_clip_sense[n], sx,
+                                          clip_left, clip_right)
+                if not visible:
+                    continue   # clipped — treat as transparent
+                prio = pf_prio[n]
+                if win_prio < 0 or prio > win_prio:
+                    win_prio = prio
+                    win_val  = px   # 13-bit
+
+            # Sprite layer (wins on tie >= over PF) — evaluate clip then priority
+            spr_px = spr_buf[col]
+            spr_pen = spr_px & 0xF
+            if spr_pen != 0:
+                # Clip evaluation for sprite
+                spr_visible = self._eval_clip(spr_en, spr_inv, spr_sense, sx,
+                                              clip_left, clip_right)
+                if spr_visible:
+                    spr_grp = (spr_px >> 10) & 0x3
+                    prio = spr_prio[spr_grp]
+                    spr_palette = (spr_px >> 4) & 0x3F
+                    if win_prio < 0 or prio >= win_prio:
+                        win_prio = prio
+                        # Convert spr 12-bit to 13-bit palette format
+                        win_val = (spr_palette << 4) | spr_pen
+
+            # Text layer (always top, no clip)
+            txt_px = text_buf[col]
+            txt_pen = txt_px & 0xF
+            if txt_pen != 0:
+                txt_color = (txt_px >> 4) & 0x1F
+                # Text stores color[4:0] in palette[4:0]; bits[8:5] = 0
+                win_val = (txt_color << 4) | txt_pen
+
+            result[col] = win_val & 0x1FFF
+
+        return result
 
     # ── Decoded control register properties ─────────────────────────────────
 

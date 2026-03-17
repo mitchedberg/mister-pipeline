@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Taito F3 Display Processor (Step 9: +Sprite Zoom)
+// TC0630FDP — Taito F3 Display Processor (Step 12: +Clip Planes)
 // =============================================================================
 // Integrates all video functions for Taito F3 arcade hardware (1992–1997):
 //   · 4 scrolling tilemap layers (PF1–PF4), 16×16 tiles, 4bpp  ← STEP 3 ✓
@@ -120,7 +120,11 @@ module tc0630fdp (
 
     // ── Sprite Pixel Output (Step 8) ──────────────────────────────────────
     // {priority[1:0], palette[5:0], pen[3:0]}; pen==0 → transparent
-    output logic [11:0] spr_pixel_out
+    output logic [11:0] spr_pixel_out,
+
+    // ── Compositor Output (Step 11) ───────────────────────────────────────
+    // {palette[8:0], pen[3:0]}.  pen==0 → all transparent (background).
+    output logic [12:0] colmix_pixel_out
 );
 
 // =============================================================================
@@ -610,24 +614,45 @@ logic [ 7:0] ls_zoom_x      [0:3];   // Step 6: X zoom per PF
 logic [ 7:0] ls_zoom_y      [0:3];   // Step 6: Y zoom per PF
 logic [ 8:0] ls_colscroll   [0:3];   // Step 7: column scroll offset per PF
 logic [15:0] ls_pal_add     [0:3];   // Step 7: palette addition raw value per PF
+logic [ 3:0] ls_pf_prio     [0:3];   // Step 11: PF priority values 0–15
+logic [ 3:0] ls_spr_prio    [0:3];   // Step 11: sprite group priorities
+// Step 12: clip plane outputs
+logic [ 7:0] ls_clip_left   [0:3];
+logic [ 7:0] ls_clip_right  [0:3];
+logic [ 3:0] ls_pf_clip_en   [0:3];
+logic [ 3:0] ls_pf_clip_inv  [0:3];
+logic        ls_pf_clip_sense[0:3];
+logic [ 3:0] ls_spr_clip_en;
+logic [ 3:0] ls_spr_clip_inv;
+logic        ls_spr_clip_sense;
 
 tc0630fdp_lineram u_lineram (
-    .clk           (clk),
-    .rst_n         (rst_n),
-    .cpu_cs        (cs_line),
-    .cpu_rw        (cpu_rw),
-    .cpu_addr      (cpu_addr[15:1]),
-    .cpu_din       (cpu_din),
-    .cpu_be        (cpu_be),
-    .cpu_dout      (line_cpu_dout),
-    .vpos          (vpos),
-    .hblank_fall   (hblank_fall),
-    .ls_rowscroll  (ls_rowscroll),
-    .ls_alt_tilemap(ls_alt_tilemap),
-    .ls_zoom_x     (ls_zoom_x),
-    .ls_zoom_y     (ls_zoom_y),
-    .ls_colscroll  (ls_colscroll),
-    .ls_pal_add    (ls_pal_add)
+    .clk            (clk),
+    .rst_n          (rst_n),
+    .cpu_cs         (cs_line),
+    .cpu_rw         (cpu_rw),
+    .cpu_addr       (cpu_addr[15:1]),
+    .cpu_din        (cpu_din),
+    .cpu_be         (cpu_be),
+    .cpu_dout       (line_cpu_dout),
+    .vpos           (vpos),
+    .hblank_fall    (hblank_fall),
+    .ls_rowscroll   (ls_rowscroll),
+    .ls_alt_tilemap (ls_alt_tilemap),
+    .ls_zoom_x      (ls_zoom_x),
+    .ls_zoom_y      (ls_zoom_y),
+    .ls_colscroll   (ls_colscroll),
+    .ls_pal_add     (ls_pal_add),
+    .ls_pf_prio       (ls_pf_prio),
+    .ls_spr_prio      (ls_spr_prio),
+    .ls_clip_left     (ls_clip_left),
+    .ls_clip_right    (ls_clip_right),
+    .ls_pf_clip_en    (ls_pf_clip_en),
+    .ls_pf_clip_inv   (ls_pf_clip_inv),
+    .ls_pf_clip_sense (ls_pf_clip_sense),
+    .ls_spr_clip_en   (ls_spr_clip_en),
+    .ls_spr_clip_inv  (ls_spr_clip_inv),
+    .ls_spr_clip_sense(ls_spr_clip_sense)
 );
 
 // =============================================================================
@@ -712,6 +737,31 @@ tc0630fdp_sprite_render u_sprite_render (
     .gfx_addr        (spr_gfx_addr),
     .gfx_data        (spr_gfx_data),
     .spr_pixel       (spr_pixel_out)
+);
+
+// =============================================================================
+// tc0630fdp_colmix — Layer Compositor (Step 11)
+// =============================================================================
+tc0630fdp_colmix u_colmix (
+    .clk               (clk),
+    .rst_n             (rst_n),
+    .hpos              (hpos),
+    .vpos              (vpos),
+    .pixel_valid       (pixel_valid),
+    .text_pixel        (text_pixel_out),
+    .bg_pixel          (bg_pixel_out),
+    .spr_pixel         (spr_pixel_out),
+    .ls_pf_prio        (ls_pf_prio),
+    .ls_spr_prio       (ls_spr_prio),
+    .ls_clip_left      (ls_clip_left),
+    .ls_clip_right     (ls_clip_right),
+    .ls_pf_clip_en     (ls_pf_clip_en),
+    .ls_pf_clip_inv    (ls_pf_clip_inv),
+    .ls_pf_clip_sense  (ls_pf_clip_sense),
+    .ls_spr_clip_en    (ls_spr_clip_en),
+    .ls_spr_clip_inv   (ls_spr_clip_inv),
+    .ls_spr_clip_sense (ls_spr_clip_sense),
+    .colmix_pixel_out  (colmix_pixel_out)
 );
 
 // =============================================================================

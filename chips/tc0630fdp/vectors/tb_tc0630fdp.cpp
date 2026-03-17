@@ -1,5 +1,5 @@
 // =============================================================================
-// Gate 5 (Steps 1–9): Verilator testbench for tc0630fdp.sv
+// Gate 5 (Steps 1–11): Verilator testbench for tc0630fdp.sv
 //
 // Reads one or more vector files (jsonl). Each line is a JSON object with "op":
 //
@@ -56,6 +56,15 @@
 //     Advance to active display of vpos+1 at screen_col.
 //     Sample spr_pixel_out (12-bit: {prio[1:0], palette[5:0], pen[3:0]}).
 //     Compare to exp_pixel. pen==0 means transparent (spr_pixel_out==0).
+//
+// Step 11 ops:
+//   op="write_line":    (reused) CPU write to Line RAM.
+//   op="check_colmix_pixel":
+//     Advance to HBLANK at vpos (triggers sprite renderer and line RAM latch).
+//     Wait 115 cycles (covers BG, text, sprite renderer).
+//     Advance to active display of vpos+1 at screen_col+1 (colmix adds 1 pipeline stage).
+//     Sample colmix_pixel_out (13-bit: {palette[8:0], pen[3:0]}).
+//     Compare to exp_pixel. pen==0 means all transparent (background).
 //
 // All passing tests: prints "PASS [note]"
 // Any failure:       prints "FAIL [note]: got=X exp=Y"
@@ -285,6 +294,85 @@ static void check_sprite_pixel(int target_vpos, int screen_col,
     dut->eval();
     int got = (int)dut->spr_pixel_out & 0xFFF;
     check(got == (exp_pixel & 0xFFF), note, got, exp_pixel & 0xFFF);
+}
+
+// ---------------------------------------------------------------------------
+// Step 11: check_colmix_pixel
+//
+// The colmix module adds one registered pipeline stage on top of the layer
+// outputs.  Layers output their pixel at hpos = H_START + col; colmix
+// registers the composite and presents it at hpos = H_START + col + 1.
+//
+// Strategy:
+//   1. Advance to vpos==V_END (VBLANK start) so sprite scanner fires.
+//   2. Wait 8000 cycles for the scanner to finish.
+//   3. Advance to hpos==H_END, vpos==target_vpos (HBLANK start).
+//      Sprite renderer and line RAM latch fire on hblank_fall.
+//   4. Wait 115 cycles for BG/text/sprite FSMs to complete.
+//   5. Advance to hpos = H_START + screen_col + 1, vpos = target_vpos+1.
+//      (+1 because colmix output is 1 cycle later than the layer outputs)
+//   6. Sample colmix_pixel_out (13-bit).
+//   7. Compare to exp_pixel.
+// ---------------------------------------------------------------------------
+static void check_colmix_pixel(int target_vpos, int screen_col,
+                                int exp_pixel, const std::string& note) {
+    int limit = 4 * H_TOTAL * V_TOTAL;
+
+    // Step 1: advance to VBLANK start
+    int found = 0;
+    for (int i = 0; i < limit; i++) {
+        if ((int)dut->vpos == V_END) {
+            found = 1;
+            break;
+        }
+        tick();
+    }
+    if (!found) {
+        printf("FAIL %s: could not reach vpos=%d (VBLANK start)\n",
+               note.c_str(), V_END);
+        g_fail++;
+        return;
+    }
+
+    // Step 2: wait for sprite scanner
+    for (int i = 0; i < 8000; i++) tick();
+
+    // Step 3: advance to HBLANK start of target_vpos
+    found = 0;
+    for (int i = 0; i < limit; i++) {
+        if ((int)dut->hpos == H_END && (int)dut->vpos == target_vpos) {
+            found = 1;
+            break;
+        }
+        tick();
+    }
+    if (!found) {
+        printf("FAIL %s: could not reach hpos=%d vpos=%d\n",
+               note.c_str(), H_END, target_vpos);
+        g_fail++;
+        return;
+    }
+
+    // Step 4: wait for layer FSMs
+    for (int i = 0; i < 115; i++) tick();
+
+    // Step 5: advance to active display at screen_col+1 (colmix pipeline delay)
+    int disp_vpos = (target_vpos + 1) % V_TOTAL;
+    int disp_hpos = H_START + screen_col + 1;
+    // Wrap if screen_col+1 >= 320 (edge case — unlikely in tests)
+    if (disp_hpos >= H_END) {
+        disp_hpos = H_START + screen_col + 1 - 320;
+    }
+
+    for (int i = 0; i < limit; i++) {
+        if ((int)dut->hpos == disp_hpos && (int)dut->vpos == disp_vpos)
+            break;
+        tick();
+    }
+
+    dut->eval();
+    int got = (int)dut->colmix_pixel_out & 0x1FFF;
+    check(got == (exp_pixel & 0x1FFF), note, got, exp_pixel & 0x1FFF);
 }
 
 // ---------------------------------------------------------------------------
@@ -633,6 +721,13 @@ int main(int argc, char** argv) {
 
             } else if (op == "check_sprite_pixel") {
                 check_sprite_pixel(jint(line, "vpos"),
+                                   jint(line, "screen_col"),
+                                   jint(line, "exp_pixel"),
+                                   note);
+
+            // ── Step 11 ops ─────────────────────────────────────────────────
+            } else if (op == "check_colmix_pixel") {
+                check_colmix_pixel(jint(line, "vpos"),
                                    jint(line, "screen_col"),
                                    jint(line, "exp_pixel"),
                                    note);
