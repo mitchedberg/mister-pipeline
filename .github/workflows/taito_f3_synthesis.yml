@@ -15,44 +15,13 @@ on:
 
 jobs:
   quartus-f3-synthesis:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    container:
+      image: raetro/quartus:17.0
     timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Cache Quartus
-        uses: actions/cache@v4
-        id: cache-quartus
-        with:
-          path: ~/intelFPGA_lite
-          key: quartus-lite-17.0.2
-
-      - name: Install Quartus Lite 17.0.2
-        if: steps.cache-quartus.outputs.cache-hit != 'true'
-        run: |
-          # Quartus 17.0.2 is the standard for MiSTer/Cyclone V
-          # Download from Intel/Altera archives
-          wget -q "https://downloads.intel.com/akdlm/software/acdsinst/17.0std/602/ib_installers/QuartusLiteSetup-17.0.2.602-linux.run"
-          chmod +x QuartusLiteSetup-17.0.2.602-linux.run
-
-          # Install to home directory (no sudo required)
-          ./QuartusLiteSetup-17.0.2.602-linux.run --mode unattended --accept_eula 1 --installdir ~/intelFPGA_lite
-
-          # Verify installation
-          echo "Quartus installation complete"
-          ls -lah ~/intelFPGA_lite/quartus/bin/quartus_sh || echo "Warning: quartus_sh not found"
-
-      - name: Add Quartus to PATH (cached)
-        if: steps.cache-quartus.outputs.cache-hit == 'true'
-        run: |
-          echo "Using cached Quartus installation"
-          ls -lah ~/intelFPGA_lite/quartus/bin/quartus_sh || echo "Warning: cached quartus_sh not found"
-
-      - name: Set up PATH for both cases
-        run: |
-          echo "$HOME/intelFPGA_lite/quartus/bin" >> $GITHUB_PATH
-          echo "PATH now includes Quartus bin directory"
 
       - name: Verify Quartus installation
         run: |
