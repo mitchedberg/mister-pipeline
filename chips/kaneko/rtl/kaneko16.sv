@@ -607,7 +607,7 @@ module kaneko16 #(
     // Word 3: attributes (palette [3:0], flip_x, flip_y, priority [3:0], size [3:0])
     // Words 4-7: reserved
 
-    wire [12:0] sprite_addr_base = {sprite_index, 3'b000};
+    wire [12:0] sprite_addr_base = {2'b00, sprite_index, 3'b000};
     wire [8:0] sprite_y = sprite_ram_mem[sprite_addr_base][8:0];
     wire [15:0] sprite_tile = sprite_ram_mem[sprite_addr_base + 13'b1][15:0];
     wire [8:0] sprite_x = sprite_ram_mem[sprite_addr_base + 13'b10][8:0];
@@ -665,18 +665,16 @@ module kaneko16 #(
                     end else begin
                         // In SCAN state - process one sprite
                         if (sprite_y != 9'h1FF) begin
-                            if (display_list_ptr <= 8'd255) begin
-                                display_list_shadow[display_list_ptr[7:0]].y <= sprite_y;
-                                display_list_shadow[display_list_ptr[7:0]].tile_num <= sprite_tile;
-                                display_list_shadow[display_list_ptr[7:0]].x <= sprite_x;
-                                display_list_shadow[display_list_ptr[7:0]].palette <= sprite_palette;
-                                display_list_shadow[display_list_ptr[7:0]].flip_x <= sprite_flip_x;
-                                display_list_shadow[display_list_ptr[7:0]].flip_y <= sprite_flip_y;
-                                display_list_shadow[display_list_ptr[7:0]].prio <= sprite_priority;
-                                display_list_shadow[display_list_ptr[7:0]].size <= sprite_size;
-                                display_list_shadow[display_list_ptr[7:0]].valid <= 1'b1;
-                                display_list_ptr <= display_list_ptr + 1'b1;
-                            end
+                            display_list_shadow[display_list_ptr[7:0]].y <= sprite_y;
+                            display_list_shadow[display_list_ptr[7:0]].tile_num <= sprite_tile;
+                            display_list_shadow[display_list_ptr[7:0]].x <= sprite_x;
+                            display_list_shadow[display_list_ptr[7:0]].palette <= sprite_palette;
+                            display_list_shadow[display_list_ptr[7:0]].flip_x <= sprite_flip_x;
+                            display_list_shadow[display_list_ptr[7:0]].flip_y <= sprite_flip_y;
+                            display_list_shadow[display_list_ptr[7:0]].prio <= sprite_priority;
+                            display_list_shadow[display_list_ptr[7:0]].size <= sprite_size;
+                            display_list_shadow[display_list_ptr[7:0]].valid <= 1'b1;
+                            display_list_ptr <= display_list_ptr + 1'b1;
                         end
                         sprite_index <= sprite_index + 1'b1;
                         scan_counter <= scan_counter + 1'b1;
