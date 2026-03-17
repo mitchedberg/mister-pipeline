@@ -106,7 +106,11 @@ always_comb begin
     logic signed [9:0] ydiff;
     xzoom   = bgzoom[15:8];
     ydiff9  = {1'b0, bgzoom[7:0]} - 9'd127;  // yzoom - 0x7F (unsigned arithmetic, wrap ok)
-    ydiff   = $signed(10'(ydiff9));
+    // Sign-extend 9-bit ydiff9 (bit8 = sign) to 10-bit signed ydiff.
+    // $signed(ydiff9) treats the 9-bit value as two's complement.
+    /* verilator lint_off WIDTHEXPAND */
+    ydiff   = $signed(ydiff9);               // sign-extend 9→10 bits (bit8 is sign bit)
+    /* verilator lint_on WIDTHEXPAND */
     // zoomx = 0x10000 - (xzoom << 8); range 0x0100..0x10000
     zoomx_c = 32'h00010000 - {16'd0, xzoom, 8'd0};
     // zoomy = 0x10000 - ydiff*512; range varies
@@ -211,16 +215,17 @@ endfunction
 // FSM state encoding
 // =============================================================================
 typedef enum logic [3:0] {
-    BG_IDLE  = 4'd0,   // wait for hblank_rise; drive first tile attr addr
-    BG_CODE  = 4'd1,   // latch attr; drive code read
-    BG_GFX0  = 4'd2,   // latch code; drive left GFX; latch left
-    BG_GFX1  = 4'd3,   // latch right GFX
-    BG_WRITE = 4'd4,   // decode+write linebuf; advance
-    BG_S0    = 4'd5,   // issue first scram read
-    BG_S1    = 4'd6,   // latch first result; issue second scram read
-    BG_S2    = 4'd7,   // latch second result; issue third scram read (BG2/3) or compute
-    BG_S3    = 4'd8,   // latch third (BG2/3); issue fourth scram read (BG2/3) or start fill
-    BG_S4    = 4'd9    // latch fourth (BG2/3); compute x_index_start; start fill
+    BG_IDLE     = 4'd0,   // wait for hblank_rise
+    BG_CODE     = 4'd1,   // latch attr; drive code read
+    BG_GFX0     = 4'd2,   // latch code; drive left GFX; latch left
+    BG_GFX1     = 4'd3,   // latch right GFX
+    BG_WRITE    = 4'd4,   // decode+write linebuf; advance
+    BG_S0       = 4'd5,   // issue first scram read
+    BG_S1       = 4'd6,   // latch first result; issue second scram read
+    BG_S2       = 4'd7,   // latch second result; issue third scram read (BG2/3) or compute
+    BG_S3       = 4'd8,   // latch third (BG2/3); issue fourth scram read (BG2/3) or start fill
+    BG_S4       = 4'd9,   // latch fourth (BG2/3); compute x_index_start; start fill
+    BG_PRE_CODE = 4'd10   // drive correct first-tile attr read (now map_tx/map_ty are set)
 } bg_state_t;
 
 bg_state_t  state;
@@ -291,13 +296,11 @@ always_comb begin
     vram_rd   = 1'b0;
     vram_addr = 15'b0;
     unique case (state)
-        BG_IDLE:  if (hblank_rise) begin
-                      vram_addr = vram_attr_init_c;
-                      vram_rd   = 1'b1;
-                  end
-        BG_CODE:  begin vram_addr = vram_code_cur_c;  vram_rd = 1'b1; end
-        BG_WRITE: begin vram_addr = vram_attr_next_c; vram_rd = 1'b1; end
-        default:  begin end
+        BG_IDLE:     begin end   // no attr prefetch; BG_PRE_CODE issues correct attr read
+        BG_PRE_CODE: begin vram_addr = vram_attr_cur_c; vram_rd = 1'b1; end
+        BG_CODE:     begin vram_addr = vram_code_cur_c; vram_rd = 1'b1; end
+        BG_WRITE:    begin vram_addr = vram_attr_next_c; vram_rd = 1'b1; end
+        default:     begin end
     endcase
 end
 
@@ -396,8 +399,12 @@ always_comb begin
     logic signed [31:0] term_origin;
     logic signed [31:0] scroll_adj;
     logic signed [31:0] neg_origin;
-    // scroll_adj = bgscrollx + 15 + LAYER*4  (all 16-bit arithmetic, sign-extend)
-    scroll_adj  = $signed({{16{bgscrollx[15]}}, bgscrollx}) + 32'sd15 + $signed(32'(LAYER) * 32'sd4);
+    // MAME bg01_draw: sx uses raw ctrl register: scroll_adj = ctrl_raw + 15 + LAYER*4
+    // bgscrollx = -(ctrl_raw + LAYER*4) for non-flip, so ctrl_raw = -bgscrollx - LAYER*4
+    // scroll_adj = -bgscrollx - LAYER*4 + 15 + LAYER*4 = -bgscrollx + 15 (non-flip)
+    // For flip: bgscrollx = ctrl_raw + LAYER*4, scroll_adj = +bgscrollx + 15
+    scroll_adj  = (flipscreen ? $signed({{16{bgscrollx[15]}}, bgscrollx})
+                               : -$signed({{16{bgscrollx[15]}}, bgscrollx})) + 32'sd15;
     term_scroll = scroll_adj <<< 16;
     // (255 - bg_dx) << 8
     term_dx     = $signed({24'd0, ~bg_dx}) <<< 8;   // ~bg_dx = 255 - bg_dx (for 8-bit)
@@ -589,11 +596,12 @@ always_ff @(posedge clk) begin
                                 map_tx <= {1'b0, xis[24:20]} & 6'h3F;
                             else
                                 map_tx <= {1'b0, xis[24:20]} & 6'h1F;
-                            map_ty <= nozoom_c ? canvas_y_c[8:4] : y_index_r[20:16];
-                            run_py <= nozoom_c ? canvas_y_c[3:0]  : y_index_r[19:16];
+                            // BG2/3: src_y_r is colscroll-adjusted source Y (latched in S1)
+                            map_ty <= src_y_r[8:4];
+                            run_py <= src_y_r[3:0];
                         end
                         tile_col <= 5'b0;
-                        state    <= BG_CODE;
+                        state    <= BG_PRE_CODE;
                     end
                 end else begin
                     // BG0/1: x_index_start_r was written in S2; reads here are correct.
@@ -603,10 +611,11 @@ always_ff @(posedge clk) begin
                         map_tx <= {1'b0, x_index_start_r[24:20]} & 6'h3F;
                     else
                         map_tx <= {1'b0, x_index_start_r[24:20]} & 6'h1F;
-                    map_ty   <= nozoom_c ? canvas_y_c[8:4] : y_index_r[20:16];
-                    run_py   <= nozoom_c ? canvas_y_c[3:0]  : y_index_r[19:16];
+                    // src_y_raw_r latched in IDLE: canvas_y_c (no-zoom) or y_index_r[24:16] (zoom)
+                    map_ty   <= src_y_raw_r[8:4];
+                    run_py   <= src_y_raw_r[3:0];
                     tile_col <= 5'b0;
-                    state    <= BG_CODE;
+                    state    <= BG_PRE_CODE;
                 end
             end
 
@@ -640,12 +649,21 @@ always_ff @(posedge clk) begin
                             map_tx <= {1'b0, xis[24:20]} & 6'h3F;
                         else
                             map_tx <= {1'b0, xis[24:20]} & 6'h1F;
-                        map_ty <= nozoom_c ? canvas_y_c[8:4] : y_index_r[20:16];
-                        run_py <= nozoom_c ? canvas_y_c[3:0]  : y_index_r[19:16];
+                        // BG2/3: src_y_r is colscroll-adjusted source Y (latched in S1)
+                        map_ty <= src_y_r[8:4];
+                        run_py <= src_y_r[3:0];
                     end
                     tile_col <= 5'b0;
-                    state    <= BG_CODE;
+                    state    <= BG_PRE_CODE;
                 end
+            end
+
+            // ── BG_PRE_CODE: issue first-tile attr read ───────────────────
+            // map_tx/map_ty/run_extend were set in BG_S3/BG_S4 (previous cycle).
+            // BG_PRE_CODE drives vram_addr=vram_attr_cur_c (the correct first tile attr).
+            // BG_CODE will latch vram_q = VRAM[vram_attr_cur_c].
+            BG_PRE_CODE: begin
+                state <= BG_CODE;
             end
 
             // ── BG_CODE: latch attr; drive code read ─────────────────────
@@ -711,8 +729,11 @@ always_ff @(posedge clk) begin
                 end
 
                 if (tile_col == 5'd20) begin
-                    // Scanline fill complete: advance Y accumulator (zoom path)
-                    if (!nozoom_c)
+                    // Scanline fill complete: advance Y accumulator (zoom path).
+                    // Only advance when this hblank fills an active-display scanline
+                    // (vpos 15..254 = the hblank before screen_y 0..239).
+                    // Blocks advances during vblank scanlines (vpos 255, 0..14, 256+).
+                    if (!nozoom_c && vpos >= 9'd15 && vpos < 9'd255)
                         y_index_r <= y_index_r + zoomy_c;
                     state <= BG_IDLE;
                 end else begin
@@ -733,7 +754,7 @@ end
 /* verilator lint_off UNUSED */
 logic _unused_bg;
 assign _unused_bg = ^{hblank_r2, bgscrolly[15:9], bgscrollx[15:9],
-                      vram_attr_cur_c, bgscrollx[3:0],
+                      vram_attr_init_c, bgscrollx[3:0],
                       flipscreen, colscroll_r,
                       rowzoom_r[15:8], scram_q[15:9],
                       x_step_r, x_index_start_r[31:25], x_index_start_r[15:0]};

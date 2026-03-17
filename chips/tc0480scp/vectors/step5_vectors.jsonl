@@ -1,0 +1,195 @@
+{"op": "reset", "note": "step reset"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "ctrl[0]=0"}
+{"op": "write", "addr": 1, "data": 0, "be": 3, "note": "ctrl[1]=0"}
+{"op": "write", "addr": 2, "data": 0, "be": 3, "note": "ctrl[2]=0"}
+{"op": "write", "addr": 3, "data": 0, "be": 3, "note": "ctrl[3]=0"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "ctrl[4]=0"}
+{"op": "write", "addr": 5, "data": 0, "be": 3, "note": "ctrl[5]=0"}
+{"op": "write", "addr": 6, "data": 0, "be": 3, "note": "ctrl[6]=0"}
+{"op": "write", "addr": 7, "data": 0, "be": 3, "note": "ctrl[7]=0"}
+{"op": "write", "addr": 8, "data": 0, "be": 3, "note": "ctrl[8]=0"}
+{"op": "write", "addr": 9, "data": 0, "be": 3, "note": "ctrl[9]=0"}
+{"op": "write", "addr": 10, "data": 0, "be": 3, "note": "ctrl[10]=0"}
+{"op": "write", "addr": 11, "data": 0, "be": 3, "note": "ctrl[11]=0"}
+{"op": "write", "addr": 12, "data": 0, "be": 3, "note": "ctrl[12]=0"}
+{"op": "write", "addr": 13, "data": 0, "be": 3, "note": "ctrl[13]=0"}
+{"op": "write", "addr": 14, "data": 0, "be": 3, "note": "ctrl[14]=0"}
+{"op": "write", "addr": 15, "data": 0, "be": 3, "note": "ctrl[15]=0"}
+{"op": "write", "addr": 16, "data": 0, "be": 3, "note": "ctrl[16]=0"}
+{"op": "write", "addr": 17, "data": 0, "be": 3, "note": "ctrl[17]=0"}
+{"op": "write", "addr": 18, "data": 0, "be": 3, "note": "ctrl[18]=0"}
+{"op": "write", "addr": 19, "data": 0, "be": 3, "note": "ctrl[19]=0"}
+{"op": "write", "addr": 20, "data": 0, "be": 3, "note": "ctrl[20]=0"}
+{"op": "write", "addr": 21, "data": 0, "be": 3, "note": "ctrl[21]=0"}
+{"op": "write", "addr": 22, "data": 0, "be": 3, "note": "ctrl[22]=0"}
+{"op": "write", "addr": 23, "data": 0, "be": 3, "note": "ctrl[23]=0"}
+{"op": "write", "addr": 8, "data": 127, "be": 3, "note": "ctrl[8]=0x007F (1:1 zoom)"}
+{"op": "write", "addr": 9, "data": 127, "be": 3, "note": "ctrl[9]=0x007F (1:1 zoom)"}
+{"op": "write", "addr": 10, "data": 127, "be": 3, "note": "ctrl[10]=0x007F (1:1 zoom)"}
+{"op": "write", "addr": 11, "data": 127, "be": 3, "note": "ctrl[11]=0x007F (1:1 zoom)"}
+{"op": "vram_zero", "base": 0, "count": 8192, "note": "zero BG tilemaps"}
+{"op": "vram_zero", "base": 8192, "count": 8192, "note": "zero rowscroll/scram (0x2000-0x3FFF)"}
+{"op": "vram_zero", "base": 16384, "count": 8192, "note": "zero rowscroll dblwidth (0x4000-0x5FFF)"}
+{"op": "vram_zero", "base": 24576, "count": 4096, "note": "zero FG0 tilemap"}
+{"op": "vram_zero", "base": 28672, "count": 4096, "note": "zero FG0 gfx data"}
+{"op": "gfx_rom_write", "word_addr": 320, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row0 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 321, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row0 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 322, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row1 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 323, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row1 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 324, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row2 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 325, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row2 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 326, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row3 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 327, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row3 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 328, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row4 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 329, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row4 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 330, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row5 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 331, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row5 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 332, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row6 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 333, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row6 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 334, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row7 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 335, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row7 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 336, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row8 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 337, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row8 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 338, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row9 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 339, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row9 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 340, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row10 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 341, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row10 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 342, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row11 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 343, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row11 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 344, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row12 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 345, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row12 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 346, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row13 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 347, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row13 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 348, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row14 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 349, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row14 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 350, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row15 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 351, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row15 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 352, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row0 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 353, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row0 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 354, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row1 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 355, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row1 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 356, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row2 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 357, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row2 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 358, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row3 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 359, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row3 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 360, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row4 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 361, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row4 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 362, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row5 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 363, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row5 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 364, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row6 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 365, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row6 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 366, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row7 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 367, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row7 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 368, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row8 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 369, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row8 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 370, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row9 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 371, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row9 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 372, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row10 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 373, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row10 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 374, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row11 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 375, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row11 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 376, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row12 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 377, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row12 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 378, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row13 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 379, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row13 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 380, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row14 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 381, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row14 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 382, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row15 half0: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 383, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile11 row15 half1: solid pen=5"}
+{"op": "gfx_rom_write", "word_addr": 640, "data_hi": 4369, "data_lo": 4369, "note": "GFX ROM tile20 row0: pen=1"}
+{"op": "gfx_rom_write", "word_addr": 641, "data_hi": 4369, "data_lo": 4369, "note": "GFX ROM tile20 row0: pen=1"}
+{"op": "gfx_rom_write", "word_addr": 642, "data_hi": 8738, "data_lo": 8738, "note": "GFX ROM tile20 row1: pen=2"}
+{"op": "gfx_rom_write", "word_addr": 643, "data_hi": 8738, "data_lo": 8738, "note": "GFX ROM tile20 row1: pen=2"}
+{"op": "gfx_rom_write", "word_addr": 644, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile20 row2: pen=3"}
+{"op": "gfx_rom_write", "word_addr": 645, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile20 row2: pen=3"}
+{"op": "gfx_rom_write", "word_addr": 646, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile20 row3: pen=4"}
+{"op": "gfx_rom_write", "word_addr": 647, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile20 row3: pen=4"}
+{"op": "gfx_rom_write", "word_addr": 648, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile20 row4: pen=5"}
+{"op": "gfx_rom_write", "word_addr": 649, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile20 row4: pen=5"}
+{"op": "gfx_rom_write", "word_addr": 650, "data_hi": 26214, "data_lo": 26214, "note": "GFX ROM tile20 row5: pen=6"}
+{"op": "gfx_rom_write", "word_addr": 651, "data_hi": 26214, "data_lo": 26214, "note": "GFX ROM tile20 row5: pen=6"}
+{"op": "gfx_rom_write", "word_addr": 652, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile20 row6: pen=7"}
+{"op": "gfx_rom_write", "word_addr": 653, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile20 row6: pen=7"}
+{"op": "gfx_rom_write", "word_addr": 654, "data_hi": 34952, "data_lo": 34952, "note": "GFX ROM tile20 row7: pen=8"}
+{"op": "gfx_rom_write", "word_addr": 655, "data_hi": 34952, "data_lo": 34952, "note": "GFX ROM tile20 row7: pen=8"}
+{"op": "gfx_rom_write", "word_addr": 656, "data_hi": 39321, "data_lo": 39321, "note": "GFX ROM tile20 row8: pen=9"}
+{"op": "gfx_rom_write", "word_addr": 657, "data_hi": 39321, "data_lo": 39321, "note": "GFX ROM tile20 row8: pen=9"}
+{"op": "gfx_rom_write", "word_addr": 658, "data_hi": 43690, "data_lo": 43690, "note": "GFX ROM tile20 row9: pen=10"}
+{"op": "gfx_rom_write", "word_addr": 659, "data_hi": 43690, "data_lo": 43690, "note": "GFX ROM tile20 row9: pen=10"}
+{"op": "gfx_rom_write", "word_addr": 660, "data_hi": 48059, "data_lo": 48059, "note": "GFX ROM tile20 row10: pen=11"}
+{"op": "gfx_rom_write", "word_addr": 661, "data_hi": 48059, "data_lo": 48059, "note": "GFX ROM tile20 row10: pen=11"}
+{"op": "gfx_rom_write", "word_addr": 662, "data_hi": 52428, "data_lo": 52428, "note": "GFX ROM tile20 row11: pen=12"}
+{"op": "gfx_rom_write", "word_addr": 663, "data_hi": 52428, "data_lo": 52428, "note": "GFX ROM tile20 row11: pen=12"}
+{"op": "gfx_rom_write", "word_addr": 664, "data_hi": 56797, "data_lo": 56797, "note": "GFX ROM tile20 row12: pen=13"}
+{"op": "gfx_rom_write", "word_addr": 665, "data_hi": 56797, "data_lo": 56797, "note": "GFX ROM tile20 row12: pen=13"}
+{"op": "gfx_rom_write", "word_addr": 666, "data_hi": 61166, "data_lo": 61166, "note": "GFX ROM tile20 row13: pen=14"}
+{"op": "gfx_rom_write", "word_addr": 667, "data_hi": 61166, "data_lo": 61166, "note": "GFX ROM tile20 row13: pen=14"}
+{"op": "gfx_rom_write", "word_addr": 668, "data_hi": 65535, "data_lo": 65535, "note": "GFX ROM tile20 row14: pen=15"}
+{"op": "gfx_rom_write", "word_addr": 669, "data_hi": 65535, "data_lo": 65535, "note": "GFX ROM tile20 row14: pen=15"}
+{"op": "gfx_rom_write", "word_addr": 670, "data_hi": 0, "data_lo": 0, "note": "GFX ROM tile20 row15: pen=16"}
+{"op": "gfx_rom_write", "word_addr": 671, "data_hi": 0, "data_lo": 0, "note": "GFX ROM tile20 row15: pen=16"}
+{"op": "map_write_bg", "layer": 0, "tile_x": 0, "tile_y": 0, "attr": 90, "code": 10, "note": "BG0 map(0,0) tile=10 color=90"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 0, "exp": 1447, "note": "BG0 no-rowscroll baseline: screen_y=0 expect 0x05A7"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 8, "exp": 1447, "note": "BG0 no-rowscroll baseline: screen_y=8 expect 0x05A7"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 15, "exp": 1447, "note": "BG0 no-rowscroll baseline: screen_y=15 expect 0x05A7"}
+{"op": "vram_write", "addr": 8192, "data": 8, "be": 3, "note": "rs_hi[BG0][row0]=8: shift source X by +8 tiles-worth pixels"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 0, "exp": 0, "note": "BG0 rowscroll hi=8 row0: screen_x=0 \u2192 canvas_x=8 \u2192 tile(0,0)=transparent (tile_code=0)"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 0, "exp": 1447, "note": "BG0 rowscroll hi=8 row0: screen_x=8 \u2192 canvas_x=0 \u2192 tile(0,0)=solid 0x5A7"}
+{"op": "check_pixel", "screen_x": 15, "screen_y": 0, "exp": 1447, "note": "BG0 rowscroll hi=8 row0: screen_x=15 \u2192 canvas_x=7 \u2192 tile(0,0)=solid"}
+{"op": "vram_write", "addr": 8193, "data": 0, "be": 3, "note": "rs_hi[BG0][row1]=0: source row 1 unshifted"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 1, "exp": 1447, "note": "BG0 screen_y=1 (source row 1): no rowscroll \u2192 tile(0,0) solid at screen_x=0"}
+{"op": "vram_write", "addr": 8192, "data": 0, "be": 3, "note": "rs_hi[BG0][row0]=0: restore"}
+{"op": "vram_write", "addr": 8192, "data": 16, "be": 3, "note": "rs_hi[BG0][row0]=16: shift by 16 (one full tile)"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 0, "exp": 0, "note": "BG0 rowscroll=16: screen_x=0 \u2192 canvas_x=16 \u2192 tile(1,0)=transparent"}
+{"op": "check_pixel", "screen_x": 16, "screen_y": 0, "exp": 1447, "note": "BG0 rowscroll=16: screen_x=16 \u2192 canvas_x=0 \u2192 tile(0,0)=solid"}
+{"op": "vram_write", "addr": 8192, "data": 0, "be": 3, "note": "restore rs_hi row0"}
+{"op": "vram_write", "addr": 10240, "data": 128, "be": 3, "note": "rs_lo[BG0][row0]=0x80: sub-pixel shift of 0.5 pixel"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 0, "exp": 0, "note": "BG0 rs_lo=0x80 row0: sub-pixel shift \u2192 screen_x=0 shifted by half pixel"}
+{"op": "vram_write", "addr": 10240, "data": 0, "be": 3, "note": "restore rs_lo row0"}
+{"op": "vram_write", "addr": 8192, "data": 0, "be": 3, "note": "rs_hi[BG0][row0]=0: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8193, "data": 1, "be": 3, "note": "rs_hi[BG0][row1]=1: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8194, "data": 2, "be": 3, "note": "rs_hi[BG0][row2]=2: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8195, "data": 3, "be": 3, "note": "rs_hi[BG0][row3]=3: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8196, "data": 4, "be": 3, "note": "rs_hi[BG0][row4]=4: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8197, "data": 5, "be": 3, "note": "rs_hi[BG0][row5]=5: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8198, "data": 6, "be": 3, "note": "rs_hi[BG0][row6]=6: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8199, "data": 7, "be": 3, "note": "rs_hi[BG0][row7]=7: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8200, "data": 8, "be": 3, "note": "rs_hi[BG0][row8]=8: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8201, "data": 9, "be": 3, "note": "rs_hi[BG0][row9]=9: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8202, "data": 10, "be": 3, "note": "rs_hi[BG0][row10]=10: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8203, "data": 11, "be": 3, "note": "rs_hi[BG0][row11]=11: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8204, "data": 12, "be": 3, "note": "rs_hi[BG0][row12]=12: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8205, "data": 13, "be": 3, "note": "rs_hi[BG0][row13]=13: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8206, "data": 14, "be": 3, "note": "rs_hi[BG0][row14]=14: linear ramp rowscroll"}
+{"op": "vram_write", "addr": 8207, "data": 15, "be": 3, "note": "rs_hi[BG0][row15]=15: linear ramp rowscroll"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 0, "exp": 1447, "note": "ramp rowscroll row0: screen_x=0 \u2192 canvas_x=0 \u2192 solid"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 1, "exp": 0, "note": "ramp rowscroll row1: screen_x=0 \u2192 canvas_x=1 \u2192 solid"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 15, "exp": 0, "note": "ramp rowscroll row15: screen_x=0 \u2192 canvas_x=15 \u2192 solid"}
+{"op": "vram_write", "addr": 8192, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row0]"}
+{"op": "vram_write", "addr": 8193, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row1]"}
+{"op": "vram_write", "addr": 8194, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row2]"}
+{"op": "vram_write", "addr": 8195, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row3]"}
+{"op": "vram_write", "addr": 8196, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row4]"}
+{"op": "vram_write", "addr": 8197, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row5]"}
+{"op": "vram_write", "addr": 8198, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row6]"}
+{"op": "vram_write", "addr": 8199, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row7]"}
+{"op": "vram_write", "addr": 8200, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row8]"}
+{"op": "vram_write", "addr": 8201, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row9]"}
+{"op": "vram_write", "addr": 8202, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row10]"}
+{"op": "vram_write", "addr": 8203, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row11]"}
+{"op": "vram_write", "addr": 8204, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row12]"}
+{"op": "vram_write", "addr": 8205, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row13]"}
+{"op": "vram_write", "addr": 8206, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row14]"}
+{"op": "vram_write", "addr": 8207, "data": 0, "be": 3, "note": "clear rs_hi[BG0][row15]"}
+{"op": "map_write_bg", "layer": 1, "tile_x": 0, "tile_y": 0, "attr": 27, "code": 11, "note": "BG1 map(0,0) tile=11 color=27"}
+{"op": "check_pixel", "screen_x": 4, "screen_y": 0, "exp": 437, "note": "BG1 tile(0,0) at screen_x=4 (stagger): expect 0x1B5"}
+{"op": "vram_write", "addr": 8704, "data": 4, "be": 3, "note": "rs_hi[BG1][row0]=4: BG1 row0 shift by 4"}
+{"op": "check_pixel", "screen_x": 4, "screen_y": 0, "exp": 1447, "note": "BG1 rs_hi=4: screen_x=4 \u2192 BG1 shifted, check BG0 shows"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 0, "exp": 437, "note": "BG1 rs_hi=4: screen_x=8 \u2192 BG1 tile(0,0) after shift"}
+{"op": "vram_write", "addr": 8704, "data": 0, "be": 3, "note": "restore BG1 rs_hi row0"}
+{"op": "write", "addr": 0, "data": 8, "be": 3, "note": "BG0_XSCROLL=8"}
+{"op": "vram_write", "addr": 8192, "data": 8, "be": 3, "note": "rs_hi[BG0][row0]=8 with bgscrollx=8"}
+{"op": "check_pixel", "screen_x": 0, "screen_y": 0, "exp": 0, "note": "bgscrollx=8 + rs_hi=8: screen_x=0 \u2192 transparent"}
+{"op": "check_pixel", "screen_x": 16, "screen_y": 0, "exp": 437, "note": "bgscrollx=8 + rs_hi=8: screen_x=16 \u2192 canvas_x=0 \u2192 solid 0x5A7"}
+{"op": "vram_write", "addr": 8192, "data": 0, "be": 3, "note": "restore rs_hi row0"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "BG0_XSCROLL=0 restore"}

@@ -1,0 +1,970 @@
+{"op": "reset", "note": "step reset"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "ctrl[0]=0"}
+{"op": "write", "addr": 1, "data": 0, "be": 3, "note": "ctrl[1]=0"}
+{"op": "write", "addr": 2, "data": 0, "be": 3, "note": "ctrl[2]=0"}
+{"op": "write", "addr": 3, "data": 0, "be": 3, "note": "ctrl[3]=0"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "ctrl[4]=0"}
+{"op": "write", "addr": 5, "data": 0, "be": 3, "note": "ctrl[5]=0"}
+{"op": "write", "addr": 6, "data": 0, "be": 3, "note": "ctrl[6]=0"}
+{"op": "write", "addr": 7, "data": 0, "be": 3, "note": "ctrl[7]=0"}
+{"op": "write", "addr": 8, "data": 0, "be": 3, "note": "ctrl[8]=0"}
+{"op": "write", "addr": 9, "data": 0, "be": 3, "note": "ctrl[9]=0"}
+{"op": "write", "addr": 10, "data": 0, "be": 3, "note": "ctrl[10]=0"}
+{"op": "write", "addr": 11, "data": 0, "be": 3, "note": "ctrl[11]=0"}
+{"op": "write", "addr": 12, "data": 0, "be": 3, "note": "ctrl[12]=0"}
+{"op": "write", "addr": 13, "data": 0, "be": 3, "note": "ctrl[13]=0"}
+{"op": "write", "addr": 14, "data": 0, "be": 3, "note": "ctrl[14]=0"}
+{"op": "write", "addr": 15, "data": 0, "be": 3, "note": "ctrl[15]=0"}
+{"op": "write", "addr": 16, "data": 0, "be": 3, "note": "ctrl[16]=0"}
+{"op": "write", "addr": 17, "data": 0, "be": 3, "note": "ctrl[17]=0"}
+{"op": "write", "addr": 18, "data": 0, "be": 3, "note": "ctrl[18]=0"}
+{"op": "write", "addr": 19, "data": 0, "be": 3, "note": "ctrl[19]=0"}
+{"op": "write", "addr": 20, "data": 0, "be": 3, "note": "ctrl[20]=0"}
+{"op": "write", "addr": 21, "data": 0, "be": 3, "note": "ctrl[21]=0"}
+{"op": "write", "addr": 22, "data": 0, "be": 3, "note": "ctrl[22]=0"}
+{"op": "write", "addr": 23, "data": 0, "be": 3, "note": "ctrl[23]=0"}
+{"op": "write", "addr": 8, "data": 127, "be": 3, "note": "ctrl[8]=0x007F (1:1 zoom)"}
+{"op": "write", "addr": 9, "data": 127, "be": 3, "note": "ctrl[9]=0x007F (1:1 zoom)"}
+{"op": "write", "addr": 10, "data": 127, "be": 3, "note": "ctrl[10]=0x007F (1:1 zoom)"}
+{"op": "write", "addr": 11, "data": 127, "be": 3, "note": "ctrl[11]=0x007F (1:1 zoom)"}
+{"op": "vram_zero", "base": 0, "count": 8192, "note": "zero BG tilemaps"}
+{"op": "vram_zero", "base": 8192, "count": 8192, "note": "zero rowscroll/scram (0x2000-0x3FFF)"}
+{"op": "vram_zero", "base": 16384, "count": 8192, "note": "zero rowscroll dblwidth (0x4000-0x5FFF)"}
+{"op": "vram_zero", "base": 24576, "count": 4096, "note": "zero FG0 tilemap"}
+{"op": "vram_zero", "base": 28672, "count": 4096, "note": "zero FG0 gfx data"}
+{"op": "gfx_rom_write", "word_addr": 1600, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row0 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1601, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row0 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1602, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row1 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1603, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row1 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1604, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row2 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1605, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row2 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1606, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row3 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1607, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row3 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1608, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row4 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1609, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row4 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1610, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row5 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1611, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row5 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1612, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row6 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1613, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row6 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1614, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row7 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1615, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row7 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1616, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row8 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1617, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row8 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1618, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row9 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1619, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row9 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1620, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row10 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1621, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row10 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1622, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row11 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1623, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row11 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1624, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row12 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1625, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row12 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1626, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row13 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1627, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row13 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1628, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row14 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1629, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row14 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1630, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row15 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1631, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile50 row15 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1632, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row0 left"}
+{"op": "gfx_rom_write", "word_addr": 1633, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row0 right"}
+{"op": "gfx_rom_write", "word_addr": 1634, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row1 left"}
+{"op": "gfx_rom_write", "word_addr": 1635, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row1 right"}
+{"op": "gfx_rom_write", "word_addr": 1636, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row2 left"}
+{"op": "gfx_rom_write", "word_addr": 1637, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row2 right"}
+{"op": "gfx_rom_write", "word_addr": 1638, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row3 left"}
+{"op": "gfx_rom_write", "word_addr": 1639, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row3 right"}
+{"op": "gfx_rom_write", "word_addr": 1640, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row4 left"}
+{"op": "gfx_rom_write", "word_addr": 1641, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row4 right"}
+{"op": "gfx_rom_write", "word_addr": 1642, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row5 left"}
+{"op": "gfx_rom_write", "word_addr": 1643, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row5 right"}
+{"op": "gfx_rom_write", "word_addr": 1644, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row6 left"}
+{"op": "gfx_rom_write", "word_addr": 1645, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row6 right"}
+{"op": "gfx_rom_write", "word_addr": 1646, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row7 left"}
+{"op": "gfx_rom_write", "word_addr": 1647, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row7 right"}
+{"op": "gfx_rom_write", "word_addr": 1648, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row8 left"}
+{"op": "gfx_rom_write", "word_addr": 1649, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row8 right"}
+{"op": "gfx_rom_write", "word_addr": 1650, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row9 left"}
+{"op": "gfx_rom_write", "word_addr": 1651, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row9 right"}
+{"op": "gfx_rom_write", "word_addr": 1652, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row10 left"}
+{"op": "gfx_rom_write", "word_addr": 1653, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row10 right"}
+{"op": "gfx_rom_write", "word_addr": 1654, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row11 left"}
+{"op": "gfx_rom_write", "word_addr": 1655, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row11 right"}
+{"op": "gfx_rom_write", "word_addr": 1656, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row12 left"}
+{"op": "gfx_rom_write", "word_addr": 1657, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row12 right"}
+{"op": "gfx_rom_write", "word_addr": 1658, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row13 left"}
+{"op": "gfx_rom_write", "word_addr": 1659, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row13 right"}
+{"op": "gfx_rom_write", "word_addr": 1660, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row14 left"}
+{"op": "gfx_rom_write", "word_addr": 1661, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row14 right"}
+{"op": "gfx_rom_write", "word_addr": 1662, "data_hi": 4386, "data_lo": 13124, "note": "GFX tile51 row15 left"}
+{"op": "gfx_rom_write", "word_addr": 1663, "data_hi": 21862, "data_lo": 30600, "note": "GFX tile51 row15 right"}
+{"op": "gfx_rom_write", "word_addr": 1664, "data_hi": 4369, "data_lo": 4369, "note": "GFX ROM tile52 row0: pen=1"}
+{"op": "gfx_rom_write", "word_addr": 1665, "data_hi": 4369, "data_lo": 4369, "note": "GFX ROM tile52 row0: pen=1"}
+{"op": "gfx_rom_write", "word_addr": 1666, "data_hi": 8738, "data_lo": 8738, "note": "GFX ROM tile52 row1: pen=2"}
+{"op": "gfx_rom_write", "word_addr": 1667, "data_hi": 8738, "data_lo": 8738, "note": "GFX ROM tile52 row1: pen=2"}
+{"op": "gfx_rom_write", "word_addr": 1668, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile52 row2: pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1669, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile52 row2: pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1670, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile52 row3: pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1671, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile52 row3: pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1672, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile52 row4: pen=5"}
+{"op": "gfx_rom_write", "word_addr": 1673, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile52 row4: pen=5"}
+{"op": "gfx_rom_write", "word_addr": 1674, "data_hi": 26214, "data_lo": 26214, "note": "GFX ROM tile52 row5: pen=6"}
+{"op": "gfx_rom_write", "word_addr": 1675, "data_hi": 26214, "data_lo": 26214, "note": "GFX ROM tile52 row5: pen=6"}
+{"op": "gfx_rom_write", "word_addr": 1676, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile52 row6: pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1677, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile52 row6: pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1678, "data_hi": 34952, "data_lo": 34952, "note": "GFX ROM tile52 row7: pen=8"}
+{"op": "gfx_rom_write", "word_addr": 1679, "data_hi": 34952, "data_lo": 34952, "note": "GFX ROM tile52 row7: pen=8"}
+{"op": "gfx_rom_write", "word_addr": 1680, "data_hi": 39321, "data_lo": 39321, "note": "GFX ROM tile52 row8: pen=9"}
+{"op": "gfx_rom_write", "word_addr": 1681, "data_hi": 39321, "data_lo": 39321, "note": "GFX ROM tile52 row8: pen=9"}
+{"op": "gfx_rom_write", "word_addr": 1682, "data_hi": 43690, "data_lo": 43690, "note": "GFX ROM tile52 row9: pen=10"}
+{"op": "gfx_rom_write", "word_addr": 1683, "data_hi": 43690, "data_lo": 43690, "note": "GFX ROM tile52 row9: pen=10"}
+{"op": "gfx_rom_write", "word_addr": 1684, "data_hi": 48059, "data_lo": 48059, "note": "GFX ROM tile52 row10: pen=11"}
+{"op": "gfx_rom_write", "word_addr": 1685, "data_hi": 48059, "data_lo": 48059, "note": "GFX ROM tile52 row10: pen=11"}
+{"op": "gfx_rom_write", "word_addr": 1686, "data_hi": 52428, "data_lo": 52428, "note": "GFX ROM tile52 row11: pen=12"}
+{"op": "gfx_rom_write", "word_addr": 1687, "data_hi": 52428, "data_lo": 52428, "note": "GFX ROM tile52 row11: pen=12"}
+{"op": "gfx_rom_write", "word_addr": 1688, "data_hi": 56797, "data_lo": 56797, "note": "GFX ROM tile52 row12: pen=13"}
+{"op": "gfx_rom_write", "word_addr": 1689, "data_hi": 56797, "data_lo": 56797, "note": "GFX ROM tile52 row12: pen=13"}
+{"op": "gfx_rom_write", "word_addr": 1690, "data_hi": 61166, "data_lo": 61166, "note": "GFX ROM tile52 row13: pen=14"}
+{"op": "gfx_rom_write", "word_addr": 1691, "data_hi": 61166, "data_lo": 61166, "note": "GFX ROM tile52 row13: pen=14"}
+{"op": "gfx_rom_write", "word_addr": 1692, "data_hi": 65535, "data_lo": 65535, "note": "GFX ROM tile52 row14: pen=15"}
+{"op": "gfx_rom_write", "word_addr": 1693, "data_hi": 65535, "data_lo": 65535, "note": "GFX ROM tile52 row14: pen=15"}
+{"op": "gfx_rom_write", "word_addr": 1694, "data_hi": 0, "data_lo": 0, "note": "GFX ROM tile52 row15: pen=16"}
+{"op": "gfx_rom_write", "word_addr": 1695, "data_hi": 0, "data_lo": 0, "note": "GFX ROM tile52 row15: pen=16"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(0,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(1,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(2,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(3,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(4,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(5,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(6,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(7,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(8,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(9,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(10,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(11,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(12,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(13,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(14,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(15,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(16,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(17,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(18,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(19,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(20,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(21,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(22,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(23,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(24,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(25,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(26,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(27,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(28,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(29,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(30,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 0, "attr": 68, "code": 50, "note": "BG2 map(31,0) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(0,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(1,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(2,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(3,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(4,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(5,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(6,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(7,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(8,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(9,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(10,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(11,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(12,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(13,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(14,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(15,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(16,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(17,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(18,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(19,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(20,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(21,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(22,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(23,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(24,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(25,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(26,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(27,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(28,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(29,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(30,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 1, "attr": 68, "code": 50, "note": "BG2 map(31,1) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(0,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(1,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(2,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(3,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(4,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(5,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(6,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(7,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(8,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(9,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(10,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(11,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(12,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(13,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(14,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(15,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(16,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(17,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(18,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(19,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(20,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(21,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(22,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(23,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(24,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(25,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(26,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(27,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(28,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(29,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(30,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 2, "attr": 68, "code": 50, "note": "BG2 map(31,2) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(0,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(1,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(2,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(3,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(4,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(5,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(6,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(7,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(8,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(9,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(10,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(11,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(12,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(13,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(14,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(15,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(16,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(17,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(18,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(19,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(20,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(21,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(22,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(23,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(24,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(25,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(26,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(27,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(28,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(29,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(30,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 3, "attr": 68, "code": 50, "note": "BG2 map(31,3) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(0,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(1,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(2,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(3,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(4,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(5,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(6,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(7,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(8,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(9,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(10,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(11,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(12,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(13,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(14,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(15,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(16,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(17,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(18,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(19,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(20,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(21,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(22,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(23,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(24,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(25,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(26,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(27,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(28,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(29,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(30,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 4, "attr": 68, "code": 50, "note": "BG2 map(31,4) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(0,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(1,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(2,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(3,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(4,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(5,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(6,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(7,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(8,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(9,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(10,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(11,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(12,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(13,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(14,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(15,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(16,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(17,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(18,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(19,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(20,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(21,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(22,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(23,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(24,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(25,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(26,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(27,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(28,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(29,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(30,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 5, "attr": 68, "code": 50, "note": "BG2 map(31,5) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(0,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(1,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(2,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(3,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(4,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(5,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(6,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(7,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(8,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(9,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(10,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(11,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(12,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(13,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(14,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(15,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(16,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(17,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(18,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(19,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(20,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(21,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(22,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(23,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(24,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(25,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(26,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(27,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(28,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(29,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(30,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 6, "attr": 68, "code": 50, "note": "BG2 map(31,6) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(0,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(1,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(2,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(3,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(4,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(5,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(6,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(7,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(8,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(9,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(10,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(11,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(12,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(13,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(14,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(15,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(16,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(17,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(18,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(19,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(20,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(21,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(22,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(23,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(24,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(25,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(26,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(27,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(28,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(29,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(30,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 7, "attr": 68, "code": 50, "note": "BG2 map(31,7) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(0,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(1,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(2,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(3,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(4,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(5,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(6,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(7,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(8,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(9,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(10,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(11,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(12,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(13,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(14,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(15,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(16,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(17,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(18,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(19,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(20,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(21,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(22,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(23,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(24,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(25,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(26,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(27,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(28,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(29,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(30,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 8, "attr": 68, "code": 50, "note": "BG2 map(31,8) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(0,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(1,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(2,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(3,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(4,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(5,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(6,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(7,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(8,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(9,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(10,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(11,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(12,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(13,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(14,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(15,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(16,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(17,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(18,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(19,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(20,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(21,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(22,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(23,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(24,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(25,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(26,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(27,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(28,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(29,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(30,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 9, "attr": 68, "code": 50, "note": "BG2 map(31,9) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(0,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(1,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(2,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(3,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(4,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(5,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(6,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(7,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(8,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(9,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(10,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(11,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(12,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(13,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(14,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(15,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(16,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(17,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(18,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(19,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(20,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(21,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(22,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(23,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(24,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(25,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(26,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(27,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(28,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(29,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(30,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 10, "attr": 68, "code": 50, "note": "BG2 map(31,10) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(0,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(1,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(2,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(3,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(4,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(5,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(6,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(7,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(8,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(9,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(10,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(11,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(12,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(13,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(14,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(15,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(16,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(17,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(18,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(19,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(20,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(21,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(22,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(23,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(24,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(25,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(26,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(27,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(28,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(29,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(30,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 11, "attr": 68, "code": 50, "note": "BG2 map(31,11) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(0,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(1,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(2,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(3,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(4,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(5,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(6,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(7,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(8,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(9,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(10,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(11,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(12,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(13,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(14,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(15,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(16,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(17,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(18,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(19,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(20,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(21,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(22,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(23,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(24,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(25,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(26,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(27,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(28,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(29,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(30,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 12, "attr": 68, "code": 50, "note": "BG2 map(31,12) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(0,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(1,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(2,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(3,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(4,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(5,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(6,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(7,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(8,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(9,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(10,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(11,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(12,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(13,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(14,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(15,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(16,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(17,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(18,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(19,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(20,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(21,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(22,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(23,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(24,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(25,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(26,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(27,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(28,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(29,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(30,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 13, "attr": 68, "code": 50, "note": "BG2 map(31,13) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(0,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(1,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(2,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(3,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(4,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(5,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(6,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(7,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(8,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(9,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(10,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(11,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(12,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(13,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(14,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(15,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(16,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(17,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(18,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(19,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(20,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(21,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(22,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(23,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(24,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(25,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(26,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(27,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(28,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(29,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(30,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 14, "attr": 68, "code": 50, "note": "BG2 map(31,14) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(0,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 1, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(1,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 2, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(2,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 3, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(3,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 4, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(4,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 5, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(5,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 6, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(6,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 7, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(7,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 8, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(8,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 9, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(9,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 10, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(10,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 11, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(11,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 12, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(12,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 13, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(13,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 14, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(14,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 15, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(15,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 16, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(16,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 17, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(17,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 18, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(18,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 19, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(19,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 20, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(20,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 21, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(21,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 22, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(22,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 23, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(23,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 24, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(24,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 25, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(25,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 26, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(26,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 27, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(27,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 28, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(28,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 29, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(29,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 30, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(30,15) tile=50 color=68"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 31, "tile_y": 15, "attr": 68, "code": 50, "note": "BG2 map(31,15) tile=50 color=68"}
+{"op": "write", "addr": 15, "data": 1, "be": 3, "note": "LAYER_CTRL bit0=1: rowzoom_en[2]=1"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 0, "exp": 1095, "note": "rowzoom_en=1, rz=0: no effect \u2192 normal 1:1 rendering"}
+{"op": "check_pixel", "screen_x": 16, "screen_y": 0, "exp": 1095, "note": "rowzoom_en=1, rz=0: screen_x=16 normal"}
+{"op": "write", "addr": 15, "data": 0, "be": 3, "note": "LAYER_CTRL=0: rowzoom_en[2]=0"}
+{"op": "vram_write", "addr": 12288, "data": 64, "be": 3, "note": "rz[BG2][row0]=0x40 (rowzoom_en=0 \u2192 should be ignored)"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 0, "exp": 1095, "note": "rowzoom_en=0, rz=0x40: ignored \u2192 normal output"}
+{"op": "vram_write", "addr": 12288, "data": 0, "be": 3, "note": "clear rz[BG2][row0]"}
+{"op": "write", "addr": 15, "data": 1, "be": 3, "note": "re-enable rowzoom_en[2]=1"}
+{"op": "write", "addr": 10, "data": 4223, "be": 3, "note": "BG2_ZOOM xzoom=0x10 (slight x zoom) for rowzoom test"}
+{"op": "vram_write", "addr": 12288, "data": 64, "be": 3, "note": "rz[BG2][row0]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12289, "data": 64, "be": 3, "note": "rz[BG2][row1]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12290, "data": 64, "be": 3, "note": "rz[BG2][row2]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12291, "data": 64, "be": 3, "note": "rz[BG2][row3]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12292, "data": 64, "be": 3, "note": "rz[BG2][row4]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12293, "data": 64, "be": 3, "note": "rz[BG2][row5]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12294, "data": 64, "be": 3, "note": "rz[BG2][row6]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12295, "data": 64, "be": 3, "note": "rz[BG2][row7]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12296, "data": 64, "be": 3, "note": "rz[BG2][row8]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12297, "data": 64, "be": 3, "note": "rz[BG2][row9]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12298, "data": 64, "be": 3, "note": "rz[BG2][row10]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12299, "data": 64, "be": 3, "note": "rz[BG2][row11]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12300, "data": 64, "be": 3, "note": "rz[BG2][row12]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12301, "data": 64, "be": 3, "note": "rz[BG2][row13]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12302, "data": 64, "be": 3, "note": "rz[BG2][row14]=0x40: uniform rowzoom"}
+{"op": "vram_write", "addr": 12303, "data": 64, "be": 3, "note": "rz[BG2][row15]=0x40: uniform rowzoom"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 0, "exp": 1095, "note": "uniform rowzoom=0x40: screen_x=8"}
+{"op": "check_pixel", "screen_x": 16, "screen_y": 0, "exp": 1095, "note": "uniform rowzoom=0x40: screen_x=16"}
+{"op": "check_pixel", "screen_x": 24, "screen_y": 0, "exp": 1095, "note": "uniform rowzoom=0x40: screen_x=24"}
+{"op": "vram_write", "addr": 12288, "data": 0, "be": 3, "note": "zero rz[BG2][row0]"}
+{"op": "vram_write", "addr": 12289, "data": 0, "be": 3, "note": "zero rz[BG2][row1]"}
+{"op": "vram_write", "addr": 12290, "data": 0, "be": 3, "note": "zero rz[BG2][row2]"}
+{"op": "vram_write", "addr": 12291, "data": 0, "be": 3, "note": "zero rz[BG2][row3]"}
+{"op": "vram_write", "addr": 12292, "data": 0, "be": 3, "note": "zero rz[BG2][row4]"}
+{"op": "vram_write", "addr": 12293, "data": 0, "be": 3, "note": "zero rz[BG2][row5]"}
+{"op": "vram_write", "addr": 12294, "data": 0, "be": 3, "note": "zero rz[BG2][row6]"}
+{"op": "vram_write", "addr": 12295, "data": 0, "be": 3, "note": "zero rz[BG2][row7]"}
+{"op": "vram_write", "addr": 12296, "data": 0, "be": 3, "note": "zero rz[BG2][row8]"}
+{"op": "vram_write", "addr": 12297, "data": 0, "be": 3, "note": "zero rz[BG2][row9]"}
+{"op": "vram_write", "addr": 12298, "data": 0, "be": 3, "note": "zero rz[BG2][row10]"}
+{"op": "vram_write", "addr": 12299, "data": 0, "be": 3, "note": "zero rz[BG2][row11]"}
+{"op": "vram_write", "addr": 12300, "data": 0, "be": 3, "note": "zero rz[BG2][row12]"}
+{"op": "vram_write", "addr": 12301, "data": 0, "be": 3, "note": "zero rz[BG2][row13]"}
+{"op": "vram_write", "addr": 12302, "data": 0, "be": 3, "note": "zero rz[BG2][row14]"}
+{"op": "vram_write", "addr": 12303, "data": 0, "be": 3, "note": "zero rz[BG2][row15]"}
+{"op": "vram_write", "addr": 12304, "data": 0, "be": 3, "note": "zero rz[BG2][row16]"}
+{"op": "vram_write", "addr": 12305, "data": 0, "be": 3, "note": "zero rz[BG2][row17]"}
+{"op": "vram_write", "addr": 12306, "data": 0, "be": 3, "note": "zero rz[BG2][row18]"}
+{"op": "vram_write", "addr": 12307, "data": 0, "be": 3, "note": "zero rz[BG2][row19]"}
+{"op": "vram_write", "addr": 12308, "data": 0, "be": 3, "note": "zero rz[BG2][row20]"}
+{"op": "vram_write", "addr": 12309, "data": 0, "be": 3, "note": "zero rz[BG2][row21]"}
+{"op": "vram_write", "addr": 12310, "data": 0, "be": 3, "note": "zero rz[BG2][row22]"}
+{"op": "vram_write", "addr": 12311, "data": 0, "be": 3, "note": "zero rz[BG2][row23]"}
+{"op": "vram_write", "addr": 12312, "data": 0, "be": 3, "note": "zero rz[BG2][row24]"}
+{"op": "vram_write", "addr": 12313, "data": 0, "be": 3, "note": "zero rz[BG2][row25]"}
+{"op": "vram_write", "addr": 12314, "data": 0, "be": 3, "note": "zero rz[BG2][row26]"}
+{"op": "vram_write", "addr": 12315, "data": 0, "be": 3, "note": "zero rz[BG2][row27]"}
+{"op": "vram_write", "addr": 12316, "data": 0, "be": 3, "note": "zero rz[BG2][row28]"}
+{"op": "vram_write", "addr": 12317, "data": 0, "be": 3, "note": "zero rz[BG2][row29]"}
+{"op": "vram_write", "addr": 12318, "data": 0, "be": 3, "note": "zero rz[BG2][row30]"}
+{"op": "vram_write", "addr": 12319, "data": 0, "be": 3, "note": "zero rz[BG2][row31]"}
+{"op": "vram_write", "addr": 12320, "data": 0, "be": 3, "note": "zero rz[BG2][row32]"}
+{"op": "vram_write", "addr": 12321, "data": 0, "be": 3, "note": "zero rz[BG2][row33]"}
+{"op": "vram_write", "addr": 12322, "data": 0, "be": 3, "note": "zero rz[BG2][row34]"}
+{"op": "vram_write", "addr": 12323, "data": 0, "be": 3, "note": "zero rz[BG2][row35]"}
+{"op": "vram_write", "addr": 12324, "data": 0, "be": 3, "note": "zero rz[BG2][row36]"}
+{"op": "vram_write", "addr": 12325, "data": 0, "be": 3, "note": "zero rz[BG2][row37]"}
+{"op": "vram_write", "addr": 12326, "data": 0, "be": 3, "note": "zero rz[BG2][row38]"}
+{"op": "vram_write", "addr": 12327, "data": 0, "be": 3, "note": "zero rz[BG2][row39]"}
+{"op": "vram_write", "addr": 12328, "data": 0, "be": 3, "note": "zero rz[BG2][row40]"}
+{"op": "vram_write", "addr": 12329, "data": 0, "be": 3, "note": "zero rz[BG2][row41]"}
+{"op": "vram_write", "addr": 12330, "data": 0, "be": 3, "note": "zero rz[BG2][row42]"}
+{"op": "vram_write", "addr": 12331, "data": 0, "be": 3, "note": "zero rz[BG2][row43]"}
+{"op": "vram_write", "addr": 12332, "data": 0, "be": 3, "note": "zero rz[BG2][row44]"}
+{"op": "vram_write", "addr": 12333, "data": 0, "be": 3, "note": "zero rz[BG2][row45]"}
+{"op": "vram_write", "addr": 12334, "data": 0, "be": 3, "note": "zero rz[BG2][row46]"}
+{"op": "vram_write", "addr": 12335, "data": 0, "be": 3, "note": "zero rz[BG2][row47]"}
+{"op": "vram_write", "addr": 12336, "data": 0, "be": 3, "note": "zero rz[BG2][row48]"}
+{"op": "vram_write", "addr": 12337, "data": 0, "be": 3, "note": "zero rz[BG2][row49]"}
+{"op": "vram_write", "addr": 12338, "data": 0, "be": 3, "note": "zero rz[BG2][row50]"}
+{"op": "vram_write", "addr": 12339, "data": 0, "be": 3, "note": "zero rz[BG2][row51]"}
+{"op": "vram_write", "addr": 12340, "data": 0, "be": 3, "note": "zero rz[BG2][row52]"}
+{"op": "vram_write", "addr": 12341, "data": 0, "be": 3, "note": "zero rz[BG2][row53]"}
+{"op": "vram_write", "addr": 12342, "data": 0, "be": 3, "note": "zero rz[BG2][row54]"}
+{"op": "vram_write", "addr": 12343, "data": 0, "be": 3, "note": "zero rz[BG2][row55]"}
+{"op": "vram_write", "addr": 12344, "data": 0, "be": 3, "note": "zero rz[BG2][row56]"}
+{"op": "vram_write", "addr": 12345, "data": 0, "be": 3, "note": "zero rz[BG2][row57]"}
+{"op": "vram_write", "addr": 12346, "data": 0, "be": 3, "note": "zero rz[BG2][row58]"}
+{"op": "vram_write", "addr": 12347, "data": 0, "be": 3, "note": "zero rz[BG2][row59]"}
+{"op": "vram_write", "addr": 12348, "data": 0, "be": 3, "note": "zero rz[BG2][row60]"}
+{"op": "vram_write", "addr": 12349, "data": 0, "be": 3, "note": "zero rz[BG2][row61]"}
+{"op": "vram_write", "addr": 12350, "data": 0, "be": 3, "note": "zero rz[BG2][row62]"}
+{"op": "vram_write", "addr": 12351, "data": 0, "be": 3, "note": "zero rz[BG2][row63]"}
+{"op": "vram_write", "addr": 12352, "data": 0, "be": 3, "note": "zero rz[BG2][row64]"}
+{"op": "vram_write", "addr": 12353, "data": 0, "be": 3, "note": "zero rz[BG2][row65]"}
+{"op": "vram_write", "addr": 12354, "data": 0, "be": 3, "note": "zero rz[BG2][row66]"}
+{"op": "vram_write", "addr": 12355, "data": 0, "be": 3, "note": "zero rz[BG2][row67]"}
+{"op": "vram_write", "addr": 12356, "data": 0, "be": 3, "note": "zero rz[BG2][row68]"}
+{"op": "vram_write", "addr": 12357, "data": 0, "be": 3, "note": "zero rz[BG2][row69]"}
+{"op": "vram_write", "addr": 12358, "data": 0, "be": 3, "note": "zero rz[BG2][row70]"}
+{"op": "vram_write", "addr": 12359, "data": 0, "be": 3, "note": "zero rz[BG2][row71]"}
+{"op": "vram_write", "addr": 12360, "data": 0, "be": 3, "note": "zero rz[BG2][row72]"}
+{"op": "vram_write", "addr": 12361, "data": 0, "be": 3, "note": "zero rz[BG2][row73]"}
+{"op": "vram_write", "addr": 12362, "data": 0, "be": 3, "note": "zero rz[BG2][row74]"}
+{"op": "vram_write", "addr": 12363, "data": 0, "be": 3, "note": "zero rz[BG2][row75]"}
+{"op": "vram_write", "addr": 12364, "data": 0, "be": 3, "note": "zero rz[BG2][row76]"}
+{"op": "vram_write", "addr": 12365, "data": 0, "be": 3, "note": "zero rz[BG2][row77]"}
+{"op": "vram_write", "addr": 12366, "data": 0, "be": 3, "note": "zero rz[BG2][row78]"}
+{"op": "vram_write", "addr": 12367, "data": 0, "be": 3, "note": "zero rz[BG2][row79]"}
+{"op": "vram_write", "addr": 12368, "data": 0, "be": 3, "note": "zero rz[BG2][row80]"}
+{"op": "vram_write", "addr": 12369, "data": 0, "be": 3, "note": "zero rz[BG2][row81]"}
+{"op": "vram_write", "addr": 12370, "data": 0, "be": 3, "note": "zero rz[BG2][row82]"}
+{"op": "vram_write", "addr": 12371, "data": 0, "be": 3, "note": "zero rz[BG2][row83]"}
+{"op": "vram_write", "addr": 12372, "data": 0, "be": 3, "note": "zero rz[BG2][row84]"}
+{"op": "vram_write", "addr": 12373, "data": 0, "be": 3, "note": "zero rz[BG2][row85]"}
+{"op": "vram_write", "addr": 12374, "data": 0, "be": 3, "note": "zero rz[BG2][row86]"}
+{"op": "vram_write", "addr": 12375, "data": 0, "be": 3, "note": "zero rz[BG2][row87]"}
+{"op": "vram_write", "addr": 12376, "data": 0, "be": 3, "note": "zero rz[BG2][row88]"}
+{"op": "vram_write", "addr": 12377, "data": 0, "be": 3, "note": "zero rz[BG2][row89]"}
+{"op": "vram_write", "addr": 12378, "data": 0, "be": 3, "note": "zero rz[BG2][row90]"}
+{"op": "vram_write", "addr": 12379, "data": 0, "be": 3, "note": "zero rz[BG2][row91]"}
+{"op": "vram_write", "addr": 12380, "data": 0, "be": 3, "note": "zero rz[BG2][row92]"}
+{"op": "vram_write", "addr": 12381, "data": 0, "be": 3, "note": "zero rz[BG2][row93]"}
+{"op": "vram_write", "addr": 12382, "data": 0, "be": 3, "note": "zero rz[BG2][row94]"}
+{"op": "vram_write", "addr": 12383, "data": 0, "be": 3, "note": "zero rz[BG2][row95]"}
+{"op": "vram_write", "addr": 12384, "data": 0, "be": 3, "note": "zero rz[BG2][row96]"}
+{"op": "vram_write", "addr": 12385, "data": 0, "be": 3, "note": "zero rz[BG2][row97]"}
+{"op": "vram_write", "addr": 12386, "data": 0, "be": 3, "note": "zero rz[BG2][row98]"}
+{"op": "vram_write", "addr": 12387, "data": 0, "be": 3, "note": "zero rz[BG2][row99]"}
+{"op": "vram_write", "addr": 12388, "data": 0, "be": 3, "note": "zero rz[BG2][row100]"}
+{"op": "vram_write", "addr": 12389, "data": 0, "be": 3, "note": "zero rz[BG2][row101]"}
+{"op": "vram_write", "addr": 12390, "data": 0, "be": 3, "note": "zero rz[BG2][row102]"}
+{"op": "vram_write", "addr": 12391, "data": 0, "be": 3, "note": "zero rz[BG2][row103]"}
+{"op": "vram_write", "addr": 12392, "data": 0, "be": 3, "note": "zero rz[BG2][row104]"}
+{"op": "vram_write", "addr": 12393, "data": 0, "be": 3, "note": "zero rz[BG2][row105]"}
+{"op": "vram_write", "addr": 12394, "data": 0, "be": 3, "note": "zero rz[BG2][row106]"}
+{"op": "vram_write", "addr": 12395, "data": 0, "be": 3, "note": "zero rz[BG2][row107]"}
+{"op": "vram_write", "addr": 12396, "data": 0, "be": 3, "note": "zero rz[BG2][row108]"}
+{"op": "vram_write", "addr": 12397, "data": 0, "be": 3, "note": "zero rz[BG2][row109]"}
+{"op": "vram_write", "addr": 12398, "data": 0, "be": 3, "note": "zero rz[BG2][row110]"}
+{"op": "vram_write", "addr": 12399, "data": 0, "be": 3, "note": "zero rz[BG2][row111]"}
+{"op": "vram_write", "addr": 12400, "data": 0, "be": 3, "note": "zero rz[BG2][row112]"}
+{"op": "vram_write", "addr": 12401, "data": 0, "be": 3, "note": "zero rz[BG2][row113]"}
+{"op": "vram_write", "addr": 12402, "data": 0, "be": 3, "note": "zero rz[BG2][row114]"}
+{"op": "vram_write", "addr": 12403, "data": 0, "be": 3, "note": "zero rz[BG2][row115]"}
+{"op": "vram_write", "addr": 12404, "data": 0, "be": 3, "note": "zero rz[BG2][row116]"}
+{"op": "vram_write", "addr": 12405, "data": 0, "be": 3, "note": "zero rz[BG2][row117]"}
+{"op": "vram_write", "addr": 12406, "data": 0, "be": 3, "note": "zero rz[BG2][row118]"}
+{"op": "vram_write", "addr": 12407, "data": 0, "be": 3, "note": "zero rz[BG2][row119]"}
+{"op": "vram_write", "addr": 12408, "data": 0, "be": 3, "note": "zero rz[BG2][row120]"}
+{"op": "vram_write", "addr": 12409, "data": 0, "be": 3, "note": "zero rz[BG2][row121]"}
+{"op": "vram_write", "addr": 12410, "data": 0, "be": 3, "note": "zero rz[BG2][row122]"}
+{"op": "vram_write", "addr": 12411, "data": 0, "be": 3, "note": "zero rz[BG2][row123]"}
+{"op": "vram_write", "addr": 12412, "data": 0, "be": 3, "note": "zero rz[BG2][row124]"}
+{"op": "vram_write", "addr": 12413, "data": 0, "be": 3, "note": "zero rz[BG2][row125]"}
+{"op": "vram_write", "addr": 12414, "data": 0, "be": 3, "note": "zero rz[BG2][row126]"}
+{"op": "vram_write", "addr": 12415, "data": 0, "be": 3, "note": "zero rz[BG2][row127]"}
+{"op": "vram_write", "addr": 12416, "data": 0, "be": 3, "note": "zero rz[BG2][row128]"}
+{"op": "vram_write", "addr": 12417, "data": 0, "be": 3, "note": "zero rz[BG2][row129]"}
+{"op": "vram_write", "addr": 12418, "data": 0, "be": 3, "note": "zero rz[BG2][row130]"}
+{"op": "vram_write", "addr": 12419, "data": 0, "be": 3, "note": "zero rz[BG2][row131]"}
+{"op": "vram_write", "addr": 12420, "data": 0, "be": 3, "note": "zero rz[BG2][row132]"}
+{"op": "vram_write", "addr": 12421, "data": 0, "be": 3, "note": "zero rz[BG2][row133]"}
+{"op": "vram_write", "addr": 12422, "data": 0, "be": 3, "note": "zero rz[BG2][row134]"}
+{"op": "vram_write", "addr": 12423, "data": 0, "be": 3, "note": "zero rz[BG2][row135]"}
+{"op": "vram_write", "addr": 12424, "data": 0, "be": 3, "note": "zero rz[BG2][row136]"}
+{"op": "vram_write", "addr": 12425, "data": 0, "be": 3, "note": "zero rz[BG2][row137]"}
+{"op": "vram_write", "addr": 12426, "data": 0, "be": 3, "note": "zero rz[BG2][row138]"}
+{"op": "vram_write", "addr": 12427, "data": 0, "be": 3, "note": "zero rz[BG2][row139]"}
+{"op": "vram_write", "addr": 12428, "data": 0, "be": 3, "note": "zero rz[BG2][row140]"}
+{"op": "vram_write", "addr": 12429, "data": 0, "be": 3, "note": "zero rz[BG2][row141]"}
+{"op": "vram_write", "addr": 12430, "data": 0, "be": 3, "note": "zero rz[BG2][row142]"}
+{"op": "vram_write", "addr": 12431, "data": 0, "be": 3, "note": "zero rz[BG2][row143]"}
+{"op": "vram_write", "addr": 12432, "data": 0, "be": 3, "note": "zero rz[BG2][row144]"}
+{"op": "vram_write", "addr": 12433, "data": 0, "be": 3, "note": "zero rz[BG2][row145]"}
+{"op": "vram_write", "addr": 12434, "data": 0, "be": 3, "note": "zero rz[BG2][row146]"}
+{"op": "vram_write", "addr": 12435, "data": 0, "be": 3, "note": "zero rz[BG2][row147]"}
+{"op": "vram_write", "addr": 12436, "data": 0, "be": 3, "note": "zero rz[BG2][row148]"}
+{"op": "vram_write", "addr": 12437, "data": 0, "be": 3, "note": "zero rz[BG2][row149]"}
+{"op": "vram_write", "addr": 12438, "data": 0, "be": 3, "note": "zero rz[BG2][row150]"}
+{"op": "vram_write", "addr": 12439, "data": 0, "be": 3, "note": "zero rz[BG2][row151]"}
+{"op": "vram_write", "addr": 12440, "data": 0, "be": 3, "note": "zero rz[BG2][row152]"}
+{"op": "vram_write", "addr": 12441, "data": 0, "be": 3, "note": "zero rz[BG2][row153]"}
+{"op": "vram_write", "addr": 12442, "data": 0, "be": 3, "note": "zero rz[BG2][row154]"}
+{"op": "vram_write", "addr": 12443, "data": 0, "be": 3, "note": "zero rz[BG2][row155]"}
+{"op": "vram_write", "addr": 12444, "data": 0, "be": 3, "note": "zero rz[BG2][row156]"}
+{"op": "vram_write", "addr": 12445, "data": 0, "be": 3, "note": "zero rz[BG2][row157]"}
+{"op": "vram_write", "addr": 12446, "data": 0, "be": 3, "note": "zero rz[BG2][row158]"}
+{"op": "vram_write", "addr": 12447, "data": 0, "be": 3, "note": "zero rz[BG2][row159]"}
+{"op": "vram_write", "addr": 12448, "data": 0, "be": 3, "note": "zero rz[BG2][row160]"}
+{"op": "vram_write", "addr": 12449, "data": 0, "be": 3, "note": "zero rz[BG2][row161]"}
+{"op": "vram_write", "addr": 12450, "data": 0, "be": 3, "note": "zero rz[BG2][row162]"}
+{"op": "vram_write", "addr": 12451, "data": 0, "be": 3, "note": "zero rz[BG2][row163]"}
+{"op": "vram_write", "addr": 12452, "data": 0, "be": 3, "note": "zero rz[BG2][row164]"}
+{"op": "vram_write", "addr": 12453, "data": 0, "be": 3, "note": "zero rz[BG2][row165]"}
+{"op": "vram_write", "addr": 12454, "data": 0, "be": 3, "note": "zero rz[BG2][row166]"}
+{"op": "vram_write", "addr": 12455, "data": 0, "be": 3, "note": "zero rz[BG2][row167]"}
+{"op": "vram_write", "addr": 12456, "data": 0, "be": 3, "note": "zero rz[BG2][row168]"}
+{"op": "vram_write", "addr": 12457, "data": 0, "be": 3, "note": "zero rz[BG2][row169]"}
+{"op": "vram_write", "addr": 12458, "data": 0, "be": 3, "note": "zero rz[BG2][row170]"}
+{"op": "vram_write", "addr": 12459, "data": 0, "be": 3, "note": "zero rz[BG2][row171]"}
+{"op": "vram_write", "addr": 12460, "data": 0, "be": 3, "note": "zero rz[BG2][row172]"}
+{"op": "vram_write", "addr": 12461, "data": 0, "be": 3, "note": "zero rz[BG2][row173]"}
+{"op": "vram_write", "addr": 12462, "data": 0, "be": 3, "note": "zero rz[BG2][row174]"}
+{"op": "vram_write", "addr": 12463, "data": 0, "be": 3, "note": "zero rz[BG2][row175]"}
+{"op": "vram_write", "addr": 12464, "data": 0, "be": 3, "note": "zero rz[BG2][row176]"}
+{"op": "vram_write", "addr": 12465, "data": 0, "be": 3, "note": "zero rz[BG2][row177]"}
+{"op": "vram_write", "addr": 12466, "data": 0, "be": 3, "note": "zero rz[BG2][row178]"}
+{"op": "vram_write", "addr": 12467, "data": 0, "be": 3, "note": "zero rz[BG2][row179]"}
+{"op": "vram_write", "addr": 12468, "data": 0, "be": 3, "note": "zero rz[BG2][row180]"}
+{"op": "vram_write", "addr": 12469, "data": 0, "be": 3, "note": "zero rz[BG2][row181]"}
+{"op": "vram_write", "addr": 12470, "data": 0, "be": 3, "note": "zero rz[BG2][row182]"}
+{"op": "vram_write", "addr": 12471, "data": 0, "be": 3, "note": "zero rz[BG2][row183]"}
+{"op": "vram_write", "addr": 12472, "data": 0, "be": 3, "note": "zero rz[BG2][row184]"}
+{"op": "vram_write", "addr": 12473, "data": 0, "be": 3, "note": "zero rz[BG2][row185]"}
+{"op": "vram_write", "addr": 12474, "data": 0, "be": 3, "note": "zero rz[BG2][row186]"}
+{"op": "vram_write", "addr": 12475, "data": 0, "be": 3, "note": "zero rz[BG2][row187]"}
+{"op": "vram_write", "addr": 12476, "data": 0, "be": 3, "note": "zero rz[BG2][row188]"}
+{"op": "vram_write", "addr": 12477, "data": 0, "be": 3, "note": "zero rz[BG2][row189]"}
+{"op": "vram_write", "addr": 12478, "data": 0, "be": 3, "note": "zero rz[BG2][row190]"}
+{"op": "vram_write", "addr": 12479, "data": 0, "be": 3, "note": "zero rz[BG2][row191]"}
+{"op": "vram_write", "addr": 12480, "data": 0, "be": 3, "note": "zero rz[BG2][row192]"}
+{"op": "vram_write", "addr": 12481, "data": 0, "be": 3, "note": "zero rz[BG2][row193]"}
+{"op": "vram_write", "addr": 12482, "data": 0, "be": 3, "note": "zero rz[BG2][row194]"}
+{"op": "vram_write", "addr": 12483, "data": 0, "be": 3, "note": "zero rz[BG2][row195]"}
+{"op": "vram_write", "addr": 12484, "data": 0, "be": 3, "note": "zero rz[BG2][row196]"}
+{"op": "vram_write", "addr": 12485, "data": 0, "be": 3, "note": "zero rz[BG2][row197]"}
+{"op": "vram_write", "addr": 12486, "data": 0, "be": 3, "note": "zero rz[BG2][row198]"}
+{"op": "vram_write", "addr": 12487, "data": 0, "be": 3, "note": "zero rz[BG2][row199]"}
+{"op": "vram_write", "addr": 12488, "data": 0, "be": 3, "note": "zero rz[BG2][row200]"}
+{"op": "vram_write", "addr": 12489, "data": 0, "be": 3, "note": "zero rz[BG2][row201]"}
+{"op": "vram_write", "addr": 12490, "data": 0, "be": 3, "note": "zero rz[BG2][row202]"}
+{"op": "vram_write", "addr": 12491, "data": 0, "be": 3, "note": "zero rz[BG2][row203]"}
+{"op": "vram_write", "addr": 12492, "data": 0, "be": 3, "note": "zero rz[BG2][row204]"}
+{"op": "vram_write", "addr": 12493, "data": 0, "be": 3, "note": "zero rz[BG2][row205]"}
+{"op": "vram_write", "addr": 12494, "data": 0, "be": 3, "note": "zero rz[BG2][row206]"}
+{"op": "vram_write", "addr": 12495, "data": 0, "be": 3, "note": "zero rz[BG2][row207]"}
+{"op": "vram_write", "addr": 12496, "data": 0, "be": 3, "note": "zero rz[BG2][row208]"}
+{"op": "vram_write", "addr": 12497, "data": 0, "be": 3, "note": "zero rz[BG2][row209]"}
+{"op": "vram_write", "addr": 12498, "data": 0, "be": 3, "note": "zero rz[BG2][row210]"}
+{"op": "vram_write", "addr": 12499, "data": 0, "be": 3, "note": "zero rz[BG2][row211]"}
+{"op": "vram_write", "addr": 12500, "data": 0, "be": 3, "note": "zero rz[BG2][row212]"}
+{"op": "vram_write", "addr": 12501, "data": 0, "be": 3, "note": "zero rz[BG2][row213]"}
+{"op": "vram_write", "addr": 12502, "data": 0, "be": 3, "note": "zero rz[BG2][row214]"}
+{"op": "vram_write", "addr": 12503, "data": 0, "be": 3, "note": "zero rz[BG2][row215]"}
+{"op": "vram_write", "addr": 12504, "data": 0, "be": 3, "note": "zero rz[BG2][row216]"}
+{"op": "vram_write", "addr": 12505, "data": 0, "be": 3, "note": "zero rz[BG2][row217]"}
+{"op": "vram_write", "addr": 12506, "data": 0, "be": 3, "note": "zero rz[BG2][row218]"}
+{"op": "vram_write", "addr": 12507, "data": 0, "be": 3, "note": "zero rz[BG2][row219]"}
+{"op": "vram_write", "addr": 12508, "data": 0, "be": 3, "note": "zero rz[BG2][row220]"}
+{"op": "vram_write", "addr": 12509, "data": 0, "be": 3, "note": "zero rz[BG2][row221]"}
+{"op": "vram_write", "addr": 12510, "data": 0, "be": 3, "note": "zero rz[BG2][row222]"}
+{"op": "vram_write", "addr": 12511, "data": 0, "be": 3, "note": "zero rz[BG2][row223]"}
+{"op": "vram_write", "addr": 12512, "data": 0, "be": 3, "note": "zero rz[BG2][row224]"}
+{"op": "vram_write", "addr": 12513, "data": 0, "be": 3, "note": "zero rz[BG2][row225]"}
+{"op": "vram_write", "addr": 12514, "data": 0, "be": 3, "note": "zero rz[BG2][row226]"}
+{"op": "vram_write", "addr": 12515, "data": 0, "be": 3, "note": "zero rz[BG2][row227]"}
+{"op": "vram_write", "addr": 12516, "data": 0, "be": 3, "note": "zero rz[BG2][row228]"}
+{"op": "vram_write", "addr": 12517, "data": 0, "be": 3, "note": "zero rz[BG2][row229]"}
+{"op": "vram_write", "addr": 12518, "data": 0, "be": 3, "note": "zero rz[BG2][row230]"}
+{"op": "vram_write", "addr": 12519, "data": 0, "be": 3, "note": "zero rz[BG2][row231]"}
+{"op": "vram_write", "addr": 12520, "data": 0, "be": 3, "note": "zero rz[BG2][row232]"}
+{"op": "vram_write", "addr": 12521, "data": 0, "be": 3, "note": "zero rz[BG2][row233]"}
+{"op": "vram_write", "addr": 12522, "data": 0, "be": 3, "note": "zero rz[BG2][row234]"}
+{"op": "vram_write", "addr": 12523, "data": 0, "be": 3, "note": "zero rz[BG2][row235]"}
+{"op": "vram_write", "addr": 12524, "data": 0, "be": 3, "note": "zero rz[BG2][row236]"}
+{"op": "vram_write", "addr": 12525, "data": 0, "be": 3, "note": "zero rz[BG2][row237]"}
+{"op": "vram_write", "addr": 12526, "data": 0, "be": 3, "note": "zero rz[BG2][row238]"}
+{"op": "vram_write", "addr": 12527, "data": 0, "be": 3, "note": "zero rz[BG2][row239]"}
+{"op": "vram_write", "addr": 12528, "data": 0, "be": 3, "note": "zero rz[BG2][row240]"}
+{"op": "vram_write", "addr": 12529, "data": 0, "be": 3, "note": "zero rz[BG2][row241]"}
+{"op": "vram_write", "addr": 12530, "data": 0, "be": 3, "note": "zero rz[BG2][row242]"}
+{"op": "vram_write", "addr": 12531, "data": 0, "be": 3, "note": "zero rz[BG2][row243]"}
+{"op": "vram_write", "addr": 12532, "data": 0, "be": 3, "note": "zero rz[BG2][row244]"}
+{"op": "vram_write", "addr": 12533, "data": 0, "be": 3, "note": "zero rz[BG2][row245]"}
+{"op": "vram_write", "addr": 12534, "data": 0, "be": 3, "note": "zero rz[BG2][row246]"}
+{"op": "vram_write", "addr": 12535, "data": 0, "be": 3, "note": "zero rz[BG2][row247]"}
+{"op": "vram_write", "addr": 12536, "data": 0, "be": 3, "note": "zero rz[BG2][row248]"}
+{"op": "vram_write", "addr": 12537, "data": 0, "be": 3, "note": "zero rz[BG2][row249]"}
+{"op": "vram_write", "addr": 12538, "data": 0, "be": 3, "note": "zero rz[BG2][row250]"}
+{"op": "vram_write", "addr": 12539, "data": 0, "be": 3, "note": "zero rz[BG2][row251]"}
+{"op": "vram_write", "addr": 12540, "data": 0, "be": 3, "note": "zero rz[BG2][row252]"}
+{"op": "vram_write", "addr": 12541, "data": 0, "be": 3, "note": "zero rz[BG2][row253]"}
+{"op": "vram_write", "addr": 12542, "data": 0, "be": 3, "note": "zero rz[BG2][row254]"}
+{"op": "vram_write", "addr": 12543, "data": 0, "be": 3, "note": "zero rz[BG2][row255]"}
+{"op": "vram_write", "addr": 13316, "data": 64, "be": 3, "note": "colscroll[BG2][col4]=64: src_y at screen_y=4 offset by 64"}
+{"op": "vram_write", "addr": 12356, "data": 96, "be": 3, "note": "rz[BG2][row68]=0x60: zoom for colscroll-adjusted source row"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 4, "exp": 1095, "note": "colscroll+rowzoom ordering: screen_y=4 \u2192 src_y=68 \u2192 uses rz[68]=0x60"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 3, "exp": 1095, "note": "colscroll+rowzoom ordering: screen_y=3 \u2192 src_y=3 \u2192 uses rz[3]=0 (no zoom)"}
+{"op": "gfx_rom_write", "word_addr": 1696, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row0 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1697, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row0 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1698, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row1 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1699, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row1 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1700, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row2 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1701, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row2 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1702, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row3 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1703, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row3 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1704, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row4 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1705, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row4 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1706, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row5 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1707, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row5 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1708, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row6 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1709, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row6 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1710, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row7 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1711, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row7 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1712, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row8 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1713, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row8 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1714, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row9 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1715, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row9 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1716, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row10 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1717, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row10 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1718, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row11 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1719, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row11 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1720, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row12 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1721, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row12 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1722, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row13 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1723, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row13 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1724, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row14 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1725, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row14 half1: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1726, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row15 half0: solid pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1727, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile53 row15 half1: solid pen=7"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 0, "attr": 51, "code": 53, "note": "BG3 map(0,0) tile=53 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 1, "attr": 51, "code": 53, "note": "BG3 map(0,1) tile=53 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 2, "attr": 51, "code": 53, "note": "BG3 map(0,2) tile=53 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 3, "attr": 51, "code": 53, "note": "BG3 map(0,3) tile=53 color=51"}
+{"op": "write", "addr": 15, "data": 3, "be": 3, "note": "LAYER_CTRL=3: rowzoom_en[2]=1, rowzoom_en[3]=1"}
+{"op": "write", "addr": 11, "data": 4223, "be": 3, "note": "BG3_ZOOM xzoom=0x10"}
+{"op": "vram_write", "addr": 12800, "data": 48, "be": 3, "note": "rz[BG3][row0]=0x30: BG3 independent rowzoom"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 0, "exp": 823, "note": "BG3 rowzoom=0x30, BG2 rowzoom\u22480: BG3 on top shows through"}

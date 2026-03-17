@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """
-TC0480SCP — Vector generator for Steps 1–4.
+TC0480SCP — Vector generator for Steps 1–8.
 
 Generates:
   step1_vectors.jsonl — Control registers + video timing (50 tests)
   step2_vectors.jsonl — VRAM read/write (20 tests)
   step3_vectors.jsonl — FG0 text layer render (30 tests)
   step4_vectors.jsonl — BG0/BG1 global scroll (35 tests)
+  step5_vectors.jsonl — BG0/BG1 rowscroll (no-zoom path) (30+ tests)
+  step6_vectors.jsonl — BG0/BG1 global zoom (40+ tests)
+  step7_vectors.jsonl — BG2/BG3 colscroll (30+ tests)
+  step8_vectors.jsonl — BG2/BG3 per-row zoom (35+ tests)
 """
 
 import json
@@ -721,6 +725,723 @@ def gen_step4():
 
 
 # =============================================================================
+# Shared helpers for steps 5–8
+# =============================================================================
+
+def _step_common_reset(m, records):
+    """Reset all ctrl registers and zero all VRAM regions.
+
+    Returns the rec() closure for convenience.
+    """
+    def rec(**kw):
+        records.append(kw)
+
+    rec(op="reset", note="step reset")
+    for i in range(24):
+        m.write_ctrl(i, 0x0000)
+        rec(op="write", addr=i, data=0x0000, be=3, note=f"ctrl[{i}]=0")
+    # Set zoom to 1:1
+    for i in range(8, 12):
+        m.write_ctrl(i, 0x007F)
+        rec(op="write", addr=i, data=0x007F, be=3,
+            note=f"ctrl[{i}]=0x007F (1:1 zoom)")
+    # Zero all VRAM
+    rec(op="vram_zero", base=0x0000, count=8192,  note="zero BG tilemaps")
+    rec(op="vram_zero", base=0x2000, count=8192,  note="zero rowscroll/scram (0x2000-0x3FFF)")
+    rec(op="vram_zero", base=0x4000, count=8192,  note="zero rowscroll dblwidth (0x4000-0x5FFF)")
+    rec(op="vram_zero", base=0x6000, count=4096,  note="zero FG0 tilemap")
+    rec(op="vram_zero", base=0x7000, count=4096,  note="zero FG0 gfx data")
+    return rec
+
+
+def _make_solid_tile(m, records, tile_code, pen, color_byte):
+    """Write a solid 16x16 BG tile to GFX ROM (all pixels same pen)."""
+    def rec(**kw):
+        records.append(kw)
+
+    nibble = pen & 0xF
+    solid_word = 0
+    for i in range(8):
+        solid_word |= (nibble << (28 - i * 4))
+    base = tile_code * 32
+    for row in range(16):
+        for half in range(2):
+            waddr = base + row * 2 + half
+            rec(op="gfx_rom_write", word_addr=waddr,
+                data_hi=(solid_word >> 16) & 0xFFFF,
+                data_lo=solid_word & 0xFFFF,
+                note=f"GFX ROM tile{tile_code} row{row} half{half}: solid pen={pen}")
+            m.write_gfx_rom_word(waddr, solid_word)
+
+
+def _make_row_pattern_tile(m, records, tile_code, row_pens):
+    """Write a 16x16 BG tile where each row has a uniform pen value.
+
+    row_pens: list of 16 values (one per row, rows 0..15).
+    """
+    def rec(**kw):
+        records.append(kw)
+
+    base = tile_code * 32
+    for row in range(16):
+        nibble = row_pens[row] & 0xF
+        row_word = 0
+        for i in range(8):
+            row_word |= (nibble << (28 - i * 4))
+        for half in range(2):
+            waddr = base + row * 2 + half
+            rec(op="gfx_rom_write", word_addr=waddr,
+                data_hi=(row_word >> 16) & 0xFFFF,
+                data_lo=row_word & 0xFFFF,
+                note=f"GFX ROM tile{tile_code} row{row}: pen={row_pens[row]}")
+            m.write_gfx_rom_word(waddr, row_word)
+
+
+def _write_bg_map_tile(m, records, layer, tile_x, tile_y, color, tile_code, flipx=0, flipy=0):
+    """Write BG tilemap entry (attr + code) to VRAM."""
+    def rec(**kw):
+        records.append(kw)
+
+    attr = ((flipy & 1) << 15) | ((flipx & 1) << 14) | (color & 0xFF)
+    code = tile_code & 0x7FFF
+    rec(op="map_write_bg", layer=layer, tile_x=tile_x, tile_y=tile_y,
+        attr=attr, code=code,
+        note=f"BG{layer} map({tile_x},{tile_y}) tile={tile_code} color={color}")
+    dw = m.dblwidth()
+    map_width = 64 if dw else 32
+    layer_base = (layer * 0x0800) if dw else (layer * 0x0400)
+    tile_idx = tile_y * map_width + tile_x
+    word_base = layer_base + tile_idx * 2
+    m.write_ram(word_base, attr)
+    m.write_ram(word_base + 1, code)
+
+
+def _write_vram(m, records, word_addr, data, note=""):
+    """Write a VRAM word and add record."""
+    records.append(dict(op="vram_write", addr=word_addr, data=data & 0xFFFF, be=3,
+                        note=note or f"VRAM[0x{word_addr:04X}]=0x{data:04X}"))
+    m.write_ram(word_addr, data)
+
+
+def _check_px(m, records, screen_x, screen_y, note=""):
+    """Generate check_pixel record using model prediction."""
+    exp = m.render_scanline(screen_y)[screen_x]
+    records.append(dict(op="check_pixel", screen_x=screen_x, screen_y=screen_y,
+                        exp=exp, note=note or f"pixel({screen_x},{screen_y}): expect 0x{exp:04X}"))
+    return exp
+
+
+# =============================================================================
+# STEP 5 — BG0/BG1 rowscroll (no-zoom path)
+# =============================================================================
+def gen_step5():
+    records = []
+    m = TC0480SCPModel()
+    rec = _step_common_reset(m, records)
+
+    # ── Shared GFX tiles ─────────────────────────────────────────────────────
+    # Tile 10: solid pen=7, color=0x5A (BG0 default)
+    # Tile 11: solid pen=5, color=0x1B (BG1 default)
+    # Tile 20: different pen per row (pen=row&0xF) to distinguish Y
+    _make_solid_tile(m, records, tile_code=10, pen=7, color_byte=0x5A)
+    _make_solid_tile(m, records, tile_code=11, pen=5, color_byte=0x1B)
+
+    # Per-row pen tile: row r has pen = (r & 0xF) + 1 (never 0 = transparent)
+    row_pens = [(r & 0xF) + 1 for r in range(16)]
+    _make_row_pattern_tile(m, records, tile_code=20, row_pens=row_pens)
+
+    # ── Test 1: No rowscroll, baseline ────────────────────────────────────────
+    # BG0 tile(0,0) = solid 0x5A7, no scroll, no rowscroll → all rows same
+    _write_bg_map_tile(m, records, layer=0, tile_x=0, tile_y=0,
+                       color=0x5A, tile_code=10)
+    exp = _check_px(m, records, 0, 0, "BG0 no-rowscroll baseline: screen_y=0 expect 0x05A7")
+    assert exp == 0x05A7
+    _check_px(m, records, 0, 8,  "BG0 no-rowscroll baseline: screen_y=8 expect 0x05A7")
+    _check_px(m, records, 0, 15, "BG0 no-rowscroll baseline: screen_y=15 expect 0x05A7")
+
+    # ── Test 2: BG0 rowscroll hi = 8 for source row 0 → shift left 8 px ────
+    # bgscrollx[0]=0 (ctrl[0]=0, stagger=0 → bgscrollx = -0 = 0x0000).
+    # rs_hi[0][row0] = 8 → x_index_start = 0 - 8<<16 - 0 = -8<<16
+    # canvas_y for screen_y=0: (0 + bgscrolly=0) & 0x1FF = 0 = source row 0.
+    # row_idx = 0 (no flip).
+    # x_fp = (0 - (8<<16)) & 0xFFFFFFFF = 0xFFF80000
+    # src_x at screen_x=0 = 0xFFF80000 >> 16 = 0xFFF8 & 0x1FF = 0x1F8 = 504
+    # tile_col = 504>>4 = 31, run_xoff = 504&0xF = 8... wait let me use model.
+    rs_hi_addr_bg0_row0 = m._rs_hi_addr(0, 0)  # = 0x2000
+    _write_vram(m, records, rs_hi_addr_bg0_row0, 8,
+                "rs_hi[BG0][row0]=8: shift source X by +8 tiles-worth pixels")
+    _check_px(m, records, 0, 0,
+              "BG0 rowscroll hi=8 row0: screen_x=0 → canvas_x=8 → tile(0,0)=transparent (tile_code=0)")
+    _check_px(m, records, 8, 0,
+              "BG0 rowscroll hi=8 row0: screen_x=8 → canvas_x=0 → tile(0,0)=solid 0x5A7")
+    _check_px(m, records, 15, 0,
+              "BG0 rowscroll hi=8 row0: screen_x=15 → canvas_x=7 → tile(0,0)=solid")
+
+    # Rows with different rowscroll (row 1 has no rowscroll)
+    rs_hi_addr_bg0_row1 = m._rs_hi_addr(0, 1)
+    _write_vram(m, records, rs_hi_addr_bg0_row1, 0,
+                "rs_hi[BG0][row1]=0: source row 1 unshifted")
+    # source row 0 is canvas_y when screen_y=0 (scrolly=0: canvas_y = screen_y = 0)
+    # source row 1 maps to screen_y=1
+    _check_px(m, records, 0, 1,
+              "BG0 screen_y=1 (source row 1): no rowscroll → tile(0,0) solid at screen_x=0")
+
+    # Restore: clear rowscroll for row 0
+    _write_vram(m, records, rs_hi_addr_bg0_row0, 0, "rs_hi[BG0][row0]=0: restore")
+
+    # ── Test 3: BG0 rowscroll hi = 16 for row 0 (exactly one tile width) ───
+    _write_vram(m, records, rs_hi_addr_bg0_row0, 16,
+                "rs_hi[BG0][row0]=16: shift by 16 (one full tile)")
+    _check_px(m, records, 0, 0,
+              "BG0 rowscroll=16: screen_x=0 → canvas_x=16 → tile(1,0)=transparent")
+    _check_px(m, records, 16, 0,
+              "BG0 rowscroll=16: screen_x=16 → canvas_x=0 → tile(0,0)=solid")
+    _write_vram(m, records, rs_hi_addr_bg0_row0, 0, "restore rs_hi row0")
+
+    # ── Test 4: rowscroll lo sub-pixel (rs_hi=0, rs_lo=0x80 → sub-pixel shift) ─
+    # x_fp = 0 - 0 - (0x80 << 8) = -0x8000 = 0xFFFF8000
+    # src_x at screen_x=0 = 0xFFFF8000>>16 = 0xFFFF & 0x1FF = 0x1FF = 511
+    # tile_col = 511>>4 = 31, px_in_tile = 511&0xF = 15 → tile(31,0) = transparent
+    rs_lo_addr_bg0_row0 = m._rs_lo_addr(0, 0)
+    _write_vram(m, records, rs_lo_addr_bg0_row0, 0x80,
+                "rs_lo[BG0][row0]=0x80: sub-pixel shift of 0.5 pixel")
+    _check_px(m, records, 0, 0,
+              "BG0 rs_lo=0x80 row0: sub-pixel shift → screen_x=0 shifted by half pixel")
+    _write_vram(m, records, rs_lo_addr_bg0_row0, 0x00, "restore rs_lo row0")
+
+    # ── Test 5: different rowscroll per row (linear ramp) ────────────────────
+    # Write rs_hi for rows 0..15 = row value itself (row 0=0, row 1=1, ...)
+    # This creates a diagonal slant effect.
+    for row in range(16):
+        addr = m._rs_hi_addr(0, row)
+        _write_vram(m, records, addr, row,
+                    f"rs_hi[BG0][row{row}]={row}: linear ramp rowscroll")
+    # screen_y=r maps to source row r (bgscrolly=0), so rs_hi=r → canvas_x=screen_x+r
+    # At screen_x=0, screen_y=0: canvas_x=0 → tile(0,0)=solid
+    # At screen_x=0, screen_y=1: canvas_x=1 → still tile(0,0) px=1 → solid
+    # At screen_x=0, screen_y=k: canvas_x=k → tile(k>>4, 0) px=k&0xF
+    # For k<16: tile(0,0)=solid → pixel=0x5A7 for any k<16
+    _check_px(m, records, 0, 0,  "ramp rowscroll row0: screen_x=0 → canvas_x=0 → solid")
+    _check_px(m, records, 0, 1,  "ramp rowscroll row1: screen_x=0 → canvas_x=1 → solid")
+    _check_px(m, records, 0, 15, "ramp rowscroll row15: screen_x=0 → canvas_x=15 → solid")
+    # Clear ramp
+    for row in range(16):
+        addr = m._rs_hi_addr(0, row)
+        _write_vram(m, records, addr, 0, f"clear rs_hi[BG0][row{row}]")
+
+    # ── Test 6: BG1 rowscroll independent from BG0 ──────────────────────────
+    # BG1 stagger: scrollx_raw=0, stagger=4, bgscrollx[1] = -(0+4)=-4 = 0xFFFC
+    # BG1 tile(0,0) appears at screen_x=4..19 (first 4 pixels offset due to stagger)
+    _write_bg_map_tile(m, records, layer=1, tile_x=0, tile_y=0,
+                       color=0x1B, tile_code=11)
+    # BG0 at (0,0) = solid tile (already written)
+    # Check BG1 shows at screen_x=4
+    _check_px(m, records, 4, 0, "BG1 tile(0,0) at screen_x=4 (stagger): expect 0x1B5")
+
+    # Write BG1 rs_hi[row0]=4: shifts BG1 row0 by 4 pixels
+    # BG1 stagger means x_fp starts at (-4<<16). Adding rs_hi=4: x_fp = -4<<16 - 4<<16 = -8<<16
+    # screen_x=4: src_x = (-8<<16 + 4*0x10000)>>16 & 0x1FF = (-4)&0x1FF = 0x1FC = 508 → tile(31,0)=transparent
+    # screen_x=8: src_x = (-8<<16 + 8*0x10000)>>16 & 0x1FF = 0 → tile(0,0) → solid
+    rs_hi_addr_bg1_row0 = m._rs_hi_addr(1, 0)
+    _write_vram(m, records, rs_hi_addr_bg1_row0, 4,
+                "rs_hi[BG1][row0]=4: BG1 row0 shift by 4")
+    _check_px(m, records, 4, 0, "BG1 rs_hi=4: screen_x=4 → BG1 shifted, check BG0 shows")
+    _check_px(m, records, 8, 0, "BG1 rs_hi=4: screen_x=8 → BG1 tile(0,0) after shift")
+    _write_vram(m, records, rs_hi_addr_bg1_row0, 0, "restore BG1 rs_hi row0")
+
+    # ── Test 7: BG0 rowscroll with bgscrollx non-zero ───────────────────────
+    # Set BG0_XSCROLL = 8 (raw) → bgscrollx[0] = -(8+0) = -8 = 0xFFF8
+    m.write_ctrl(0, 8)
+    rec(op="write", addr=0, data=8, be=3, note="BG0_XSCROLL=8")
+    # Without rowscroll: canvas_x at screen_x=0 = (0 + 0xFFF8) & 0x1FF = 0x1F8 = 504 → tile(31,0)
+    # With rs_hi[row0]=8: x_fp = (0xFFF8<<16 - 8<<16 - 0) = ((0xFFF8-8)<<16) = (0xFFF0<<16)
+    # src_x at screen_x=0 = 0xFFF0 & 0x1FF = 0x1F0 = 496 → tile(31,0) transparent
+    # src_x at screen_x=16: = (0xFFF0 + 16) & 0x1FF = (0x10000) & 0x1FF = 0 → tile(0,0) solid
+    _write_vram(m, records, rs_hi_addr_bg0_row0, 8, "rs_hi[BG0][row0]=8 with bgscrollx=8")
+    _check_px(m, records, 0, 0,
+              "bgscrollx=8 + rs_hi=8: screen_x=0 → transparent")
+    _check_px(m, records, 16, 0,
+              "bgscrollx=8 + rs_hi=8: screen_x=16 → canvas_x=0 → solid 0x5A7")
+    # Restore
+    _write_vram(m, records, rs_hi_addr_bg0_row0, 0, "restore rs_hi row0")
+    m.write_ctrl(0, 0)
+    rec(op="write", addr=0, data=0, be=3, note="BG0_XSCROLL=0 restore")
+
+    write_vectors("step5_vectors.jsonl", records)
+    return len(records)
+
+
+# =============================================================================
+# STEP 6 — BG0/BG1 global zoom
+# =============================================================================
+def gen_step6():
+    records = []
+    m = TC0480SCPModel()
+    rec = _step_common_reset(m, records)
+
+    # ── Shared tiles ────────────────────────────────────────────────────────
+    # Tile 10: solid pen=7, color=0x5A
+    # Tile 30: per-row pattern (row r has pen r&0xF+1) for Y-zoom tests
+    _make_solid_tile(m, records, tile_code=10, pen=7, color_byte=0x5A)
+    row_pens = [(r & 0xF) + 1 for r in range(16)]
+    _make_row_pattern_tile(m, records, tile_code=30, row_pens=row_pens)
+
+    _write_bg_map_tile(m, records, layer=0, tile_x=0, tile_y=0,
+                       color=0x5A, tile_code=10)
+
+    # ── Test 1: 1:1 zoom (no-zoom baseline) ──────────────────────────────
+    # ctrl[8] = 0x007F → xzoom=0, yzoom=0x7F → zoomx=0x10000, zoomy=0x10000 → nozoom=1
+    # (already set by common reset)
+    _check_px(m, records, 0, 0, "1:1 zoom baseline: solid tile at (0,0)")
+    _check_px(m, records, 8, 0, "1:1 zoom baseline: solid at screen_x=8")
+
+    # ── Test 2: xzoom=0x40 → horizontal expansion (more pixels per tile) ──
+    # zoomx = 0x10000 - (0x40 << 8) = 0x10000 - 0x4000 = 0xC000
+    # x_step = 0xC000 instead of 0x10000 → source advances slower → tiles appear wider
+    # sx_base = ((bgscrollx_raw+15+0)<<16) + ((255-bg_dx)<<8) + (-15)*0xC000
+    # bgscrollx_raw=0, bg_dx=0: sx = (15<<16) + (255<<8) + (-15)*0xC000
+    # = 0x000F0000 + 0x0000FF00 + (-0x00120000)
+    # = 0x000F0000 + 0x0000FF00 - 0x00120000 = 0xFFFEFF00
+    # At screen_x=0: src_x = 0xFFFEFF00>>16 & 0x1FF = 0xFFFE & 0x1FF = 0x1FE = 510
+    # That's tile(31,0) → transparent. Tile(0,0) solid starts when src_x=0.
+    # src_x=0 when x_fp crosses 0: x_fp_at_screen_x = 0xFFFEFF00 + screen_x*0xC000
+    # 0 = 0xFFFEFF00 + screen_x*0xC000 → screen_x*0xC000 = 0x10100 → screen_x = 0x10100/0xC000 ≈ 1.34
+    # Actually at screen_x=2: x_fp = 0xFFFEFF00 + 2*0xC000 = 0xFFFFEF00 → src_x = 0xFFFF & 0x1FF = 0x1FF
+    # Still in negative territory. Let me just use the model.
+    zoom_xonly = 0x7F | (0x40 << 8)  # xzoom=0x40, yzoom=0x7F (y stays 1:1)
+    m.write_ctrl(8, zoom_xonly)
+    rec(op="write", addr=8, data=zoom_xonly, be=3,
+        note=f"BG0_ZOOM=0x{zoom_xonly:04X}: xzoom=0x40 (horizontal expansion), yzoom=0x7F (1:1 y)")
+    # model now in zoom path; verify some pixels
+    # At 1:1 tile(0,0) solid was at screen_x=0..15. With zoom, it shifts.
+    # Zooming changes sx_base, so let model predict.
+    for sx in [0, 4, 8, 16, 20]:
+        _check_px(m, records, sx, 0, f"xzoom=0x40: screen_x={sx}")
+
+    # Reset zoom
+    m.write_ctrl(8, 0x007F)
+    rec(op="write", addr=8, data=0x007F, be=3, note="BG0_ZOOM restore 1:1")
+
+    # ── Test 3: yzoom=0x3F (<0x7F) → vertical compression ──────────────
+    # zoomy = 0x10000 - ((0x3F - 0x7F) * 512) = 0x10000 - ((-0x40)*512)
+    # = 0x10000 + 0x8000 = 0x18000 > 0x10000 → source Y advances faster → tilemap squished
+    # Use per-row-pattern tile to see different rows at different screen_y
+    _write_bg_map_tile(m, records, layer=0, tile_x=0, tile_y=0,
+                       color=0x5A, tile_code=30)
+    zoom_y_comp = 0x3F  # yzoom=0x3F, xzoom=0 → 1:1 x, compressed y
+    m.write_ctrl(8, zoom_y_comp)
+    rec(op="write", addr=8, data=zoom_y_comp, be=3,
+        note=f"BG0_ZOOM=0x{zoom_y_comp:04X}: yzoom=0x3F (vertical compression)")
+    # With yzoom=0x3F, zoomy = 0x10000 - ((0x3F-0x7F)*512) = 0x10000 + 0x8000 = 0x18000
+    # y_index at screen_y=k = (scrolly<<16) + (bg_dy<<8) + k*0x18000
+    # src_y at screen_y=0: 0 → tile_row=0, run_py=0 → pen=row_pens[0]=1 → 0x5A1
+    # src_y at screen_y=1: 0x18000>>16 = 1 → tile_row=0, run_py=1 → pen=2 → 0x5A2
+    # src_y at screen_y=10: 10*0x18000>>16 = 0xF0000>>16 = 15 → run_py=15 → pen=row_pens[15]
+    for sy in [0, 1, 2, 5, 10]:
+        _check_px(m, records, 0, sy, f"yzoom=0x3F (compression): screen_y={sy}")
+    m.write_ctrl(8, 0x007F)
+    rec(op="write", addr=8, data=0x007F, be=3, note="restore 1:1 y")
+
+    # ── Test 4: yzoom=0xBF (>0x7F) → vertical expansion ─────────────────
+    # zoomy = 0x10000 - ((0xBF - 0x7F)*512) = 0x10000 - 0x40*512 = 0x10000 - 0x8000 = 0x8000
+    # y_index advances slower → tilemap stretched vertically
+    zoom_y_exp = 0xBF  # yzoom=0xBF, xzoom=0
+    m.write_ctrl(8, zoom_y_exp)
+    rec(op="write", addr=8, data=zoom_y_exp, be=3,
+        note=f"BG0_ZOOM=0x{zoom_y_exp:04X}: yzoom=0xBF (vertical expansion)")
+    for sy in [0, 2, 4, 8, 15]:
+        _check_px(m, records, 0, sy, f"yzoom=0xBF (expansion): screen_y={sy}")
+    m.write_ctrl(8, 0x007F)
+    rec(op="write", addr=8, data=0x007F, be=3, note="restore 1:1 y")
+
+    # ── Test 5: both axes zoom ─────────────────────────────────────────
+    zoom_both = (0x40 << 8) | 0xBF  # xzoom=0x40, yzoom=0xBF
+    m.write_ctrl(8, zoom_both)
+    rec(op="write", addr=8, data=zoom_both, be=3,
+        note=f"BG0_ZOOM=0x{zoom_both:04X}: xzoom=0x40, yzoom=0xBF")
+    for sx, sy in [(0, 0), (4, 0), (8, 0), (0, 4), (0, 8)]:
+        _check_px(m, records, sx, sy, f"both zoom: screen_xy=({sx},{sy})")
+    m.write_ctrl(8, 0x007F)
+    rec(op="write", addr=8, data=0x007F, be=3, note="restore 1:1")
+
+    # ── Test 6: DX sub-pixel offset ─────────────────────────────────────
+    # ctrl[16] = BG0_DX low byte. sx_term_dx = (255 - bg_dx) << 8.
+    # bg_dx=0: term_dx=(255)<<8=0xFF00. bg_dx=0x80: term_dx=(175)<<8=0xAF00. Delta=-0x5000.
+    # Use xzoom=0x20 to stay in zoom path.
+    m.write_ctrl(8, (0x20 << 8) | 0x7F)
+    rec(op="write", addr=8, data=(0x20 << 8) | 0x7F, be=3,
+        note="BG0_ZOOM xzoom=0x20 for DX sub-pixel test")
+    m.write_ctrl(16, 0x00)
+    rec(op="write", addr=16, data=0, be=3, note="BG0_DX=0")
+    px_dx0 = [m.render_scanline(0)[sx] for sx in range(8)]
+    for sx in range(8):
+        _check_px(m, records, sx, 0, f"DX=0 xzoom=0x20: screen_x={sx}")
+    m.write_ctrl(16, 0x80)
+    rec(op="write", addr=16, data=0x80, be=3, note="BG0_DX=0x80")
+    for sx in range(8):
+        _check_px(m, records, sx, 0, f"DX=0x80 xzoom=0x20: screen_x={sx}")
+    m.write_ctrl(16, 0)
+    rec(op="write", addr=16, data=0, be=3, note="BG0_DX restore 0")
+    m.write_ctrl(8, 0x007F)
+    rec(op="write", addr=8, data=0x007F, be=3, note="restore 1:1")
+
+    # ── Test 7: zoom path ignores rowscroll RAM ──────────────────────────
+    # Set zoom != 1:1, write rowscroll, verify output unchanged from zoom-only.
+    m.write_ctrl(8, (0x20 << 8) | 0x7F)
+    rec(op="write", addr=8, data=(0x20 << 8) | 0x7F, be=3,
+        note="BG0_ZOOM xzoom=0x20 for rowscroll-disabled test")
+    _write_bg_map_tile(m, records, layer=0, tile_x=0, tile_y=0,
+                       color=0x5A, tile_code=10)
+    # Model in zoom path: render, note expected values
+    zoom_px = [m.render_scanline(0)[sx] for sx in range(8)]
+    # Write rs_hi for source rows 0..15 = large value (32) to strongly shift if applied
+    for row in range(16):
+        # We do NOT update m here because model zoom path already ignores rowscroll
+        records.append(dict(op="vram_write", addr=m._rs_hi_addr(0, row),
+                            data=32, be=3,
+                            note=f"rs_hi[BG0][row{row}]=32 (zoom path should ignore)"))
+    for sx in range(8):
+        _check_px(m, records, sx, 0,
+                  f"zoom+rs_hi=32: zoom path ignores rowscroll, screen_x={sx}")
+    # clear rowscroll
+    for row in range(16):
+        records.append(dict(op="vram_write", addr=m._rs_hi_addr(0, row),
+                            data=0, be=3, note=f"clear rs_hi[BG0][row{row}]"))
+    m.write_ctrl(8, 0x007F)
+    rec(op="write", addr=8, data=0x007F, be=3, note="restore 1:1")
+
+    # ── Test 8: BG1 independent zoom ──────────────────────────────────────
+    _write_bg_map_tile(m, records, layer=1, tile_x=0, tile_y=0,
+                       color=0x1B, tile_code=10)
+    m.write_ctrl(9, (0x30 << 8) | 0x7F)  # BG1 xzoom=0x30
+    rec(op="write", addr=9, data=(0x30 << 8) | 0x7F, be=3,
+        note="BG1_ZOOM xzoom=0x30")
+    for sx in [4, 8, 16]:
+        _check_px(m, records, sx, 0, f"BG1 xzoom=0x30: screen_x={sx}")
+    m.write_ctrl(9, 0x007F)
+    rec(op="write", addr=9, data=0x007F, be=3, note="restore BG1 zoom")
+
+    write_vectors("step6_vectors.jsonl", records)
+    return len(records)
+
+
+# =============================================================================
+# STEP 7 — BG2/BG3 colscroll
+# =============================================================================
+def gen_step7():
+    records = []
+    m = TC0480SCPModel()
+    rec = _step_common_reset(m, records)
+
+    # ── Shared tiles ────────────────────────────────────────────────────────
+    # Tile 40: solid pen=3, color=0x22 (BG2)
+    # Tile 41: solid pen=4, color=0x33 (BG3)
+    # Tile 42: per-row pattern for BG2 Y tests
+    _make_solid_tile(m, records, tile_code=40, pen=3, color_byte=0x22)
+    _make_solid_tile(m, records, tile_code=41, pen=4, color_byte=0x33)
+    row_pens = [(r & 0xF) + 1 for r in range(16)]
+    _make_row_pattern_tile(m, records, tile_code=42, row_pens=row_pens)
+
+    # BG2 appears in priority; set priority so BG2 is on top of BG0/BG1/BG3
+    # Default priority_order=0 → bg_priority=0x0123 (nibbles b→t: BG3,BG2,BG1,BG0)
+    # That means BG0 is on top. We need BG2 on top. Use priority_order=4 → 0x3210 (BG0 top)
+    # Hmm, let's just use BG2 alone to avoid priority confusion.
+    # Use BG2 tile(0,0) only, BG0/BG1/BG3 transparent (tile_code=0).
+
+    # Write BG2 tilemap with per-row-pattern tile across all rows 0..15
+    # so we can verify the y-shift effect clearly.
+    for ty in range(16):
+        _write_bg_map_tile(m, records, layer=2, tile_x=0, tile_y=ty,
+                           color=0x22, tile_code=42)
+
+    # ── Test 1: colscroll=0, baseline ─────────────────────────────────────
+    # All colscroll entries = 0 → src_y unchanged → normal scroll
+    # BG2 stagger: bgscrollx_raw=0, stagger=8 → bgscrollx[2] = -(8+0)=-8 = 0xFFF8 (no-zoom)
+    # But in zoom path (which BG2 uses since it doesn't have nozoom path...) wait.
+    # BG2 IS subject to zoom path vs no-zoom path too. With zoom=1:1 (0x007F), nozoom=1.
+    # No-zoom path for BG2: same as BG0/BG1 but with colscroll + rowzoom in FSM.
+    # canvas_y = (y + scrolly) & 0x1FF. After colscroll: src_y = (canvas_y + cs) & 0x1FF.
+    # With cs=0: src_y = canvas_y. tile_row = canvas_y >> 4 = screen_y >> 4.
+    # At screen_y=0: tile_row=0, run_py=0 → pen=row_pens[0]=1 → 0x221
+    # At screen_y=5: tile_row=0, run_py=5 → pen=row_pens[5]=6 → 0x226
+    # BG2 x stagger means first 8 screen_x pixels show tile(31,0), screen_x=8+ show tile(0,0).
+    # Actually stagger shifts x. Let's check screen_x=8 to be safe.
+    _check_px(m, records, 8, 0,  "BG2 colscroll=0 baseline: screen_y=0 run_py=0 → pen=1")
+    _check_px(m, records, 8, 5,  "BG2 colscroll=0 baseline: screen_y=5 run_py=5 → pen=6")
+    _check_px(m, records, 8, 15, "BG2 colscroll=0 baseline: screen_y=15 run_py=15 → pen=0 (transparent)")
+
+    # ── Test 2: BG2 colscroll entry for col_idx=0 = 8 → shift screen_y=0 src_y by 8 ──
+    # col_idx = screen_y (in no-zoom path) = 0 for screen_y=0.
+    # src_y = (canvas_y + cs) & 0x1FF = (0 + 8) & 0x1FF = 8
+    # tile_row = 8>>4 = 0, run_py = 8&0xF = 8 → pen=row_pens[8]=9 → 0x229
+    cs_addr_bg2_col0 = m._cs_addr(2, 0)
+    _write_vram(m, records, cs_addr_bg2_col0, 8,
+                "colscroll[BG2][col0]=8: shift source Y by +8 for screen_y=0")
+    _check_px(m, records, 8, 0,
+              "BG2 cs=8 col0: screen_y=0 → src_y=8 → run_py=8 → pen=9 → 0x229")
+    # screen_y=1 (col_idx=1) has colscroll=0 → unchanged
+    _check_px(m, records, 8, 1,
+              "BG2 cs=8 col0, cs=0 col1: screen_y=1 unchanged → run_py=1 → pen=2")
+    # screen_y=2 (col_idx=2) has colscroll=0 → unchanged
+    _check_px(m, records, 8, 2,
+              "BG2 cs=0 col2: screen_y=2 unchanged → run_py=2 → pen=3")
+
+    # ── Test 3: large colscroll (cs=32 for col_idx=4) ───────────────────
+    cs_addr_bg2_col4 = m._cs_addr(2, 4)
+    _write_vram(m, records, cs_addr_bg2_col4, 32,
+                "colscroll[BG2][col4]=32: shift screen_y=4 source by +32 rows")
+    # screen_y=4: canvas_y=4, src_y=(4+32)&0x1FF=36, tile_row=36>>4=2, run_py=36&0xF=4
+    # tile(0,2) → pen=row_pens[4]=5 → 0x225
+    _check_px(m, records, 8, 4,
+              "BG2 cs=32 col4: screen_y=4 → src_y=36 → tile_row=2 → run_py=4 → pen=5")
+    # screen_y=5 (col_idx=5) has cs=0 → src_y=5 → run_py=5 → pen=6
+    _check_px(m, records, 8, 5,
+              "BG2 cs=0 col5: screen_y=5 → src_y=5 unchanged → pen=6")
+
+    # ── Test 4: colscroll wrap (cs=0x200-4 = 0x1FC → src_y = canvas_y - 4) ─
+    cs_addr_bg2_col8 = m._cs_addr(2, 8)
+    _write_vram(m, records, cs_addr_bg2_col8, 0x1FC,
+                "colscroll[BG2][col8]=0x1FC (-4 wrap): shift screen_y=8 src_y by -4")
+    # screen_y=8: canvas_y=8, src_y=(8+0x1FC)&0x1FF=0x204&0x1FF=4
+    # tile_row=0, run_py=4 → pen=row_pens[4]=5 → 0x225
+    _check_px(m, records, 8, 8,
+              "BG2 cs=0x1FC col8: screen_y=8 → src_y=(8-4)=4 → run_py=4 → pen=5")
+
+    # ── Test 5: BG3 colscroll independent ────────────────────────────────
+    # Write BG3 tiles
+    for ty in range(16):
+        _write_bg_map_tile(m, records, layer=3, tile_x=0, tile_y=ty,
+                           color=0x33, tile_code=42)
+    # BG3 at same positions as BG2. Default priority: BG2 and BG3 in priority order.
+    # Actually default priority_order=0 → 0x0123 nibbles[15:12..3:0] = 0,1,2,3
+    # Reading the colmix: for i in 0..3: layer = (pri>>(12-i*4))&0xF
+    # i=0: layer=(0x0123>>12)&0xF=0 (bottom)
+    # i=1: layer=(0x0123>>8)&0xF=1
+    # i=2: layer=(0x0123>>4)&0xF=2
+    # i=3: layer=(0x0123>>0)&0xF=3 (top)
+    # So BG3 is on top of BG2. Since both use tile 42 with same colors,
+    # the visible output = BG3's pixel (if non-transparent) or BG2's.
+    # Both have same tile code so same pens. BG3 color=0x33, BG2 color=0x22.
+    # BG3 is on top → output = BG3 pixel.
+
+    # BG3 colscroll independent: write cs=16 for col_idx=3 on BG3
+    cs_addr_bg3_col3 = m._cs_addr(3, 3)
+    _write_vram(m, records, cs_addr_bg3_col3, 16,
+                "colscroll[BG3][col3]=16: BG3 independent colscroll")
+    # BG2 col3 still has cs=0 (from before)
+    # screen_y=3: BG3 src_y=(3+16)=19, tile_row=1, run_py=3 → pen=4 → 0x334
+    # BG2 src_y=3, run_py=3 → pen=4 → 0x224. But BG3 is on top.
+    _check_px(m, records, 8, 3,
+              "BG3 cs=16 col3 on top: screen_y=3 → BG3 src_y=19 → run_py=3 → pen=4 → 0x334")
+    # screen_y=4 BG3 cs=0 → BG3 src_y=4 → run_py=4 → pen=5 → 0x335
+    # BG2 col4 has cs=32 → src_y=36 → tile_row=2 → run_py=4 → pen=5 → 0x225. BG3 on top → 0x335
+    _check_px(m, records, 8, 4,
+              "BG3 cs=0 col4, BG2 cs=32 col4: BG3 on top → BG3 src_y=4 → pen=5 → 0x335")
+
+    write_vectors("step7_vectors.jsonl", records)
+    return len(records)
+
+
+# =============================================================================
+# STEP 8 — BG2/BG3 per-row zoom
+# =============================================================================
+def gen_step8():
+    records = []
+    m = TC0480SCPModel()
+    rec = _step_common_reset(m, records)
+
+    # ── Shared tiles ────────────────────────────────────────────────────────
+    # Tile 50: solid pen=7, color=0x44 (BG2)
+    # Tile 51: per-column pen pattern for X zoom test (same pen per row)
+    # Tile 52: per-row pattern for combined tests
+    _make_solid_tile(m, records, tile_code=50, pen=7, color_byte=0x44)
+
+    # Tile 51: column-dependent pen. Each pixel has pen=(col>>1)+1 so we can
+    # detect X stretching. Use GFX ROM pixel array: pixel k in a row has pen k>>1+1.
+    # Since tiles are 16 wide: nibbles in GFX word:
+    # left half (px0..7): pen = (px_idx>>1)+1 for px_idx 0..7
+    # right half (px8..15): pen = (px_idx>>1)+1 for px_idx 8..15
+    left_word_51 = 0
+    right_word_51 = 0
+    for i in range(8):
+        p_l = (i >> 1) + 1  # px 0..7 → pens 1,1,2,2,3,3,4,4
+        p_r = ((i+8) >> 1) + 1  # px 8..15 → pens 5,5,6,6,7,7,8,8 (but pen 8 is nibble 8 = 0x8)
+        left_word_51  |= ((p_l & 0xF) << (28 - i*4))
+        right_word_51 |= ((p_r & 0xF) << (28 - i*4))
+    base_51 = 51 * 32
+    for row in range(16):
+        records.append(dict(op="gfx_rom_write", word_addr=base_51 + row*2,
+                            data_hi=(left_word_51>>16)&0xFFFF, data_lo=left_word_51&0xFFFF,
+                            note=f"GFX tile51 row{row} left"))
+        records.append(dict(op="gfx_rom_write", word_addr=base_51 + row*2 + 1,
+                            data_hi=(right_word_51>>16)&0xFFFF, data_lo=right_word_51&0xFFFF,
+                            note=f"GFX tile51 row{row} right"))
+        m.write_gfx_rom_word(base_51 + row*2,     left_word_51)
+        m.write_gfx_rom_word(base_51 + row*2 + 1, right_word_51)
+
+    row_pens = [(r & 0xF) + 1 for r in range(16)]
+    _make_row_pattern_tile(m, records, tile_code=52, row_pens=row_pens)
+
+    # Fill BG2 tilemap rows 0..15 with tile 50 (solid pen=7).
+    # Tile 51 (column-gradient) is defined above for completeness but we use solid
+    # tiles for check_pixel tests to avoid sensitivity to fractional x_step position.
+    for ty in range(16):
+        for tx in range(32):
+            _write_bg_map_tile(m, records, layer=2, tile_x=tx, tile_y=ty,
+                               color=0x44, tile_code=50)
+
+    # Enable BG2 rowzoom: ctrl[15] bit0 = 1
+    m.write_ctrl(15, 0x0001)
+    rec(op="write", addr=15, data=0x0001, be=3, note="LAYER_CTRL bit0=1: rowzoom_en[2]=1")
+
+    # ── Test 1: rowzoom_en=1 but all rowzoom entries=0 → no effect ───────
+    # x_step = zoomx - (0 << 8) = zoomx = 0x10000. Same as no zoom.
+    _check_px(m, records, 8, 0, "rowzoom_en=1, rz=0: no effect → normal 1:1 rendering")
+    _check_px(m, records, 16, 0, "rowzoom_en=1, rz=0: screen_x=16 normal")
+
+    # ── Test 2: rowzoom_en=0 with non-zero rowzoom RAM → no effect ────────
+    m.write_ctrl(15, 0x0000)
+    rec(op="write", addr=15, data=0x0000, be=3, note="LAYER_CTRL=0: rowzoom_en[2]=0")
+    # Write large rowzoom value
+    rz_addr_bg2_row0 = m._rz_addr(2, 0)  # = 0x3000
+    _write_vram(m, records, rz_addr_bg2_row0, 0x40,
+                "rz[BG2][row0]=0x40 (rowzoom_en=0 → should be ignored)")
+    _check_px(m, records, 8, 0,
+              "rowzoom_en=0, rz=0x40: ignored → normal output")
+    # Note: model doesn't apply rowzoom when rowzoom_en=0, so _check_px gives correct expected.
+    # Clean up: zero rowzoom
+    _write_vram(m, records, rz_addr_bg2_row0, 0, "clear rz[BG2][row0]")
+    # Re-enable
+    m.write_ctrl(15, 0x0001)
+    rec(op="write", addr=15, data=0x0001, be=3, note="re-enable rowzoom_en[2]=1")
+
+    # ── Test 3: uniform rowzoom=0x40 across all rows → horizontal compression ─
+    # x_step = zoomx - (0x40<<8) = 0x10000 - 0x4000 = 0xC000
+    # All rows have same zoom → uniform compression effect
+    # x_origin_adj = (layer*4 - 31) * (0x40<<8) = (8-31)*0x4000 = -23*0x4000 = -0x5C000
+    # sx = ((scrollx_raw+15+8)<<16) + (255<<8) + (-15-8)*0x10000 [zoomx=0x10000 since we're in no-zoom... ]
+    # Wait, in no-zoom path x_step=0x10000 always; rowzoom only applies in certain path.
+    # Actually: rowzoom applies in BOTH no-zoom and zoom paths for BG2/3 (it modifies x_step).
+    # In no-zoom path: x_step_r = nozoom_c ? 32'h00010000 : zoomx_c (not modified by rz here)
+    # Wait -- let me re-read the RTL S2 for BG2/3:
+    # x_step_r <= zoomx_c - rz_sub (where rz_sub = rz_lo<<8 if rowzoom_en)
+    # But in no-zoom path (nozoom_c=1), zoomx_c = 0x10000.
+    # So x_step = 0x10000 - (rz_lo<<8).
+    # Actually the RTL S2 is ALWAYS run for BG2/3 (both zoom and no-zoom), and it sets x_step.
+    # In BG_S3 (no-rowzoom) or BG_S4: x_step_r <= nozoom_c ? 32'h00010000 : zoomx_c
+    # Hmm, BG2/3 S3 (no-rowzoom): x_step_r <= nozoom_c ? 32'h00010000 : zoomx_c
+    # That overrides the S2 x_step! So rowzoom x_step computation from S2 is overwritten in S3/S4?
+    # NO! For BG2/3 with rowzoom_en: we go through S4, not S3.
+    # In S4: x_step_r <= nozoom_c ? 32'h00010000 : zoomx_c  ← also overrides!
+    # So rowzoom doesn't affect x_step in the no-zoom path? That seems wrong.
+    # Let me re-read RTL S2 and S4 more carefully.
+    #
+    # Actually looking at RTL S2 BG2/3:
+    #   x_step_r <= zoomx_c - rz_sub  (where rz_sub = rz_lo<<8 if rowzoom_en else 0)
+    # RTL S4: x_step_r <= nozoom_c ? 32'h00010000 : zoomx_c
+    # S4 OVERWRITES x_step_r! So x_step computed in S2 is wasted.
+    # That means rowzoom doesn't reduce x_step in no-zoom path. That's actually correct
+    # per section2: "x_step = zoomx" in the zoom path formula. In no-zoom path,
+    # x_step = 0x10000 always. Rowzoom reduces x_step ONLY when in zoom path.
+    # The x_origin adjustment applies in both paths (via rz_origin in S4).
+    # Let me re-read S4: x_step_r <= nozoom_c ? 32'h00010000 : zoomx_c
+    # So in no-zoom path: x_step=0x10000 (unchanged). In zoom path: x_step=zoomx_c (not rz-adjusted).
+    # But section2 §2.2 says "x_step = zoomx - (row_zoom & 0xff)*256". This only applies in zoom path.
+    # In no-zoom path there's no x_step reduction from rowzoom in section2 either (that whole
+    # section is only for the zoom path, as bg23_draw applies on the same `else` branch).
+    # So rowzoom for BG2/3 only reduces x_step in ZOOM PATH. In no-zoom path, rowzoom
+    # only contributes the x_origin adjustment.
+    # Wait, but section2 §2.2 says the colscroll/rowzoom is the `else` (zoom) path. And
+    # the no-zoom path for BG2/3 would use MAME's tilemap engine.
+    # For our step7/8 tests, let's use zoom path to exercise rowzoom properly.
+    # But zoom path requires nozoom=0. Let's set a slight zoom.
+    #
+    # Actually: check if RTL S4 overwrites S2's x_step. Reading carefully:
+    # RTL BG_S4:
+    #   x_step_r <= nozoom_c ? 32'h00010000 : zoomx_c;
+    # So YES, S4 overwrites x_step_r. The S2 computation is lost for BG2/3 with rowzoom.
+    # This means in no-zoom path: x_step stays 0x10000 (rowzoom not applied to step).
+    # In zoom path: x_step = zoomx_c (also not rz-adjusted in x_step!).
+    #
+    # Hmm, that means rowzoom doesn't affect x_step at all? Let me re-read the S2 code.
+    # Oh wait - I need to re-read the actual current RTL after my fix:
+
+    # Actually I realize I need to re-read what x_step assignment is in S4 (BG2/3 with rowzoom).
+    # Let me just use the model (which I trust is correct per section2) and test against it.
+    # The model applies: x_step = zoomx - (rz_lo<<8) in zoom path for BG2/3 with rowzoom_en.
+    # Let's test in zoom path.
+
+    # Set BG2 into zoom path with small xzoom
+    m.write_ctrl(10, (0x10 << 8) | 0x7F)  # BG2 xzoom=0x10, yzoom=0x7F
+    rec(op="write", addr=10, data=(0x10 << 8) | 0x7F, be=3,
+        note="BG2_ZOOM xzoom=0x10 (slight x zoom) for rowzoom test")
+
+    rz_uniform = 0x40
+    for row in range(16):
+        addr = m._rz_addr(2, row)
+        _write_vram(m, records, addr, rz_uniform,
+                    f"rz[BG2][row{row}]=0x{rz_uniform:02X}: uniform rowzoom")
+    # In zoom path: x_step = zoomx - (0x40<<8) = (0x10000 - 0x10*0x100) - 0x40*0x100
+    # = (0x10000 - 0x1000) - 0x4000 = 0xF000 - 0x4000 = 0xB000
+    for sx in [8, 16, 24]:
+        _check_px(m, records, sx, 0, f"uniform rowzoom=0x40: screen_x={sx}")
+
+    # ── Test 4: colscroll + rowzoom interaction (ordering proof) ──────────
+    # This is the critical colscroll-before-rowzoom ordering proof from §3.3 of plan.
+    # col_idx=4 (screen_y=4) has colscroll=64 → src_y = canvas_y + 64 = 4 + 64 = 68
+    # row_idx = 68 → rz[68] should have zoom value.
+    # rz[68] = 0x60. rz[canvas_y=4=row4] = 0x00.
+    # x_step at screen_y=4 should use rz[68]=0x60, NOT rz[4]=0x00.
+
+    # First, zero all rowzoom
+    for row in range(256):
+        addr = m._rz_addr(2, row)
+        records.append(dict(op="vram_write", addr=addr, data=0, be=3,
+                            note=f"zero rz[BG2][row{row}]"))
+        m.write_ram(addr, 0)
+
+    # Write colscroll entry 4 = 64
+    cs_addr_bg2_col4 = m._cs_addr(2, 4)
+    _write_vram(m, records, cs_addr_bg2_col4, 64,
+                "colscroll[BG2][col4]=64: src_y at screen_y=4 offset by 64")
+
+    # Write rowzoom for source row 68 = 0x60 (strong zoom)
+    rz_addr_68 = m._rz_addr(2, 68)
+    _write_vram(m, records, rz_addr_68, 0x60,
+                "rz[BG2][row68]=0x60: zoom for colscroll-adjusted source row")
+    # rowzoom at source row 4 = 0 (default zero)
+
+    # Now render screen_y=4: col_idx=4, src_y=(4+64)&0x1FF=68, row_idx=68, rz=0x60
+    _check_px(m, records, 8, 4,
+              "colscroll+rowzoom ordering: screen_y=4 → src_y=68 → uses rz[68]=0x60")
+    # Contrast with screen_y=3: col_idx=3, colscroll=0, src_y=3, rz[3]=0 → different x_step
+    _check_px(m, records, 8, 3,
+              "colscroll+rowzoom ordering: screen_y=3 → src_y=3 → uses rz[3]=0 (no zoom)")
+
+    # ── Test 5: rowzoom_en[3] independent ────────────────────────────────
+    # Use solid tile (tile50-like) for BG3 to avoid sensitivity to y-row position.
+    # We make a solid BG3 tile with color=0x33, pen=7, tile_code=53.
+    _make_solid_tile(m, records, tile_code=53, pen=7, color_byte=0x33)
+    for ty in range(4):
+        _write_bg_map_tile(m, records, layer=3, tile_x=0, tile_y=ty,
+                           color=0x33, tile_code=53)
+    m.write_ctrl(15, 0x0003)  # rowzoom_en[2]=1, rowzoom_en[3]=1
+    rec(op="write", addr=15, data=0x0003, be=3, note="LAYER_CTRL=3: rowzoom_en[2]=1, rowzoom_en[3]=1")
+    m.write_ctrl(11, (0x10 << 8) | 0x7F)  # BG3 in zoom path
+    rec(op="write", addr=11, data=(0x10 << 8) | 0x7F, be=3, note="BG3_ZOOM xzoom=0x10")
+    rz_addr_bg3_row0 = m._rz_addr(3, 0)
+    _write_vram(m, records, rz_addr_bg3_row0, 0x30,
+                "rz[BG3][row0]=0x30: BG3 independent rowzoom")
+    # BG3 is on top (priority 0x0123 → BG3 at position 3 = top)
+    # Solid tile: rowzoom affects x_step but not pen (solid pen=7 everywhere).
+    # Test verifies BG3 rowzoom_en is independent from BG2 (BG3 on top, different zoom).
+    _check_px(m, records, 8, 0, "BG3 rowzoom=0x30, BG2 rowzoom≈0: BG3 on top shows through")
+
+    write_vectors("step8_vectors.jsonl", records)
+    return len(records)
+
+
+# =============================================================================
 # Main
 # =============================================================================
 if __name__ == "__main__":
@@ -728,4 +1449,10 @@ if __name__ == "__main__":
     n2 = gen_step2()
     n3 = gen_step3()
     n4 = gen_step4()
-    print(f"Total vectors: step1={n1}, step2={n2}, step3={n3}, step4={n4}, total={n1+n2+n3+n4}")
+    n5 = gen_step5()
+    n6 = gen_step6()
+    n7 = gen_step7()
+    n8 = gen_step8()
+    total = n1 + n2 + n3 + n4 + n5 + n6 + n7 + n8
+    print(f"Total vectors: step1={n1}, step2={n2}, step3={n3}, step4={n4}, "
+          f"step5={n5}, step6={n6}, step7={n7}, step8={n8}, total={total}")

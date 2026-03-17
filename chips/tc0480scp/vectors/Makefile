@@ -14,6 +14,11 @@ VEC1       := $(VEC_DIR)/step1_vectors.jsonl
 VEC2       := $(VEC_DIR)/step2_vectors.jsonl
 VEC3       := $(VEC_DIR)/step3_vectors.jsonl
 VEC4       := $(VEC_DIR)/step4_vectors.jsonl
+VEC5       := $(VEC_DIR)/step5_vectors.jsonl
+VEC6       := $(VEC_DIR)/step6_vectors.jsonl
+VEC7       := $(VEC_DIR)/step7_vectors.jsonl
+VEC8       := $(VEC_DIR)/step8_vectors.jsonl
+ALL_VECS   := $(VEC1) $(VEC2) $(VEC3) $(VEC4) $(VEC5) $(VEC6) $(VEC7) $(VEC8)
 SIM_BIN    := $(OBJ_DIR)/Vtc0480scp
 
 .PHONY: all vectors build run clean test
@@ -21,18 +26,10 @@ all: vectors build run
 
 test: all
 
-vectors: $(VEC1) $(VEC2) $(VEC3) $(VEC4)
+vectors: $(ALL_VECS)
 
-$(VEC1): $(VEC_DIR)/generate_vectors.py $(VEC_DIR)/scp_model.py
-	cd $(VEC_DIR) && $(PYTHON) generate_vectors.py
-
-$(VEC2): $(VEC_DIR)/generate_vectors.py $(VEC_DIR)/scp_model.py
-	cd $(VEC_DIR) && $(PYTHON) generate_vectors.py
-
-$(VEC3): $(VEC_DIR)/generate_vectors.py $(VEC_DIR)/scp_model.py
-	cd $(VEC_DIR) && $(PYTHON) generate_vectors.py
-
-$(VEC4): $(VEC_DIR)/generate_vectors.py $(VEC_DIR)/scp_model.py
+# All vector files are regenerated together by generate_vectors.py
+$(ALL_VECS): $(VEC_DIR)/generate_vectors.py $(VEC_DIR)/scp_model.py
 	cd $(VEC_DIR) && $(PYTHON) generate_vectors.py
 
 build: $(SIM_BIN)
@@ -41,9 +38,9 @@ $(SIM_BIN): $(TB) $(RTL)
 	    $(RTL) \
 	    $(TB) --build -CFLAGS "-O2 -std=c++17" 2>&1
 
-run: $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4)
-	cd $(VEC_DIR) && $(SIM_BIN) $(VEC1) $(VEC2) $(VEC3) $(VEC4)
+run: $(SIM_BIN) $(ALL_VECS)
+	cd $(VEC_DIR) && $(SIM_BIN) $(ALL_VECS)
 
 clean:
 	rm -rf $(OBJ_DIR)
-	rm -f $(VEC1) $(VEC2) $(VEC3) $(VEC4)
+	rm -f $(ALL_VECS)

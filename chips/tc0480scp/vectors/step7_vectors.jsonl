@@ -1,0 +1,177 @@
+{"op": "reset", "note": "step reset"}
+{"op": "write", "addr": 0, "data": 0, "be": 3, "note": "ctrl[0]=0"}
+{"op": "write", "addr": 1, "data": 0, "be": 3, "note": "ctrl[1]=0"}
+{"op": "write", "addr": 2, "data": 0, "be": 3, "note": "ctrl[2]=0"}
+{"op": "write", "addr": 3, "data": 0, "be": 3, "note": "ctrl[3]=0"}
+{"op": "write", "addr": 4, "data": 0, "be": 3, "note": "ctrl[4]=0"}
+{"op": "write", "addr": 5, "data": 0, "be": 3, "note": "ctrl[5]=0"}
+{"op": "write", "addr": 6, "data": 0, "be": 3, "note": "ctrl[6]=0"}
+{"op": "write", "addr": 7, "data": 0, "be": 3, "note": "ctrl[7]=0"}
+{"op": "write", "addr": 8, "data": 0, "be": 3, "note": "ctrl[8]=0"}
+{"op": "write", "addr": 9, "data": 0, "be": 3, "note": "ctrl[9]=0"}
+{"op": "write", "addr": 10, "data": 0, "be": 3, "note": "ctrl[10]=0"}
+{"op": "write", "addr": 11, "data": 0, "be": 3, "note": "ctrl[11]=0"}
+{"op": "write", "addr": 12, "data": 0, "be": 3, "note": "ctrl[12]=0"}
+{"op": "write", "addr": 13, "data": 0, "be": 3, "note": "ctrl[13]=0"}
+{"op": "write", "addr": 14, "data": 0, "be": 3, "note": "ctrl[14]=0"}
+{"op": "write", "addr": 15, "data": 0, "be": 3, "note": "ctrl[15]=0"}
+{"op": "write", "addr": 16, "data": 0, "be": 3, "note": "ctrl[16]=0"}
+{"op": "write", "addr": 17, "data": 0, "be": 3, "note": "ctrl[17]=0"}
+{"op": "write", "addr": 18, "data": 0, "be": 3, "note": "ctrl[18]=0"}
+{"op": "write", "addr": 19, "data": 0, "be": 3, "note": "ctrl[19]=0"}
+{"op": "write", "addr": 20, "data": 0, "be": 3, "note": "ctrl[20]=0"}
+{"op": "write", "addr": 21, "data": 0, "be": 3, "note": "ctrl[21]=0"}
+{"op": "write", "addr": 22, "data": 0, "be": 3, "note": "ctrl[22]=0"}
+{"op": "write", "addr": 23, "data": 0, "be": 3, "note": "ctrl[23]=0"}
+{"op": "write", "addr": 8, "data": 127, "be": 3, "note": "ctrl[8]=0x007F (1:1 zoom)"}
+{"op": "write", "addr": 9, "data": 127, "be": 3, "note": "ctrl[9]=0x007F (1:1 zoom)"}
+{"op": "write", "addr": 10, "data": 127, "be": 3, "note": "ctrl[10]=0x007F (1:1 zoom)"}
+{"op": "write", "addr": 11, "data": 127, "be": 3, "note": "ctrl[11]=0x007F (1:1 zoom)"}
+{"op": "vram_zero", "base": 0, "count": 8192, "note": "zero BG tilemaps"}
+{"op": "vram_zero", "base": 8192, "count": 8192, "note": "zero rowscroll/scram (0x2000-0x3FFF)"}
+{"op": "vram_zero", "base": 16384, "count": 8192, "note": "zero rowscroll dblwidth (0x4000-0x5FFF)"}
+{"op": "vram_zero", "base": 24576, "count": 4096, "note": "zero FG0 tilemap"}
+{"op": "vram_zero", "base": 28672, "count": 4096, "note": "zero FG0 gfx data"}
+{"op": "gfx_rom_write", "word_addr": 1280, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row0 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1281, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row0 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1282, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row1 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1283, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row1 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1284, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row2 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1285, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row2 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1286, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row3 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1287, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row3 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1288, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row4 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1289, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row4 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1290, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row5 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1291, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row5 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1292, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row6 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1293, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row6 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1294, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row7 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1295, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row7 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1296, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row8 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1297, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row8 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1298, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row9 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1299, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row9 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1300, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row10 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1301, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row10 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1302, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row11 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1303, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row11 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1304, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row12 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1305, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row12 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1306, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row13 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1307, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row13 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1308, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row14 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1309, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row14 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1310, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row15 half0: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1311, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile40 row15 half1: solid pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1312, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row0 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1313, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row0 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1314, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row1 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1315, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row1 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1316, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row2 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1317, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row2 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1318, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row3 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1319, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row3 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1320, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row4 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1321, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row4 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1322, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row5 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1323, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row5 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1324, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row6 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1325, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row6 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1326, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row7 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1327, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row7 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1328, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row8 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1329, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row8 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1330, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row9 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1331, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row9 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1332, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row10 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1333, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row10 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1334, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row11 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1335, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row11 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1336, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row12 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1337, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row12 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1338, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row13 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1339, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row13 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1340, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row14 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1341, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row14 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1342, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row15 half0: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1343, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile41 row15 half1: solid pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1344, "data_hi": 4369, "data_lo": 4369, "note": "GFX ROM tile42 row0: pen=1"}
+{"op": "gfx_rom_write", "word_addr": 1345, "data_hi": 4369, "data_lo": 4369, "note": "GFX ROM tile42 row0: pen=1"}
+{"op": "gfx_rom_write", "word_addr": 1346, "data_hi": 8738, "data_lo": 8738, "note": "GFX ROM tile42 row1: pen=2"}
+{"op": "gfx_rom_write", "word_addr": 1347, "data_hi": 8738, "data_lo": 8738, "note": "GFX ROM tile42 row1: pen=2"}
+{"op": "gfx_rom_write", "word_addr": 1348, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile42 row2: pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1349, "data_hi": 13107, "data_lo": 13107, "note": "GFX ROM tile42 row2: pen=3"}
+{"op": "gfx_rom_write", "word_addr": 1350, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile42 row3: pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1351, "data_hi": 17476, "data_lo": 17476, "note": "GFX ROM tile42 row3: pen=4"}
+{"op": "gfx_rom_write", "word_addr": 1352, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile42 row4: pen=5"}
+{"op": "gfx_rom_write", "word_addr": 1353, "data_hi": 21845, "data_lo": 21845, "note": "GFX ROM tile42 row4: pen=5"}
+{"op": "gfx_rom_write", "word_addr": 1354, "data_hi": 26214, "data_lo": 26214, "note": "GFX ROM tile42 row5: pen=6"}
+{"op": "gfx_rom_write", "word_addr": 1355, "data_hi": 26214, "data_lo": 26214, "note": "GFX ROM tile42 row5: pen=6"}
+{"op": "gfx_rom_write", "word_addr": 1356, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile42 row6: pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1357, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile42 row6: pen=7"}
+{"op": "gfx_rom_write", "word_addr": 1358, "data_hi": 34952, "data_lo": 34952, "note": "GFX ROM tile42 row7: pen=8"}
+{"op": "gfx_rom_write", "word_addr": 1359, "data_hi": 34952, "data_lo": 34952, "note": "GFX ROM tile42 row7: pen=8"}
+{"op": "gfx_rom_write", "word_addr": 1360, "data_hi": 39321, "data_lo": 39321, "note": "GFX ROM tile42 row8: pen=9"}
+{"op": "gfx_rom_write", "word_addr": 1361, "data_hi": 39321, "data_lo": 39321, "note": "GFX ROM tile42 row8: pen=9"}
+{"op": "gfx_rom_write", "word_addr": 1362, "data_hi": 43690, "data_lo": 43690, "note": "GFX ROM tile42 row9: pen=10"}
+{"op": "gfx_rom_write", "word_addr": 1363, "data_hi": 43690, "data_lo": 43690, "note": "GFX ROM tile42 row9: pen=10"}
+{"op": "gfx_rom_write", "word_addr": 1364, "data_hi": 48059, "data_lo": 48059, "note": "GFX ROM tile42 row10: pen=11"}
+{"op": "gfx_rom_write", "word_addr": 1365, "data_hi": 48059, "data_lo": 48059, "note": "GFX ROM tile42 row10: pen=11"}
+{"op": "gfx_rom_write", "word_addr": 1366, "data_hi": 52428, "data_lo": 52428, "note": "GFX ROM tile42 row11: pen=12"}
+{"op": "gfx_rom_write", "word_addr": 1367, "data_hi": 52428, "data_lo": 52428, "note": "GFX ROM tile42 row11: pen=12"}
+{"op": "gfx_rom_write", "word_addr": 1368, "data_hi": 56797, "data_lo": 56797, "note": "GFX ROM tile42 row12: pen=13"}
+{"op": "gfx_rom_write", "word_addr": 1369, "data_hi": 56797, "data_lo": 56797, "note": "GFX ROM tile42 row12: pen=13"}
+{"op": "gfx_rom_write", "word_addr": 1370, "data_hi": 61166, "data_lo": 61166, "note": "GFX ROM tile42 row13: pen=14"}
+{"op": "gfx_rom_write", "word_addr": 1371, "data_hi": 61166, "data_lo": 61166, "note": "GFX ROM tile42 row13: pen=14"}
+{"op": "gfx_rom_write", "word_addr": 1372, "data_hi": 65535, "data_lo": 65535, "note": "GFX ROM tile42 row14: pen=15"}
+{"op": "gfx_rom_write", "word_addr": 1373, "data_hi": 65535, "data_lo": 65535, "note": "GFX ROM tile42 row14: pen=15"}
+{"op": "gfx_rom_write", "word_addr": 1374, "data_hi": 0, "data_lo": 0, "note": "GFX ROM tile42 row15: pen=16"}
+{"op": "gfx_rom_write", "word_addr": 1375, "data_hi": 0, "data_lo": 0, "note": "GFX ROM tile42 row15: pen=16"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 0, "attr": 34, "code": 42, "note": "BG2 map(0,0) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 1, "attr": 34, "code": 42, "note": "BG2 map(0,1) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 2, "attr": 34, "code": 42, "note": "BG2 map(0,2) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 3, "attr": 34, "code": 42, "note": "BG2 map(0,3) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 4, "attr": 34, "code": 42, "note": "BG2 map(0,4) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 5, "attr": 34, "code": 42, "note": "BG2 map(0,5) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 6, "attr": 34, "code": 42, "note": "BG2 map(0,6) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 7, "attr": 34, "code": 42, "note": "BG2 map(0,7) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 8, "attr": 34, "code": 42, "note": "BG2 map(0,8) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 9, "attr": 34, "code": 42, "note": "BG2 map(0,9) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 10, "attr": 34, "code": 42, "note": "BG2 map(0,10) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 11, "attr": 34, "code": 42, "note": "BG2 map(0,11) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 12, "attr": 34, "code": 42, "note": "BG2 map(0,12) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 13, "attr": 34, "code": 42, "note": "BG2 map(0,13) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 14, "attr": 34, "code": 42, "note": "BG2 map(0,14) tile=42 color=34"}
+{"op": "map_write_bg", "layer": 2, "tile_x": 0, "tile_y": 15, "attr": 34, "code": 42, "note": "BG2 map(0,15) tile=42 color=34"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 0, "exp": 545, "note": "BG2 colscroll=0 baseline: screen_y=0 run_py=0 \u2192 pen=1"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 5, "exp": 550, "note": "BG2 colscroll=0 baseline: screen_y=5 run_py=5 \u2192 pen=6"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 15, "exp": 0, "note": "BG2 colscroll=0 baseline: screen_y=15 run_py=15 \u2192 pen=0 (transparent)"}
+{"op": "vram_write", "addr": 13312, "data": 8, "be": 3, "note": "colscroll[BG2][col0]=8: shift source Y by +8 for screen_y=0"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 0, "exp": 553, "note": "BG2 cs=8 col0: screen_y=0 \u2192 src_y=8 \u2192 run_py=8 \u2192 pen=9 \u2192 0x229"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 1, "exp": 546, "note": "BG2 cs=8 col0, cs=0 col1: screen_y=1 unchanged \u2192 run_py=1 \u2192 pen=2"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 2, "exp": 547, "note": "BG2 cs=0 col2: screen_y=2 unchanged \u2192 run_py=2 \u2192 pen=3"}
+{"op": "vram_write", "addr": 13316, "data": 32, "be": 3, "note": "colscroll[BG2][col4]=32: shift screen_y=4 source by +32 rows"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 4, "exp": 549, "note": "BG2 cs=32 col4: screen_y=4 \u2192 src_y=36 \u2192 tile_row=2 \u2192 run_py=4 \u2192 pen=5"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 5, "exp": 550, "note": "BG2 cs=0 col5: screen_y=5 \u2192 src_y=5 unchanged \u2192 pen=6"}
+{"op": "vram_write", "addr": 13320, "data": 508, "be": 3, "note": "colscroll[BG2][col8]=0x1FC (-4 wrap): shift screen_y=8 src_y by -4"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 8, "exp": 549, "note": "BG2 cs=0x1FC col8: screen_y=8 \u2192 src_y=(8-4)=4 \u2192 run_py=4 \u2192 pen=5"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 0, "attr": 51, "code": 42, "note": "BG3 map(0,0) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 1, "attr": 51, "code": 42, "note": "BG3 map(0,1) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 2, "attr": 51, "code": 42, "note": "BG3 map(0,2) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 3, "attr": 51, "code": 42, "note": "BG3 map(0,3) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 4, "attr": 51, "code": 42, "note": "BG3 map(0,4) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 5, "attr": 51, "code": 42, "note": "BG3 map(0,5) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 6, "attr": 51, "code": 42, "note": "BG3 map(0,6) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 7, "attr": 51, "code": 42, "note": "BG3 map(0,7) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 8, "attr": 51, "code": 42, "note": "BG3 map(0,8) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 9, "attr": 51, "code": 42, "note": "BG3 map(0,9) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 10, "attr": 51, "code": 42, "note": "BG3 map(0,10) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 11, "attr": 51, "code": 42, "note": "BG3 map(0,11) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 12, "attr": 51, "code": 42, "note": "BG3 map(0,12) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 13, "attr": 51, "code": 42, "note": "BG3 map(0,13) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 14, "attr": 51, "code": 42, "note": "BG3 map(0,14) tile=42 color=51"}
+{"op": "map_write_bg", "layer": 3, "tile_x": 0, "tile_y": 15, "attr": 51, "code": 42, "note": "BG3 map(0,15) tile=42 color=51"}
+{"op": "vram_write", "addr": 13827, "data": 16, "be": 3, "note": "colscroll[BG3][col3]=16: BG3 independent colscroll"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 3, "exp": 548, "note": "BG3 cs=16 col3 on top: screen_y=3 \u2192 BG3 src_y=19 \u2192 run_py=3 \u2192 pen=4 \u2192 0x334"}
+{"op": "check_pixel", "screen_x": 8, "screen_y": 4, "exp": 549, "note": "BG3 cs=0 col4, BG2 cs=32 col4: BG3 on top \u2192 BG3 src_y=4 \u2192 pen=5 \u2192 0x335"}
