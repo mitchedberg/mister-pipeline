@@ -532,8 +532,19 @@ def gen_step4():
         m.write_ctrl(i, 0x0000)
         rec(op="write", addr=i, data=0x0000, be=3, note=f"ctrl[{i}]=0")
 
-    # Zero all BG tilemaps and FG0 tilemap (BRAM persistence)
-    rec(op="vram_zero", base=0x0000, count=8192,  note="zero all BG tilemaps")
+    # Set zoom registers to 1:1 (no-zoom path): xzoom=0x00, yzoom=0x7F → 0x007F
+    # ctrl[8..11] = BG0..BG3_ZOOM. yzoom=0x7F is neutral; zoomy_c = 0x10000 → nozoom_c=1.
+    for i in range(8, 12):
+        m.write_ctrl(i, 0x007F)
+        rec(op="write", addr=i, data=0x007F, be=3,
+            note=f"ctrl[{i}]=0x007F (BGx_ZOOM: xzoom=0, yzoom=0x7F → 1:1 → nozoom_c=1)")
+
+    # Zero all BG tilemaps, rowscroll/scram area, and FG0 (BRAM persistence)
+    # Without zeroing the scram area (0x2000–0x5FFF), dirty rs_hi from step2
+    # corrupts x_index_start causing wrong map_tx/run_xoff in BG engine.
+    rec(op="vram_zero", base=0x0000, count=8192,  note="zero all BG tilemaps (0x0000–0x1FFF)")
+    rec(op="vram_zero", base=0x2000, count=8192,  note="zero rowscroll/scram area (0x2000–0x3FFF)")
+    rec(op="vram_zero", base=0x4000, count=8192,  note="zero rowscroll hi area dblwidth (0x4000–0x5FFF)")
     rec(op="vram_zero", base=0x6000, count=4096,  note="zero FG0 tilemap")
     rec(op="vram_zero", base=0x7000, count=4096,  note="zero FG0 gfx data")
 

@@ -28,9 +28,9 @@ module tc0480scp_colmix (
     input  logic        pixel_active,
 
     // ── BG layer pixels (Steps 4+; tied to zero until then) ──────────────
-    input  logic [ 3:0] bg_pixel [0:3],    // 4-bit pen (0=transparent)
-    input  logic [ 7:0] bg_color [0:3],    // 8-bit palette bank
-    input  logic        bg_valid [0:3],
+    input  logic [3:0][ 3:0] bg_pixel,     // 4-bit pen (0=transparent)
+    input  logic [3:0][ 7:0] bg_color,     // 8-bit palette bank
+    input  logic [3:0]       bg_valid,
 
     // ── Priority control (Steps 9+) ───────────────────────────────────────
     input  logic [15:0] bg_priority,
@@ -82,7 +82,7 @@ end
 // Suppress unused warnings (bg inputs unused until Step 4)
 /* verilator lint_off UNUSED */
 logic _unused_colmix;
-assign _unused_colmix = ^{bg_valid[0], bg_valid[1], bg_valid[2], bg_valid[3]};
+assign _unused_colmix = ^bg_valid;
 /* verilator lint_on UNUSED */
 
 endmodule

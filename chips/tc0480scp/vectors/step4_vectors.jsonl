@@ -23,7 +23,13 @@
 {"op": "write", "addr": 21, "data": 0, "be": 3, "note": "ctrl[21]=0"}
 {"op": "write", "addr": 22, "data": 0, "be": 3, "note": "ctrl[22]=0"}
 {"op": "write", "addr": 23, "data": 0, "be": 3, "note": "ctrl[23]=0"}
-{"op": "vram_zero", "base": 0, "count": 8192, "note": "zero all BG tilemaps"}
+{"op": "write", "addr": 8, "data": 127, "be": 3, "note": "ctrl[8]=0x007F (BGx_ZOOM: xzoom=0, yzoom=0x7F \u2192 1:1 \u2192 nozoom_c=1)"}
+{"op": "write", "addr": 9, "data": 127, "be": 3, "note": "ctrl[9]=0x007F (BGx_ZOOM: xzoom=0, yzoom=0x7F \u2192 1:1 \u2192 nozoom_c=1)"}
+{"op": "write", "addr": 10, "data": 127, "be": 3, "note": "ctrl[10]=0x007F (BGx_ZOOM: xzoom=0, yzoom=0x7F \u2192 1:1 \u2192 nozoom_c=1)"}
+{"op": "write", "addr": 11, "data": 127, "be": 3, "note": "ctrl[11]=0x007F (BGx_ZOOM: xzoom=0, yzoom=0x7F \u2192 1:1 \u2192 nozoom_c=1)"}
+{"op": "vram_zero", "base": 0, "count": 8192, "note": "zero all BG tilemaps (0x0000\u20130x1FFF)"}
+{"op": "vram_zero", "base": 8192, "count": 8192, "note": "zero rowscroll/scram area (0x2000\u20130x3FFF)"}
+{"op": "vram_zero", "base": 16384, "count": 8192, "note": "zero rowscroll hi area dblwidth (0x4000\u20130x5FFF)"}
 {"op": "vram_zero", "base": 24576, "count": 4096, "note": "zero FG0 tilemap"}
 {"op": "vram_zero", "base": 28672, "count": 4096, "note": "zero FG0 gfx data"}
 {"op": "gfx_rom_write", "word_addr": 320, "data_hi": 30583, "data_lo": 30583, "note": "GFX ROM tile10 row0 half0: solid pen=7"}

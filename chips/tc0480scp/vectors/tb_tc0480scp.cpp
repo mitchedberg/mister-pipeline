@@ -129,14 +129,16 @@ static uint32_t* gfx_rom = nullptr;
 static const int GFX_ROM_WORDS = (1 << 21);
 
 static void tick() {
-    // Drive GFX ROM output to DUT (Step 4: combinational async read)
-    // The DUT drives gfx_addr and gfx_rd; we respond with gfx_data.
-    // We do this before the clock edge so the FSM reads correct data.
+    // Drive GFX ROM outputs to DUT (Step 4: combinational async read).
+    // Each BG engine (0–3) has an independent read port so simultaneous
+    // fetches from different layers never collide.
     if (gfx_rom) {
-        uint32_t addr = dut->gfx_addr & (GFX_ROM_WORDS - 1);
-        dut->gfx_data = gfx_rom[addr];
+        for (int n = 0; n < 4; n++) {
+            uint32_t addr = dut->gfx_addr[n] & (GFX_ROM_WORDS - 1);
+            dut->gfx_data[n] = gfx_rom[addr];
+        }
     } else {
-        dut->gfx_data = 0;
+        for (int n = 0; n < 4; n++) dut->gfx_data[n] = 0;
     }
     dut->clk = 0; dut->eval();
     dut->clk = 1; dut->eval();
@@ -339,7 +341,7 @@ int main(int argc, char** argv) {
 
     // Initial power-on state
     dut->async_rst_n = 0;
-    dut->gfx_data    = 0;
+    for (int n = 0; n < 4; n++) dut->gfx_data[n] = 0;
     idle_bus();
     for (int i = 0; i < 4; i++) tick();
     dut->async_rst_n = 1;
