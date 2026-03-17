@@ -1,0 +1,616 @@
+{"op": "reset"}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 0, "data": 43981}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 1, "data": 4660}
+{"op": "vram_sel", "layer": 1}
+{"op": "write_vram", "addr": 0, "data": 57005}
+{"op": "vram_sel", "layer": 1}
+{"op": "write_vram", "addr": 1, "data": 48879}
+{"op": "vram_sel", "layer": 2}
+{"op": "write_vram", "addr": 0, "data": 4369}
+{"op": "vram_sel", "layer": 3}
+{"op": "write_vram", "addr": 0, "data": 8738}
+{"op": "vram_sel", "layer": 0}
+{"op": "read_vram", "addr": 0, "exp": 43981}
+{"op": "vram_sel", "layer": 0}
+{"op": "read_vram", "addr": 1, "exp": 4660}
+{"op": "vram_sel", "layer": 1}
+{"op": "read_vram", "addr": 0, "exp": 57005}
+{"op": "vram_sel", "layer": 1}
+{"op": "read_vram", "addr": 1, "exp": 48879}
+{"op": "vram_sel", "layer": 2}
+{"op": "read_vram", "addr": 0, "exp": 4369}
+{"op": "vram_sel", "layer": 3}
+{"op": "read_vram", "addr": 0, "exp": 8738}
+{"op": "reset"}
+{"op": "write_rom_byte", "addr": 32, "data": 170}
+{"op": "write_rom_byte", "addr": 33, "data": 170}
+{"op": "write_rom_byte", "addr": 34, "data": 170}
+{"op": "write_rom_byte", "addr": 35, "data": 170}
+{"op": "write_rom_byte", "addr": 36, "data": 170}
+{"op": "write_rom_byte", "addr": 37, "data": 170}
+{"op": "write_rom_byte", "addr": 38, "data": 170}
+{"op": "write_rom_byte", "addr": 39, "data": 170}
+{"op": "write_rom_byte", "addr": 40, "data": 170}
+{"op": "write_rom_byte", "addr": 41, "data": 170}
+{"op": "write_rom_byte", "addr": 42, "data": 170}
+{"op": "write_rom_byte", "addr": 43, "data": 170}
+{"op": "write_rom_byte", "addr": 44, "data": 170}
+{"op": "write_rom_byte", "addr": 45, "data": 170}
+{"op": "write_rom_byte", "addr": 46, "data": 170}
+{"op": "write_rom_byte", "addr": 47, "data": 170}
+{"op": "write_rom_byte", "addr": 48, "data": 170}
+{"op": "write_rom_byte", "addr": 49, "data": 170}
+{"op": "write_rom_byte", "addr": 50, "data": 170}
+{"op": "write_rom_byte", "addr": 51, "data": 170}
+{"op": "write_rom_byte", "addr": 52, "data": 170}
+{"op": "write_rom_byte", "addr": 53, "data": 170}
+{"op": "write_rom_byte", "addr": 54, "data": 170}
+{"op": "write_rom_byte", "addr": 55, "data": 170}
+{"op": "write_rom_byte", "addr": 56, "data": 170}
+{"op": "write_rom_byte", "addr": 57, "data": 170}
+{"op": "write_rom_byte", "addr": 58, "data": 170}
+{"op": "write_rom_byte", "addr": 59, "data": 170}
+{"op": "write_rom_byte", "addr": 60, "data": 170}
+{"op": "write_rom_byte", "addr": 61, "data": 170}
+{"op": "write_rom_byte", "addr": 62, "data": 170}
+{"op": "write_rom_byte", "addr": 63, "data": 170}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 0, "data": 1}
+{"op": "write_vram", "addr": 1, "data": 5}
+{"op": "vsync_pulse"}
+{"op": "set_pixel", "hpos": 4, "vpos": 4, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 3}
+{"op": "clock_n", "n": 4}
+{"op": "check_bg_valid", "layer": 0, "exp": 1}
+{"op": "check_bg_color", "layer": 0, "exp": 90}
+{"op": "check_bg_prio", "layer": 0, "exp": 0}
+{"op": "reset"}
+{"op": "write_rom_byte", "addr": 64, "data": 51}
+{"op": "write_rom_byte", "addr": 65, "data": 51}
+{"op": "write_rom_byte", "addr": 66, "data": 51}
+{"op": "write_rom_byte", "addr": 67, "data": 51}
+{"op": "write_rom_byte", "addr": 68, "data": 51}
+{"op": "write_rom_byte", "addr": 69, "data": 51}
+{"op": "write_rom_byte", "addr": 70, "data": 51}
+{"op": "write_rom_byte", "addr": 71, "data": 51}
+{"op": "write_rom_byte", "addr": 72, "data": 51}
+{"op": "write_rom_byte", "addr": 73, "data": 51}
+{"op": "write_rom_byte", "addr": 74, "data": 51}
+{"op": "write_rom_byte", "addr": 75, "data": 51}
+{"op": "write_rom_byte", "addr": 76, "data": 51}
+{"op": "write_rom_byte", "addr": 77, "data": 51}
+{"op": "write_rom_byte", "addr": 78, "data": 51}
+{"op": "write_rom_byte", "addr": 79, "data": 51}
+{"op": "write_rom_byte", "addr": 80, "data": 51}
+{"op": "write_rom_byte", "addr": 81, "data": 51}
+{"op": "write_rom_byte", "addr": 82, "data": 51}
+{"op": "write_rom_byte", "addr": 83, "data": 51}
+{"op": "write_rom_byte", "addr": 84, "data": 51}
+{"op": "write_rom_byte", "addr": 85, "data": 51}
+{"op": "write_rom_byte", "addr": 86, "data": 51}
+{"op": "write_rom_byte", "addr": 87, "data": 51}
+{"op": "write_rom_byte", "addr": 88, "data": 51}
+{"op": "write_rom_byte", "addr": 89, "data": 51}
+{"op": "write_rom_byte", "addr": 90, "data": 51}
+{"op": "write_rom_byte", "addr": 91, "data": 51}
+{"op": "write_rom_byte", "addr": 92, "data": 51}
+{"op": "write_rom_byte", "addr": 93, "data": 51}
+{"op": "write_rom_byte", "addr": 94, "data": 51}
+{"op": "write_rom_byte", "addr": 95, "data": 51}
+{"op": "write_rom_byte", "addr": 96, "data": 119}
+{"op": "write_rom_byte", "addr": 97, "data": 119}
+{"op": "write_rom_byte", "addr": 98, "data": 119}
+{"op": "write_rom_byte", "addr": 99, "data": 119}
+{"op": "write_rom_byte", "addr": 100, "data": 119}
+{"op": "write_rom_byte", "addr": 101, "data": 119}
+{"op": "write_rom_byte", "addr": 102, "data": 119}
+{"op": "write_rom_byte", "addr": 103, "data": 119}
+{"op": "write_rom_byte", "addr": 104, "data": 119}
+{"op": "write_rom_byte", "addr": 105, "data": 119}
+{"op": "write_rom_byte", "addr": 106, "data": 119}
+{"op": "write_rom_byte", "addr": 107, "data": 119}
+{"op": "write_rom_byte", "addr": 108, "data": 119}
+{"op": "write_rom_byte", "addr": 109, "data": 119}
+{"op": "write_rom_byte", "addr": 110, "data": 119}
+{"op": "write_rom_byte", "addr": 111, "data": 119}
+{"op": "write_rom_byte", "addr": 112, "data": 119}
+{"op": "write_rom_byte", "addr": 113, "data": 119}
+{"op": "write_rom_byte", "addr": 114, "data": 119}
+{"op": "write_rom_byte", "addr": 115, "data": 119}
+{"op": "write_rom_byte", "addr": 116, "data": 119}
+{"op": "write_rom_byte", "addr": 117, "data": 119}
+{"op": "write_rom_byte", "addr": 118, "data": 119}
+{"op": "write_rom_byte", "addr": 119, "data": 119}
+{"op": "write_rom_byte", "addr": 120, "data": 119}
+{"op": "write_rom_byte", "addr": 121, "data": 119}
+{"op": "write_rom_byte", "addr": 122, "data": 119}
+{"op": "write_rom_byte", "addr": 123, "data": 119}
+{"op": "write_rom_byte", "addr": 124, "data": 119}
+{"op": "write_rom_byte", "addr": 125, "data": 119}
+{"op": "write_rom_byte", "addr": 126, "data": 119}
+{"op": "write_rom_byte", "addr": 127, "data": 119}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 0, "data": 2}
+{"op": "write_vram", "addr": 1, "data": 2}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 2, "data": 3}
+{"op": "write_vram", "addr": 3, "data": 3}
+{"op": "write_scroll", "layer": 0, "axis": "x", "data": 8}
+{"op": "vsync_pulse"}
+{"op": "set_pixel", "hpos": 0, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 1}
+{"op": "check_bg_color", "layer": 0, "exp": 55}
+{"op": "check_bg_prio", "layer": 0, "exp": 0}
+{"op": "set_pixel", "hpos": 8, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 0}
+{"op": "check_bg_valid", "layer": 1, "exp": 0}
+{"op": "reset"}
+{"op": "write_rom_byte", "addr": 128, "data": 33}
+{"op": "write_rom_byte", "addr": 129, "data": 67}
+{"op": "write_rom_byte", "addr": 130, "data": 101}
+{"op": "write_rom_byte", "addr": 131, "data": 135}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 0, "data": 4}
+{"op": "write_vram", "addr": 1, "data": 22}
+{"op": "vsync_pulse"}
+{"op": "set_pixel", "hpos": 0, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 1}
+{"op": "check_bg_color", "layer": 0, "exp": 104}
+{"op": "check_bg_prio", "layer": 0, "exp": 0}
+{"op": "set_pixel", "hpos": 7, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 1}
+{"op": "check_bg_color", "layer": 0, "exp": 97}
+{"op": "check_bg_prio", "layer": 0, "exp": 0}
+{"op": "reset"}
+{"op": "write_rom_byte", "addr": 160, "data": 170}
+{"op": "write_rom_byte", "addr": 160, "data": 170}
+{"op": "write_rom_byte", "addr": 161, "data": 170}
+{"op": "write_rom_byte", "addr": 161, "data": 170}
+{"op": "write_rom_byte", "addr": 162, "data": 170}
+{"op": "write_rom_byte", "addr": 162, "data": 170}
+{"op": "write_rom_byte", "addr": 163, "data": 170}
+{"op": "write_rom_byte", "addr": 163, "data": 170}
+{"op": "write_rom_byte", "addr": 160, "data": 170}
+{"op": "write_rom_byte", "addr": 161, "data": 170}
+{"op": "write_rom_byte", "addr": 162, "data": 170}
+{"op": "write_rom_byte", "addr": 163, "data": 170}
+{"op": "write_rom_byte", "addr": 188, "data": 187}
+{"op": "write_rom_byte", "addr": 189, "data": 187}
+{"op": "write_rom_byte", "addr": 190, "data": 187}
+{"op": "write_rom_byte", "addr": 191, "data": 187}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 0, "data": 5}
+{"op": "write_vram", "addr": 1, "data": 39}
+{"op": "vsync_pulse"}
+{"op": "set_pixel", "hpos": 0, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 1}
+{"op": "check_bg_color", "layer": 0, "exp": 123}
+{"op": "check_bg_prio", "layer": 0, "exp": 0}
+{"op": "set_pixel", "hpos": 0, "vpos": 7, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 1}
+{"op": "check_bg_color", "layer": 0, "exp": 122}
+{"op": "check_bg_prio", "layer": 0, "exp": 0}
+{"op": "reset"}
+{"op": "write_rom_byte", "addr": 192, "data": 0}
+{"op": "write_rom_byte", "addr": 193, "data": 0}
+{"op": "write_rom_byte", "addr": 194, "data": 0}
+{"op": "write_rom_byte", "addr": 195, "data": 0}
+{"op": "write_rom_byte", "addr": 196, "data": 0}
+{"op": "write_rom_byte", "addr": 197, "data": 0}
+{"op": "write_rom_byte", "addr": 198, "data": 0}
+{"op": "write_rom_byte", "addr": 199, "data": 0}
+{"op": "write_rom_byte", "addr": 200, "data": 0}
+{"op": "write_rom_byte", "addr": 201, "data": 0}
+{"op": "write_rom_byte", "addr": 202, "data": 0}
+{"op": "write_rom_byte", "addr": 203, "data": 0}
+{"op": "write_rom_byte", "addr": 204, "data": 0}
+{"op": "write_rom_byte", "addr": 205, "data": 0}
+{"op": "write_rom_byte", "addr": 206, "data": 0}
+{"op": "write_rom_byte", "addr": 207, "data": 0}
+{"op": "write_rom_byte", "addr": 208, "data": 0}
+{"op": "write_rom_byte", "addr": 209, "data": 0}
+{"op": "write_rom_byte", "addr": 210, "data": 0}
+{"op": "write_rom_byte", "addr": 211, "data": 0}
+{"op": "write_rom_byte", "addr": 212, "data": 0}
+{"op": "write_rom_byte", "addr": 213, "data": 0}
+{"op": "write_rom_byte", "addr": 214, "data": 0}
+{"op": "write_rom_byte", "addr": 215, "data": 0}
+{"op": "write_rom_byte", "addr": 216, "data": 0}
+{"op": "write_rom_byte", "addr": 217, "data": 0}
+{"op": "write_rom_byte", "addr": 218, "data": 0}
+{"op": "write_rom_byte", "addr": 219, "data": 0}
+{"op": "write_rom_byte", "addr": 220, "data": 0}
+{"op": "write_rom_byte", "addr": 221, "data": 0}
+{"op": "write_rom_byte", "addr": 222, "data": 0}
+{"op": "write_rom_byte", "addr": 223, "data": 0}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 0, "data": 6}
+{"op": "write_vram", "addr": 1, "data": 4}
+{"op": "vsync_pulse"}
+{"op": "set_pixel", "hpos": 0, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 0}
+{"op": "reset"}
+{"op": "write_rom_byte", "addr": 224, "data": 85}
+{"op": "write_rom_byte", "addr": 225, "data": 85}
+{"op": "write_rom_byte", "addr": 226, "data": 85}
+{"op": "write_rom_byte", "addr": 227, "data": 85}
+{"op": "write_rom_byte", "addr": 228, "data": 85}
+{"op": "write_rom_byte", "addr": 229, "data": 85}
+{"op": "write_rom_byte", "addr": 230, "data": 85}
+{"op": "write_rom_byte", "addr": 231, "data": 85}
+{"op": "write_rom_byte", "addr": 232, "data": 85}
+{"op": "write_rom_byte", "addr": 233, "data": 85}
+{"op": "write_rom_byte", "addr": 234, "data": 85}
+{"op": "write_rom_byte", "addr": 235, "data": 85}
+{"op": "write_rom_byte", "addr": 236, "data": 85}
+{"op": "write_rom_byte", "addr": 237, "data": 85}
+{"op": "write_rom_byte", "addr": 238, "data": 85}
+{"op": "write_rom_byte", "addr": 239, "data": 85}
+{"op": "write_rom_byte", "addr": 240, "data": 85}
+{"op": "write_rom_byte", "addr": 241, "data": 85}
+{"op": "write_rom_byte", "addr": 242, "data": 85}
+{"op": "write_rom_byte", "addr": 243, "data": 85}
+{"op": "write_rom_byte", "addr": 244, "data": 85}
+{"op": "write_rom_byte", "addr": 245, "data": 85}
+{"op": "write_rom_byte", "addr": 246, "data": 85}
+{"op": "write_rom_byte", "addr": 247, "data": 85}
+{"op": "write_rom_byte", "addr": 248, "data": 85}
+{"op": "write_rom_byte", "addr": 249, "data": 85}
+{"op": "write_rom_byte", "addr": 250, "data": 85}
+{"op": "write_rom_byte", "addr": 251, "data": 85}
+{"op": "write_rom_byte", "addr": 252, "data": 85}
+{"op": "write_rom_byte", "addr": 253, "data": 85}
+{"op": "write_rom_byte", "addr": 254, "data": 85}
+{"op": "write_rom_byte", "addr": 255, "data": 85}
+{"op": "write_rom_byte", "addr": 256, "data": 204}
+{"op": "write_rom_byte", "addr": 257, "data": 204}
+{"op": "write_rom_byte", "addr": 258, "data": 204}
+{"op": "write_rom_byte", "addr": 259, "data": 204}
+{"op": "write_rom_byte", "addr": 260, "data": 204}
+{"op": "write_rom_byte", "addr": 261, "data": 204}
+{"op": "write_rom_byte", "addr": 262, "data": 204}
+{"op": "write_rom_byte", "addr": 263, "data": 204}
+{"op": "write_rom_byte", "addr": 264, "data": 204}
+{"op": "write_rom_byte", "addr": 265, "data": 204}
+{"op": "write_rom_byte", "addr": 266, "data": 204}
+{"op": "write_rom_byte", "addr": 267, "data": 204}
+{"op": "write_rom_byte", "addr": 268, "data": 204}
+{"op": "write_rom_byte", "addr": 269, "data": 204}
+{"op": "write_rom_byte", "addr": 270, "data": 204}
+{"op": "write_rom_byte", "addr": 271, "data": 204}
+{"op": "write_rom_byte", "addr": 272, "data": 204}
+{"op": "write_rom_byte", "addr": 273, "data": 204}
+{"op": "write_rom_byte", "addr": 274, "data": 204}
+{"op": "write_rom_byte", "addr": 275, "data": 204}
+{"op": "write_rom_byte", "addr": 276, "data": 204}
+{"op": "write_rom_byte", "addr": 277, "data": 204}
+{"op": "write_rom_byte", "addr": 278, "data": 204}
+{"op": "write_rom_byte", "addr": 279, "data": 204}
+{"op": "write_rom_byte", "addr": 280, "data": 204}
+{"op": "write_rom_byte", "addr": 281, "data": 204}
+{"op": "write_rom_byte", "addr": 282, "data": 204}
+{"op": "write_rom_byte", "addr": 283, "data": 204}
+{"op": "write_rom_byte", "addr": 284, "data": 204}
+{"op": "write_rom_byte", "addr": 285, "data": 204}
+{"op": "write_rom_byte", "addr": 286, "data": 204}
+{"op": "write_rom_byte", "addr": 287, "data": 204}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 0, "data": 7}
+{"op": "write_vram", "addr": 1, "data": 1}
+{"op": "vram_sel", "layer": 1}
+{"op": "write_vram", "addr": 0, "data": 8}
+{"op": "write_vram", "addr": 1, "data": 2}
+{"op": "vsync_pulse"}
+{"op": "set_pixel", "hpos": 0, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 1}
+{"op": "check_bg_color", "layer": 0, "exp": 21}
+{"op": "check_bg_prio", "layer": 0, "exp": 0}
+{"op": "check_bg_valid", "layer": 1, "exp": 1}
+{"op": "check_bg_color", "layer": 1, "exp": 44}
+{"op": "check_bg_prio", "layer": 1, "exp": 0}
+{"op": "check_bg_color", "layer": 0, "exp": 21}
+{"op": "check_bg_color", "layer": 1, "exp": 44}
+{"op": "reset"}
+{"op": "write_rom_byte", "addr": 288, "data": 51}
+{"op": "write_rom_byte", "addr": 289, "data": 51}
+{"op": "write_rom_byte", "addr": 290, "data": 51}
+{"op": "write_rom_byte", "addr": 291, "data": 51}
+{"op": "write_rom_byte", "addr": 292, "data": 51}
+{"op": "write_rom_byte", "addr": 293, "data": 51}
+{"op": "write_rom_byte", "addr": 294, "data": 51}
+{"op": "write_rom_byte", "addr": 295, "data": 51}
+{"op": "write_rom_byte", "addr": 296, "data": 51}
+{"op": "write_rom_byte", "addr": 297, "data": 51}
+{"op": "write_rom_byte", "addr": 298, "data": 51}
+{"op": "write_rom_byte", "addr": 299, "data": 51}
+{"op": "write_rom_byte", "addr": 300, "data": 51}
+{"op": "write_rom_byte", "addr": 301, "data": 51}
+{"op": "write_rom_byte", "addr": 302, "data": 51}
+{"op": "write_rom_byte", "addr": 303, "data": 51}
+{"op": "write_rom_byte", "addr": 304, "data": 51}
+{"op": "write_rom_byte", "addr": 305, "data": 51}
+{"op": "write_rom_byte", "addr": 306, "data": 51}
+{"op": "write_rom_byte", "addr": 307, "data": 51}
+{"op": "write_rom_byte", "addr": 308, "data": 51}
+{"op": "write_rom_byte", "addr": 309, "data": 51}
+{"op": "write_rom_byte", "addr": 310, "data": 51}
+{"op": "write_rom_byte", "addr": 311, "data": 51}
+{"op": "write_rom_byte", "addr": 312, "data": 51}
+{"op": "write_rom_byte", "addr": 313, "data": 51}
+{"op": "write_rom_byte", "addr": 314, "data": 51}
+{"op": "write_rom_byte", "addr": 315, "data": 51}
+{"op": "write_rom_byte", "addr": 316, "data": 51}
+{"op": "write_rom_byte", "addr": 317, "data": 51}
+{"op": "write_rom_byte", "addr": 318, "data": 51}
+{"op": "write_rom_byte", "addr": 319, "data": 51}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 0, "data": 9}
+{"op": "write_vram", "addr": 1, "data": 72}
+{"op": "vsync_pulse"}
+{"op": "set_pixel", "hpos": 0, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 1}
+{"op": "check_bg_prio", "layer": 0, "exp": 1}
+{"op": "reset"}
+{"op": "write_rom_byte", "addr": 288, "data": 51}
+{"op": "write_rom_byte", "addr": 289, "data": 51}
+{"op": "write_rom_byte", "addr": 290, "data": 51}
+{"op": "write_rom_byte", "addr": 291, "data": 51}
+{"op": "write_rom_byte", "addr": 292, "data": 51}
+{"op": "write_rom_byte", "addr": 293, "data": 51}
+{"op": "write_rom_byte", "addr": 294, "data": 51}
+{"op": "write_rom_byte", "addr": 295, "data": 51}
+{"op": "write_rom_byte", "addr": 296, "data": 51}
+{"op": "write_rom_byte", "addr": 297, "data": 51}
+{"op": "write_rom_byte", "addr": 298, "data": 51}
+{"op": "write_rom_byte", "addr": 299, "data": 51}
+{"op": "write_rom_byte", "addr": 300, "data": 51}
+{"op": "write_rom_byte", "addr": 301, "data": 51}
+{"op": "write_rom_byte", "addr": 302, "data": 51}
+{"op": "write_rom_byte", "addr": 303, "data": 51}
+{"op": "write_rom_byte", "addr": 304, "data": 51}
+{"op": "write_rom_byte", "addr": 305, "data": 51}
+{"op": "write_rom_byte", "addr": 306, "data": 51}
+{"op": "write_rom_byte", "addr": 307, "data": 51}
+{"op": "write_rom_byte", "addr": 308, "data": 51}
+{"op": "write_rom_byte", "addr": 309, "data": 51}
+{"op": "write_rom_byte", "addr": 310, "data": 51}
+{"op": "write_rom_byte", "addr": 311, "data": 51}
+{"op": "write_rom_byte", "addr": 312, "data": 51}
+{"op": "write_rom_byte", "addr": 313, "data": 51}
+{"op": "write_rom_byte", "addr": 314, "data": 51}
+{"op": "write_rom_byte", "addr": 315, "data": 51}
+{"op": "write_rom_byte", "addr": 316, "data": 51}
+{"op": "write_rom_byte", "addr": 317, "data": 51}
+{"op": "write_rom_byte", "addr": 318, "data": 51}
+{"op": "write_rom_byte", "addr": 319, "data": 51}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 0, "data": 9}
+{"op": "write_vram", "addr": 1, "data": 8}
+{"op": "vsync_pulse"}
+{"op": "set_pixel", "hpos": 0, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 1}
+{"op": "check_bg_prio", "layer": 0, "exp": 0}
+{"op": "reset"}
+{"op": "write_rom_byte", "addr": 320, "data": 255}
+{"op": "write_rom_byte", "addr": 321, "data": 255}
+{"op": "write_rom_byte", "addr": 322, "data": 255}
+{"op": "write_rom_byte", "addr": 323, "data": 255}
+{"op": "write_rom_byte", "addr": 324, "data": 255}
+{"op": "write_rom_byte", "addr": 325, "data": 255}
+{"op": "write_rom_byte", "addr": 326, "data": 255}
+{"op": "write_rom_byte", "addr": 327, "data": 255}
+{"op": "write_rom_byte", "addr": 328, "data": 255}
+{"op": "write_rom_byte", "addr": 329, "data": 255}
+{"op": "write_rom_byte", "addr": 330, "data": 255}
+{"op": "write_rom_byte", "addr": 331, "data": 255}
+{"op": "write_rom_byte", "addr": 332, "data": 255}
+{"op": "write_rom_byte", "addr": 333, "data": 255}
+{"op": "write_rom_byte", "addr": 334, "data": 255}
+{"op": "write_rom_byte", "addr": 335, "data": 255}
+{"op": "write_rom_byte", "addr": 336, "data": 255}
+{"op": "write_rom_byte", "addr": 337, "data": 255}
+{"op": "write_rom_byte", "addr": 338, "data": 255}
+{"op": "write_rom_byte", "addr": 339, "data": 255}
+{"op": "write_rom_byte", "addr": 340, "data": 255}
+{"op": "write_rom_byte", "addr": 341, "data": 255}
+{"op": "write_rom_byte", "addr": 342, "data": 255}
+{"op": "write_rom_byte", "addr": 343, "data": 255}
+{"op": "write_rom_byte", "addr": 344, "data": 255}
+{"op": "write_rom_byte", "addr": 345, "data": 255}
+{"op": "write_rom_byte", "addr": 346, "data": 255}
+{"op": "write_rom_byte", "addr": 347, "data": 255}
+{"op": "write_rom_byte", "addr": 348, "data": 255}
+{"op": "write_rom_byte", "addr": 349, "data": 255}
+{"op": "write_rom_byte", "addr": 350, "data": 255}
+{"op": "write_rom_byte", "addr": 351, "data": 255}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 0, "data": 10}
+{"op": "write_vram", "addr": 1, "data": 9}
+{"op": "vsync_pulse"}
+{"op": "set_pixel", "hpos": 0, "vpos": 0, "hblank": 1, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 0}
+{"op": "set_pixel", "hpos": 0, "vpos": 0, "hblank": 0, "vblank": 1}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 0}
+{"op": "set_pixel", "hpos": 0, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 1}
+{"op": "reset"}
+{"op": "write_rom_byte", "addr": 352, "data": 238}
+{"op": "write_rom_byte", "addr": 353, "data": 238}
+{"op": "write_rom_byte", "addr": 354, "data": 238}
+{"op": "write_rom_byte", "addr": 355, "data": 238}
+{"op": "write_rom_byte", "addr": 356, "data": 238}
+{"op": "write_rom_byte", "addr": 357, "data": 238}
+{"op": "write_rom_byte", "addr": 358, "data": 238}
+{"op": "write_rom_byte", "addr": 359, "data": 238}
+{"op": "write_rom_byte", "addr": 360, "data": 238}
+{"op": "write_rom_byte", "addr": 361, "data": 238}
+{"op": "write_rom_byte", "addr": 362, "data": 238}
+{"op": "write_rom_byte", "addr": 363, "data": 238}
+{"op": "write_rom_byte", "addr": 364, "data": 238}
+{"op": "write_rom_byte", "addr": 365, "data": 238}
+{"op": "write_rom_byte", "addr": 366, "data": 238}
+{"op": "write_rom_byte", "addr": 367, "data": 238}
+{"op": "write_rom_byte", "addr": 368, "data": 238}
+{"op": "write_rom_byte", "addr": 369, "data": 238}
+{"op": "write_rom_byte", "addr": 370, "data": 238}
+{"op": "write_rom_byte", "addr": 371, "data": 238}
+{"op": "write_rom_byte", "addr": 372, "data": 238}
+{"op": "write_rom_byte", "addr": 373, "data": 238}
+{"op": "write_rom_byte", "addr": 374, "data": 238}
+{"op": "write_rom_byte", "addr": 375, "data": 238}
+{"op": "write_rom_byte", "addr": 376, "data": 238}
+{"op": "write_rom_byte", "addr": 377, "data": 238}
+{"op": "write_rom_byte", "addr": 378, "data": 238}
+{"op": "write_rom_byte", "addr": 379, "data": 238}
+{"op": "write_rom_byte", "addr": 380, "data": 238}
+{"op": "write_rom_byte", "addr": 381, "data": 238}
+{"op": "write_rom_byte", "addr": 382, "data": 238}
+{"op": "write_rom_byte", "addr": 383, "data": 238}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 128, "data": 11}
+{"op": "write_vram", "addr": 129, "data": 12}
+{"op": "write_scroll", "layer": 0, "axis": "y", "data": 8}
+{"op": "vsync_pulse"}
+{"op": "set_pixel", "hpos": 0, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 1}
+{"op": "check_bg_color", "layer": 0, "exp": 206}
+{"op": "check_bg_prio", "layer": 0, "exp": 0}
+{"op": "reset"}
+{"op": "write_rom_byte", "addr": 384, "data": 153}
+{"op": "write_rom_byte", "addr": 385, "data": 153}
+{"op": "write_rom_byte", "addr": 386, "data": 153}
+{"op": "write_rom_byte", "addr": 387, "data": 153}
+{"op": "write_rom_byte", "addr": 388, "data": 153}
+{"op": "write_rom_byte", "addr": 389, "data": 153}
+{"op": "write_rom_byte", "addr": 390, "data": 153}
+{"op": "write_rom_byte", "addr": 391, "data": 153}
+{"op": "write_rom_byte", "addr": 392, "data": 153}
+{"op": "write_rom_byte", "addr": 393, "data": 153}
+{"op": "write_rom_byte", "addr": 394, "data": 153}
+{"op": "write_rom_byte", "addr": 395, "data": 153}
+{"op": "write_rom_byte", "addr": 396, "data": 153}
+{"op": "write_rom_byte", "addr": 397, "data": 153}
+{"op": "write_rom_byte", "addr": 398, "data": 153}
+{"op": "write_rom_byte", "addr": 399, "data": 153}
+{"op": "write_rom_byte", "addr": 400, "data": 153}
+{"op": "write_rom_byte", "addr": 401, "data": 153}
+{"op": "write_rom_byte", "addr": 402, "data": 153}
+{"op": "write_rom_byte", "addr": 403, "data": 153}
+{"op": "write_rom_byte", "addr": 404, "data": 153}
+{"op": "write_rom_byte", "addr": 405, "data": 153}
+{"op": "write_rom_byte", "addr": 406, "data": 153}
+{"op": "write_rom_byte", "addr": 407, "data": 153}
+{"op": "write_rom_byte", "addr": 408, "data": 153}
+{"op": "write_rom_byte", "addr": 409, "data": 153}
+{"op": "write_rom_byte", "addr": 410, "data": 153}
+{"op": "write_rom_byte", "addr": 411, "data": 153}
+{"op": "write_rom_byte", "addr": 412, "data": 153}
+{"op": "write_rom_byte", "addr": 413, "data": 153}
+{"op": "write_rom_byte", "addr": 414, "data": 153}
+{"op": "write_rom_byte", "addr": 415, "data": 153}
+{"op": "vram_sel", "layer": 0}
+{"op": "write_vram", "addr": 0, "data": 12}
+{"op": "write_vram", "addr": 1, "data": 10}
+{"op": "write_scroll", "layer": 0, "axis": "x", "data": 504}
+{"op": "vsync_pulse"}
+{"op": "set_pixel", "hpos": 8, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 0, "exp": 1}
+{"op": "check_bg_color", "layer": 0, "exp": 169}
+{"op": "check_bg_prio", "layer": 0, "exp": 0}
+{"op": "reset"}
+{"op": "write_rom_byte", "addr": 512, "data": 34}
+{"op": "write_rom_byte", "addr": 513, "data": 34}
+{"op": "write_rom_byte", "addr": 514, "data": 34}
+{"op": "write_rom_byte", "addr": 515, "data": 34}
+{"op": "write_rom_byte", "addr": 516, "data": 34}
+{"op": "write_rom_byte", "addr": 517, "data": 34}
+{"op": "write_rom_byte", "addr": 518, "data": 34}
+{"op": "write_rom_byte", "addr": 519, "data": 34}
+{"op": "write_rom_byte", "addr": 520, "data": 34}
+{"op": "write_rom_byte", "addr": 521, "data": 34}
+{"op": "write_rom_byte", "addr": 522, "data": 34}
+{"op": "write_rom_byte", "addr": 523, "data": 34}
+{"op": "write_rom_byte", "addr": 524, "data": 34}
+{"op": "write_rom_byte", "addr": 525, "data": 34}
+{"op": "write_rom_byte", "addr": 526, "data": 34}
+{"op": "write_rom_byte", "addr": 527, "data": 34}
+{"op": "write_rom_byte", "addr": 528, "data": 34}
+{"op": "write_rom_byte", "addr": 529, "data": 34}
+{"op": "write_rom_byte", "addr": 530, "data": 34}
+{"op": "write_rom_byte", "addr": 531, "data": 34}
+{"op": "write_rom_byte", "addr": 532, "data": 34}
+{"op": "write_rom_byte", "addr": 533, "data": 34}
+{"op": "write_rom_byte", "addr": 534, "data": 34}
+{"op": "write_rom_byte", "addr": 535, "data": 34}
+{"op": "write_rom_byte", "addr": 536, "data": 34}
+{"op": "write_rom_byte", "addr": 537, "data": 34}
+{"op": "write_rom_byte", "addr": 538, "data": 34}
+{"op": "write_rom_byte", "addr": 539, "data": 34}
+{"op": "write_rom_byte", "addr": 540, "data": 34}
+{"op": "write_rom_byte", "addr": 541, "data": 34}
+{"op": "write_rom_byte", "addr": 542, "data": 34}
+{"op": "write_rom_byte", "addr": 543, "data": 34}
+{"op": "write_rom_byte", "addr": 544, "data": 68}
+{"op": "write_rom_byte", "addr": 545, "data": 68}
+{"op": "write_rom_byte", "addr": 546, "data": 68}
+{"op": "write_rom_byte", "addr": 547, "data": 68}
+{"op": "write_rom_byte", "addr": 548, "data": 68}
+{"op": "write_rom_byte", "addr": 549, "data": 68}
+{"op": "write_rom_byte", "addr": 550, "data": 68}
+{"op": "write_rom_byte", "addr": 551, "data": 68}
+{"op": "write_rom_byte", "addr": 552, "data": 68}
+{"op": "write_rom_byte", "addr": 553, "data": 68}
+{"op": "write_rom_byte", "addr": 554, "data": 68}
+{"op": "write_rom_byte", "addr": 555, "data": 68}
+{"op": "write_rom_byte", "addr": 556, "data": 68}
+{"op": "write_rom_byte", "addr": 557, "data": 68}
+{"op": "write_rom_byte", "addr": 558, "data": 68}
+{"op": "write_rom_byte", "addr": 559, "data": 68}
+{"op": "write_rom_byte", "addr": 560, "data": 68}
+{"op": "write_rom_byte", "addr": 561, "data": 68}
+{"op": "write_rom_byte", "addr": 562, "data": 68}
+{"op": "write_rom_byte", "addr": 563, "data": 68}
+{"op": "write_rom_byte", "addr": 564, "data": 68}
+{"op": "write_rom_byte", "addr": 565, "data": 68}
+{"op": "write_rom_byte", "addr": 566, "data": 68}
+{"op": "write_rom_byte", "addr": 567, "data": 68}
+{"op": "write_rom_byte", "addr": 568, "data": 68}
+{"op": "write_rom_byte", "addr": 569, "data": 68}
+{"op": "write_rom_byte", "addr": 570, "data": 68}
+{"op": "write_rom_byte", "addr": 571, "data": 68}
+{"op": "write_rom_byte", "addr": 572, "data": 68}
+{"op": "write_rom_byte", "addr": 573, "data": 68}
+{"op": "write_rom_byte", "addr": 574, "data": 68}
+{"op": "write_rom_byte", "addr": 575, "data": 68}
+{"op": "vram_sel", "layer": 2}
+{"op": "write_vram", "addr": 0, "data": 16}
+{"op": "write_vram", "addr": 1, "data": 3}
+{"op": "vram_sel", "layer": 3}
+{"op": "write_vram", "addr": 0, "data": 17}
+{"op": "write_vram", "addr": 1, "data": 6}
+{"op": "vsync_pulse"}
+{"op": "set_pixel", "hpos": 0, "vpos": 0, "hblank": 0, "vblank": 0}
+{"op": "clock_n", "n": 8}
+{"op": "check_bg_valid", "layer": 2, "exp": 1}
+{"op": "check_bg_color", "layer": 2, "exp": 50}
+{"op": "check_bg_prio", "layer": 2, "exp": 0}
+{"op": "check_bg_valid", "layer": 3, "exp": 1}
+{"op": "check_bg_color", "layer": 3, "exp": 100}
+{"op": "check_bg_prio", "layer": 3, "exp": 0}

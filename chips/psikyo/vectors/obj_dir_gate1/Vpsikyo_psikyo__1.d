@@ -1,0 +1,12 @@
+Vpsikyo_psikyo__1.o: \
+  /Volumes/2TB_20260220/Projects/MiSTer_Pipeline/chips/psikyo/vectors/obj_dir_gate1/Vpsikyo__pch.h \
+  /opt/homebrew/Cellar/verilator/5.046/share/verilator/include/verilated.h \
+  /opt/homebrew/Cellar/verilator/5.046/share/verilator/include/verilated_config.h \
+  /opt/homebrew/Cellar/verilator/5.046/share/verilator/include/verilatedos.h \
+  /opt/homebrew/Cellar/verilator/5.046/share/verilator/include/verilated_types.h \
+  /opt/homebrew/Cellar/verilator/5.046/share/verilator/include/verilated_funcs.h \
+  /Volumes/2TB_20260220/Projects/MiSTer_Pipeline/chips/psikyo/vectors/obj_dir_gate1/Vpsikyo__Syms.h \
+  /Volumes/2TB_20260220/Projects/MiSTer_Pipeline/chips/psikyo/vectors/obj_dir_gate1/Vpsikyo.h \
+  /Volumes/2TB_20260220/Projects/MiSTer_Pipeline/chips/psikyo/vectors/obj_dir_gate1/Vpsikyo___024root.h \
+  /Volumes/2TB_20260220/Projects/MiSTer_Pipeline/chips/psikyo/vectors/obj_dir_gate1/Vpsikyo_psikyo.h \
+  Vpsikyo_psikyo__1.cpp Vpsikyo__pch.h

@@ -1,5 +1,5 @@
-# Psikyo Gate 1 Testbench Makefile
-# Targets: all, vectors, build, run, test, clean
+# Psikyo Gates 1 & 2 Testbench Makefile
+# Targets: all, gate1, gate2, vectors, build, run, test, clean
 
 RTL_DIR = ../rtl
 VERILATOR ?= verilator
@@ -9,42 +9,70 @@ LDFLAGS = -L/opt/homebrew/lib
 LIBS = -lm
 
 RTL = $(RTL_DIR)/psikyo.sv
-TB = tb_gate1.cpp
+TB_GATE1 = tb_gate1.cpp
+TB_GATE2 = tb_gate2.cpp
 OBJ_DIR = obj_dir
-TARGET = $(OBJ_DIR)/Vpsikyo
+OBJ_DIR_GATE1 = obj_dir_gate1
+OBJ_DIR_GATE2 = obj_dir_gate2
+TARGET_GATE1 = $(OBJ_DIR_GATE1)/Vpsikyo
+TARGET_GATE2 = $(OBJ_DIR_GATE2)/Vpsikyo
 
 PYTHON = python3
 
-.PHONY: all vectors build run test clean
+.PHONY: all gate1 gate2 vectors vectors-gate1 vectors-gate2 build build-gate1 build-gate2 run test clean help
 
-all: vectors build test
+all: test
 
-vectors:
+gate1: vectors-gate1 build-gate1 test-gate1
+
+gate2: vectors-gate2 build-gate2 test-gate2
+
+vectors: vectors-gate1 vectors-gate2
+
+vectors-gate1:
 	$(PYTHON) generate_gate1.py
 
-build: vectors $(TARGET)
+vectors-gate2:
+	$(PYTHON) generate_gate2.py
 
-$(TARGET): $(RTL) $(TB)
-	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR) -Wall --top-module psikyo \
+build: build-gate1 build-gate2
+
+build-gate1: vectors-gate1 $(TARGET_GATE1)
+
+build-gate2: vectors-gate2 $(TARGET_GATE2)
+
+$(TARGET_GATE1): $(RTL) $(TB_GATE1)
+	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR_GATE1) -Wall --top-module psikyo \
 		-Wno-MODMISSING \
 		-O0 -fno-dfg -fno-dfg-peephole \
-		$(RTL) $(TB) --build -CFLAGS "-O2 -std=c++17 -I/opt/homebrew/include" 2>&1
+		$(RTL) $(TB_GATE1) --build -CFLAGS "-O2 -std=c++17 -I/opt/homebrew/include" 2>&1
 
-run: build
-	cd $(OBJ_DIR) && ./Vpsikyo ../gate1_vectors.jsonl
+$(TARGET_GATE2): $(RTL) $(TB_GATE2)
+	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR_GATE2) -Wall --top-module psikyo \
+		-Wno-MODMISSING \
+		-O0 -fno-dfg -fno-dfg-peephole \
+		$(RTL) $(TB_GATE2) --build -CFLAGS "-O2 -std=c++17 -I/opt/homebrew/include" 2>&1
 
-test: build
-	cd $(OBJ_DIR) && ./Vpsikyo ../gate1_vectors.jsonl
+test: test-gate1 test-gate2
+
+test-gate1: build-gate1
+	cd $(OBJ_DIR_GATE1) && ./Vpsikyo ../gate1_vectors.jsonl
+
+test-gate2: build-gate2
+	cd $(OBJ_DIR_GATE2) && ./Vpsikyo ../gate2_vectors.jsonl
+
+run: test
 
 clean:
-	rm -rf $(OBJ_DIR) gate1_vectors.jsonl
+	rm -rf $(OBJ_DIR_GATE1) $(OBJ_DIR_GATE2) gate1_vectors.jsonl gate2_vectors.jsonl
 	rm -f *.vcd
 
 help:
-	@echo "Psikyo Gate 1 Test Targets:"
-	@echo "  all     - Generate vectors, build, and run tests (default)"
-	@echo "  vectors - Generate test vectors (gate1_vectors.jsonl)"
-	@echo "  build   - Compile Verilator testbench"
-	@echo "  run     - Run compiled testbench"
-	@echo "  test    - Run full test suite"
-	@echo "  clean   - Remove build artifacts"
+	@echo "Psikyo Gate 1 & 2 Test Targets:"
+	@echo "  all         - Run all tests (default)"
+	@echo "  gate1       - Run Gate 1 tests only"
+	@echo "  gate2       - Run Gate 2 tests only"
+	@echo "  vectors     - Generate all test vectors"
+	@echo "  build       - Compile all testbenches"
+	@echo "  test        - Run all tests"
+	@echo "  clean       - Remove build artifacts"

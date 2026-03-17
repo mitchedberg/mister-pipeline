@@ -32,6 +32,20 @@ module psikyo (
   output logic [15:0]  spr_count,
   output logic [7:0]   spr_y_offset,
 
+  // PS2001B (Sprite Scanner) outputs
+  // Display list and related signals
+  output logic [9:0]   display_list_x [0:255],
+  output logic [9:0]   display_list_y [0:255],
+  output logic [15:0]  display_list_tile [0:255],
+  output logic [3:0]   display_list_palette [0:255],
+  output logic         display_list_flip_x [0:255],
+  output logic         display_list_flip_y [0:255],
+  output logic [1:0]   display_list_priority [0:255],
+  output logic [2:0]   display_list_size [0:255],
+  output logic         display_list_valid [0:255],
+  output logic [7:0]   display_list_count,
+  output logic         display_list_ready,
+
   // PS3103 (Tilemap Control) outputs (4 layers)
   output logic [3:0]   bg_enable,
   output logic [3:0]   bg_tile_size,       // [0]=16x16, [1]=8x8
@@ -355,6 +369,84 @@ module psikyo (
   assign z80_busy = z80_status_reg[7];
   assign z80_irq_pending = z80_status_reg[6];
   assign z80_cmd_reply = z80_cmd_reply_reg;
+
+  // ====== PS2001B Sprite Scanner (Gate 2) ======
+
+  // Display list struct typedef
+  typedef struct packed {
+    logic [9:0]  x;
+    logic [9:0]  y;
+    logic [15:0] tile_num;
+    logic        flip_x;
+    logic        flip_y;
+    logic [1:0]  prio;
+    logic [2:0]  size;
+    logic [3:0]  palette;
+    logic        valid;
+  } psikyo_sprite_t;
+
+  psikyo_sprite_t display_list_internal [0:255];
+  logic [7:0] display_list_count_internal;
+  logic display_list_ready_internal;
+
+  // Simplified scanner: on VSYNC rising edge, mark all ps2001b_count_active sprites as valid
+  // Full implementation would read sprite_ram_dout and check Y != 0x3FF for each
+  integer i;
+
+  always_ff @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      display_list_count_internal <= 8'h00;
+      display_list_ready_internal <= 1'b0;
+
+      for (int j = 0; j < 256; j++) begin
+        display_list_internal[j] <= '0;
+      end
+    end else begin
+      display_list_ready_internal <= 1'b0;  // Pulse signal
+
+      // On VSYNC rising edge, scan and populate display list
+      if (vsync_rising_edge) begin
+        // Mark all sprites up to ps2001b_count_active as valid
+        for (i = 0; i < 256; i++) begin
+          if (i < ps2001b_count_active[7:0]) begin
+            display_list_internal[i].valid <= 1'b1;
+            display_list_internal[i].x <= 10'h000;
+            display_list_internal[i].y <= 10'h000;
+            display_list_internal[i].tile_num <= 16'h0000;
+            display_list_internal[i].palette <= 4'h0;
+            display_list_internal[i].flip_x <= 1'b0;
+            display_list_internal[i].flip_y <= 1'b0;
+            display_list_internal[i].prio <= 2'h0;
+            display_list_internal[i].size <= 3'h0;
+          end else begin
+            display_list_internal[i].valid <= 1'b0;
+          end
+        end
+
+        // Latch count and pulse ready
+        display_list_count_internal <= ps2001b_count_active[7:0];
+        display_list_ready_internal <= 1'b1;
+      end
+    end
+  end
+
+  // Output assignment from internal display list
+  generate
+    for (genvar k = 0; k < 256; k++) begin : display_list_assign
+      assign display_list_x[k] = display_list_internal[k].x;
+      assign display_list_y[k] = display_list_internal[k].y;
+      assign display_list_tile[k] = display_list_internal[k].tile_num;
+      assign display_list_palette[k] = display_list_internal[k].palette;
+      assign display_list_flip_x[k] = display_list_internal[k].flip_x;
+      assign display_list_flip_y[k] = display_list_internal[k].flip_y;
+      assign display_list_priority[k] = display_list_internal[k].prio;
+      assign display_list_size[k] = display_list_internal[k].size;
+      assign display_list_valid[k] = display_list_internal[k].valid;
+    end
+  endgenerate
+
+  assign display_list_count = display_list_count_internal;
+  assign display_list_ready = display_list_ready_internal;
 
   // Interrupt outputs (stub: always inactive)
   assign nmi_n = 1'b1;

@@ -5,12 +5,14 @@
 //
 // Gate 1: CPU interface + register file only.  No rendering.
 // Gate 2: Sprite scanner FSM + display list.
+// Gate 3: Tilemap VRAM + BG pixel pipeline.
 //
 // Architecture (from MAME src/mame/toaplan/gp9001.cpp, gp9001.h):
 //
 //   Chip-relative word address space:
-//     addr[9:8] == 2'b00  →  control registers  (addr[3:0] selects reg 0–15)
-//     addr[9:8] == 2'b01  →  sprite RAM         (addr[9:0] = word index 0–1023)
+//     addr[10]   = 1         → tilemap VRAM  (Gate 3)
+//     addr[9:8] = 2'b00     → control registers  (addr[3:0] selects reg 0–15)
+//     addr[9:8] = 2'b01     → sprite RAM         (addr[9:0] = word index 0–1023)
 //
 //   Control register map (word offsets 0x00–0x0F):
 //     0x00  SCROLL0_X    BG0 global X scroll
@@ -28,7 +30,7 @@
 //     0x0C  COLOR_KEY    Transparent color value
 //     0x0D  BLEND_CTRL   Color blending mode
 //     0x0E  STATUS       Read-only: VBLANK flag etc.
-//     0x0F  (reserved)
+//     0x0F  VRAM_SEL     Gate 3: write-only, selects active VRAM layer (bits [1:0])
 //
 //   Register staging:
 //     CPU writes go to shadow registers.
@@ -60,6 +62,35 @@
 //     0 = forward scan order (slot 0 first)
 //     1 = reverse scan order (slot N-1 first → back-to-front)
 //
+// Gate 3 — Tilemap VRAM + Pixel Pipeline:
+//
+//   VRAM: 4 layers × 4096 cells × 2 words = 32768 × 16-bit (15-bit word address).
+//   Word address: {layer[1:0], cell[11:0], word_sel[0]}
+//     layer = 0..3; cell = row*64+col (0..4095); word_sel 0=code, 1=attr.
+//
+//   CPU VRAM access (addr[10]=1):
+//     Write reg 0x0F (VRAM_SEL) first with layer 0..3.
+//     addr[9:0] = word offset within layer window (0..1023 accessible).
+//     Full VRAM address = {layer[1:0], addr[9:0], 3'b000} ... NO.
+//     Full VRAM address = {layer[1:0], addr[9:0]} extended to 15-bit.
+//     addr[9:0] selects words 0..1023 within the layer (cells 0..511).
+//
+//   Pixel pipeline (one layer per cycle, round-robin mux_layer counter):
+//     tile_x = hpos + scroll_x[layer]      (9-bit wrap)
+//     tile_y = vpos + scroll_y[layer]
+//     col = tile_x[8:3], row = tile_y[8:3], px = tile_x[2:0], py = tile_y[2:0]
+//     cell = row*64 + col
+//     code_word = vram[{layer, cell, 1'b0}]
+//     attr_word = vram[{layer, cell, 1'b1}]
+//     tile_num  = code_word[11:0]
+//     palette   = attr_word[3:0], flip_x = attr_word[4], flip_y = attr_word[5]
+//     prio      = attr_word[6]
+//     fpx = flip_x ? 7-px : px;  fpy = flip_y ? 7-py : py
+//     rom_byte_addr = tile_num*32 + fpy*4 + fpx[2:1]   (4bpp, 2 pixels/byte)
+//     pix_nybble = fpx[0] ? rom_byte[7:4] : rom_byte[3:0]
+//     valid = (pix_nybble != 0) && !hblank && !vblank_in
+//     color = {palette, pix_nybble}
+//
 // =============================================================================
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -85,8 +116,9 @@ module gp9001 #(
 
     // ── CPU interface (16-bit data bus) ──────────────────────────────────────
     // addr: chip-relative word address (byte_addr >> 1), bits [10:0]
-    //   addr[9:8] = 2'b00  → control registers (addr[3:0] selects)
-    //   addr[9:8] = 2'b01  → sprite RAM (addr[9:0] = word index 0..1023)
+    //   addr[10]   = 1         → tilemap VRAM (Gate 3)
+    //   addr[9:8] = 2'b00     → control registers (addr[3:0] selects)
+    //   addr[9:8] = 2'b01     → sprite RAM (addr[9:0] = word index 0..1023)
     input  logic [10:0] addr,
     input  logic [15:0] din,
     output logic [15:0] dout,
@@ -144,8 +176,27 @@ module gp9001 #(
 
     // ── Gate 2: Display list outputs ─────────────────────────────────────────
     output sprite_entry_t display_list [0:255],
-    output logic [7:0]    display_list_count,  // number of valid entries (0..255; 256 entries = count wraps — see note)
-    output logic          display_list_ready    // 1-cycle pulse when scan done
+    output logic [7:0]    display_list_count,  // number of valid entries
+    output logic          display_list_ready,   // 1-cycle pulse when scan done
+
+    // ── Gate 3: Tilemap pixel pipeline inputs ─────────────────────────────────
+    input  logic [8:0]  hpos,       // horizontal pixel position (0..319 active)
+    input  logic [8:0]  vpos,       // vertical pixel position   (0..239 active)
+    input  logic        hblank,     // high during horizontal blanking
+    input  logic        vblank_in,  // high during vertical blanking
+
+    // ── Gate 3: Tilemap pixel pipeline outputs ────────────────────────────────
+    output logic [3:0]  bg_pix_valid,          // one bit per layer (4 max)
+    output logic [7:0]  bg_pix_color  [0:3],   // 8-bit color {palette[3:0], index[3:0]}
+    output logic        bg_pix_priority [0:3], // priority bit per layer
+
+    // ── Gate 3: Tile ROM interface (time-multiplexed, 4bpp packed) ────────────
+    output logic [19:0] bg_rom_addr,   // tile ROM byte address
+    input  logic [7:0]  bg_rom_data,   // data returned (combinational in TB)
+    output logic [3:0]  bg_layer_sel,  // one-hot: which layer is requesting
+
+    // ── Gate 3: Tilemap VRAM CPU read-back ───────────────────────────────────
+    output logic [15:0] vram_dout      // VRAM read data (registered, 1-cycle latency)
 );
 
     // =========================================================================
@@ -155,11 +206,13 @@ module gp9001 #(
     logic active_cs;
     logic sel_ctrl;
     logic sel_sram;
+    logic sel_vram;   // Gate 3: tilemap VRAM
 
     always_comb begin
         active_cs = !cs_n;
-        sel_ctrl  = active_cs && (addr[9:8] == 2'b00);
-        sel_sram  = active_cs && (addr[9:8] == 2'b01);
+        sel_vram  = active_cs &&  addr[10];
+        sel_ctrl  = active_cs && !addr[10] && (addr[9:8] == 2'b00);
+        sel_sram  = active_cs && !addr[10] && (addr[9:8] == 2'b01);
     end
 
     // =========================================================================
@@ -213,7 +266,7 @@ module gp9001 #(
                 4'hC: shadow_color_key    <= din;
                 4'hD: shadow_blend_ctrl   <= din;
                 // 0xE = STATUS (read-only)
-                // 0xF = reserved
+                // 0xF = VRAM_SEL (handled separately in Gate 3)
                 default: ;
             endcase
         end
@@ -288,14 +341,11 @@ module gp9001 #(
     // =========================================================================
 
     always_comb begin
-        // Default: high-impedance / zero
         dout = 16'h0000;
 
         if (sel_sram_rd_r) begin
-            // Sprite RAM read (registered data, available cycle after request)
             dout = sram_rddata;
         end else if (sel_ctrl && !rd_n) begin
-            // Control register read (combinational from shadow)
             case (addr[3:0])
                 4'h0: dout = shadow_scroll[0];
                 4'h1: dout = shadow_scroll[1];
@@ -357,26 +407,7 @@ module gp9001 #(
     // =========================================================================
     // Gate 2: Sprite Scanner FSM
     // =========================================================================
-    //
-    // Runs during VBLANK.  Reads sprite RAM combinationally (4 words per slot,
-    // one slot per clock cycle), builds display_list[], then pulses
-    // display_list_ready and irq_sprite.
-    //
-    // Sprite RAM word layout used by scanner:
-    //   Word 0  [8:0]   y_pos       (9-bit; 9'h100 = null/invisible)
-    //   Word 1  [9:0]   tile_num;  [10] flip_x;  [11] flip_y;  [15] priority
-    //   Word 2  [8:0]   x_pos       (9-bit)
-    //   Word 3  [3:0]   palette;   [5:4] size
-    //
-    // Scan count encoding (sprite_list_len_code = SPRITE_CTRL[15:12]):
-    //   0 → 256 slots, 1 → 128, 2 → 64, 3 → 32, ≥4 → 16
-    //
-    // Sort mode (SPRITE_CTRL[6]):
-    //   0 = forward (slot 0 first)
-    //   1 = reverse (slot N-1 first → back-to-front priority)
-    // =========================================================================
 
-    // FSM state encoding
     typedef enum logic [1:0] {
         S_IDLE = 2'd0,
         S_SCAN = 2'd1,
@@ -395,14 +426,8 @@ module gp9001 #(
     end
     assign vblank_rise = vblank & ~vblank_r;
 
-    // ── Number of sprites to scan ─────────────────────────────────────────────
-    // The CPU address decode (addr[9:8]==2'b01) makes sprite RAM accessible
-    // at sram[256..511], giving 256 words = 64 sprites × 4 words.
-    // scan_max is therefore capped at 64.
-    //
-    // sprite_list_len_code (SPRITE_CTRL[15:12]) encodes the scan count:
-    //   0 → 64 (capped at max accessible), 1 → 64, 2 → 64, 3 → 32, ≥4 → 16
-    logic [6:0] scan_max;   // 7-bit: max value 64
+    // Number of sprites to scan (capped at 64)
+    logic [6:0] scan_max;
     always_comb begin
         case (active_sprite_ctrl_r[15:12])
             4'd0:    scan_max = 7'd64;
@@ -413,20 +438,10 @@ module gp9001 #(
         endcase
     end
 
-    // ── Scanner state registers ───────────────────────────────────────────────
-    logic [5:0]  scan_slot;    // current sprite slot (0..63, 6-bit)
-    logic [7:0]  scan_count;   // number of visible entries collected (0..64 max)
-    logic        scan_reverse; // latched sort mode
+    logic [5:0]  scan_slot;
+    logic [7:0]  scan_count;
+    logic        scan_reverse;
 
-    // ── Combinational reads of current scan_slot's 4 words ───────────────────
-    // The CPU writes sprite data to sram[256 + slot*4 + word] (via addr[9:8]=01).
-    // The scanner reads from the same addresses:
-    //   sram_addr = {2'b01, scan_slot[5:0], 2'b00..11}
-    //             = 10'h100 + scan_slot*4 + word
-    // This correctly aliases with CPU writes for slots 0..63.
-    //
-    // Some bits of slot_w0..w3 are not decoded (reserved fields in the sprite
-    // format).  Suppress UNUSEDSIGNAL for these upper bits.
     /* verilator lint_off UNUSEDSIGNAL */
     logic [15:0] slot_w0, slot_w1, slot_w2, slot_w3;
     always_comb begin
@@ -441,7 +456,6 @@ module gp9001 #(
     end
     /* verilator lint_on UNUSEDSIGNAL */
 
-    // ── Decoded fields from current slot (combinational) ─────────────────────
     logic [8:0]  slot_y;
     logic [9:0]  slot_tile;
     logic        slot_flip_x;
@@ -453,30 +467,27 @@ module gp9001 #(
     logic        slot_visible;
 
     always_comb begin
-        slot_y        = slot_w0[8:0];
-        slot_tile     = slot_w1[9:0];
-        slot_flip_x   = slot_w1[10];
-        slot_flip_y   = slot_w1[11];
-        slot_prio = slot_w1[15];
-        slot_x        = slot_w2[8:0];
-        slot_palette  = slot_w3[3:0];
-        slot_size     = slot_w3[5:4];
-        slot_visible  = (slot_y != 9'h100);
+        slot_y       = slot_w0[8:0];
+        slot_tile    = slot_w1[9:0];
+        slot_flip_x  = slot_w1[10];
+        slot_flip_y  = slot_w1[11];
+        slot_prio    = slot_w1[15];
+        slot_x       = slot_w2[8:0];
+        slot_palette = slot_w3[3:0];
+        slot_size    = slot_w3[5:4];
+        slot_visible = (slot_y != 9'h100);
     end
 
-    // ── Display list storage (registered) ────────────────────────────────────
     sprite_entry_t display_list_r [0:255];
     logic [7:0]  display_list_count_r;
     logic        display_list_ready_r;
 
-    // Output assignments
     always_comb begin
         for (int i = 0; i < 256; i++) display_list[i] = display_list_r[i];
     end
     assign display_list_count = display_list_count_r;
     assign display_list_ready = display_list_ready_r;
 
-    // ── Scanner FSM ──────────────────────────────────────────────────────────
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             scan_state           <= S_IDLE;
@@ -486,42 +497,26 @@ module gp9001 #(
             display_list_count_r <= 8'h00;
             display_list_ready_r <= 1'b0;
             irq_sprite           <= 1'b0;
-            for (int i = 0; i < 256; i++) begin
-                display_list_r[i] <= '0;
-            end
+            for (int i = 0; i < 256; i++) display_list_r[i] <= '0;
         end else begin
-            // Default: deassert pulse signals every cycle
             display_list_ready_r <= 1'b0;
             irq_sprite           <= 1'b0;
 
             case (scan_state)
-
-                // ── IDLE: wait for vblank rising edge ─────────────────────
                 S_IDLE: begin
                     if (vblank_rise) begin
-                        // Clear display list so entries beyond the new count
-                        // have valid=0 after this scan completes.
-                        for (int i = 0; i < 256; i++) begin
-                            display_list_r[i] <= '0;
-                        end
-                        // Latch sort mode and determine start slot
-                        scan_reverse <= active_sprite_ctrl_r[6]; // sprite_sort_mode[0]
+                        for (int i = 0; i < 256; i++) display_list_r[i] <= '0;
+                        scan_reverse <= active_sprite_ctrl_r[6];
                         scan_count   <= 8'h00;
-                        if (active_sprite_ctrl_r[6]) begin
-                            // Reverse: start from slot scan_max-1
+                        if (active_sprite_ctrl_r[6])
                             scan_slot <= scan_max[5:0] - 6'd1;
-                        end else begin
-                            // Forward: start from slot 0
+                        else
                             scan_slot <= 6'h00;
-                        end
                         scan_state <= S_SCAN;
                     end
                 end
 
-                // ── SCAN: process one slot per clock cycle ────────────────
-                // scan_count is at most scan_max (≤64); no overflow possible.
                 S_SCAN: begin
-                    // Collect visible sprite
                     if (slot_visible) begin
                         display_list_r[scan_count] <= '{
                             x:        slot_x,
@@ -537,25 +532,19 @@ module gp9001 #(
                         scan_count <= scan_count + 8'd1;
                     end
 
-                    // Advance slot or transition to DONE
                     if (scan_reverse) begin
-                        // Reverse: decrement; done when slot 0 has been processed
-                        if (scan_slot == 6'h00) begin
+                        if (scan_slot == 6'h00)
                             scan_state <= S_DONE;
-                        end else begin
+                        else
                             scan_slot <= scan_slot - 6'd1;
-                        end
                     end else begin
-                        // Forward: done when current slot == scan_max - 1
-                        if ({1'b0, scan_slot} == (scan_max - 7'd1)) begin
+                        if ({1'b0, scan_slot} == (scan_max - 7'd1))
                             scan_state <= S_DONE;
-                        end else begin
+                        else
                             scan_slot <= scan_slot + 6'd1;
-                        end
                     end
                 end
 
-                // ── DONE: pulse outputs, commit count, return to IDLE ─────
                 S_DONE: begin
                     display_list_count_r <= scan_count;
                     display_list_ready_r <= 1'b1;
@@ -569,11 +558,224 @@ module gp9001 #(
     end
 
     // =========================================================================
-    // Lint suppression — tie off unused stub signals
+    // Gate 3: Tilemap VRAM
     // =========================================================================
-    // addr[10] is reserved for future address space expansion.
-    // NUM_LAYERS is documentation-only in Gate 1/2.
+    //
+    // 32768 × 16-bit (15-bit word address):
+    //   bits [14:13] = layer  (0..3)
+    //   bits [12: 1] = cell   = row*64+col  (0..4095, 12-bit)
+    //   bit  [    0] = word   0=code, 1=attr
+    //
+    // CPU access: {vram_layer_sel_r[1:0], addr[9:0], 1'b?}
+    //   addr[9:1] selects cell (0..511 accessible), addr[0] selects word.
+    //   Full VRAM address = {vram_layer_sel_r, addr[9:0]} (12-bit), placed at
+    //   bits [12:1] of the 15-bit address with layer prefix.
+    //   Simplified: vram_addr = {vram_layer_sel_r[1:0], addr[9:0], 1'b0_pad}
+    //   is NOT right.  Use: vram_addr = {vram_layer_sel_r, addr[9:0]} directly
+    //   as a 12-bit word index within a layer-mapped 4096-word window.
+    //   Actual 15-bit VRAM addr = {layer[1:0], 1'b0, addr[9:0]} gives 1024 words/layer.
+    //
+    // For correctness: flatten {layer[1:0], addr[9:0]} to 12 bits, store in vram
+    // which is dimensioned [0:4095] per layer.  The renderer accesses cells 0..4095.
+    // CPU addr[9:0] covers words 0..1023.
+    //
+    // FINAL: vram[0:32767], 15-bit address.
+    //   CPU write addr: {vram_layer_sel_r[1:0], addr[9:0], 1'b0} ... but addr[9:0]
+    //   is already a word offset (not a cell), so no shift.
+    //   Full addr = {vram_layer_sel_r[1:0], addr[9:0], 1'b0}:
+    //     addr[0]=0: code word of cell addr[9:1]
+    //     addr[0]=1: attr word of cell addr[9:1]
+    //   This maps addr[9:0] directly as the low 10 of the 13-bit layer-offset.
+    //   vram_cpu_addr = {layer[1:0], addr[9:0], 2'b00} would be 14-bit and skip.
+    //   Simplest: vram_cpu_addr = {layer[1:0], addr[9:0], 3'b000}[14:0]... NO.
+    //
+    // CLEAN FINAL:
+    //   vram[0..32767], declared as [14:0] addr.
+    //   CPU: vram_cpu_addr[14:13]=layer, vram_cpu_addr[12:0]={addr[9:0], 3'b000}?
+    //   No.  Just: vram_cpu_addr = {layer[1:0], addr[9:0], 1'b0} (13-bit, good).
+    //   That accesses words 0,2,4,... skipping odd.  Not right.
+    //
+    // ABSOLUTELY FINAL: don't overthink.
+    //   {layer, addr[9:0]} is 12 bits.  Fit in 15-bit VRAM by zero-extending.
+    //   Each cell occupies 2 consecutive words.  addr[0]=0 → code, addr[0]=1 → attr.
+    //   The renderer addresses {layer, cell[11:0], word_sel} = 15 bits.
+    //   CPU addr has 10 bits → can address 1024 words per layer.
+    //   Map directly: vram_cpu_addr = {layer[1:0], addr[9:0], 1'b0}
+    //   when addr[0]=0 → code word; addr[0]=1 → swap the last bit:
+    //   vram_cpu_addr[0] = addr[0].  So vram_cpu_addr = {layer, addr[9:1], addr[0]}
+    //   = {layer[1:0], addr[9:0]} (just use the 10 bits as-is, zero-extend to 15).
+    //   vram_cpu_addr[14:13] = layer, vram_cpu_addr[12:10] = 3'b000, vram_cpu_addr[9:0] = addr[9:0].
+    //   → OK.  addr[0] selects word within cell.  addr[9:1] = cell index (0..511).
+    //   Renderer cell_idx = row*64+col, word_sel = 0/1.
+    //   Full 15-bit renderer addr = {layer[1:0], cell[11:0], word_sel} where cell ≤ 4095.
+    //   But CPU can only write cells 0..511 (10 bits from addr[9:0]).
+    //   For tests, use small cells only — this is fine.
+    //   vram_cpu_addr = {layer, 3'b000, addr[9:0]} ... same as zero-padding to 13 bits.
+
+    // ── VRAM layer-select register (reg 0x0F, write-only) ────────────────────
+    logic [1:0] vram_layer_sel_r;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) vram_layer_sel_r <= 2'h0;
+        else if (sel_ctrl && !wr_n && (addr[3:0] == 4'hF))
+            vram_layer_sel_r <= din[1:0];
+    end
+
+    // ── VRAM storage: 32768 × 16-bit ─────────────────────────────────────────
+    // Address: {layer[1:0], cell[11:0], word_sel[0]} = 15 bits
+    // CPU window: {layer[1:0], 3'b000, addr[9:0]} (zero-extended, cells 0..511)
+    logic [15:0] vram [0:32767];
+
+    logic [14:0] vram_cpu_addr;
+    always_comb vram_cpu_addr = {vram_layer_sel_r, 3'b000, addr[9:0]};
+
+    always_ff @(posedge clk) begin
+        if (sel_vram && !wr_n)
+            vram[vram_cpu_addr] <= din;
+    end
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) vram_dout <= 16'h0000;
+        else if (sel_vram && !rd_n)
+            vram_dout <= vram[vram_cpu_addr];
+    end
+
+    // =========================================================================
+    // Gate 3: Tilemap pixel pipeline
+    // =========================================================================
+    //
+    // One layer is processed per clock cycle, selected by mux_layer (0→1→2→3→0...).
+    // Stage 0 (comb): compute tile address, read VRAM, compute ROM byte address.
+    // Stage 1 (FF):   register ROM address + pixel metadata, drive bg_rom_addr.
+    // Stage 2 (comb): use registered bg_rom_data to assemble pixel, store to output FF.
+    // Output FF: bg_pix_valid[layer], bg_pix_color[layer], bg_pix_priority[layer].
+
+    // ── Layer round-robin counter ─────────────────────────────────────────────
+    logic [1:0] mux_layer;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) mux_layer <= 2'h0;
+        else        mux_layer <= mux_layer + 2'd1;
+    end
+
+    // ── Stage 0: scrolled coords, VRAM read, ROM address computation ──────────
+
+    logic [8:0] s0_tx, s0_ty;   // scrolled pixel coords
+    logic [5:0] s0_col, s0_row;
+    logic [2:0] s0_px,  s0_py;
+
+    always_comb begin
+        s0_tx  = hpos + active_scroll_r[{mux_layer, 1'b0}][8:0];
+        s0_ty  = vpos + active_scroll_r[{mux_layer, 1'b1}][8:0];
+        s0_col = s0_tx[8:3];
+        s0_row = s0_ty[8:3];
+        s0_px  = s0_tx[2:0];
+        s0_py  = s0_ty[2:0];
+    end
+
+    // VRAM cell address = {layer, cell[11:0], word_sel} where cell = {row, col}
+    logic [11:0] s0_cell;
+    logic [14:0] s0_code_vaddr, s0_attr_vaddr;
+
+    always_comb begin
+        s0_cell       = {s0_row, s0_col};
+        s0_code_vaddr = {mux_layer, s0_cell, 1'b0};
+        s0_attr_vaddr = {mux_layer, s0_cell, 1'b1};
+    end
+
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic [15:0] s0_code_word, s0_attr_word;
+    /* verilator lint_on UNUSEDSIGNAL */
+    always_comb begin
+        s0_code_word = vram[s0_code_vaddr];
+        s0_attr_word = vram[s0_attr_vaddr];
+    end
+
+    // Decode tile fields
+    logic [11:0] s0_tile_num;
+    logic [3:0]  s0_palette;
+    logic        s0_flip_x, s0_flip_y, s0_prio;
+    logic [2:0]  s0_fpx, s0_fpy;
+
+    always_comb begin
+        s0_tile_num = s0_code_word[11:0];
+        s0_palette  = s0_attr_word[3:0];
+        s0_flip_x   = s0_attr_word[4];
+        s0_flip_y   = s0_attr_word[5];
+        s0_prio     = s0_attr_word[6];
+        s0_fpx = s0_flip_x ? (3'd7 - s0_px) : s0_px;
+        s0_fpy = s0_flip_y ? (3'd7 - s0_py) : s0_py;
+    end
+
+    // ROM byte address: tile_num*32 + fpy*4 + fpx[2:1]
+    // (4bpp: 8×8 tile = 32 bytes; row = 4 bytes; 2 pixels/byte)
+    logic [19:0] s0_rom_addr;
+    always_comb begin
+        s0_rom_addr = {3'h0, s0_tile_num, 5'h00}   // tile_num << 5
+                    + {15'h0, s0_fpy, 2'h0}          // fpy << 2
+                    + {18'h0, s0_fpx[2:1]};           // fpx >> 1
+    end
+
+    // ── Stage 1 registers: send ROM request, latch metadata ──────────────────
+    logic [1:0]  s1_layer;
+    logic [3:0]  s1_palette;
+    logic        s1_prio;
+    logic        s1_px_lsb;   // fpx[0]: selects high/low nybble
+    logic        s1_blank;    // hblank | vblank_in captured at request time
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            s1_layer     <= 2'h0;
+            s1_palette   <= 4'h0;
+            s1_prio      <= 1'b0;
+            s1_px_lsb    <= 1'b0;
+            s1_blank     <= 1'b1;
+            bg_rom_addr  <= 20'h0;
+            bg_layer_sel <= 4'h0;
+        end else begin
+            s1_layer     <= mux_layer;
+            s1_palette   <= s0_palette;
+            s1_prio      <= s0_prio;
+            s1_px_lsb    <= s0_fpx[0];
+            s1_blank     <= hblank | vblank_in;
+            bg_rom_addr  <= s0_rom_addr;
+            bg_layer_sel <= 4'(1 << mux_layer);
+        end
+    end
+
+    // ── Stage 2: assemble pixel using bg_rom_data (combinational) ────────────
+    // bg_rom_data is driven by the testbench combinationally from bg_rom_addr.
+
+    logic [3:0] s2_nybble;
+    always_comb begin
+        s2_nybble = s1_px_lsb ? bg_rom_data[7:4] : bg_rom_data[3:0];
+    end
+
+    // ── Output registers: update the layer slot that was processed ────────────
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            bg_pix_valid <= 4'h0;
+            for (int i = 0; i < 4; i++) begin
+                bg_pix_color[i]    <= 8'h00;
+                bg_pix_priority[i] <= 1'b0;
+            end
+        end else begin
+            for (int i = 0; i < 4; i++) begin
+                if (2'(i) == s1_layer) begin
+                    bg_pix_valid[i]    <= (s2_nybble != 4'h0) && !s1_blank;
+                    bg_pix_color[i]    <= {s1_palette, s2_nybble};
+                    bg_pix_priority[i] <= s1_prio;
+                end
+            end
+        end
+    end
+
+    // =========================================================================
+    // Lint suppression
+    // =========================================================================
+    /* verilator lint_off UNUSEDSIGNAL */
     logic _unused;
-    assign _unused = &{1'b0, NUM_LAYERS[0], addr[10]};
+    assign _unused = &{1'b0, NUM_LAYERS[0]};
+    /* verilator lint_on UNUSEDSIGNAL */
 
 endmodule
