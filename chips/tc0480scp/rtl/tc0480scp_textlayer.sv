@@ -116,27 +116,26 @@ logic hblank_rise;
 assign hblank_rise = hblank_r & ~hblank_r2;
 
 // =============================================================================
-// Fetch geometry: compute at hblank_rise, latch for the entire fill.
-// Latch fetch_py at hblank_rise to avoid vpos-increment mid-fill bug.
+// Fetch geometry: computed combinationally from vpos/scroll, latched at hblank_rise.
+// Using combinational canvas_y avoids the 1-cycle stale-register issue where
+// two always_ff blocks both trigger on hblank_rise but one reads the other's output.
 // =============================================================================
-logic [2:0] fetch_py;      // pixel row within 8px tile (0..7)
-logic [5:0] fetch_row;     // tile row in 64×64 map (0..63)
-logic [8:0] fetch_xstart;  // first canvas X pixel (for left-edge tile)
-logic [2:0] fetch_xoff;    // pixel offset within first tile
+logic [8:0] canvas_y_c;    // combinational canvas Y (used this cycle by hblank_rise)
+logic [5:0] fetch_row;     // tile row in 64×64 map (0..63) — latched at hblank_rise
+logic [8:0] fetch_xstart;  // first canvas X pixel (for left-edge tile) — latched
+logic [2:0] fetch_xoff;    // pixel offset within first tile — latched
+
+// Compute canvas Y combinationally so TL_IDLE can latch run_py_r correctly.
+// V_START=16: hblank fires at vpos=15 for screen_y=0 → canvas_y = (15-15+scroll) = scroll.
+assign canvas_y_c = (vpos - 9'd15 + text_scrolly[8:0]) & 9'h1FF;
 
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        fetch_py     <= 3'b0;
         fetch_row    <= 6'b0;
         fetch_xstart <= 9'b0;
         fetch_xoff   <= 3'b0;
     end else if (hblank_rise) begin
-        // Next visible scanline's canvas Y
-        logic [8:0] next_canvas_y;
-        next_canvas_y = (vpos + 9'd1 + text_scrolly[8:0]) & 9'h1FF;
-        fetch_py   <= next_canvas_y[2:0];
-        fetch_row  <= next_canvas_y[8:3];
-        // Canvas X at output pixel 0: just the scroll (no tile offset yet)
+        fetch_row    <= canvas_y_c[8:3];
         fetch_xstart <= text_scrollx[8:0];
         fetch_xoff   <= text_scrollx[2:0];
     end
@@ -160,13 +159,12 @@ logic [5:0] run_tile_col; // current map tile column (0..63)
 
 // Tile attribute registers (latched in TL_WAIT)
 logic [5:0] tile_color_r;
-logic [7:0] tile_idx_r;
 logic       tile_flipx_r;
 logic       tile_flipy_r;
 
 // GFX word latches
 logic [15:0] gfx_w0_r;   // first word of the tile pixel row
-logic [15:0] gfx_w1_r;   // second word
+// gfx word1 is read directly from vram_gfx_q in TL_WRITE (no latch needed)
 
 // GFX base address for the current tile (computed in TL_WAIT)
 logic [14:0] gfx_base_r; // = 0x7000 + tile_idx * 16 + fetch_py_r * 2
@@ -181,14 +179,14 @@ logic [2:0]  run_py_r;   // snapshotted fetch_py for flipY
 logic [14:0] map_addr_c;
 logic [14:0] gfx0_addr_c;  // gfx row word 0
 logic [14:0] gfx1_addr_c;  // gfx row word 1
+logic [ 2:0] gfx_ry_c;     // flipY-adjusted row index
 
 always_comb begin
     map_addr_c  = 15'h6000 + {3'b0, fetch_row, run_tile_col};
     // flipY applied to row index
-    logic [2:0] ry;
-    ry = tile_flipy_r ? (3'd7 - run_py_r) : run_py_r;
-    gfx0_addr_c = gfx_base_r + {12'b0, ry, 1'b0};
-    gfx1_addr_c = gfx_base_r + {12'b0, ry, 1'b0} + 15'd1;
+    gfx_ry_c    = tile_flipy_r ? (3'd7 - run_py_r) : run_py_r;
+    gfx0_addr_c = 15'(gfx_base_r + {12'b0, gfx_ry_c, 1'b0});
+    gfx1_addr_c = 15'(gfx_base_r + {12'b0, gfx_ry_c, 1'b0} + 15'd1);
 end
 
 always_comb begin
@@ -228,11 +226,9 @@ always_ff @(posedge clk) begin
         tile_slot     <= 6'b0;
         run_tile_col  <= 6'b0;
         tile_color_r  <= 6'b0;
-        tile_idx_r    <= 8'b0;
         tile_flipx_r  <= 1'b0;
         tile_flipy_r  <= 1'b0;
         gfx_w0_r      <= 16'b0;
-        gfx_w1_r      <= 16'b0;
         gfx_base_r    <= 15'b0;
         run_py_r      <= 3'b0;
     end else begin
@@ -243,7 +239,9 @@ always_ff @(posedge clk) begin
                     tile_slot    <= 6'd0;
                     // First tile column: canvas_x at output pixel 0 >> 3
                     run_tile_col <= fetch_xstart[8:3] & 6'h3F;
-                    run_py_r     <= fetch_py;
+                    // Use canvas_y_c directly (combinational) — fetch_py updates on
+                    // the same posedge, so reading fetch_py here would get the stale value.
+                    run_py_r     <= canvas_y_c[2:0];
                     state        <= TL_MAP;
                 end
             end
@@ -257,23 +255,21 @@ always_ff @(posedge clk) begin
             TL_WAIT: begin
                 // vram_map_q is registered result of TL_MAP cycle address
                 tile_color_r  <= vram_map_q[13:8];
-                tile_idx_r    <= vram_map_q[7:0];
                 tile_flipx_r  <= vram_map_q[14];
                 tile_flipy_r  <= vram_map_q[15];
-                // Gfx base: 0x7000 + tile_idx * 16 (each tile = 16 words)
-                gfx_base_r    <= 15'h7000 + {4'b0, vram_map_q[7:0], 3'b0};
+                // Gfx base: 0x7000 + tile_idx * 16 (each tile = 16 words = 8 rows × 2)
+                gfx_base_r    <= 15'h7000 + {3'b0, vram_map_q[7:0], 4'b0};
                 state         <= TL_GFX0;
             end
 
-            // Latch gfx word0; issue gfx word1 read (gfx1_addr_c is combinational)
+            // Issue gfx word0 read; no latch yet (result available next cycle in TL_GFX1)
             TL_GFX0: begin
-                gfx_w0_r <= vram_gfx_q;
-                state    <= TL_GFX1;
+                state <= TL_GFX1;
             end
 
-            // Latch gfx word1; decode 8 pixels; write to linebuf
+            // Latch gfx word0 (result of TL_GFX0 addr); issue gfx word1 read
             TL_GFX1: begin
-                gfx_w1_r <= vram_gfx_q;
+                gfx_w0_r <= vram_gfx_q;  // sc_data = result of TL_GFX0's read = word0
                 state    <= TL_WRITE;
             end
 
@@ -336,7 +332,8 @@ end
 // =============================================================================
 /* verilator lint_off UNUSED */
 logic _unused_tl;
-assign _unused_tl = ^{hblank_r2, fetch_xstart[2:0]};
+assign _unused_tl = ^{hblank_r2, fetch_xstart[2:0],
+                      text_scrollx[15:9], text_scrolly[15:9]};
 /* verilator lint_on UNUSED */
 
 endmodule

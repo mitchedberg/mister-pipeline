@@ -102,6 +102,7 @@
 {"op": "write", "addr": 12, "data": 8, "be": 3, "note": "TEXT_XSCROLL=8 (shift left 1 tile)"}
 {"op": "check_pixel", "screen_x": 0, "screen_y": 0, "exp": 0, "note": "X scroll=8: screen_x=0 \u2192 canvas_x=8 \u2192 tile(1,0) = transparent \u2192 0x0000"}
 {"op": "write", "addr": 12, "data": 0, "be": 3, "note": "TEXT_XSCROLL=0 (restore)"}
+{"op": "vram_zero", "base": 28672, "count": 16, "note": "zero tile0 gfx data so tile_idx=0 \u2192 transparent"}
 {"op": "write", "addr": 13, "data": 8, "be": 3, "note": "TEXT_YSCROLL=8 (shift up 1 tile)"}
 {"op": "check_pixel", "screen_x": 0, "screen_y": 0, "exp": 0, "note": "Y scroll=8: screen_y=0 \u2192 canvas_y=8 \u2192 tile(0,1)=untouched \u2192 transparent"}
 {"op": "check_pixel", "screen_x": 0, "screen_y": 232, "exp": 0, "note": "Y scroll=8: screen_y=232 \u2192 canvas_y=240 \u2192 tile(0,30)=untouched \u2192 transparent"}
