@@ -1,0 +1,50 @@
+{"id": 0, "name": "BG0 Scroll X write", "op": "write", "addr": 0, "data": 22068, "lds_n": 0, "uds_n": 0, "expected_shadow": 22068}
+{"id": 1, "name": "BG0 Scroll Y write", "op": "write", "addr": 2, "data": 61355, "lds_n": 0, "uds_n": 0, "expected_shadow": 61389}
+{"id": 2, "name": "BG1 Scroll X write", "op": "write", "addr": 256, "data": 22068, "lds_n": 0, "uds_n": 0, "expected_shadow": 22068}
+{"id": 3, "name": "BG1 Scroll Y write", "op": "write", "addr": 258, "data": 61355, "lds_n": 0, "uds_n": 0, "expected_shadow": 61389}
+{"id": 4, "name": "BG2 Scroll X write", "op": "write", "addr": 512, "data": 22068, "lds_n": 0, "uds_n": 0, "expected_shadow": 22068}
+{"id": 5, "name": "BG2 Scroll Y write", "op": "write", "addr": 514, "data": 61355, "lds_n": 0, "uds_n": 0, "expected_shadow": 61389}
+{"id": 6, "name": "BG3 Scroll X write", "op": "write", "addr": 768, "data": 22068, "lds_n": 0, "uds_n": 0, "expected_shadow": 22068}
+{"id": 7, "name": "BG3 Scroll Y write", "op": "write", "addr": 770, "data": 61355, "lds_n": 0, "uds_n": 0, "expected_shadow": 61389}
+{"id": 8, "name": "BG0 Layer control write", "op": "write", "addr": 4, "data": 85, "lds_n": 0, "uds_n": 1, "expected_shadow": 85}
+{"id": 9, "name": "BG1 Layer control write", "op": "write", "addr": 260, "data": 85, "lds_n": 0, "uds_n": 1, "expected_shadow": 85}
+{"id": 10, "name": "BG2 Layer control write", "op": "write", "addr": 516, "data": 85, "lds_n": 0, "uds_n": 1, "expected_shadow": 85}
+{"id": 11, "name": "BG3 Layer control write", "op": "write", "addr": 772, "data": 85, "lds_n": 0, "uds_n": 1, "expected_shadow": 85}
+{"id": 12, "name": "Sprite control write", "op": "write", "addr": 1024, "data": 170, "lds_n": 0, "uds_n": 1, "expected_shadow": 170}
+{"id": 13, "name": "Map base select write", "op": "write", "addr": 16, "data": 5, "lds_n": 0, "uds_n": 1, "expected_shadow": 5}
+{"id": 14, "name": "GFX bank select write", "op": "write", "addr": 32, "data": 66, "lds_n": 0, "uds_n": 1, "expected_shadow": 66}
+{"id": 15, "name": "Joystick 1 write", "op": "write", "addr": 32768, "data": 4660, "lds_n": 0, "uds_n": 0, "expected_shadow": 4660}
+{"id": 16, "name": "Joystick 2 write", "op": "write", "addr": 32770, "data": 22136, "lds_n": 0, "uds_n": 0, "expected_shadow": 22136}
+{"id": 17, "name": "Coin input write", "op": "write", "addr": 32772, "data": 255, "lds_n": 0, "uds_n": 0, "expected_shadow": 255}
+{"id": 18, "name": "DIP switches write", "op": "write", "addr": 32774, "data": 43690, "lds_n": 0, "uds_n": 0, "expected_shadow": 43690}
+{"id": 19, "name": "Watchdog kick reset", "op": "write", "addr": 32776, "data": 0, "lds_n": 0, "uds_n": 0, "expected_watchdog": 0}
+{"id": 20, "name": "Video interrupt control write", "op": "write", "addr": 32782, "data": 3, "lds_n": 0, "uds_n": 1, "expected_shadow": 3}
+{"id": 21, "name": "MCU status write", "op": "write", "addr": 40960, "data": 0, "lds_n": 0, "uds_n": 1, "expected_shadow": 0}
+{"id": 22, "name": "MCU command write", "op": "write", "addr": 40961, "data": 66, "lds_n": 0, "uds_n": 1, "expected_shadow": 66}
+{"id": 23, "name": "MCU parameter 1 write", "op": "write", "addr": 40962, "data": 171, "lds_n": 0, "uds_n": 1, "expected_shadow": 171}
+{"id": 24, "name": "MCU parameter 2 write", "op": "write", "addr": 40963, "data": 205, "lds_n": 0, "uds_n": 1, "expected_shadow": 205}
+{"id": 25, "name": "Sprite RAM write [0]", "op": "sprite_ram_write", "addr": 0, "data": 4096, "lds_n": 0, "uds_n": 0, "expected_sprite_ram": 4096}
+{"id": 26, "name": "Sprite RAM write [2]", "op": "sprite_ram_write", "addr": 2, "data": 4369, "lds_n": 0, "uds_n": 0, "expected_sprite_ram": 4369}
+{"id": 27, "name": "Sprite RAM write [4]", "op": "sprite_ram_write", "addr": 4, "data": 4642, "lds_n": 0, "uds_n": 0, "expected_sprite_ram": 4642}
+{"id": 28, "name": "Sprite RAM write [6]", "op": "sprite_ram_write", "addr": 6, "data": 4915, "lds_n": 0, "uds_n": 0, "expected_sprite_ram": 4915}
+{"id": 29, "name": "Sprite RAM write [8]", "op": "sprite_ram_write", "addr": 8, "data": 5188, "lds_n": 0, "uds_n": 0, "expected_sprite_ram": 5188}
+{"id": 30, "name": "Sprite RAM write [10]", "op": "sprite_ram_write", "addr": 10, "data": 5461, "lds_n": 0, "uds_n": 0, "expected_sprite_ram": 5461}
+{"id": 31, "name": "Sprite RAM write [12]", "op": "sprite_ram_write", "addr": 12, "data": 5734, "lds_n": 0, "uds_n": 0, "expected_sprite_ram": 5734}
+{"id": 32, "name": "Sprite RAM write [14]", "op": "sprite_ram_write", "addr": 14, "data": 6007, "lds_n": 0, "uds_n": 0, "expected_sprite_ram": 6007}
+{"id": 33, "name": "Sprite RAM read [0]", "op": "sprite_ram_read", "addr": 0, "expected_sprite_ram": 4096}
+{"id": 34, "name": "Sprite RAM read [2]", "op": "sprite_ram_read", "addr": 2, "expected_sprite_ram": 4369}
+{"id": 35, "name": "Sprite RAM read [4]", "op": "sprite_ram_read", "addr": 4, "expected_sprite_ram": 4642}
+{"id": 36, "name": "Sprite RAM read [6]", "op": "sprite_ram_read", "addr": 6, "expected_sprite_ram": 4915}
+{"id": 37, "name": "Sprite RAM read [8]", "op": "sprite_ram_read", "addr": 8, "expected_sprite_ram": 5188}
+{"id": 38, "name": "Sprite RAM read [10]", "op": "sprite_ram_read", "addr": 10, "expected_sprite_ram": 5461}
+{"id": 39, "name": "Sprite RAM read [12]", "op": "sprite_ram_read", "addr": 12, "expected_sprite_ram": 5734}
+{"id": 40, "name": "Sprite RAM read [14]", "op": "sprite_ram_read", "addr": 14, "expected_sprite_ram": 6007}
+{"id": 41, "name": "Read scroll X BG0", "op": "read", "addr": 0, "expected_shadow": 22068}
+{"id": 42, "name": "Read scroll Y BG0", "op": "read", "addr": 2, "expected_shadow": 61389}
+{"id": 43, "name": "Read layer control BG0", "op": "read", "addr": 4, "expected_shadow": 85}
+{"id": 44, "name": "Read GFX bank", "op": "read", "addr": 32, "expected_shadow": 66}
+{"id": 45, "name": "VBlank edge: shadow \u2192 active latch", "op": "vsync_edge", "expected_shadow_x0": 4369, "expected_active_x0": 4369, "expected_shadow_y1": 8738, "expected_active_y1": 8738}
+{"id": 46, "name": "Lower byte write (LDS_N=0, UDS_N=1)", "op": "write", "addr": 0, "data": 65280, "lds_n": 0, "uds_n": 1, "expected_shadow": 4352}
+{"id": 47, "name": "Upper byte write (LDS_N=1, UDS_N=0)", "op": "write", "addr": 256, "data": 255, "lds_n": 1, "uds_n": 0, "expected_shadow": 52}
+{"id": 48, "name": "Watchdog counter overflow", "op": "watchdog_tick", "expected_watchdog_timeout": true}
+{"id": 49, "name": "Watchdog counter partial (no timeout)", "op": "watchdog_tick", "expected_watchdog_timeout": false, "expected_watchdog_counter": 128}

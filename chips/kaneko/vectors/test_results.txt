@@ -1,0 +1,25 @@
+PASS [1] BG0 Scroll X write (expected=0x5634, actual=0x5634)
+PASS [2] BG0 Scroll Y write (expected=0xefab, actual=0xefab)
+PASS [3] BG1 Scroll X write (expected=0x1111, actual=0x1111)
+PASS [4] BG1 Scroll Y write (expected=0x2222, actual=0x2222)
+PASS [5] BG2 Scroll X write (expected=0x3333, actual=0x3333)
+PASS [6] BG2 Scroll Y write (expected=0x4444, actual=0x4444)
+PASS [7] BG3 Scroll X write (expected=0x5555, actual=0x5555)
+PASS [8] BG3 Scroll Y write (expected=0x6666, actual=0x6666)
+PASS [9] Layer Control BG0 write (expected=0x55, actual=0x55)
+PASS [10] Sprite Control write (expected=0xaa, actual=0xaa)
+PASS [11] GFX Bank Select write (expected=0x42, actual=0x42)
+PASS [12] Joystick 1 write (expected=0x1234, actual=0x1234)
+PASS [13] Watchdog kick reset (counter=01, acceptable)
+PASS [14] Sprite RAM write/read (expected=0xabcd, actual=0xabcd)
+PASS [15] VBlank edge latch (x=0x7777, y=0x8888)
+PASS [16] Sprite RAM [0x0002] = 0x4000
+PASS [17] Sprite RAM [0x0004] = 0x4100
+PASS [18] Sprite RAM [0x0006] = 0x4200
+PASS [19] Sprite RAM [0x0008] = 0x4300
+PASS [20] Sprite RAM [0x000a] = 0x4400
+
+========== TEST SUMMARY ==========
+PASS: 20
+FAIL: 0
+TOTAL: 20

@@ -32,7 +32,7 @@ run: build gate1_vectors.jsonl
 
 test: build gate1_vectors.jsonl
 	cd $(OBJ_DIR) && ./Vnmk16 2>&1 | tee test_output.log
-	@grep -q "Failed: 0" test_output.log && echo "✓ All tests passed" || (echo "✗ Some tests failed" && exit 1)
+	@grep -q "Failed: 0" $(OBJ_DIR)/test_output.log && echo "✓ All tests passed" || (echo "✗ Some tests failed" && exit 1)
 
 clean:
 	rm -rf $(OBJ_DIR) gate1_vectors.jsonl *.log
