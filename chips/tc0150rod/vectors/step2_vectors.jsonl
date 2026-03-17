@@ -1,0 +1,59 @@
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 1346, "be": 3}
+{"op": "ram_write", "addr": 1020, "data": 80, "be": 3}
+{"op": "ram_write", "addr": 1021, "data": 80, "be": 3}
+{"op": "ram_write", "addr": 1022, "data": 839, "be": 3}
+{"op": "ram_write", "addr": 1023, "data": 2053, "be": 3}
+{"op": "ram_write", "addr": 1020, "data": 40, "be": 3}
+{"op": "ram_write", "addr": 1021, "data": 40, "be": 3}
+{"op": "ram_write", "addr": 1022, "data": 839, "be": 3}
+{"op": "ram_write", "addr": 1023, "data": 4103, "be": 3}
+{"op": "check_geometry", "vpos": 0, "y_offs": -1, "exp_road_a_base": 1020, "exp_road_b_base": 1020, "exp_left_edge_a": 79, "exp_right_edge_a": 240, "exp_priority_switch_line": 67}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 16, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 16, "y_offs": -1, "exp_road_a_base": 4092, "exp_road_b_base": 4092, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 1040, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 1040, "y_offs": -1, "exp_road_a_base": 4092, "exp_road_b_base": 1020, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 2064, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 2064, "y_offs": -1, "exp_road_a_base": 4092, "exp_road_b_base": 2044, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 3088, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 3088, "y_offs": -1, "exp_road_a_base": 4092, "exp_road_b_base": 3068, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 272, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 272, "y_offs": -1, "exp_road_a_base": 1020, "exp_road_b_base": 4092, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 1296, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 1296, "y_offs": -1, "exp_road_a_base": 1020, "exp_road_b_base": 1020, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 2320, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 2320, "y_offs": -1, "exp_road_a_base": 1020, "exp_road_b_base": 2044, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 3344, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 3344, "y_offs": -1, "exp_road_a_base": 1020, "exp_road_b_base": 3068, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 528, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 528, "y_offs": -1, "exp_road_a_base": 2044, "exp_road_b_base": 4092, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 1552, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 1552, "y_offs": -1, "exp_road_a_base": 2044, "exp_road_b_base": 1020, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 2576, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 2576, "y_offs": -1, "exp_road_a_base": 2044, "exp_road_b_base": 2044, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 3600, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 3600, "y_offs": -1, "exp_road_a_base": 2044, "exp_road_b_base": 3068, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 784, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 784, "y_offs": -1, "exp_road_a_base": 3068, "exp_road_b_base": 4092, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 1808, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 1808, "y_offs": -1, "exp_road_a_base": 3068, "exp_road_b_base": 1020, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 2832, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 2832, "y_offs": -1, "exp_road_a_base": 3068, "exp_road_b_base": 2044, "exp_psl": 17}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 4095, "data": 3856, "be": 3}
+{"op": "check_ctrl_decode", "ctrl": 3856, "y_offs": -1, "exp_road_a_base": 3068, "exp_road_b_base": 3068, "exp_psl": 17}

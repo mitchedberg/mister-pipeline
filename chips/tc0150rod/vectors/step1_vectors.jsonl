@@ -1,0 +1,47 @@
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 0, "data": 4660, "be": 3}
+{"op": "ram_read", "addr": 0, "exp": 4660}
+{"op": "ram_write", "addr": 1, "data": 43981, "be": 3}
+{"op": "ram_read", "addr": 1, "exp": 43981}
+{"op": "ram_write", "addr": 255, "data": 65535, "be": 3}
+{"op": "ram_read", "addr": 255, "exp": 65535}
+{"op": "ram_write", "addr": 256, "data": 23130, "be": 3}
+{"op": "ram_read", "addr": 256, "exp": 23130}
+{"op": "ram_write", "addr": 2047, "data": 1, "be": 3}
+{"op": "ram_read", "addr": 2047, "exp": 1}
+{"op": "ram_write", "addr": 2048, "data": 57005, "be": 3}
+{"op": "ram_read", "addr": 2048, "exp": 57005}
+{"op": "ram_write", "addr": 4094, "data": 48879, "be": 3}
+{"op": "ram_read", "addr": 4094, "exp": 48879}
+{"op": "ram_write", "addr": 4095, "data": 49218, "be": 3}
+{"op": "ram_read", "addr": 4095, "exp": 49218}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 16, "data": 43981, "be": 3}
+{"op": "ram_write", "addr": 16, "data": 65280, "be": 2}
+{"op": "ram_read", "addr": 16, "exp": 65485}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 32, "data": 4660, "be": 3}
+{"op": "ram_write", "addr": 32, "data": 255, "be": 1}
+{"op": "ram_read", "addr": 32, "exp": 4863}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 0, "data": 42405, "be": 3}
+{"op": "ram_read", "addr": 0, "exp": 42405}
+{"op": "ram_write", "addr": 1, "data": 42404, "be": 3}
+{"op": "ram_read", "addr": 1, "exp": 42404}
+{"op": "ram_write", "addr": 254, "data": 42331, "be": 3}
+{"op": "ram_read", "addr": 254, "exp": 42331}
+{"op": "ram_write", "addr": 255, "data": 42330, "be": 3}
+{"op": "ram_read", "addr": 255, "exp": 42330}
+{"op": "ram_write", "addr": 2046, "data": 41563, "be": 3}
+{"op": "ram_read", "addr": 2046, "exp": 41563}
+{"op": "ram_write", "addr": 2047, "data": 41562, "be": 3}
+{"op": "ram_read", "addr": 2047, "exp": 41562}
+{"op": "ram_write", "addr": 4094, "data": 43611, "be": 3}
+{"op": "ram_read", "addr": 4094, "exp": 43611}
+{"op": "ram_write", "addr": 4095, "data": 43610, "be": 3}
+{"op": "ram_read", "addr": 4095, "exp": 43610}
+{"op": "zero_ram", "base": 0, "count": 4096}
+{"op": "ram_write", "addr": 66, "data": 51966, "be": 3}
+{"op": "ram_write", "addr": 67, "data": 47806, "be": 3}
+{"op": "int_rd", "addr": 66, "exp": 51966}
+{"op": "int_rd", "addr": 67, "exp": 47806}
