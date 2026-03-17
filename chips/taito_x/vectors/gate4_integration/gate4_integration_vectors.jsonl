@@ -1,0 +1,642 @@
+{"op": "reset"}
+{"op": "load_gfx_word", "addr": 64, "data": 30583}
+{"op": "load_gfx_word", "addr": 65, "data": 30583}
+{"op": "load_gfx_word", "addr": 66, "data": 30583}
+{"op": "load_gfx_word", "addr": 67, "data": 30583}
+{"op": "load_gfx_word", "addr": 68, "data": 30583}
+{"op": "load_gfx_word", "addr": 69, "data": 30583}
+{"op": "load_gfx_word", "addr": 70, "data": 30583}
+{"op": "load_gfx_word", "addr": 71, "data": 30583}
+{"op": "load_gfx_word", "addr": 72, "data": 30583}
+{"op": "load_gfx_word", "addr": 73, "data": 30583}
+{"op": "load_gfx_word", "addr": 74, "data": 30583}
+{"op": "load_gfx_word", "addr": 75, "data": 30583}
+{"op": "load_gfx_word", "addr": 76, "data": 30583}
+{"op": "load_gfx_word", "addr": 77, "data": 30583}
+{"op": "load_gfx_word", "addr": 78, "data": 30583}
+{"op": "load_gfx_word", "addr": 79, "data": 30583}
+{"op": "load_gfx_word", "addr": 80, "data": 30583}
+{"op": "load_gfx_word", "addr": 81, "data": 30583}
+{"op": "load_gfx_word", "addr": 82, "data": 30583}
+{"op": "load_gfx_word", "addr": 83, "data": 30583}
+{"op": "load_gfx_word", "addr": 84, "data": 30583}
+{"op": "load_gfx_word", "addr": 85, "data": 30583}
+{"op": "load_gfx_word", "addr": 86, "data": 30583}
+{"op": "load_gfx_word", "addr": 87, "data": 30583}
+{"op": "load_gfx_word", "addr": 88, "data": 30583}
+{"op": "load_gfx_word", "addr": 89, "data": 30583}
+{"op": "load_gfx_word", "addr": 90, "data": 30583}
+{"op": "load_gfx_word", "addr": 91, "data": 30583}
+{"op": "load_gfx_word", "addr": 92, "data": 30583}
+{"op": "load_gfx_word", "addr": 93, "data": 30583}
+{"op": "load_gfx_word", "addr": 94, "data": 30583}
+{"op": "load_gfx_word", "addr": 95, "data": 30583}
+{"op": "load_gfx_word", "addr": 96, "data": 30583}
+{"op": "load_gfx_word", "addr": 97, "data": 30583}
+{"op": "load_gfx_word", "addr": 98, "data": 30583}
+{"op": "load_gfx_word", "addr": 99, "data": 30583}
+{"op": "load_gfx_word", "addr": 100, "data": 30583}
+{"op": "load_gfx_word", "addr": 101, "data": 30583}
+{"op": "load_gfx_word", "addr": 102, "data": 30583}
+{"op": "load_gfx_word", "addr": 103, "data": 30583}
+{"op": "load_gfx_word", "addr": 104, "data": 30583}
+{"op": "load_gfx_word", "addr": 105, "data": 30583}
+{"op": "load_gfx_word", "addr": 106, "data": 30583}
+{"op": "load_gfx_word", "addr": 107, "data": 30583}
+{"op": "load_gfx_word", "addr": 108, "data": 30583}
+{"op": "load_gfx_word", "addr": 109, "data": 30583}
+{"op": "load_gfx_word", "addr": 110, "data": 30583}
+{"op": "load_gfx_word", "addr": 111, "data": 30583}
+{"op": "load_gfx_word", "addr": 112, "data": 30583}
+{"op": "load_gfx_word", "addr": 113, "data": 30583}
+{"op": "load_gfx_word", "addr": 114, "data": 30583}
+{"op": "load_gfx_word", "addr": 115, "data": 30583}
+{"op": "load_gfx_word", "addr": 116, "data": 30583}
+{"op": "load_gfx_word", "addr": 117, "data": 30583}
+{"op": "load_gfx_word", "addr": 118, "data": 30583}
+{"op": "load_gfx_word", "addr": 119, "data": 30583}
+{"op": "load_gfx_word", "addr": 120, "data": 30583}
+{"op": "load_gfx_word", "addr": 121, "data": 30583}
+{"op": "load_gfx_word", "addr": 122, "data": 30583}
+{"op": "load_gfx_word", "addr": 123, "data": 30583}
+{"op": "load_gfx_word", "addr": 124, "data": 30583}
+{"op": "load_gfx_word", "addr": 125, "data": 30583}
+{"op": "load_gfx_word", "addr": 126, "data": 30583}
+{"op": "load_gfx_word", "addr": 127, "data": 30583}
+{"op": "palette_write", "addr": 87, "data": 1023, "be": 3}
+{"op": "ctrl_write", "addr": 0, "data": 0, "be": 1}
+{"op": "ctrl_write", "addr": 1, "data": 64, "be": 1}
+{"op": "cram_write", "addr": 0, "data": 1, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 10340, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 146, "be": 1}
+{"op": "render_frame"}
+{"op": "check_pixel", "x": 100, "y": 112, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 108, "y": 120, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 115, "y": 127, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "reset"}
+{"op": "load_gfx_word", "addr": 64, "data": 30583}
+{"op": "load_gfx_word", "addr": 65, "data": 30583}
+{"op": "load_gfx_word", "addr": 66, "data": 30583}
+{"op": "load_gfx_word", "addr": 67, "data": 30583}
+{"op": "load_gfx_word", "addr": 68, "data": 30583}
+{"op": "load_gfx_word", "addr": 69, "data": 30583}
+{"op": "load_gfx_word", "addr": 70, "data": 30583}
+{"op": "load_gfx_word", "addr": 71, "data": 30583}
+{"op": "load_gfx_word", "addr": 72, "data": 30583}
+{"op": "load_gfx_word", "addr": 73, "data": 30583}
+{"op": "load_gfx_word", "addr": 74, "data": 30583}
+{"op": "load_gfx_word", "addr": 75, "data": 30583}
+{"op": "load_gfx_word", "addr": 76, "data": 30583}
+{"op": "load_gfx_word", "addr": 77, "data": 30583}
+{"op": "load_gfx_word", "addr": 78, "data": 30583}
+{"op": "load_gfx_word", "addr": 79, "data": 30583}
+{"op": "load_gfx_word", "addr": 80, "data": 30583}
+{"op": "load_gfx_word", "addr": 81, "data": 30583}
+{"op": "load_gfx_word", "addr": 82, "data": 30583}
+{"op": "load_gfx_word", "addr": 83, "data": 30583}
+{"op": "load_gfx_word", "addr": 84, "data": 30583}
+{"op": "load_gfx_word", "addr": 85, "data": 30583}
+{"op": "load_gfx_word", "addr": 86, "data": 30583}
+{"op": "load_gfx_word", "addr": 87, "data": 30583}
+{"op": "load_gfx_word", "addr": 88, "data": 30583}
+{"op": "load_gfx_word", "addr": 89, "data": 30583}
+{"op": "load_gfx_word", "addr": 90, "data": 30583}
+{"op": "load_gfx_word", "addr": 91, "data": 30583}
+{"op": "load_gfx_word", "addr": 92, "data": 30583}
+{"op": "load_gfx_word", "addr": 93, "data": 30583}
+{"op": "load_gfx_word", "addr": 94, "data": 30583}
+{"op": "load_gfx_word", "addr": 95, "data": 30583}
+{"op": "load_gfx_word", "addr": 96, "data": 30583}
+{"op": "load_gfx_word", "addr": 97, "data": 30583}
+{"op": "load_gfx_word", "addr": 98, "data": 30583}
+{"op": "load_gfx_word", "addr": 99, "data": 30583}
+{"op": "load_gfx_word", "addr": 100, "data": 30583}
+{"op": "load_gfx_word", "addr": 101, "data": 30583}
+{"op": "load_gfx_word", "addr": 102, "data": 30583}
+{"op": "load_gfx_word", "addr": 103, "data": 30583}
+{"op": "load_gfx_word", "addr": 104, "data": 30583}
+{"op": "load_gfx_word", "addr": 105, "data": 30583}
+{"op": "load_gfx_word", "addr": 106, "data": 30583}
+{"op": "load_gfx_word", "addr": 107, "data": 30583}
+{"op": "load_gfx_word", "addr": 108, "data": 30583}
+{"op": "load_gfx_word", "addr": 109, "data": 30583}
+{"op": "load_gfx_word", "addr": 110, "data": 30583}
+{"op": "load_gfx_word", "addr": 111, "data": 30583}
+{"op": "load_gfx_word", "addr": 112, "data": 30583}
+{"op": "load_gfx_word", "addr": 113, "data": 30583}
+{"op": "load_gfx_word", "addr": 114, "data": 30583}
+{"op": "load_gfx_word", "addr": 115, "data": 30583}
+{"op": "load_gfx_word", "addr": 116, "data": 30583}
+{"op": "load_gfx_word", "addr": 117, "data": 30583}
+{"op": "load_gfx_word", "addr": 118, "data": 30583}
+{"op": "load_gfx_word", "addr": 119, "data": 30583}
+{"op": "load_gfx_word", "addr": 120, "data": 30583}
+{"op": "load_gfx_word", "addr": 121, "data": 30583}
+{"op": "load_gfx_word", "addr": 122, "data": 30583}
+{"op": "load_gfx_word", "addr": 123, "data": 30583}
+{"op": "load_gfx_word", "addr": 124, "data": 30583}
+{"op": "load_gfx_word", "addr": 125, "data": 30583}
+{"op": "load_gfx_word", "addr": 126, "data": 30583}
+{"op": "load_gfx_word", "addr": 127, "data": 30583}
+{"op": "load_gfx_word", "addr": 128, "data": 48059}
+{"op": "load_gfx_word", "addr": 129, "data": 48059}
+{"op": "load_gfx_word", "addr": 130, "data": 48059}
+{"op": "load_gfx_word", "addr": 131, "data": 48059}
+{"op": "load_gfx_word", "addr": 132, "data": 48059}
+{"op": "load_gfx_word", "addr": 133, "data": 48059}
+{"op": "load_gfx_word", "addr": 134, "data": 48059}
+{"op": "load_gfx_word", "addr": 135, "data": 48059}
+{"op": "load_gfx_word", "addr": 136, "data": 48059}
+{"op": "load_gfx_word", "addr": 137, "data": 48059}
+{"op": "load_gfx_word", "addr": 138, "data": 48059}
+{"op": "load_gfx_word", "addr": 139, "data": 48059}
+{"op": "load_gfx_word", "addr": 140, "data": 48059}
+{"op": "load_gfx_word", "addr": 141, "data": 48059}
+{"op": "load_gfx_word", "addr": 142, "data": 48059}
+{"op": "load_gfx_word", "addr": 143, "data": 48059}
+{"op": "load_gfx_word", "addr": 144, "data": 48059}
+{"op": "load_gfx_word", "addr": 145, "data": 48059}
+{"op": "load_gfx_word", "addr": 146, "data": 48059}
+{"op": "load_gfx_word", "addr": 147, "data": 48059}
+{"op": "load_gfx_word", "addr": 148, "data": 48059}
+{"op": "load_gfx_word", "addr": 149, "data": 48059}
+{"op": "load_gfx_word", "addr": 150, "data": 48059}
+{"op": "load_gfx_word", "addr": 151, "data": 48059}
+{"op": "load_gfx_word", "addr": 152, "data": 48059}
+{"op": "load_gfx_word", "addr": 153, "data": 48059}
+{"op": "load_gfx_word", "addr": 154, "data": 48059}
+{"op": "load_gfx_word", "addr": 155, "data": 48059}
+{"op": "load_gfx_word", "addr": 156, "data": 48059}
+{"op": "load_gfx_word", "addr": 157, "data": 48059}
+{"op": "load_gfx_word", "addr": 158, "data": 48059}
+{"op": "load_gfx_word", "addr": 159, "data": 48059}
+{"op": "load_gfx_word", "addr": 160, "data": 48059}
+{"op": "load_gfx_word", "addr": 161, "data": 48059}
+{"op": "load_gfx_word", "addr": 162, "data": 48059}
+{"op": "load_gfx_word", "addr": 163, "data": 48059}
+{"op": "load_gfx_word", "addr": 164, "data": 48059}
+{"op": "load_gfx_word", "addr": 165, "data": 48059}
+{"op": "load_gfx_word", "addr": 166, "data": 48059}
+{"op": "load_gfx_word", "addr": 167, "data": 48059}
+{"op": "load_gfx_word", "addr": 168, "data": 48059}
+{"op": "load_gfx_word", "addr": 169, "data": 48059}
+{"op": "load_gfx_word", "addr": 170, "data": 48059}
+{"op": "load_gfx_word", "addr": 171, "data": 48059}
+{"op": "load_gfx_word", "addr": 172, "data": 48059}
+{"op": "load_gfx_word", "addr": 173, "data": 48059}
+{"op": "load_gfx_word", "addr": 174, "data": 48059}
+{"op": "load_gfx_word", "addr": 175, "data": 48059}
+{"op": "load_gfx_word", "addr": 176, "data": 48059}
+{"op": "load_gfx_word", "addr": 177, "data": 48059}
+{"op": "load_gfx_word", "addr": 178, "data": 48059}
+{"op": "load_gfx_word", "addr": 179, "data": 48059}
+{"op": "load_gfx_word", "addr": 180, "data": 48059}
+{"op": "load_gfx_word", "addr": 181, "data": 48059}
+{"op": "load_gfx_word", "addr": 182, "data": 48059}
+{"op": "load_gfx_word", "addr": 183, "data": 48059}
+{"op": "load_gfx_word", "addr": 184, "data": 48059}
+{"op": "load_gfx_word", "addr": 185, "data": 48059}
+{"op": "load_gfx_word", "addr": 186, "data": 48059}
+{"op": "load_gfx_word", "addr": 187, "data": 48059}
+{"op": "load_gfx_word", "addr": 188, "data": 48059}
+{"op": "load_gfx_word", "addr": 189, "data": 48059}
+{"op": "load_gfx_word", "addr": 190, "data": 48059}
+{"op": "load_gfx_word", "addr": 191, "data": 48059}
+{"op": "palette_write", "addr": 55, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 75, "data": 31, "be": 3}
+{"op": "ctrl_write", "addr": 0, "data": 0, "be": 1}
+{"op": "ctrl_write", "addr": 1, "data": 64, "be": 1}
+{"op": "cram_write", "addr": 0, "data": 1, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 6194, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 158, "be": 1}
+{"op": "cram_write", "addr": 1, "data": 2, "be": 3}
+{"op": "cram_write", "addr": 513, "data": 8252, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 39168, "be": 2}
+{"op": "render_frame"}
+{"op": "check_pixel", "x": 60, "y": 105, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "reset"}
+{"op": "load_gfx_word", "addr": 192, "data": 4369}
+{"op": "load_gfx_word", "addr": 193, "data": 4369}
+{"op": "load_gfx_word", "addr": 194, "data": 4369}
+{"op": "load_gfx_word", "addr": 195, "data": 4369}
+{"op": "load_gfx_word", "addr": 196, "data": 8738}
+{"op": "load_gfx_word", "addr": 197, "data": 8738}
+{"op": "load_gfx_word", "addr": 198, "data": 8738}
+{"op": "load_gfx_word", "addr": 199, "data": 8738}
+{"op": "load_gfx_word", "addr": 200, "data": 13107}
+{"op": "load_gfx_word", "addr": 201, "data": 13107}
+{"op": "load_gfx_word", "addr": 202, "data": 13107}
+{"op": "load_gfx_word", "addr": 203, "data": 13107}
+{"op": "load_gfx_word", "addr": 204, "data": 17476}
+{"op": "load_gfx_word", "addr": 205, "data": 17476}
+{"op": "load_gfx_word", "addr": 206, "data": 17476}
+{"op": "load_gfx_word", "addr": 207, "data": 17476}
+{"op": "load_gfx_word", "addr": 208, "data": 21845}
+{"op": "load_gfx_word", "addr": 209, "data": 21845}
+{"op": "load_gfx_word", "addr": 210, "data": 21845}
+{"op": "load_gfx_word", "addr": 211, "data": 21845}
+{"op": "load_gfx_word", "addr": 212, "data": 26214}
+{"op": "load_gfx_word", "addr": 213, "data": 26214}
+{"op": "load_gfx_word", "addr": 214, "data": 26214}
+{"op": "load_gfx_word", "addr": 215, "data": 26214}
+{"op": "load_gfx_word", "addr": 216, "data": 30583}
+{"op": "load_gfx_word", "addr": 217, "data": 30583}
+{"op": "load_gfx_word", "addr": 218, "data": 30583}
+{"op": "load_gfx_word", "addr": 219, "data": 30583}
+{"op": "load_gfx_word", "addr": 220, "data": 34952}
+{"op": "load_gfx_word", "addr": 221, "data": 34952}
+{"op": "load_gfx_word", "addr": 222, "data": 34952}
+{"op": "load_gfx_word", "addr": 223, "data": 34952}
+{"op": "load_gfx_word", "addr": 224, "data": 39321}
+{"op": "load_gfx_word", "addr": 225, "data": 39321}
+{"op": "load_gfx_word", "addr": 226, "data": 39321}
+{"op": "load_gfx_word", "addr": 227, "data": 39321}
+{"op": "load_gfx_word", "addr": 228, "data": 43690}
+{"op": "load_gfx_word", "addr": 229, "data": 43690}
+{"op": "load_gfx_word", "addr": 230, "data": 43690}
+{"op": "load_gfx_word", "addr": 231, "data": 43690}
+{"op": "load_gfx_word", "addr": 232, "data": 48059}
+{"op": "load_gfx_word", "addr": 233, "data": 48059}
+{"op": "load_gfx_word", "addr": 234, "data": 48059}
+{"op": "load_gfx_word", "addr": 235, "data": 48059}
+{"op": "load_gfx_word", "addr": 236, "data": 52428}
+{"op": "load_gfx_word", "addr": 237, "data": 52428}
+{"op": "load_gfx_word", "addr": 238, "data": 52428}
+{"op": "load_gfx_word", "addr": 239, "data": 52428}
+{"op": "load_gfx_word", "addr": 240, "data": 56797}
+{"op": "load_gfx_word", "addr": 241, "data": 56797}
+{"op": "load_gfx_word", "addr": 242, "data": 56797}
+{"op": "load_gfx_word", "addr": 243, "data": 56797}
+{"op": "load_gfx_word", "addr": 244, "data": 61166}
+{"op": "load_gfx_word", "addr": 245, "data": 61166}
+{"op": "load_gfx_word", "addr": 246, "data": 61166}
+{"op": "load_gfx_word", "addr": 247, "data": 61166}
+{"op": "load_gfx_word", "addr": 248, "data": 65535}
+{"op": "load_gfx_word", "addr": 249, "data": 65535}
+{"op": "load_gfx_word", "addr": 250, "data": 65535}
+{"op": "load_gfx_word", "addr": 251, "data": 65535}
+{"op": "load_gfx_word", "addr": 252, "data": 0}
+{"op": "load_gfx_word", "addr": 253, "data": 0}
+{"op": "load_gfx_word", "addr": 254, "data": 0}
+{"op": "load_gfx_word", "addr": 255, "data": 0}
+{"op": "palette_write", "addr": 8, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 24, "data": 2114, "be": 3}
+{"op": "palette_write", "addr": 40, "data": 4228, "be": 3}
+{"op": "palette_write", "addr": 56, "data": 6342, "be": 3}
+{"op": "palette_write", "addr": 72, "data": 8456, "be": 3}
+{"op": "palette_write", "addr": 88, "data": 10570, "be": 3}
+{"op": "palette_write", "addr": 104, "data": 12684, "be": 3}
+{"op": "palette_write", "addr": 120, "data": 14798, "be": 3}
+{"op": "palette_write", "addr": 136, "data": 16912, "be": 3}
+{"op": "palette_write", "addr": 152, "data": 19026, "be": 3}
+{"op": "palette_write", "addr": 168, "data": 21140, "be": 3}
+{"op": "palette_write", "addr": 184, "data": 23254, "be": 3}
+{"op": "palette_write", "addr": 200, "data": 25368, "be": 3}
+{"op": "palette_write", "addr": 216, "data": 27482, "be": 3}
+{"op": "palette_write", "addr": 232, "data": 29596, "be": 3}
+{"op": "palette_write", "addr": 248, "data": 31710, "be": 3}
+{"op": "ctrl_write", "addr": 0, "data": 0, "be": 1}
+{"op": "ctrl_write", "addr": 1, "data": 64, "be": 1}
+{"op": "cram_write", "addr": 0, "data": 3, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 14712, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 208, "be": 1}
+{"op": "render_frame"}
+{"op": "reset"}
+{"op": "load_gfx_word", "addr": 256, "data": 4660}
+{"op": "load_gfx_word", "addr": 257, "data": 22136}
+{"op": "load_gfx_word", "addr": 258, "data": 39612}
+{"op": "load_gfx_word", "addr": 259, "data": 57072}
+{"op": "load_gfx_word", "addr": 260, "data": 4660}
+{"op": "load_gfx_word", "addr": 261, "data": 22136}
+{"op": "load_gfx_word", "addr": 262, "data": 39612}
+{"op": "load_gfx_word", "addr": 263, "data": 57072}
+{"op": "load_gfx_word", "addr": 264, "data": 4660}
+{"op": "load_gfx_word", "addr": 265, "data": 22136}
+{"op": "load_gfx_word", "addr": 266, "data": 39612}
+{"op": "load_gfx_word", "addr": 267, "data": 57072}
+{"op": "load_gfx_word", "addr": 268, "data": 4660}
+{"op": "load_gfx_word", "addr": 269, "data": 22136}
+{"op": "load_gfx_word", "addr": 270, "data": 39612}
+{"op": "load_gfx_word", "addr": 271, "data": 57072}
+{"op": "load_gfx_word", "addr": 272, "data": 4660}
+{"op": "load_gfx_word", "addr": 273, "data": 22136}
+{"op": "load_gfx_word", "addr": 274, "data": 39612}
+{"op": "load_gfx_word", "addr": 275, "data": 57072}
+{"op": "load_gfx_word", "addr": 276, "data": 4660}
+{"op": "load_gfx_word", "addr": 277, "data": 22136}
+{"op": "load_gfx_word", "addr": 278, "data": 39612}
+{"op": "load_gfx_word", "addr": 279, "data": 57072}
+{"op": "load_gfx_word", "addr": 280, "data": 4660}
+{"op": "load_gfx_word", "addr": 281, "data": 22136}
+{"op": "load_gfx_word", "addr": 282, "data": 39612}
+{"op": "load_gfx_word", "addr": 283, "data": 57072}
+{"op": "load_gfx_word", "addr": 284, "data": 4660}
+{"op": "load_gfx_word", "addr": 285, "data": 22136}
+{"op": "load_gfx_word", "addr": 286, "data": 39612}
+{"op": "load_gfx_word", "addr": 287, "data": 57072}
+{"op": "load_gfx_word", "addr": 288, "data": 4660}
+{"op": "load_gfx_word", "addr": 289, "data": 22136}
+{"op": "load_gfx_word", "addr": 290, "data": 39612}
+{"op": "load_gfx_word", "addr": 291, "data": 57072}
+{"op": "load_gfx_word", "addr": 292, "data": 4660}
+{"op": "load_gfx_word", "addr": 293, "data": 22136}
+{"op": "load_gfx_word", "addr": 294, "data": 39612}
+{"op": "load_gfx_word", "addr": 295, "data": 57072}
+{"op": "load_gfx_word", "addr": 296, "data": 4660}
+{"op": "load_gfx_word", "addr": 297, "data": 22136}
+{"op": "load_gfx_word", "addr": 298, "data": 39612}
+{"op": "load_gfx_word", "addr": 299, "data": 57072}
+{"op": "load_gfx_word", "addr": 300, "data": 4660}
+{"op": "load_gfx_word", "addr": 301, "data": 22136}
+{"op": "load_gfx_word", "addr": 302, "data": 39612}
+{"op": "load_gfx_word", "addr": 303, "data": 57072}
+{"op": "load_gfx_word", "addr": 304, "data": 4660}
+{"op": "load_gfx_word", "addr": 305, "data": 22136}
+{"op": "load_gfx_word", "addr": 306, "data": 39612}
+{"op": "load_gfx_word", "addr": 307, "data": 57072}
+{"op": "load_gfx_word", "addr": 308, "data": 4660}
+{"op": "load_gfx_word", "addr": 309, "data": 22136}
+{"op": "load_gfx_word", "addr": 310, "data": 39612}
+{"op": "load_gfx_word", "addr": 311, "data": 57072}
+{"op": "load_gfx_word", "addr": 312, "data": 4660}
+{"op": "load_gfx_word", "addr": 313, "data": 22136}
+{"op": "load_gfx_word", "addr": 314, "data": 39612}
+{"op": "load_gfx_word", "addr": 315, "data": 57072}
+{"op": "load_gfx_word", "addr": 316, "data": 4660}
+{"op": "load_gfx_word", "addr": 317, "data": 22136}
+{"op": "load_gfx_word", "addr": 318, "data": 39612}
+{"op": "load_gfx_word", "addr": 319, "data": 57072}
+{"op": "palette_write", "addr": 0, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 16, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 32, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 48, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 64, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 80, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 96, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 112, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 1, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 17, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 33, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 49, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 65, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 81, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 97, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 113, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 2, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 18, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 34, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 50, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 66, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 82, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 98, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 114, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 3, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 19, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 35, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 51, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 67, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 83, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 99, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 115, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 4, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 20, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 36, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 52, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 68, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 84, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 100, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 116, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 5, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 21, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 37, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 53, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 69, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 85, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 101, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 117, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 6, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 22, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 38, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 54, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 70, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 86, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 102, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 118, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 7, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 23, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 39, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 55, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 71, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 87, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 103, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 119, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 8, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 24, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 40, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 56, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 72, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 88, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 104, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 120, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 9, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 25, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 41, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 57, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 73, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 89, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 105, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 121, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 10, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 26, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 42, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 58, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 74, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 90, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 106, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 122, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 11, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 27, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 43, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 59, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 75, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 91, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 107, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 123, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 12, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 28, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 44, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 60, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 76, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 92, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 108, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 124, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 13, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 29, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 45, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 61, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 77, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 93, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 109, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 125, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 14, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 30, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 46, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 62, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 78, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 94, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 110, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 126, "data": 32767, "be": 3}
+{"op": "palette_write", "addr": 15, "data": 0, "be": 3}
+{"op": "palette_write", "addr": 31, "data": 31744, "be": 3}
+{"op": "palette_write", "addr": 47, "data": 992, "be": 3}
+{"op": "palette_write", "addr": 63, "data": 31, "be": 3}
+{"op": "palette_write", "addr": 79, "data": 32736, "be": 3}
+{"op": "palette_write", "addr": 95, "data": 31775, "be": 3}
+{"op": "palette_write", "addr": 111, "data": 1023, "be": 3}
+{"op": "palette_write", "addr": 127, "data": 32767, "be": 3}
+{"op": "ctrl_write", "addr": 0, "data": 0, "be": 1}
+{"op": "ctrl_write", "addr": 1, "data": 64, "be": 1}
+{"op": "cram_write", "addr": 0, "data": 4, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 4176, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 178, "be": 1}
+{"op": "render_frame"}
+{"op": "check_pixel", "x": 80, "y": 80, "exp_r": 0, "exp_g": 0, "exp_b": 0}
+{"op": "check_pixel", "x": 84, "y": 80, "exp_r": 0, "exp_g": 0, "exp_b": 0}
+{"op": "check_pixel", "x": 88, "y": 80, "exp_r": 0, "exp_g": 0, "exp_b": 0}
+{"op": "check_pixel", "x": 92, "y": 80, "exp_r": 0, "exp_g": 0, "exp_b": 0}
+{"op": "reset"}
+{"op": "load_gfx_word", "addr": 320, "data": 3855}
+{"op": "load_gfx_word", "addr": 321, "data": 3855}
+{"op": "load_gfx_word", "addr": 322, "data": 3855}
+{"op": "load_gfx_word", "addr": 323, "data": 3855}
+{"op": "load_gfx_word", "addr": 324, "data": 61680}
+{"op": "load_gfx_word", "addr": 325, "data": 61680}
+{"op": "load_gfx_word", "addr": 326, "data": 61680}
+{"op": "load_gfx_word", "addr": 327, "data": 61680}
+{"op": "load_gfx_word", "addr": 328, "data": 3855}
+{"op": "load_gfx_word", "addr": 329, "data": 3855}
+{"op": "load_gfx_word", "addr": 330, "data": 3855}
+{"op": "load_gfx_word", "addr": 331, "data": 3855}
+{"op": "load_gfx_word", "addr": 332, "data": 61680}
+{"op": "load_gfx_word", "addr": 333, "data": 61680}
+{"op": "load_gfx_word", "addr": 334, "data": 61680}
+{"op": "load_gfx_word", "addr": 335, "data": 61680}
+{"op": "load_gfx_word", "addr": 336, "data": 3855}
+{"op": "load_gfx_word", "addr": 337, "data": 3855}
+{"op": "load_gfx_word", "addr": 338, "data": 3855}
+{"op": "load_gfx_word", "addr": 339, "data": 3855}
+{"op": "load_gfx_word", "addr": 340, "data": 61680}
+{"op": "load_gfx_word", "addr": 341, "data": 61680}
+{"op": "load_gfx_word", "addr": 342, "data": 61680}
+{"op": "load_gfx_word", "addr": 343, "data": 61680}
+{"op": "load_gfx_word", "addr": 344, "data": 3855}
+{"op": "load_gfx_word", "addr": 345, "data": 3855}
+{"op": "load_gfx_word", "addr": 346, "data": 3855}
+{"op": "load_gfx_word", "addr": 347, "data": 3855}
+{"op": "load_gfx_word", "addr": 348, "data": 61680}
+{"op": "load_gfx_word", "addr": 349, "data": 61680}
+{"op": "load_gfx_word", "addr": 350, "data": 61680}
+{"op": "load_gfx_word", "addr": 351, "data": 61680}
+{"op": "load_gfx_word", "addr": 352, "data": 3855}
+{"op": "load_gfx_word", "addr": 353, "data": 3855}
+{"op": "load_gfx_word", "addr": 354, "data": 3855}
+{"op": "load_gfx_word", "addr": 355, "data": 3855}
+{"op": "load_gfx_word", "addr": 356, "data": 61680}
+{"op": "load_gfx_word", "addr": 357, "data": 61680}
+{"op": "load_gfx_word", "addr": 358, "data": 61680}
+{"op": "load_gfx_word", "addr": 359, "data": 61680}
+{"op": "load_gfx_word", "addr": 360, "data": 3855}
+{"op": "load_gfx_word", "addr": 361, "data": 3855}
+{"op": "load_gfx_word", "addr": 362, "data": 3855}
+{"op": "load_gfx_word", "addr": 363, "data": 3855}
+{"op": "load_gfx_word", "addr": 364, "data": 61680}
+{"op": "load_gfx_word", "addr": 365, "data": 61680}
+{"op": "load_gfx_word", "addr": 366, "data": 61680}
+{"op": "load_gfx_word", "addr": 367, "data": 61680}
+{"op": "load_gfx_word", "addr": 368, "data": 3855}
+{"op": "load_gfx_word", "addr": 369, "data": 3855}
+{"op": "load_gfx_word", "addr": 370, "data": 3855}
+{"op": "load_gfx_word", "addr": 371, "data": 3855}
+{"op": "load_gfx_word", "addr": 372, "data": 61680}
+{"op": "load_gfx_word", "addr": 373, "data": 61680}
+{"op": "load_gfx_word", "addr": 374, "data": 61680}
+{"op": "load_gfx_word", "addr": 375, "data": 61680}
+{"op": "load_gfx_word", "addr": 376, "data": 3855}
+{"op": "load_gfx_word", "addr": 377, "data": 3855}
+{"op": "load_gfx_word", "addr": 378, "data": 3855}
+{"op": "load_gfx_word", "addr": 379, "data": 3855}
+{"op": "load_gfx_word", "addr": 380, "data": 61680}
+{"op": "load_gfx_word", "addr": 381, "data": 61680}
+{"op": "load_gfx_word", "addr": 382, "data": 61680}
+{"op": "load_gfx_word", "addr": 383, "data": 61680}
+{"op": "palette_write", "addr": 111, "data": 31775, "be": 3}
+{"op": "ctrl_write", "addr": 0, "data": 0, "be": 1}
+{"op": "ctrl_write", "addr": 1, "data": 64, "be": 1}
+{"op": "cram_write", "addr": 0, "data": 5, "be": 3}
+{"op": "cram_write", "addr": 512, "data": 12408, "be": 3}
+{"op": "yram_write", "addr": 0, "data": 138, "be": 1}
+{"op": "render_frame"}
+{"op": "check_pixel", "x": 120, "y": 120, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 122, "y": 120, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 124, "y": 120, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 126, "y": 120, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 128, "y": 120, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 130, "y": 120, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 132, "y": 120, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 134, "y": 120, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 120, "y": 122, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 122, "y": 122, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 124, "y": 122, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 126, "y": 122, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 128, "y": 122, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 130, "y": 122, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 132, "y": 122, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 134, "y": 122, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 120, "y": 124, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 122, "y": 124, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 124, "y": 124, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 126, "y": 124, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 128, "y": 124, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 130, "y": 124, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 132, "y": 124, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 134, "y": 124, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 120, "y": 126, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 122, "y": 126, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 124, "y": 126, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 126, "y": 126, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 128, "y": 126, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 130, "y": 126, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 132, "y": 126, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 134, "y": 126, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 120, "y": 128, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 122, "y": 128, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 124, "y": 128, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 126, "y": 128, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 128, "y": 128, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 130, "y": 128, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 132, "y": 128, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 134, "y": 128, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 120, "y": 130, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 122, "y": 130, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 124, "y": 130, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 126, "y": 130, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 128, "y": 130, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 130, "y": 130, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 132, "y": 130, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 134, "y": 130, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 120, "y": 132, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 122, "y": 132, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 124, "y": 132, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 126, "y": 132, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 128, "y": 132, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 130, "y": 132, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 132, "y": 132, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 134, "y": 132, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 120, "y": 134, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 122, "y": 134, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 124, "y": 134, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 126, "y": 134, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 128, "y": 134, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 130, "y": 134, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 132, "y": 134, "exp_r": 31, "exp_g": 31, "exp_b": 31}
+{"op": "check_pixel", "x": 134, "y": 134, "exp_r": 31, "exp_g": 31, "exp_b": 31}

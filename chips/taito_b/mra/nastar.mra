@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Nastar Warrior / Rastan Saga II (rastsag2, nastar) — Taito B, 1989
+  Single MC68000 @ 8 MHz, Z80 @ 4 MHz, YM2610 @ 8 MHz
+  TC0180VCU tilemap, TC0220IOC I/O, TC0260DAR palette DAC, TC0140SYT sound
+
+  SDRAM layout (byte addresses, nastar default):
+    0x000000  CPU program ROM (512KB, maincpu)
+    0x080000  Z80 audio program (128KB, audiocpu)
+    0x0C0000  (pad to 1MB boundary)
+    0x100000  TC0180VCU GFX ROM (1MB)
+    0x200000  ADPCM-A samples (512KB, ymsnd:adpcma)
+    0x280000  ADPCM-B samples (512KB, ymsnd:adpcmb)
+
+  ROM names from MAME rastsag2 driver (src/mame/taito/taito_b.cpp)
+  CRCs are placeholders (00000000) — replace with actual MAME ROM dump CRCs.
+-->
+<misterromdescription>
+  <name>Nastar Warrior</name>
+  <setname>nastar</setname>
+  <rbf>taito_b</rbf>
+  <mameversion>0245</mameversion>
+  <year>1989</year>
+  <manufacturer>Taito</manufacturer>
+  <category>Action</category>
+  <buttons names="Attack,Jump,Taunt,Start,Coin" default="A,B,C,Start,Select"/>
+  <!--
+    index 0: CPU + Z80 program ROMs (loaded sequentially to SDRAM base 0)
+    index 1: TC0180VCU GFX ROM (to SDRAM 0x100000)
+    index 2: ADPCM sample ROMs (to SDRAM 0x200000)
+    0xFE: DIP switches
+  -->
+
+  <!-- CPU program ROM (512KB) -->
+  <rom index="0" zip="nastar.zip" type="merged" md5="00000000000000000000000000000000">
+    <!-- CPU: 0x000000-0x07FFFF (512KB) -->
+    <part name="c09-27.rom" crc="00000000" offset="0x000000" length="0x080000"/>
+    <!-- Z80 audio: 0x080000-0x0FFFFF (128KB + 128KB pad) -->
+    <part name="c09-28.rom" crc="00000000" offset="0x080000" length="0x020000"/>
+  </rom>
+
+  <!-- TC0180VCU GFX ROM (1MB) -->
+  <!-- Loaded to SDRAM offset 0x100000 -->
+  <rom index="1" zip="nastar.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c09-01.rom" crc="00000000" offset="0x000000" length="0x100000"/>
+  </rom>
+
+  <!-- ADPCM sample ROMs (512KB ADPCM-A + 512KB ADPCM-B) -->
+  <!-- Loaded to SDRAM offset 0x200000 -->
+  <rom index="2" zip="nastar.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c09-29.rom" crc="00000000" offset="0x000000" length="0x080000"/>
+    <part name="c09-30.rom" crc="00000000" offset="0x080000" length="0x080000"/>
+  </rom>
+
+  <!-- DIP switch defaults (8 bytes per DIP bank, SDRAM 0xFE address) -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>

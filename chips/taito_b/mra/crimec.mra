@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Crime City (crimec) — Taito B, 1990
+  Single MC68000 @ 8 MHz, Z80 @ 4 MHz, YM2610 @ 8 MHz
+  TC0180VCU tilemap, TC0220IOC I/O, TC0260DAR palette DAC, TC0140SYT sound
+
+  NOTE: Crime City uses a different address map than Nastar (chips relocated).
+  This MRA assumes the core uses parameters to select the address decode layout.
+  For standalone crimec support, taito_b.sv would need game-specific parameters.
+
+  SDRAM layout (crime city hardware):
+    0x000000  CPU program ROM (512KB)
+    0x080000  Z80 audio program (128KB)
+    0x100000  TC0180VCU GFX ROM (1MB)
+    0x200000  ADPCM samples (512KB + 512KB)
+-->
+<misterromdescription>
+  <name>Crime City</name>
+  <setname>crimec</setname>
+  <rbf>taito_b</rbf>
+  <mameversion>0245</mameversion>
+  <year>1990</year>
+  <manufacturer>Taito</manufacturer>
+  <category>Action</category>
+  <buttons names="Attack,Jump,Taunt,Start,Coin" default="A,B,C,Start,Select"/>
+
+  <!-- CPU program ROM (512KB) -->
+  <rom index="0" zip="crimec.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="crimec.c14" crc="00000000" offset="0x000000" length="0x080000"/>
+    <part name="crimec.c15" crc="00000000" offset="0x080000" length="0x020000"/>
+  </rom>
+
+  <!-- TC0180VCU GFX ROM (1MB) -->
+  <rom index="1" zip="crimec.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="crimec.c01" crc="00000000" offset="0x000000" length="0x100000"/>
+  </rom>
+
+  <!-- ADPCM sample ROMs (512KB + 512KB) -->
+  <rom index="2" zip="crimec.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="crimec.c11" crc="00000000" offset="0x000000" length="0x080000"/>
+    <part name="crimec.c12" crc="00000000" offset="0x080000" length="0x080000"/>
+  </rom>
+
+  <!-- DIP switch defaults -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>
