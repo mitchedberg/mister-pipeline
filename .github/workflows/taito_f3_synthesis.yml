@@ -26,9 +26,8 @@ jobs:
           mkdir -p /tmp/quartus_diag
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/build" \
-            -w /build/chips/taito_f3/quartus \
             raetro/quartus:17.0 \
-            quartus_sh --flow compile taito_f3 2>&1 | tee /tmp/quartus_diag/f3_synthesis.log
+            quartus_sh --flow compile chips/taito_f3/quartus/taito_f3 2>&1 | tee /tmp/quartus_diag/f3_synthesis.log
           EXIT=${PIPESTATUS[0]}
           echo "Quartus exit code: $EXIT"
           exit $EXIT
