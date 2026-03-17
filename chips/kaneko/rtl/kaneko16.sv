@@ -379,7 +379,10 @@ module kaneko16 #(
     // Write to sprite RAM on write strobe
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            // Initialize memory to zero
+            // Initialize sprite RAM to sentinel (0x01FF means inactive)
+            for (int i = 0; i < 8192; i++) begin
+                sprite_ram_mem[i] <= 16'h01FF;
+            end
         end else begin
             if (write_strobe && is_sprite_ram) begin
                 sprite_ram_mem[cpu_addr[12:0]] <= cpu_din;

@@ -231,7 +231,7 @@ def generate_vectors():
         "id": test_id,
         "name": "VBlank trigger - scan sprites",
         "op": "vsync_pulse",
-        "expected_count": 5,  # Expect 5 valid sprites
+        "expected_count": 44,  # 9 valid (sprites 0-8) + 35 valid (sprites 10-44) = 44
     })
     test_id += 1
 

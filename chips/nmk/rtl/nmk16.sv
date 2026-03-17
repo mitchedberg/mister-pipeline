@@ -204,8 +204,12 @@ module nmk16 #(
     logic [15:0] sprite_data_rd_muxed;
 
     // Write port (from CPU)
-    always_ff @(posedge clk) begin
-        if (~cs_n & ~wr_n & is_sprite) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            for (int i = 0; i < 1024; i++) begin
+                sprite_ram_storage[i] <= 16'h01FF;
+            end
+        end else if (~cs_n & ~wr_n & is_sprite) begin
             sprite_ram_storage[addr[10:1]] <= din;
         end
     end

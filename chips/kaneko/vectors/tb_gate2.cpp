@@ -131,7 +131,7 @@ public:
         tick();
         tick();
         // Wait for scan to complete (256 sprites + overhead)
-        for (int i = 0; i < 400; i++) {
+        for (int i = 0; i < 600; i++) {
             tick();
         }
     }

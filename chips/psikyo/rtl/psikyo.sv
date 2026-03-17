@@ -211,10 +211,12 @@ module psikyo (
           // PS2001B sprite control registers
           case (addr[3:1])
             3'b000: ps2001b_ctrl_shadow <= din[7:0];           // 0x080000
-            3'b001: ps2001b_table_base_shadow[15:0] <= din;    // 0x080004 (low word)
-            3'b010: ps2001b_table_base_shadow[31:16] <= din;   // 0x080006 (high word)
-            3'b011: ps2001b_count_shadow <= din;               // 0x080008
-            3'b100: ps2001b_y_offset_shadow <= din[7:0];       // 0x08000A
+            3'b001: ps2001b_table_base_shadow[15:0] <= din;    // 0x080002 (low word)
+            3'b010: ps2001b_table_base_shadow[31:16] <= din;   // 0x080004 (high word)
+            3'b011: begin
+              ps2001b_count_shadow <= din;                      // 0x080006
+            end
+            3'b100: ps2001b_y_offset_shadow <= din[7:0];       // 0x080008
             default: ;
           endcase
         end
@@ -272,6 +274,8 @@ module psikyo (
   // ====== VSYNC Latch (Rising Edge Detection) ======
 
   logic vsync_n_r;
+  logic vsync_n_scan_r;
+  logic vsync_scan_falling;
 
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -395,6 +399,8 @@ module psikyo (
 
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
+      vsync_n_scan_r <= 1'b1;
+      vsync_scan_falling <= 1'b0;
       display_list_count_internal <= 8'h00;
       display_list_ready_internal <= 1'b0;
 
@@ -402,13 +408,15 @@ module psikyo (
         display_list_internal[j] <= '0;
       end
     end else begin
+      vsync_scan_falling <= vsync_n_scan_r & ~vsync_n;  // capture edge BEFORE latch updates
+      vsync_n_scan_r <= vsync_n;                          // update latch
       display_list_ready_internal <= 1'b0;  // Pulse signal
 
       // On VSYNC rising edge, scan and populate display list
-      if (vsync_rising_edge) begin
-        // Mark all sprites up to ps2001b_count_active as valid
+      if (vsync_scan_falling) begin
+        // Mark all sprites up to ps2001b_count_shadow as valid (read shadow, not active)
         for (i = 0; i < 256; i++) begin
-          if (i < ps2001b_count_active[7:0]) begin
+          if (i < ps2001b_count_shadow[7:0]) begin
             display_list_internal[i].valid <= 1'b1;
             display_list_internal[i].x <= 10'h000;
             display_list_internal[i].y <= 10'h000;
@@ -424,7 +432,7 @@ module psikyo (
         end
 
         // Latch count and pulse ready
-        display_list_count_internal <= ps2001b_count_active[7:0];
+        display_list_count_internal <= ps2001b_count_shadow[7:0];
         display_list_ready_internal <= 1'b1;
       end
     end
