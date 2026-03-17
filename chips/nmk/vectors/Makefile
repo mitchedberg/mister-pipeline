@@ -1,13 +1,14 @@
 # NMK16 Test Makefile
-# Targets: gate1, gate2, all, clean
+# Targets: gate1, gate2, gate3, all, clean
 
 VERILATOR ?= verilator
 OBJ_DIR := obj
 OBJ_DIR_G1 := obj_gate1
 OBJ_DIR_G2 := obj_gate2
+OBJ_DIR_G3 := obj_gate3
 RTL := ../rtl/nmk16.sv
 
-.PHONY: gate1 gate2 all clean
+.PHONY: gate1 gate2 gate3 all clean
 
 # Gate 1 targets
 gate1: gate1_vectors.jsonl gate1_build gate1_test
@@ -51,12 +52,33 @@ gate2_test: gate2_build gate2_vectors.jsonl
 $(OBJ_DIR_G2):
 	mkdir -p $(OBJ_DIR_G2)
 
+# Gate 3 targets
+gate3: gate3_vectors.jsonl gate3_build gate3_test
+
+gate3_vectors.jsonl: generate_gate3.py gate3_model.py
+	python3 generate_gate3.py
+
+gate3_build: $(OBJ_DIR_G3)/Vnmk16
+
+$(OBJ_DIR_G3)/Vnmk16: $(RTL) tb_gate3.cpp | $(OBJ_DIR_G3)
+	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR_G3) -Wall --top-module nmk16 \
+		-Wno-MODMISSING \
+		-O0 -fno-dfg -fno-dfg-peephole \
+		$(RTL) tb_gate3.cpp --build -CFLAGS "-O2 -std=c++17" 2>&1
+
+gate3_test: gate3_build gate3_vectors.jsonl
+	cd $(OBJ_DIR_G3) && ./Vnmk16 ../gate3_vectors.jsonl 2>&1 | tee gate3_test.log
+	@grep -q "Failed: 0" $(OBJ_DIR_G3)/gate3_test.log && echo "✓ Gate 3: All tests passed" || (echo "✗ Gate 3: Some tests failed" && exit 1)
+
+$(OBJ_DIR_G3):
+	mkdir -p $(OBJ_DIR_G3)
+
 # Combined targets
-all: gate1 gate2
+all: gate1 gate2 gate3
 	@echo ""
 	@echo "=== ALL GATES PASSED ==="
 
 clean:
-	rm -rf $(OBJ_DIR_G1) $(OBJ_DIR_G2) gate1_vectors.jsonl gate2_vectors.jsonl *.log
+	rm -rf $(OBJ_DIR_G1) $(OBJ_DIR_G2) $(OBJ_DIR_G3) gate1_vectors.jsonl gate2_vectors.jsonl gate3_vectors.jsonl *.log
 
 .SILENT: clean
