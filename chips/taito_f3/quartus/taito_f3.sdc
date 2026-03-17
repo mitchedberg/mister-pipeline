@@ -75,7 +75,7 @@ set_false_path -to   [get_ports {AUDIO_L}]
 set_false_path -to   [get_ports {AUDIO_R}]
 
 # DIP switches (async, sampled by core)
-set_false_path -from {get_ports {SW[*]}}
+set_false_path -from [get_ports {SW[*]}]
 
 # ==========================================================================
 # FALSE PATHS — CONFIGURATION & DISPLAY SCALING
