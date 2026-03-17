@@ -101,12 +101,10 @@ jobs:
             MODULE=$(basename "$f" .sv)
             MDIR="$WORK/$MODULE"
             mkdir -p "$MDIR"
-            cat > "$MDIR/${MODULE}.qsf" << QSFEOF
-set_global_assignment -name FAMILY "Cyclone V"
-set_global_assignment -name DEVICE 5CSEBA6U23I7
-set_global_assignment -name TOP_LEVEL_ENTITY ${MODULE}
-set_global_assignment -name SYSTEMVERILOG_FILE ${GITHUB_WORKSPACE}/${f}
-QSFEOF
+            printf 'set_global_assignment -name FAMILY "Cyclone V"\n' > "$MDIR/${MODULE}.qsf"
+            printf 'set_global_assignment -name DEVICE 5CSEBA6U23I7\n' >> "$MDIR/${MODULE}.qsf"
+            printf 'set_global_assignment -name TOP_LEVEL_ENTITY %s\n' "${MODULE}" >> "$MDIR/${MODULE}.qsf"
+            printf 'set_global_assignment -name SYSTEMVERILOG_FILE %s/%s\n' "${GITHUB_WORKSPACE}" "${f}" >> "$MDIR/${MODULE}.qsf"
             echo "── Quartus map: $MODULE ──"
             # Best-effort — standalone files may have missing dependencies
             (cd "$MDIR" && quartus_map ${MODULE} --read_settings_files=on 2>&1) || echo "  SKIP: $MODULE (missing dependencies OK for standalone lint)"
