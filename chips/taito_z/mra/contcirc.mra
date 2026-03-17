@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Continental Circus (contcirc) — Taito Z, 1987
+  Earlier Taito Z hardware: TC0100SCN tilemap (not TC0480SCP),
+  TC0040IOC I/O (not TC0510NIO), 12 MHz CPUs (24 MHz XTAL / 2),
+  No TC0150ROD (road data embedded in OBJ ROM via sprite system).
+
+  NOTE: contcirc uses different chips from dblaxle/racingb.
+  This MRA is provided for catalog completeness. The taito_z RTL
+  currently targets dblaxle/racingb hardware (TC0480SCP + TC0510NIO).
+  contcirc requires a separate per-game address-map parameter set.
+
+  SDRAM layout (approximate — verify against MAME contcirc driver):
+    0x000000  CPU A program ROM (~256KB)
+    0x080000  CPU B program ROM (~256KB)
+    0x0C0000  Z80 audio program
+    0x100000  SCR GFX ROM (TC0100SCN tilemap)
+    0x200000  Sprite OBJ GFX ROM
+    0x700000  ADPCM samples
+
+  ROM names and CRCs are placeholders — replace with MAME ROM dump data.
+-->
+<misterromdescription>
+  <name>Continental Circus</name>
+  <setname>contcirc</setname>
+  <rbf>taito_z</rbf>
+  <mameversion>0245</mameversion>
+  <year>1987</year>
+  <manufacturer>Taito</manufacturer>
+  <category>Racing</category>
+  <buttons names="Brake,Gear,Start,Coin" default="A,B,Start,Select"/>
+
+  <!-- CPU A + CPU B + Z80 program ROMs -->
+  <rom index="0" zip="contcirc.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="b33-ww.ic19" crc="00000000" offset="0x000000" length="0x020000"/>
+    <part name="b33-xx.ic7"  crc="00000000" offset="0x020000" length="0x020000"/>
+    <part name="b33-yy.ic35" crc="00000000" offset="0x080000" length="0x020000"/>
+    <part name="b33-zz.ic32" crc="00000000" offset="0x0C0000" length="0x010000"/>
+  </rom>
+
+  <!-- SCR GFX ROM (TC0100SCN) -->
+  <rom index="1" zip="contcirc.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="b33-aa.ic12" crc="00000000" offset="0x000000" length="0x040000"/>
+    <part name="b33-bb.ic11" crc="00000000" offset="0x040000" length="0x040000"/>
+  </rom>
+
+  <!-- Sprite OBJ GFX ROM -->
+  <rom index="2" zip="contcirc.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="b33-cc.ic25" crc="00000000" offset="0x000000" length="0x080000"/>
+    <part name="b33-dd.ic33" crc="00000000" offset="0x080000" length="0x080000"/>
+  </rom>
+
+  <!-- Road ROM (stub — contcirc may use OBJ-based road) -->
+  <rom index="3" zip="contcirc.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="b33-ee.ic28" crc="00000000" offset="0x000000" length="0x040000"/>
+  </rom>
+
+  <!-- STY spritemap ROM -->
+  <rom index="4" zip="contcirc.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="b33-ff.ic3"  crc="00000000" offset="0x000000" length="0x040000"/>
+  </rom>
+
+  <!-- ADPCM samples -->
+  <rom index="5" zip="contcirc.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="b33-gg.ic42" crc="00000000" offset="0x000000" length="0x080000"/>
+  </rom>
+
+  <!-- DIP switches -->
+  <rom index="0xFE">
+    <part repeat="8">FF</part>
+  </rom>
+
+</misterromdescription>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Racing Beat (racingb) — Taito Z, 1991
+  Identical hardware to Double Axle but with different address map.
+  Key address map differences from dblaxle (handled by per-game parameters):
+    TC0510NIO at 0x300000 (not 0x400000)
+    CPU B reset register at 0x500002 (not 0x600000)
+    TC0140SYT at 0x520000 (not 0x620000)
+    Palette at 0x700000 (not 0x800000)
+    TC0480SCP VRAM at 0x900000 only (no mirror at 0xA00000)
+    Sprite RAM at 0xB00000 (not 0xC00000)
+    CPU A IRQ4+IRQ6 every other frame (not just IRQ4)
+    CPU B ROM at 0x000000-0x03FFFF (256KB, same size as dblaxle)
+
+  SDRAM layout: same as dblaxle (same ROM regions, same sizes)
+
+  ROM names from MAME racingb driver (src/mame/taito/taito_z.cpp)
+  CRCs are placeholders (00000000) — replace with actual MAME ROM dump CRCs.
+-->
+<misterromdescription>
+  <name>Racing Beat</name>
+  <setname>racingb</setname>
+  <rbf>taito_z</rbf>
+  <mameversion>0245</mameversion>
+  <year>1991</year>
+  <manufacturer>Taito</manufacturer>
+  <category>Racing</category>
+  <buttons names="Brake,Gear,Start,Coin" default="A,B,Start,Select"/>
+
+  <!-- CPU A program ROM (512KB) -->
+  <rom index="0" zip="racingb.zip" type="merged" md5="00000000000000000000000000000000">
+    <!-- CPU A: 0x000000-0x07FFFF -->
+    <part name="c84-23.ic19" crc="00000000" offset="0x000000" length="0x020000"/>
+    <part name="c84-22.ic7"  crc="00000000" offset="0x020000" length="0x020000"/>
+    <part name="c84-25.ic18" crc="00000000" offset="0x040000" length="0x020000"/>
+    <part name="c84-24.ic6"  crc="00000000" offset="0x060000" length="0x020000"/>
+    <!-- CPU B: 0x080000-0x0BFFFF -->
+    <part name="c84-27.ic35" crc="00000000" offset="0x080000" length="0x020000"/>
+    <part name="c84-26.ic35" crc="00000000" offset="0x0A0000" length="0x020000"/>
+    <!-- Z80 audio: 0x0C0000-0x0DFFFF -->
+    <part name="c84-28.ic32" crc="00000000" offset="0x0C0000" length="0x020000"/>
+  </rom>
+
+  <!-- TC0480SCP SCR GFX ROM (1MB) -->
+  <rom index="1" zip="racingb.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c84-11.ic12" crc="00000000" offset="0x000000" length="0x080000"/>
+    <part name="c84-12.ic11" crc="00000000" offset="0x080000" length="0x080000"/>
+  </rom>
+
+  <!-- Sprite OBJ GFX ROM (4MB) -->
+  <rom index="2" zip="racingb.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c84-08.ic25" crc="00000000" offset="0x000000" length="0x100000"/>
+    <part name="c84-07.ic33" crc="00000000" offset="0x100000" length="0x100000"/>
+    <part name="c84-06.ic23" crc="00000000" offset="0x200000" length="0x100000"/>
+    <part name="c84-05.ic31" crc="00000000" offset="0x300000" length="0x100000"/>
+  </rom>
+
+  <!-- TC0150ROD road ROM (512KB) -->
+  <rom index="3" zip="racingb.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c84-09.ic28" crc="00000000" offset="0x000000" length="0x080000"/>
+  </rom>
+
+  <!-- STY spritemap ROM (512KB) -->
+  <rom index="4" zip="racingb.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c84-04.ic3"  crc="00000000" offset="0x000000" length="0x080000"/>
+  </rom>
+
+  <!-- ADPCM sample ROMs -->
+  <rom index="5" zip="racingb.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c84-01.ic42" crc="00000000" offset="0x000000" length="0x100000"/>
+    <part name="c84-02.ic43" crc="00000000" offset="0x100000" length="0x080000"/>
+    <part name="c84-03.ic44" crc="00000000" offset="0x180000" length="0x080000"/>
+  </rom>
+
+  <!-- DIP switches -->
+  <rom index="0xFE">
+    <part repeat="8">FF</part>
+  </rom>
+
+</misterromdescription>

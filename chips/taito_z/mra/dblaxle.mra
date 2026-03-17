@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Double Axle (dblaxle) — Taito Z, 1991
+  Dual MC68000 @ 16 MHz, Z80 @ 4 MHz, YM2610 @ 8 MHz
+  TC0480SCP tilemap, TC0370MSO sprites, TC0150ROD road, TC0510NIO I/O
+
+  SDRAM layout (byte addresses):
+    0x000000  CPU A program ROM (512KB, maincpu: 4x128KB interleaved)
+    0x080000  CPU B program ROM (256KB, sub: 2x128KB interleaved)
+    0x0C0000  Z80 audio program (128KB, audiocpu)
+    0x100000  TC0480SCP SCR GFX (1MB, tc0480scp: 2x512KB ROM_LOAD32_WORD)
+    0x200000  Sprite OBJ GFX (4MB, sprites: 4x1MB ROM_LOAD64_WORD_SWAP)
+    0x600000  TC0150ROD road data (512KB, tc0150rod)
+    0x680000  STY spritemap ROM (512KB, spritemap)
+    0x700000  ADPCM-A samples (1.5MB, ymsnd:adpcma)
+    0x880000  ADPCM-B samples (512KB, ymsnd:adpcmb)
+
+  ROM names from MAME dblaxle driver (src/mame/taito/taito_z.cpp)
+  CRCs are placeholders (00000000) — replace with actual MAME ROM dump CRCs.
+-->
+<misterromdescription>
+  <name>Double Axle</name>
+  <setname>dblaxle</setname>
+  <rbf>taito_z</rbf>
+  <mameversion>0245</mameversion>
+  <year>1991</year>
+  <manufacturer>Taito</manufacturer>
+  <category>Racing</category>
+  <buttons names="Brake,Gear,Start,Coin" default="A,B,Start,Select"/>
+  <!--
+    index 0: CPU A + CPU B + Z80 program ROMs (loaded sequentially to SDRAM base)
+    index 1: TC0480SCP SCR GFX ROM (to SDRAM 0x100000)
+    index 2: Sprite OBJ GFX ROM (to SDRAM 0x200000)
+    index 3: TC0150ROD road ROM (to SDRAM 0x600000)
+    index 4: STY spritemap ROM (to SDRAM 0x680000)
+    index 5: ADPCM sample ROMs (to SDRAM 0x700000)
+    0xFE: DIP switches
+  -->
+
+  <!-- CPU A program ROM (512KB) — 4x128KB interleaved: odd bytes, even bytes -->
+  <rom index="0" zip="dblaxle.zip" type="merged" md5="00000000000000000000000000000000">
+    <!-- CPU A: 0x000000-0x07FFFF -->
+    <part name="c78-31.ic19" crc="00000000" offset="0x000000" length="0x020000"/>
+    <part name="c78-32.ic7"  crc="00000000" offset="0x020000" length="0x020000"/>
+    <part name="c78-29.ic18" crc="00000000" offset="0x040000" length="0x020000"/>
+    <part name="c78-30.ic6"  crc="00000000" offset="0x060000" length="0x020000"/>
+    <!-- CPU B: 0x080000-0x0BFFFF -->
+    <part name="c78-33.ic35" crc="00000000" offset="0x080000" length="0x020000"/>
+    <part name="c78-34.ic35" crc="00000000" offset="0x0A0000" length="0x020000"/>
+    <!-- Z80 audio: 0x0C0000-0x0DFFFF -->
+    <part name="c78-35.ic32" crc="00000000" offset="0x0C0000" length="0x020000"/>
+  </rom>
+
+  <!-- TC0480SCP SCR GFX ROM (1MB = 2x512KB, ROM_LOAD32_WORD interleaved) -->
+  <!-- Loaded to SDRAM offset 0x100000 -->
+  <rom index="1" zip="dblaxle.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c78-10.ic12" crc="00000000" offset="0x000000" length="0x080000"/>
+    <part name="c78-11.ic11" crc="00000000" offset="0x080000" length="0x080000"/>
+  </rom>
+
+  <!-- Sprite OBJ GFX ROM (4MB = 4x1MB, ROM_LOAD64_WORD_SWAP interleaved) -->
+  <!-- Loaded to SDRAM offset 0x200000 -->
+  <rom index="2" zip="dblaxle.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c78-08.ic25" crc="00000000" offset="0x000000" length="0x100000"/>
+    <part name="c78-07.ic33" crc="00000000" offset="0x100000" length="0x100000"/>
+    <part name="c78-06.ic23" crc="00000000" offset="0x200000" length="0x100000"/>
+    <part name="c78-05.ic31" crc="00000000" offset="0x300000" length="0x100000"/>
+  </rom>
+
+  <!-- TC0150ROD road ROM (512KB) -->
+  <!-- Loaded to SDRAM offset 0x600000 -->
+  <rom index="3" zip="dblaxle.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c78-09.ic28" crc="00000000" offset="0x000000" length="0x080000"/>
+  </rom>
+
+  <!-- STY spritemap ROM (512KB) -->
+  <!-- Loaded to SDRAM offset 0x680000 -->
+  <rom index="4" zip="dblaxle.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="c78-04.ic3"  crc="00000000" offset="0x000000" length="0x080000"/>
+  </rom>
+
+  <!-- ADPCM sample ROMs: ADPCM-A (1.5MB) then ADPCM-B (512KB) -->
+  <!-- Loaded to SDRAM offset 0x700000 -->
+  <rom index="5" zip="dblaxle.zip" type="merged" md5="00000000000000000000000000000000">
+    <!-- ADPCM-A: 0x700000 (1MB + 512KB) -->
+    <part name="c78-01.ic42" crc="00000000" offset="0x000000" length="0x100000"/>
+    <part name="c78-02.ic43" crc="00000000" offset="0x100000" length="0x080000"/>
+    <!-- ADPCM-B: 0x880000 (512KB) -->
+    <part name="c78-03.ic44" crc="00000000" offset="0x180000" length="0x080000"/>
+  </rom>
+
+  <!-- DIP switches -->
+  <rom index="0xFE">
+    <part repeat="8">FF</part>
+  </rom>
+
+</misterromdescription>

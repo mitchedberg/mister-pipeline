@@ -1,0 +1,71 @@
+# =============================================================================
+# Taito Z Core — QIP File (Quartus Source Files)
+# =============================================================================
+#
+# Add core-specific RTL files here.
+# System framework files (sys.qip) are sourced from sys/sys.tcl.
+#
+# WARNING: Do not add files through Quartus IDE — edit this file directly!
+#
+# =============================================================================
+
+# =========================================================================
+# TOP-LEVEL EMU WRAPPER
+# =========================================================================
+
+set_global_assignment -name SYSTEMVERILOG_FILE emu.sv
+
+# =========================================================================
+# PLL (Phase-Locked Loop)
+# =========================================================================
+# Generates sys_clk (32 MHz) and sdram_clk (143 MHz) from 50 MHz reference
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/pll.sv
+
+# =========================================================================
+# TAITO Z CORE (Main Integration)
+# =========================================================================
+# Dual MC68000, TC0480SCP, TC0510NIO, TC0140SYT, TC0150ROD, TC0370MSO,
+# palette RAM, shared RAM, priority compositor
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/taito_z.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/taito_z_palette.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/taito_z_compositor.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/tc0510nio.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sdram_z.sv
+
+# =========================================================================
+# SUPPORT CHIPS (shared across Taito families)
+# =========================================================================
+
+# TC0480SCP: 4-layer tilemap engine (BG0-BG3 + FG text)
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0480scp/rtl/tc0480scp.sv
+
+# TC0140SYT: 68000 <-> Z80 sound communication
+set_global_assignment -name SYSTEMVERILOG_FILE ../../taito_support/rtl/TC0140SYT.sv
+
+# TC0150ROD: Road generator (CPU B bus)
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0150rod/rtl/tc0150rod.sv
+
+# TC0370MSO: Sprite scanner + TC0300FLA line buffer
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0370mso/rtl/tc0370mso.sv
+
+# =========================================================================
+# MC68000 CPU CORES (Dual CPU A + CPU B)
+# =========================================================================
+# fx68k: Cycle-accurate 68000 implementation
+# Two instances: one for CPU A, one for CPU B
+
+set_global_assignment -name VERILOG_FILE ../../fx68k/fx68k.v
+set_global_assignment -name VERILOG_FILE ../../fx68k/fx68kAlu.v
+set_global_assignment -name VERILOG_FILE ../../fx68k/uaddrPla.v
+
+# =========================================================================
+# TIMING CONSTRAINTS
+# =========================================================================
+
+set_global_assignment -name SDC_FILE taito_z.sdc
+
+# =============================================================================
+# END OF FILES.QIP
+# =============================================================================
