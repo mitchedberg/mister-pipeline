@@ -15,19 +15,35 @@ on:
 
 jobs:
   quartus-x-synthesis:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache Quartus
+        uses: actions/cache@v4
+        id: cache-quartus
+        with:
+          path: ~/intelFPGA_lite
+          key: quartus-lite-17.0.2
+
+      - name: Install Quartus Lite 17.0.2
+        if: steps.cache-quartus.outputs.cache-hit != 'true'
+        run: |
+          # Quartus 17.0.2 is the standard for MiSTer/Cyclone V
+          # Download from Intel/Altera archives
+          wget -q "https://downloads.intel.com/akdlm/software/acdsinst/17.0std/602/ib_installers/QuartusLiteSetup-17.0.2.602-linux.run"
+          chmod +x QuartusLiteSetup-17.0.2.602-linux.run
+          # Install to home directory (no sudo required)
+          ./QuartusLiteSetup-17.0.2.602-linux.run --mode unattended --accept_eula 1 --installdir ~/intelFPGA_lite
+
       - name: Run Quartus synthesis
         run: |
+          export PATH="$HOME/intelFPGA_lite/quartus/bin:$PATH"
+          cd "${{ github.workspace }}/chips/taito_x/quartus"
           mkdir -p /tmp/quartus_diag
-          docker run --rm \
-            -v "$GITHUB_WORKSPACE:/workspace" \
-            raetro/quartus:17.0 \
-            sh -c "cd /workspace/chips/taito_x/quartus && quartus_sh --flow compile taito_x" 2>&1 | tee /tmp/quartus_diag/x_synthesis.log
+          quartus_sh --flow compile taito_x 2>&1 | tee /tmp/quartus_diag/x_synthesis.log
           EXIT=${PIPESTATUS[0]}
           echo "Quartus exit code: $EXIT"
           exit $EXIT
