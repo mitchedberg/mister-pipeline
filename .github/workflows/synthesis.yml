@@ -21,8 +21,6 @@ on:
 jobs:
   quartus-synthesis:
     runs-on: ubuntu-latest
-    container:
-      image: raetro/quartus:17.0
 
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +28,7 @@ jobs:
           fetch-depth: 2
 
       - name: Install Verilator + Yosys
-        run: apt-get update -qq && apt-get install -y -qq verilator yosys
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq verilator yosys
 
       - name: Determine SV files to process
         id: files
@@ -104,10 +102,16 @@ jobs:
             printf 'set_global_assignment -name FAMILY "Cyclone V"\n' > "$MDIR/${MODULE}.qsf"
             printf 'set_global_assignment -name DEVICE 5CSEBA6U23I7\n' >> "$MDIR/${MODULE}.qsf"
             printf 'set_global_assignment -name TOP_LEVEL_ENTITY %s\n' "${MODULE}" >> "$MDIR/${MODULE}.qsf"
-            printf 'set_global_assignment -name SYSTEMVERILOG_FILE %s/%s\n' "${GITHUB_WORKSPACE}" "${f}" >> "$MDIR/${MODULE}.qsf"
+            printf 'set_global_assignment -name SYSTEMVERILOG_FILE /workspace/%s\n' "${f}" >> "$MDIR/${MODULE}.qsf"
             echo "── Quartus map: $MODULE ──"
-            # Best-effort — standalone files may have missing dependencies
-            (cd "$MDIR" && quartus_map ${MODULE} --read_settings_files=on 2>&1) || echo "  SKIP: $MODULE (missing dependencies OK for standalone lint)"
+            # Best-effort via Docker — standalone files may have missing dependencies
+            docker run --rm \
+              -v "$GITHUB_WORKSPACE:/workspace" \
+              -v "$MDIR:/work" \
+              -w /work \
+              raetro/quartus:17.0 \
+              sh -c "quartus_map ${MODULE} --read_settings_files=on 2>&1" \
+              || echo "  SKIP: $MODULE (missing dependencies OK for standalone lint)"
           done
 
       - name: Upload synthesis reports

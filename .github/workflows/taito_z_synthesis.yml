@@ -16,69 +16,49 @@ on:
 jobs:
   quartus-z-synthesis:
     runs-on: ubuntu-latest
-    container:
-      image: raetro/quartus:17.0
-      options: --user root
     timeout-minutes: 90
 
     steps:
-      - name: Install git
-        run: apt-get update -qq && apt-get install -y -qq git
-
       - uses: actions/checkout@v4
 
-      - name: Verify Quartus installation
+      - name: Run Quartus synthesis (via Docker)
         run: |
-          which quartus_sh || echo "quartus_sh not in PATH"
-          quartus_sh --version || echo "quartus_sh --version failed"
-
-      - name: Run Quartus synthesis
-        run: |
-          cd chips/taito_z/quartus
-
-          echo "=========================================="
-          echo "Starting Quartus Taito Z synthesis"
-          echo "=========================================="
-
-          # Run full compile flow: analysis, synthesis, fitting, assembly
-          if quartus_sh --flow compile taito_z; then
-            echo "=========================================="
-            echo "Synthesis SUCCESSFUL"
-            echo "=========================================="
-          else
-            echo "=========================================="
-            echo "Synthesis FAILED"
-            echo "=========================================="
-            exit 1
-          fi
-
-          # Verify RBF output was created
-          if [ -f output_files/taito_z.rbf ]; then
-            echo "RBF file generated: output_files/taito_z.rbf"
-            ls -lh output_files/taito_z.rbf
-          else
-            echo "ERROR: RBF file not found!"
-            ls -la output_files/ || echo "output_files directory doesn't exist"
-            exit 1
-          fi
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace/chips/taito_z/quartus \
+            raetro/quartus:17.0 \
+            sh -c "
+              echo '=========================================='
+              echo 'Starting Quartus Taito Z synthesis'
+              echo '=========================================='
+              quartus_sh --flow compile taito_z
+              STATUS=\$?
+              if [ \$STATUS -eq 0 ]; then
+                echo '=========================================='
+                echo 'Synthesis SUCCESSFUL'
+                echo '=========================================='
+              else
+                echo '=========================================='
+                echo 'Synthesis FAILED (exit \$STATUS)'
+                echo '=========================================='
+                exit \$STATUS
+              fi
+              if [ -f output_files/taito_z.rbf ]; then
+                echo 'RBF file generated:'
+                ls -lh output_files/taito_z.rbf
+              else
+                echo 'ERROR: RBF file not found'
+                ls -la output_files/ 2>/dev/null || true
+                exit 1
+              fi
+            "
 
       - name: Collect artifacts
         if: success()
         run: |
           mkdir -p /tmp/z_artifacts
           cp chips/taito_z/quartus/output_files/taito_z.rbf /tmp/z_artifacts/
-
-          # Also copy MRA files
-          if [ -d "chips/taito_z/mra" ]; then
-            cp chips/taito_z/mra/*.mra /tmp/z_artifacts/ 2>/dev/null || true
-          fi
-
-          # Copy key documentation
-          if [ -f "chips/taito_z/DEPLOY.md" ]; then
-            cp chips/taito_z/DEPLOY.md /tmp/z_artifacts/
-          fi
-
-          echo "Artifacts collected:"
+          cp chips/taito_z/mra/*.mra /tmp/z_artifacts/ 2>/dev/null || true
           ls -lh /tmp/z_artifacts/
 
       - name: Upload RBF artifact
@@ -104,9 +84,9 @@ jobs:
         if: always()
         run: |
           echo "Job Status: ${{ job.status }}"
-          if [ -f "chips/taito_z/quartus/output_files/taito_z.fit.rpt" ]; then
+          RPT=chips/taito_z/quartus/output_files/taito_z.fit.rpt
+          if [ -f "$RPT" ]; then
             echo ""
             echo "Fitting Report Summary:"
-            grep -E "^Total logic elements|Total memory bits|Total pins|I/O pins used" \
-              "chips/taito_z/quartus/output_files/taito_z.fit.rpt" || echo "(fitting report available)"
+            grep -E "^Total logic elements|Total memory bits|Total pins|I/O pins used" "$RPT" || true
           fi
