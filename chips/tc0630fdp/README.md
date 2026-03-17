@@ -1,7 +1,8 @@
 # TC0630FDP — Taito F3 Display Processor
 
-**Status:** Research complete — RTL not started (greenfield)
+**Status:** RTL COMPLETE — 1218 tests passing (Steps 1–17), zero Verilator --Wall warnings
 **Research date:** 2026-03-16
+**RTL complete date:** 2026-03-16
 **MAME sources:** `src/mame/taito/taito_f3.cpp`, `taito_f3_v.cpp`, `taito_f3.h`
 **Key MAME PRs:** #10920 (line clip fixes), #11788 (palette OR fix), #11811 (major rewrite)
 
@@ -65,7 +66,7 @@ It integrates:
 
 | Chip | Name | Function | FPGA Status |
 |------|------|----------|-------------|
-| **TC0630FDP** | Display Processor | All video (this chip) | **To build** |
+| **TC0630FDP** | Display Processor | All video (this chip) | **COMPLETE** |
 | TC0650FDA | Digital-to-Analog | Palette DAC, RGB output | To build (template from TC0260DAR) |
 | TC0640FIO | I/O Controller | Inputs, EEPROM, watchdog | To build (reference TC0220IOC) |
 | TC0660FCM | Control Module | Misc control/comms | TBD (possibly trivial) |

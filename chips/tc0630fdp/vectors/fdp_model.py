@@ -1615,6 +1615,27 @@ class TaitoF3Model:
 
         return result
 
+    def render_frame(self) -> list:
+        """Render a complete frame (all 232 active scanlines) using blend_scanline().
+
+        Returns 232-element list; each element is a 320-entry list of 24-bit RGB values
+        {R8, G8, B8} for that scanline.
+
+        Sprite scanning is performed once before the per-scanline loop (mirrors RTL:
+        sprite scanner walks all entries during VBLANK, then the renderer uses the
+        pre-built per-scanline lists).
+
+        Step 17: render_frame() — final integration method.
+        """
+        slist = self.scan_sprites()   # VBLANK sprite scan (once per frame)
+        frame = []
+        for scan in range(V_START, V_END):
+            vpos = scan - 1   # hblank_fall at vpos renders scan = vpos+1
+            spr_linebuf = self.render_sprite_scanline(vpos, slist)
+            row_rgb = self.blend_scanline(vpos, spr_linebuf)
+            frame.append(row_rgb)
+        return frame
+
     def blend_scanline(self, vpos: int, spr_linebuf: list = None) -> list:
         """Compute blended 24-bit RGB output for the scanline AFTER vpos (Steps 13+14).
 
