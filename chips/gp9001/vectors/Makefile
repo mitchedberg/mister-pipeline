@@ -12,9 +12,9 @@ TB1        := $(VEC_DIR)/tb_gate1.cpp
 VEC1       := $(VEC_DIR)/gate1_vectors.jsonl
 SIM1       := $(OBJ_DIR)/Vgp9001_gate1
 
-.PHONY: all gate1 gate2 gate3 vectors build run clean test
+.PHONY: all gate1 gate2 gate3 gate4 vectors build run clean test
 
-all: gate1 gate2 gate3
+all: gate1 gate2 gate3 gate4
 
 test: all
 
@@ -78,10 +78,32 @@ $(SIM3): $(TB3) $(RTL)
 gate3: $(VEC3) $(SIM3)
 	cd $(VEC_DIR) && $(SIM3) $(VEC3)
 
+# ── Gate 4 ──────────────────────────────────────────────────────────────────
+
+TB4        := $(VEC_DIR)/tb_gate4.cpp
+VEC4       := $(VEC_DIR)/gate4_vectors.jsonl
+SIM4       := $(OBJ_DIR)/Vgp9001_gate4
+
+# Gate 4 vectors
+$(VEC4): $(VEC_DIR)/generate_gate4.py $(VEC_DIR)/gate4_model.py
+	cd $(VEC_DIR) && $(PYTHON) generate_gate4.py
+
+# Gate 4 simulation binary
+$(SIM4): $(TB4) $(RTL)
+	mkdir -p $(OBJ_DIR)/gate4
+	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR)/gate4 -Wall --top-module gp9001 \
+	    -O0 -fno-dfg -fno-dfg-peephole \
+	    $(RTL) \
+	    $(TB4) --build -CFLAGS "-O2 -std=c++17" 2>&1
+	cp $(OBJ_DIR)/gate4/Vgp9001 $(SIM4)
+
+gate4: $(VEC4) $(SIM4)
+	cd $(VEC_DIR) && $(SIM4) $(VEC4)
+
 # ── Misc ────────────────────────────────────────────────────────────────────
 
-vectors: $(VEC1) $(VEC2) $(VEC3)
+vectors: $(VEC1) $(VEC2) $(VEC3) $(VEC4)
 
 clean:
 	rm -rf $(OBJ_DIR)
-	rm -f $(VEC1) $(VEC2) $(VEC3)
+	rm -f $(VEC1) $(VEC2) $(VEC3) $(VEC4)

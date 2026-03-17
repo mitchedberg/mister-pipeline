@@ -125,7 +125,12 @@ struct DUT {
         top->vpos      = 0;
         top->hblank    = 0;
         top->vblank_in = 0;
-        top->bg_rom_data = 0;
+        top->bg_rom_data  = 0;
+        // Gate 4 inputs — idle
+        top->scan_trigger      = 0;
+        top->current_scanline  = 0;
+        top->spr_rom_data      = 0;
+        top->spr_rd_addr       = 0;
     }
 
     // Tick one clock, driving bg_rom_data combinationally from ROM lookup.

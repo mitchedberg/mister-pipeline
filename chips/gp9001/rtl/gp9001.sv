@@ -196,7 +196,33 @@ module gp9001 #(
     output logic [3:0]  bg_layer_sel,  // one-hot: which layer is requesting
 
     // ── Gate 3: Tilemap VRAM CPU read-back ───────────────────────────────────
-    output logic [15:0] vram_dout      // VRAM read data (registered, 1-cycle latency)
+    output logic [15:0] vram_dout,     // VRAM read data (registered, 1-cycle latency)
+
+    // ── Gate 4: Sprite rasterizer control ─────────────────────────────────────
+    // Pulse scan_trigger for 1 cycle to start rendering all sprites for
+    // current_scanline into the scanline pixel buffer.
+    input  logic        scan_trigger,      // 1-cycle pulse: start scanline render
+    input  logic [8:0]  current_scanline,  // scanline to render (0..239)
+
+    // ── Gate 4: Sprite ROM interface (byte-addressed, 4bpp packed) ────────────
+    // One 16×16 tile = 128 bytes (16 rows × 8 bytes/row, 2 pixels/byte).
+    // ROM address: tile_code * 128 + row_in_tile * 8 + byte_in_row.
+    // Tile code for multi-tile sprite at tile column tc, tile row tr:
+    //   tile_code = sprite.tile_num + tr * tiles_wide + tc
+    output logic [20:0] spr_rom_addr,  // sprite tile ROM byte address
+    output logic        spr_rom_rd,    // ROM read strobe (combinational model: ignored)
+    input  logic [7:0]  spr_rom_data,  // data returned (combinational in TB)
+
+    // ── Gate 4: Scanline pixel buffer read-back port ──────────────────────────
+    // After spr_render_done pulses, use spr_rd_addr to read individual pixels.
+    // Combinational (zero-latency) read from internal scanline buffer.
+    input  logic [8:0]  spr_rd_addr,      // pixel X address to read (0..319)
+    output logic [7:0]  spr_rd_color,     // 8-bit {palette[3:0], index[3:0]}
+    output logic        spr_rd_valid,     // 1 = opaque sprite pixel at this X
+    output logic        spr_rd_priority,  // sprite priority bit at this X
+
+    // ── Gate 4: Done strobe ────────────────────────────────────────────────────
+    output logic        spr_render_done   // 1-cycle pulse when scanline render complete
 );
 
     // =========================================================================
@@ -767,6 +793,286 @@ module gp9001 #(
                     bg_pix_priority[i] <= s1_prio;
                 end
             end
+        end
+    end
+
+    // =========================================================================
+    // Gate 4: Per-scanline sprite rasterizer
+    // =========================================================================
+    //
+    // On scan_trigger pulse, iterates display_list[0..display_list_count-1].
+    // For each valid sprite that intersects current_scanline:
+    //   - Computes row_in_sprite = current_scanline - sprite.y
+    //   - Applies flip_y to row_in_sprite
+    //   - Iterates tile columns (tiles_wide = 1<<size[1:0] for a 16px tile unit)
+    //   - For each tile column, fetches 8 bytes (16 pixels) from sprite ROM:
+    //       addr = tile_code * 128 + row_in_tile * 8 + byte_in_row
+    //   - Unpacks 4bpp pairs, applies flip_x, writes opaque pixels to scanline buf
+    //
+    // Sprite size encoding (matching Gate 2 display list):
+    //   size=0: 8×8   (1 tile = 16 pixels,  but size 0 = 8×8 = 1 tile too)
+    //           NOTE: MAME uses 16×16 as the minimum tile size on GP9001.
+    //           Here: size=0 → 1 tile wide×tall (16×16 px), size=1 → 2 tiles (32×32), etc.
+    //   size=0: tiles_wide=1, tile_px_w=16 (sprites are 16×16 minimum)
+    //   size=1: tiles_wide=2 (32×32 px)
+    //   size=2: tiles_wide=4 (64×64 px)
+    //   size=3: tiles_wide=8 (128×128 px)
+    //
+    // ROM byte address formula:
+    //   For sprite tile_code T, tile column tc, tile row tr,
+    //   row_in_tile rit, byte_in_row b:
+    //     full_tile_code = T + tr * tiles_wide + tc
+    //     addr = full_tile_code * 128 + rit * 8 + b
+    //
+    // Pixel unpacking from byte (4bpp, low nibble = left pixel):
+    //   pixel_lo = rom_byte[3:0]   (screen X offset 2*b   within the tile)
+    //   pixel_hi = rom_byte[7:4]   (screen X offset 2*b+1 within the tile)
+    //   With flip_x: pixel order within sprite is reversed.
+    //
+    // State machine:
+    //   IDLE       → wait for scan_trigger
+    //   SPR_CHECK  → check if sprite[spr_idx] intersects scanline; advance or render
+    //   FETCH_BYTE → drive spr_rom_addr, read spr_rom_data (1 cycle, comb ROM)
+    //   DONE       → pulse spr_render_done, clear buffer, go to IDLE
+    // =========================================================================
+
+    // ── FSM state encoding ────────────────────────────────────────────────────
+    typedef enum logic [1:0] {
+        G4_IDLE  = 2'd0,
+        G4_CHECK = 2'd1,
+        G4_FETCH = 2'd2,
+        G4_DONE  = 2'd3
+    } g4_state_t;
+
+    g4_state_t g4_state;
+
+    // ── Counters / working registers ──────────────────────────────────────────
+    logic [7:0]  g4_spr_idx;      // current sprite index (0..255)
+    logic [3:0]  g4_tile_col;     // current tile column within sprite (0..7)
+    logic [3:0]  g4_byte_idx;     // current byte within tile row (0..7)
+
+    // Decoded from current sprite entry
+    logic [8:0]  g4_spr_x;
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic [8:0]  g4_spr_y;    // saved but only used during G4_CHECK transition
+    logic        g4_flip_y;   // applied when computing g4_row_in_spr (G4_CHECK)
+    /* verilator lint_on UNUSEDSIGNAL */
+    logic [9:0]  g4_tile_base;    // sprite.tile_num
+    logic        g4_flip_x;
+    logic        g4_prio;
+    logic [3:0]  g4_palette;
+    logic [1:0]  g4_size;         // 0=16px, 1=32px, 2=64px, 3=128px (square)
+
+    // Derived geometry (combinational, from always_comb below)
+    logic [3:0]  g4_tiles_wide;   // 1<<size
+    logic [8:0]  g4_px_width;     // tiles_wide * 16
+    logic [7:0]  g4_row_in_spr;   // row within sprite (0..127 max for 128px sprite)
+    logic [3:0]  g4_tile_row;     // row_in_spr[7:4]
+
+    // ── Scanline pixel buffer (Gate 4 internal) ──────────────────────────────
+    // Internal buffer; read out via spr_rd_addr / spr_rd_color / spr_rd_valid.
+    logic [7:0]  spr_pix_color    [0:319];
+    logic        spr_pix_valid    [0:319];
+    logic        spr_pix_priority [0:319];
+
+    // ── Read-back port (combinational) ────────────────────────────────────────
+    always_comb begin
+        spr_rd_color    = spr_pix_color[spr_rd_addr];
+        spr_rd_valid    = spr_pix_valid[spr_rd_addr];
+        spr_rd_priority = spr_pix_priority[spr_rd_addr];
+    end
+
+    // ── ROM address drive ─────────────────────────────────────────────────────
+    logic [9:0]  g4_full_tile;    // tile_base + tile_row*tiles_wide + tile_col
+    logic [3:0]  g4_rit;          // row in tile (0..15) = g4_row_in_spr[3:0]
+
+    always_comb begin
+        g4_tiles_wide = 4'(1 << g4_size);
+        g4_px_width   = 9'(g4_tiles_wide) * 9'd16;  // tiles * 16 pixels wide
+        g4_rit        = g4_row_in_spr[3:0];
+        g4_tile_row   = g4_row_in_spr[7:4];
+        // full tile code: base + tile_row * tiles_wide + tile_col
+        g4_full_tile  = g4_tile_base
+                      + 10'(g4_tile_row) * 10'(g4_tiles_wide)
+                      + 10'(g4_tile_col);
+        // byte address: full_tile * 128 + rit * 8 + byte_idx
+        spr_rom_addr  = 21'(g4_full_tile) * 21'd128
+                      + 21'(g4_rit)       * 21'd8
+                      + 21'(g4_byte_idx);
+        spr_rom_rd    = (g4_state == G4_FETCH);
+    end
+
+    // ── FSM ───────────────────────────────────────────────────────────────────
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            g4_state       <= G4_IDLE;
+            g4_spr_idx     <= 8'h00;
+            g4_tile_col    <= 4'h0;
+            g4_byte_idx    <= 4'h0;
+            g4_spr_x       <= 9'h000;
+            g4_spr_y       <= 9'h000;
+            g4_tile_base   <= 10'h000;
+            g4_flip_x      <= 1'b0;
+            g4_flip_y      <= 1'b0;
+            g4_prio        <= 1'b0;
+            g4_palette     <= 4'h0;
+            g4_size        <= 2'h0;
+            g4_row_in_spr  <= 8'h00;
+            spr_render_done <= 1'b0;
+            for (int i = 0; i < 320; i++) begin
+                spr_pix_color[i] <= 8'h00;
+                spr_pix_valid[i] <= 1'b0;
+                spr_pix_priority[i]  <= 1'b0;
+            end
+        end else begin
+            spr_render_done <= 1'b0;  // default: not done
+
+            case (g4_state)
+                // ── IDLE: wait for trigger, clear buffer ─────────────────────
+                G4_IDLE: begin
+                    if (scan_trigger) begin
+                        // Clear pixel buffer for this scanline
+                        for (int i = 0; i < 320; i++) begin
+                            spr_pix_color[i] <= 8'h00;
+                            spr_pix_valid[i] <= 1'b0;
+                            spr_pix_priority[i]  <= 1'b0;
+                        end
+                        g4_spr_idx  <= 8'h00;
+                        g4_state    <= G4_CHECK;
+                    end
+                end
+
+                // ── CHECK: test if sprite[spr_idx] intersects current_scanline ─
+                G4_CHECK: begin
+                    if (g4_spr_idx >= display_list_count) begin
+                        // All sprites processed
+                        spr_render_done <= 1'b1;
+                        g4_state        <= G4_IDLE;
+                    end else begin
+                        // Read sprite from display_list
+                        begin
+                            automatic sprite_entry_t e = display_list[g4_spr_idx];
+                            if (e.valid) begin
+                                // sprite height in pixels = tiles_tall * 16
+                                // tiles_tall = 1 << e.size (same as tiles_wide, square)
+                                automatic logic [8:0] spr_h = 9'(4'(1 << e.size)) * 9'd16;
+                                if (current_scanline >= e.y &&
+                                    current_scanline < (e.y + spr_h)) begin
+                                    // Sprite intersects — save fields, start fetch
+                                    g4_spr_x     <= e.x;
+                                    g4_spr_y     <= e.y;
+                                    g4_tile_base <= e.tile_num;
+                                    g4_flip_x    <= e.flip_x;
+                                    g4_flip_y    <= e.flip_y;
+                                    g4_prio      <= e.prio;
+                                    g4_palette   <= e.palette;
+                                    g4_size      <= e.size;
+
+                                    // Compute row within sprite (with flip_y applied)
+                                    begin
+                                        automatic logic [7:0] raw_row = 8'(current_scanline - e.y);
+                                        if (e.flip_y)
+                                            g4_row_in_spr <= 8'(spr_h - 9'd1) - raw_row;
+                                        else
+                                            g4_row_in_spr <= raw_row;
+                                    end
+
+                                    g4_tile_col <= 4'h0;
+                                    g4_byte_idx <= 4'h0;
+                                    g4_state    <= G4_FETCH;
+                                end else begin
+                                    // No intersection — advance
+                                    g4_spr_idx <= g4_spr_idx + 8'h01;
+                                end
+                            end else begin
+                                // Invalid entry — advance
+                                g4_spr_idx <= g4_spr_idx + 8'h01;
+                            end
+                        end
+                    end
+                end
+
+                // ── FETCH: read one byte from sprite ROM, write 2 pixels ──────
+                G4_FETCH: begin
+                    // spr_rom_addr is driven combinationally from g4_full_tile/rit/byte_idx.
+                    // spr_rom_data is assumed combinational (zero-latency TB model).
+                    begin
+                        // Unpack two 4-bit pixels from the ROM byte
+                        automatic logic [3:0] nib_lo = spr_rom_data[3:0];  // left pixel
+                        automatic logic [3:0] nib_hi = spr_rom_data[7:4];  // right pixel
+
+                        // Screen X base for this byte:
+                        //   sprite_x + tile_col * 16 + byte_idx * 2  (no flip_x)
+                        // With flip_x:
+                        //   sprite_x + (tiles_wide * 16 - 1) - (tile_col * 16 + byte_idx * 2 + 1)
+                        //   = sprite_x + px_width - 2 - tile_col*16 - byte_idx*2
+                        automatic logic [9:0] base_x;
+                        automatic logic [9:0] px_lo_x, px_hi_x;
+                        automatic logic [3:0] eff_nib_lo, eff_nib_hi;
+
+                        if (g4_flip_x) begin
+                            // Flip_x: sprite pixel P goes to screen X = spr_x + (px_width-1-P).
+                            // Byte b contains:
+                            //   nib_lo = sprite pixel 2*b   → screen spr_x + px_width - 1 - 2*b
+                            //   nib_hi = sprite pixel 2*b+1 → screen spr_x + px_width - 2 - 2*b
+                            // base_x = spr_x + px_width - 2 - tile_col*16 - byte_idx*2
+                            //   nib_hi → base_x       (lower screen X = px_width-2-...)
+                            //   nib_lo → base_x + 1   (higher screen X = px_width-1-...)
+                            base_x   = 10'(g4_spr_x)
+                                     + 10'(g4_px_width)
+                                     - 10'd2
+                                     - 10'(g4_tile_col) * 10'd16
+                                     - 10'(g4_byte_idx) * 10'd2;
+                            px_hi_x    = base_x;           // nib_hi → lower screen X
+                            px_lo_x    = base_x + 10'd1;  // nib_lo → higher screen X
+                            eff_nib_hi = nib_hi;           // no swap — nibbles stay as-is
+                            eff_nib_lo = nib_lo;
+                        end else begin
+                            base_x   = 10'(g4_spr_x)
+                                     + 10'(g4_tile_col) * 10'd16
+                                     + 10'(g4_byte_idx) * 10'd2;
+                            px_lo_x    = base_x;
+                            px_hi_x    = base_x + 10'd1;
+                            eff_nib_lo = nib_lo;
+                            eff_nib_hi = nib_hi;
+                        end
+
+                        // Write pixel lo — index is safe (< 320) after the guard
+                        /* verilator lint_off WIDTHTRUNC */
+                        if (px_lo_x < 10'd320 && eff_nib_lo != 4'h0) begin
+                            spr_pix_color[px_lo_x[8:0]] <= {g4_palette, eff_nib_lo};
+                            spr_pix_valid[px_lo_x[8:0]] <= 1'b1;
+                            spr_pix_priority[px_lo_x[8:0]]  <= g4_prio;
+                        end
+
+                        // Write pixel hi
+                        if (px_hi_x < 10'd320 && eff_nib_hi != 4'h0) begin
+                            spr_pix_color[px_hi_x[8:0]] <= {g4_palette, eff_nib_hi};
+                            spr_pix_valid[px_hi_x[8:0]] <= 1'b1;
+                            spr_pix_priority[px_hi_x[8:0]]  <= g4_prio;
+                        end
+                        /* verilator lint_on WIDTHTRUNC */
+                    end
+
+                    // Advance byte counter
+                    if (g4_byte_idx == 4'd7) begin
+                        g4_byte_idx <= 4'd0;
+                        // Advance tile column
+                        if (g4_tile_col == (4'(g4_tiles_wide) - 4'd1)) begin
+                            g4_tile_col <= 4'd0;
+                            // Move to next sprite
+                            g4_spr_idx <= g4_spr_idx + 8'd1;
+                            g4_state   <= G4_CHECK;
+                        end else begin
+                            g4_tile_col <= g4_tile_col + 4'd1;
+                        end
+                    end else begin
+                        g4_byte_idx <= g4_byte_idx + 4'd1;
+                    end
+                end
+
+                default: g4_state <= G4_IDLE;
+            endcase
         end
     end
 

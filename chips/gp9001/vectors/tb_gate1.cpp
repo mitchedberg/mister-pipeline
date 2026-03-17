@@ -108,6 +108,17 @@ struct DUT {
         top->vsync  = 0;
         top->vblank = 0;
         top->scan_addr = 0;
+        // Gate 3 inputs
+        top->hpos      = 0;
+        top->vpos      = 0;
+        top->hblank    = 0;
+        top->vblank_in = 0;
+        top->bg_rom_data  = 0;
+        // Gate 4 inputs
+        top->scan_trigger     = 0;
+        top->current_scanline = 0;
+        top->spr_rom_data     = 0;
+        top->spr_rd_addr      = 0;
         clk_tick(4);
         top->rst_n = 1;
         clk_tick(4);
