@@ -222,7 +222,32 @@ module gp9001 #(
     output logic        spr_rd_priority,  // sprite priority bit at this X
 
     // ── Gate 4: Done strobe ────────────────────────────────────────────────────
-    output logic        spr_render_done   // 1-cycle pulse when scanline render complete
+    output logic        spr_render_done,  // 1-cycle pulse when scanline render complete
+
+    // ── Gate 5: Priority mixer inputs ─────────────────────────────────────────
+    // Sprite pixel at current X (from Gate 4 scanline buffer read-back):
+    //   spr_rd_color / spr_rd_valid / spr_rd_priority (already declared above)
+    // BG pixel inputs (from Gate 3 pipeline outputs):
+    //   bg_pix_color[0:3] / bg_pix_valid[3:0] / bg_pix_priority[0:3] (already declared)
+    // LAYER_CTRL: active_layer_ctrl_r (internal; exposed via layer_ctrl output)
+    //
+    // Gate 5 uses the following existing ports (no new inputs needed):
+    //   spr_rd_color, spr_rd_valid, spr_rd_priority   — sprite pixel
+    //   bg_pix_color[0:3], bg_pix_valid[3:0],
+    //   bg_pix_priority[0:3]                          — BG layers 0..3
+    //   layer_ctrl                                    — LAYER_CTRL register
+
+    // ── Gate 5: Priority mixer outputs ────────────────────────────────────────
+    // Combinational: computed every cycle from current sprite + BG pixel inputs.
+    // Priority algorithm (from section2_behavior.md §4.1):
+    //   If spr_rd_priority=1 (sprite above all BG):
+    //     winner = first opaque in order: sprite, BG0, BG1
+    //   If spr_rd_priority=0 (sprite below BG0, above BG1):
+    //     winner = first opaque in order: BG0, sprite, BG1
+    //   BG2/BG3 are always below BG1 (added if layer_ctrl enables them).
+    //   A pixel is opaque if its valid bit is 1.
+    output logic [7:0]  final_color,   // 8-bit palette index of winning pixel
+    output logic        final_valid    // 1 = at least one layer has an opaque pixel
 );
 
     // =========================================================================
@@ -1073,6 +1098,91 @@ module gp9001 #(
 
                 default: g4_state <= G4_IDLE;
             endcase
+        end
+    end
+
+    // =========================================================================
+    // Gate 5: Priority mixer / color compositor
+    // =========================================================================
+    //
+    // Purely combinational.  Consumes sprite pixels (from Gate 4 scanline
+    // buffer, read-back via spr_rd_color/spr_rd_valid/spr_rd_priority) and
+    // BG layer pixels (from Gate 3 pipeline, bg_pix_color/bg_pix_valid/
+    // bg_pix_priority) to produce a single winning pixel each cycle.
+    //
+    // Priority algorithm (section2_behavior.md §4.1):
+    //
+    //   Layer priority order (lowest → highest on screen):
+    //     BG3 (layer 3, bottom)
+    //     BG2 (layer 2)
+    //     BG1 (layer 1)
+    //     [sprite here if spr_priority=0]
+    //     BG0 (layer 0, foreground)
+    //     [sprite here if spr_priority=1]
+    //
+    //   Implementation: iterate from lowest to highest priority; last opaque
+    //   pixel wins (painter's algorithm).
+    //
+    //   Layers enabled/active: LAYER_CTRL bits.  Current assumption
+    //   (pending MAME verification, MAME_VERIFICATION.md item #1):
+    //     layer_ctrl[7:6] = num_layers_active: 00=2, 01=3, 10=4, 11=4
+    //     layer 0 always active; layer 1 always active; layers 2/3 per count.
+    //
+    //   Transparency: valid=0 means skip (pixel falls through to layer below).
+    //
+    // =========================================================================
+
+    // ── Internal signals ──────────────────────────────────────────────────────
+    // num_active decoded from layer_ctrl[7:6] (already in num_layers_active)
+    //   num_layers_active = 2'b00 → 2 layers (BG0+BG1)
+    //   num_layers_active = 2'b01 → 3 layers (BG0+BG1+BG2)
+    //   num_layers_active = 2'b10 → 4 layers (BG0+BG1+BG2+BG3)
+    //   num_layers_active = 2'b11 → 4 layers
+
+    always_comb begin : gate5_colmix
+        // Start transparent
+        final_color = 8'h00;
+        final_valid = 1'b0;
+
+        // ── Pass 1: lowest-priority layers first (painter's algorithm) ─────────
+        // BG layer 3 (bottom of stack) — only active when num_layers >= 4
+        if (num_layers_active[1]) begin  // 2'b10 or 2'b11 → 4 layers
+            if (bg_pix_valid[3]) begin
+                final_color = bg_pix_color[3];
+                final_valid = 1'b1;
+            end
+        end
+
+        // BG layer 2 — only active when num_layers >= 3
+        if (num_layers_active != 2'b00) begin  // 01, 10, or 11 → 3+ layers
+            if (bg_pix_valid[2]) begin
+                final_color = bg_pix_color[2];
+                final_valid = 1'b1;
+            end
+        end
+
+        // BG layer 1 (always active)
+        if (bg_pix_valid[1]) begin
+            final_color = bg_pix_color[1];
+            final_valid = 1'b1;
+        end
+
+        // Sprite (if priority=0: below BG0, above BG1)
+        if (!spr_rd_priority && spr_rd_valid) begin
+            final_color = spr_rd_color;
+            final_valid = 1'b1;
+        end
+
+        // BG layer 0 (foreground, always active — highest BG priority)
+        if (bg_pix_valid[0]) begin
+            final_color = bg_pix_color[0];
+            final_valid = 1'b1;
+        end
+
+        // Sprite (if priority=1: above all BG layers)
+        if (spr_rd_priority && spr_rd_valid) begin
+            final_color = spr_rd_color;
+            final_valid = 1'b1;
         end
     end
 
