@@ -1,0 +1,4 @@
+obj/
+*.log
+*.vcd
+gate1_vectors.jsonl
