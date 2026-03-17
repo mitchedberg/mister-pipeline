@@ -1,0 +1,49 @@
+{"op": "reset"}
+{"op": "yram_write", "addr": 0, "data": 51966, "be": 3}
+{"op": "yram_read", "addr": 0, "exp": 51966}
+{"op": "yram_write", "addr": 32, "data": 56832, "be": 2}
+{"op": "yram_read", "addr": 32, "exp": 56832}
+{"op": "yram_write", "addr": 256, "data": 128, "be": 3}
+{"op": "yram_read", "addr": 256, "exp": 128}
+{"op": "cram_write", "addr": 0, "data": 4660, "be": 3}
+{"op": "cram_read", "addr": 0, "exp": 4660}
+{"op": "cram_write", "addr": 255, "data": 50175, "be": 3}
+{"op": "cram_read", "addr": 255, "exp": 50175}
+{"op": "cram_write", "addr": 512, "data": 63970, "be": 3}
+{"op": "cram_read", "addr": 512, "exp": 63970}
+{"op": "cram_write", "addr": 4096, "data": 32853, "be": 3}
+{"op": "cram_read", "addr": 4096, "exp": 32853}
+{"op": "cram_write", "addr": 16, "data": 43776, "be": 2}
+{"op": "cram_write", "addr": 16, "data": 205, "be": 1}
+{"op": "cram_read", "addr": 16, "exp": 43981}
+{"op": "cram_write", "addr": 8191, "data": 57005, "be": 3}
+{"op": "cram_read", "addr": 8191, "exp": 57005}
+{"op": "cram_write", "addr": 256, "data": 39030, "be": 3}
+{"op": "cram_scan_rd", "addr": 256, "exp": 39030}
+{"op": "ctrl_write", "addr": 0, "data": 64, "be": 1}
+{"op": "ctrl_read", "addr": 0, "exp": 65344}
+{"op": "check_flip_screen", "exp": 1}
+{"op": "check_bg_startcol", "exp": 0}
+{"op": "ctrl_write", "addr": 0, "data": 67, "be": 1}
+{"op": "check_flip_screen", "exp": 1}
+{"op": "check_bg_startcol", "exp": 3}
+{"op": "ctrl_write", "addr": 0, "data": 0, "be": 1}
+{"op": "check_flip_screen", "exp": 0}
+{"op": "ctrl_write", "addr": 1, "data": 1, "be": 1}
+{"op": "check_bg_numcol", "exp": 1}
+{"op": "ctrl_write", "addr": 1, "data": 0, "be": 1}
+{"op": "check_bg_numcol", "exp": 0}
+{"op": "check_frame_bank", "exp": 1}
+{"op": "ctrl_write", "addr": 1, "data": 64, "be": 1}
+{"op": "check_frame_bank", "exp": 0}
+{"op": "ctrl_write", "addr": 1, "data": 255, "be": 1}
+{"op": "check_frame_bank", "exp": 1}
+{"op": "ctrl_write", "addr": 2, "data": 171, "be": 1}
+{"op": "ctrl_write", "addr": 3, "data": 205, "be": 1}
+{"op": "check_col_upper_mask", "exp": 52651}
+{"op": "ctrl_write", "addr": 0, "data": 0, "be": 1}
+{"op": "ctrl_write", "addr": 1, "data": 0, "be": 1}
+{"op": "ctrl_write", "addr": 2, "data": 0, "be": 1}
+{"op": "ctrl_write", "addr": 3, "data": 0, "be": 1}
+{"op": "check_col_upper_mask", "exp": 0}
+{"op": "check_frame_bank", "exp": 1}

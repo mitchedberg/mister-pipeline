@@ -1,0 +1,16 @@
+{"op": "zero_yram"}
+{"op": "yram_write", "addr": 0, "data": 48879, "be": 3}
+{"op": "yram_read", "addr": 0, "exp": 48879}
+{"op": "yram_write", "addr": 1, "data": 4660, "be": 3}
+{"op": "yram_read", "addr": 1, "exp": 4660}
+{"op": "yram_write", "addr": 2, "data": 65280, "be": 2}
+{"op": "yram_read", "addr": 2, "exp": 65280}
+{"op": "yram_write", "addr": 2, "data": 171, "be": 1}
+{"op": "yram_read", "addr": 2, "exp": 65451}
+{"op": "yram_write", "addr": 383, "data": 42405, "be": 3}
+{"op": "yram_read", "addr": 383, "exp": 42405}
+{"op": "yram_write", "addr": 16, "data": 23130, "be": 3}
+{"op": "yram_scan_rd", "addr": 16, "exp": 23130}
+{"op": "yram_write", "addr": 16, "data": 204, "be": 1}
+{"op": "yram_read", "addr": 16, "exp": 23244}
+{"op": "yram_scan_rd", "addr": 16, "exp": 23244}
