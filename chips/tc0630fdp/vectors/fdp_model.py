@@ -18,6 +18,23 @@ Step 3 scope (added):
   - render_bg_scanline(vpos, plane, xscroll, yscroll, extend_mode):
       returns 320-entry list of {palette[8:0], pen[3:0]} packed as 13-bit int
 
+Step 8 scope (added):
+  - Sprite RAM (32K × 16-bit words)
+  - write_sprite_ram(): write sprite entry words directly into Sprite RAM
+  - scan_sprites(vpos_range): walk entries 0–255, build per-scanline active-sprite list
+  - render_sprite_scanline(vpos): fill 320-entry line buffer from active-sprite list for
+    the scanline after vpos (no zoom, pen==0 transparent, flip X/Y supported)
+
+  Sprite RAM entry format (section1 §8.1, 8 words per entry):
+    Word 0: tile_lo[15:0]
+    Word 2: scroll_mode[15:14], sx[11:0] (signed)
+    Word 3: is_cmd[15],         sy[11:0] (signed)
+    Word 4: block_ctrl[15:12], lock[11], flipY[10], flipX[9], color[7:0]
+    Word 5: tile_hi[0]
+  tile_code = {tile_hi, tile_lo}  (17-bit total)
+  priority  = color[7:6]         (top 2 bits of color byte)
+  palette   = color[5:0]         (lower 6 bits)
+
 Step 7 scope (added):
   - _line_colscroll(plane, scan): returns 9-bit column scroll offset (§9.2 bits[8:0])
   - _line_pal_add(plane, scan): returns palette-line addition offset (§9.10)
@@ -98,7 +115,7 @@ _UNUSED_REGS = {8, 9, 10, 11, 14}
 
 
 class TaitoF3Model:
-    """Steps 1–6 behavioral model: control registers, video timing, text layer, BG layers, Line RAM, zoom."""
+    """Steps 1–8 behavioral model: control registers, video timing, text layer, BG layers, Line RAM, zoom, sprites."""
 
     # Memory sizes
     TEXT_RAM_WORDS  = 4096    # 64×64 tile map × 1 word each
@@ -106,6 +123,8 @@ class TaitoF3Model:
     PF_RAM_WORDS    = 6144    # 0x1800 words per playfield
     GFX_ROM_WORDS   = 4096    # simulation GFX ROM (32-bit words) — matches RTL BRAM
     LINE_RAM_WORDS  = 32768   # 32K × 16-bit words = 64KB Line RAM (step 5)
+    SPR_RAM_WORDS   = 32768   # 32K × 16-bit words = 64KB Sprite RAM (step 8)
+    SPR_COUNT       = 256     # Step 8: scan only first 256 entries
 
     def __init__(self):
         self.ctrl     = [0] * 16          # 16 × 16-bit display control registers
@@ -114,6 +133,7 @@ class TaitoF3Model:
         self.pf_ram   = [[0] * self.PF_RAM_WORDS for _ in range(4)]  # step 3
         self.gfx_rom  = [0] * self.GFX_ROM_WORDS   # step 3 (32-bit words)
         self.line_ram = [0] * self.LINE_RAM_WORDS   # step 5 (16-bit words)
+        self.spr_ram  = [0] * self.SPR_RAM_WORDS    # step 8 (16-bit words)
         self._rst()
 
     def _rst(self):
@@ -124,6 +144,7 @@ class TaitoF3Model:
         self.pf_ram   = [[0] * self.PF_RAM_WORDS for _ in range(4)]
         self.gfx_rom  = [0] * self.GFX_ROM_WORDS
         self.line_ram = [0] * self.LINE_RAM_WORDS
+        self.spr_ram  = [0] * self.SPR_RAM_WORDS
 
     # ── Address decode ──────────────────────────────────────────────────────
 
@@ -236,6 +257,185 @@ class TaitoF3Model:
     def read_line_ram(self, word_addr: int) -> int:
         """Read 16-bit word from Line RAM at 15-bit word address."""
         return self.line_ram[word_addr & 0x7FFF]
+
+    # ── Sprite RAM read/write (Step 8) ───────────────────────────────────────
+
+    def write_sprite_ram(self, word_addr: int, data: int, be: int = 0x3) -> None:
+        """Write 16-bit word to Sprite RAM at 15-bit word address (0..32767).
+
+        Sprite entries are 8 words each (words 0,1,2,3,4,5,6,7).
+        Entry N starts at word address N*8.
+        Step 8 uses words 0, 2, 3, 4, 5 of each entry.
+        """
+        word_addr &= 0x7FFF
+        data &= 0xFFFF
+        cur = self.spr_ram[word_addr]
+        if be & 0x2: cur = (cur & 0x00FF) | (data & 0xFF00)
+        if be & 0x1: cur = (cur & 0xFF00) | (data & 0x00FF)
+        self.spr_ram[word_addr] = cur
+
+    def read_sprite_ram(self, word_addr: int) -> int:
+        """Read 16-bit word from Sprite RAM at 15-bit word address."""
+        return self.spr_ram[word_addr & 0x7FFF]
+
+    def write_sprite_entry(self, idx: int, tile_code: int, sx: int, sy: int,
+                           color: int, flipx: bool = False, flipy: bool = False) -> None:
+        """Write a complete sprite entry to Sprite RAM.
+
+        idx       : sprite entry index (0–255 for Step 8)
+        tile_code : 17-bit tile code
+        sx        : screen X (signed 12-bit, left edge of tile)
+        sy        : screen Y (signed 12-bit, top edge of tile)
+        color     : 8-bit color byte: [7:6]=priority_group, [5:0]=palette
+        flipx     : horizontal flip
+        flipy     : vertical flip
+        """
+        idx &= 0xFF
+        base = idx * 8
+        tile_lo = tile_code & 0xFFFF
+        tile_hi = (tile_code >> 16) & 0x1
+
+        # sy is signed 12-bit; mask to 12 bits
+        sx_12 = sx & 0xFFF
+        sy_12 = sy & 0xFFF
+
+        # word 4: [10]=flipY, [9]=flipX, [7:0]=color
+        w4 = (color & 0xFF)
+        if flipx: w4 |= (1 << 9)
+        if flipy: w4 |= (1 << 10)
+
+        self.spr_ram[base + 0] = tile_lo
+        self.spr_ram[base + 2] = sx_12
+        self.spr_ram[base + 3] = sy_12
+        self.spr_ram[base + 4] = w4
+        self.spr_ram[base + 5] = tile_hi
+
+    def scan_sprites(self) -> list:
+        """Walk sprite entries 0..SPR_COUNT-1, build per-scanline active-sprite lists.
+
+        Returns: list of 232 lists (one per screen scanline V_START..V_END-1),
+                 each list containing up to 64 sprite descriptors (dict).
+        Sprite descriptor fields: tile_code, sx, sy, palette, prio, flipx, flipy.
+        Matches RTL scanner logic: V_START=24, V_END=256, MAX_SLOT=63, SPR_COUNT=256.
+        """
+        slist = [[] for _ in range(V_END - V_START)]  # 232 entries
+
+        for idx in range(self.SPR_COUNT):
+            base = idx * 8
+            w0 = self.spr_ram[base + 0]
+            w2 = self.spr_ram[base + 2]
+            w3 = self.spr_ram[base + 3]
+            w4 = self.spr_ram[base + 4]
+            w5 = self.spr_ram[base + 5]
+
+            tile_lo   = w0
+            sx_raw    = w2 & 0xFFF
+            sy_raw    = w3 & 0xFFF
+            flipy     = bool(w4 & (1 << 10))
+            flipx     = bool(w4 & (1 << 9))
+            color     = w4 & 0xFF
+            tile_hi   = w5 & 0x1
+            tile_code = (tile_hi << 16) | tile_lo
+            palette   = color & 0x3F
+            prio      = (color >> 6) & 0x3
+
+            # Sign-extend 12-bit to signed int
+            sx = sx_raw if sx_raw < 0x800 else sx_raw - 0x1000
+            sy = sy_raw if sy_raw < 0x800 else sy_raw - 0x1000
+
+            # Compute active scanline range: sy to sy+15 (16×16 tile)
+            sy_top = max(V_START, sy)
+            sy_bot = min(V_END - 1, sy + 15)
+
+            if sy_top > sy_bot:
+                continue   # sprite entirely off screen
+
+            for scan in range(sy_top, sy_bot + 1):
+                scan_idx = scan - V_START
+                if len(slist[scan_idx]) >= 64:
+                    continue  # slot full
+                slist[scan_idx].append({
+                    'tile_code': tile_code,
+                    'sx':        sx,
+                    'sy':        sy,
+                    'palette':   palette,
+                    'prio':      prio,
+                    'flipx':     flipx,
+                    'flipy':     flipy,
+                })
+
+        return slist
+
+    def render_sprite_scanline(self, vpos: int, slist: list = None) -> list:
+        """Render sprites for scanline (vpos+1) into a 320-entry line buffer.
+
+        Returns list of 320 12-bit pixels: {prio[1:0], palette[5:0], pen[3:0]}.
+        Zero entry = transparent (no sprite pixel at that column).
+
+        Parameters:
+          vpos  : current scanline (renders vpos+1, matching RTL hblank_fall logic)
+          slist : pre-built scanline sprite list (from scan_sprites()); if None,
+                  will call scan_sprites() internally.
+
+        Rendering:
+          - Iterates sprites in slot order (0 first, last slot overwrites = on top).
+          - For each sprite: compute tile row from (vpos+1) - sy.
+          - Decode 16 pixels from GFX ROM (left 8 + right 8).
+          - Write non-transparent (pen != 0) pixels to linebuf at sx + px.
+          - flipX: reverse nibble order within each 8-pixel half.
+          - flipY: use row (15 - tile_row) from GFX ROM.
+        """
+        render_scan = vpos + 1   # RTL renders scanline vpos+1
+
+        if render_scan < V_START or render_scan >= V_END:
+            return [0] * 320
+
+        scan_idx = render_scan - V_START
+
+        if slist is None:
+            slist = self.scan_sprites()
+
+        sprites = slist[scan_idx]
+        linebuf = [0] * 320
+
+        for spr in sprites:
+            tile_code = spr['tile_code']
+            sx        = spr['sx']
+            sy        = spr['sy']
+            palette   = spr['palette']
+            prio      = spr['prio']
+            flipx     = spr['flipx']
+            flipy     = spr['flipy']
+
+            # Tile row: lower 4 bits of (render_scan - sy)
+            tile_row = (render_scan - sy) & 0xF
+            fetch_row = (15 - tile_row) if flipy else tile_row
+
+            left_addr  = tile_code * 32 + fetch_row * 2
+            right_addr = left_addr + 1
+            left_word  = self.gfx_rom[left_addr]  if left_addr  < self.GFX_ROM_WORDS else 0
+            right_word = self.gfx_rom[right_addr] if right_addr < self.GFX_ROM_WORDS else 0
+
+            for px in range(16):
+                scol = sx + px
+                if scol < 0 or scol >= 320:
+                    continue
+
+                # Select half word and nibble index
+                if px < 8:
+                    ni = (7 - px) if flipx else px
+                    sh = 28 - ni * 4
+                    pen = (left_word >> sh) & 0xF
+                else:
+                    ni = (7 - (px & 7)) if flipx else (px & 7)
+                    sh = 28 - ni * 4
+                    pen = (right_word >> sh) & 0xF
+
+                if pen == 0:
+                    continue  # transparent
+                linebuf[scol] = (prio << 10) | (palette << 4) | pen
+
+        return linebuf
 
     # ── Line RAM decoder helpers (Step 5 + Step 6) ───────────────────────────
 

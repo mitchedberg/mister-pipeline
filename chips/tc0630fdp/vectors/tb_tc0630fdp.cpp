@@ -1,5 +1,5 @@
 // =============================================================================
-// Gate 5 (Steps 1–5): Verilator testbench for tc0630fdp.sv
+// Gate 5 (Steps 1–8): Verilator testbench for tc0630fdp.sv
 //
 // Reads one or more vector files (jsonl). Each line is a JSON object with "op":
 //
@@ -46,6 +46,16 @@
 //     Compare each independently: exp_text vs text_pixel_out, exp_bg vs bg[0].
 //     Validates that text and BG layers both render correctly at the same
 //     screen position — compositing priority ("text wins") is Plan Step 11.
+//
+// Step 8 ops:
+//   op="write_sprite":  CPU write to Sprite RAM at chip word addr 0x20000+offset.
+//     "addr" is the cpu_addr word address within the chip window (0x20000–0x27FFF).
+//   op="check_sprite_pixel":
+//     Advance to HBLANK at vpos (hblank_fall triggers renderer for vpos+1).
+//     Renderer completes within HBLANK (112 cycles; ≤64 sprites × ~6 cycles each).
+//     Advance to active display of vpos+1 at screen_col.
+//     Sample spr_pixel_out (12-bit: {prio[1:0], palette[5:0], pen[3:0]}).
+//     Compare to exp_pixel. pen==0 means transparent (spr_pixel_out==0).
 //
 // All passing tests: prints "PASS [note]"
 // Any failure:       prints "FAIL [note]: got=X exp=Y"
@@ -123,7 +133,10 @@ static void do_reset() {
     dut->cpu_din   = 0;
     dut->cpu_lds_n = 1;
     dut->cpu_uds_n = 1;
-    dut->gfx_wr_en = 0;
+    dut->gfx_wr_en   = 0;
+    dut->spr_wr_en   = 0;
+    dut->spr_wr_addr = 0;
+    dut->spr_wr_data = 0;
     for (int i = 0; i < 4; i++) tick();
     dut->async_rst_n = 1;
     for (int i = 0; i < 2; i++) tick();
@@ -183,6 +196,95 @@ static void gfx_write(int word_addr, uint32_t data) {
     tick();
     dut->gfx_wr_en   = 0;
     tick();
+}
+
+// Write one 16-bit word to Sprite RAM via the dedicated direct write port.
+// word_addr: 15-bit word address into Sprite RAM (0..32767).
+// This bypasses the CPU bus — used to pre-load sprite entries quickly.
+static void spr_write(int word_addr, uint16_t data) {
+    dut->spr_wr_en   = 1;
+    dut->spr_wr_addr = (uint32_t)(word_addr & 0x7FFF);
+    dut->spr_wr_data = data;
+    tick();
+    dut->spr_wr_en   = 0;
+    tick();
+}
+
+// ---------------------------------------------------------------------------
+// Step 8: check_sprite_pixel
+//
+// Strategy:
+//   1. Advance to vpos==V_END (VBLANK start); the sprite scanner fires here.
+//   2. Wait 8000 cycles for the scanner to finish walking all 256 entries
+//      (232 clear cycles + 256 × ~24 cycles ≈ 6400 cycles; 8000 is conservative).
+//   3. Advance to hpos==H_END, vpos==target_vpos (HBLANK start).
+//      The sprite renderer fires on hblank_fall, loading sprites for vpos+1.
+//      The renderer completes within HBLANK (112 cycles; 64 sprites × ~6 cycles).
+//   4. Advance directly to hpos=H_START+screen_col, vpos=target_vpos+1.
+//      The ping-pong swap fires at hblank_end (hpos==H_START), so the front
+//      buffer holds the freshly-rendered sprites before we sample.
+//   5. Sample spr_pixel_out (12-bit).
+//   6. Compare to exp_pixel.
+// ---------------------------------------------------------------------------
+static void check_sprite_pixel(int target_vpos, int screen_col,
+                                int exp_pixel, const std::string& note) {
+    int limit = 4 * H_TOTAL * V_TOTAL;
+
+    // Step 1: advance to VBLANK start (vpos==V_END)
+    int found = 0;
+    for (int i = 0; i < limit; i++) {
+        if ((int)dut->vpos == V_END) {
+            found = 1;
+            break;
+        }
+        tick();
+    }
+    if (!found) {
+        printf("FAIL %s: could not reach vpos=%d (VBLANK start)\n",
+               note.c_str(), V_END);
+        g_fail++;
+        return;
+    }
+
+    // Step 2: wait for scanner to walk all 256 sprite entries
+    for (int i = 0; i < 8000; i++) tick();
+
+    // Step 3: advance to HBLANK start of target_vpos
+    found = 0;
+    for (int i = 0; i < limit; i++) {
+        if ((int)dut->hpos == H_END && (int)dut->vpos == target_vpos) {
+            found = 1;
+            break;
+        }
+        tick();
+    }
+    if (!found) {
+        printf("FAIL %s: could not reach hpos=%d vpos=%d\n",
+               note.c_str(), H_END, target_vpos);
+        g_fail++;
+        return;
+    }
+
+    // Step 4: advance directly to active display of vpos+1 at screen_col.
+    // Do NOT do a fixed-cycle blind wait here — that would overshoot HBLANK
+    // (HBLANK is only 112 cycles) and cause the seek loop to wrap around to
+    // the wrong frame.  The renderer completes within HBLANK for the test
+    // vectors (1-2 sprites per scanline, ~10 cycles each).  The ping-pong
+    // swap fires at hblank_end (hpos==H_START of vpos+1), so by the time we
+    // reach disp_hpos = H_START+screen_col the front buffer holds the correct
+    // rendered data.
+    int disp_vpos = (target_vpos + 1) % V_TOTAL;
+    int disp_hpos = H_START + screen_col;
+
+    for (int i = 0; i < limit; i++) {
+        if ((int)dut->hpos == disp_hpos && (int)dut->vpos == disp_vpos)
+            break;
+        tick();
+    }
+
+    dut->eval();
+    int got = (int)dut->spr_pixel_out & 0xFFF;
+    check(got == (exp_pixel & 0xFFF), note, got, exp_pixel & 0xFFF);
 }
 
 // ---------------------------------------------------------------------------
@@ -405,6 +507,9 @@ int main(int argc, char** argv) {
     dut->gfx_wr_en   = 0;
     dut->gfx_wr_addr = 0;
     dut->gfx_wr_data = 0;
+    dut->spr_wr_en   = 0;
+    dut->spr_wr_addr = 0;
+    dut->spr_wr_data = 0;
     for (int i = 0; i < 4; i++) tick();
     dut->async_rst_n = 1;
     for (int i = 0; i < 4; i++) tick();
@@ -516,6 +621,20 @@ int main(int argc, char** argv) {
                                    jint(line, "screen_col"),
                                    jint(line, "exp_text"),
                                    jint(line, "exp_bg"),
+                                   note);
+
+            // ── Step 8 ops ──────────────────────────────────────────────────
+            // write_sprite: CPU write to Sprite RAM.
+            // "addr" is the chip-window word address (0x20000–0x27FFF).
+            // Uses direct spr_wr_* write port (offset = addr - 0x20000).
+            } else if (op == "write_sprite") {
+                int word_offset = jint(line, "addr") - 0x20000;
+                spr_write(word_offset, (uint16_t)(jint(line, "data") & 0xFFFF));
+
+            } else if (op == "check_sprite_pixel") {
+                check_sprite_pixel(jint(line, "vpos"),
+                                   jint(line, "screen_col"),
+                                   jint(line, "exp_pixel"),
                                    note);
 
             } else {

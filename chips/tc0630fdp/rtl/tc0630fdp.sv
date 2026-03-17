@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — Taito F3 Display Processor (Step 7: +Colscroll +Palette Addition)
+// TC0630FDP — Taito F3 Display Processor (Step 8: +Simple Sprites)
 // =============================================================================
 // Integrates all video functions for Taito F3 arcade hardware (1992–1997):
 //   · 4 scrolling tilemap layers (PF1–PF4), 16×16 tiles, 4bpp  ← STEP 3 ✓
@@ -105,13 +105,22 @@ module tc0630fdp (
     output logic [12:0] bg_pixel_out [0:3],
 
     // ── GFX ROM Write Port (Step 3 testbench) ─────────────────────────────
-    // The testbench writes tile graphics data here before rendering.
-    // gfx_wr_addr: 32-bit word address into the shared GFX ROM.
-    // gfx_wr_data: 32-bit write data.
-    // gfx_wr_en:   write enable (active high, registered on posedge clk).
     input  logic [21:0] gfx_wr_addr,
     input  logic [31:0] gfx_wr_data,
-    input  logic        gfx_wr_en
+    input  logic        gfx_wr_en,
+
+    // ── Sprite RAM Write Port (Step 8 testbench) ───────────────────────────
+    // Used by testbench to populate sprite RAM before rendering.
+    // spr_wr_addr: 15-bit word address into Sprite RAM (0..32767)
+    // spr_wr_data: 16-bit write data
+    // spr_wr_en:   write enable (active high, registered on posedge clk)
+    input  logic [14:0] spr_wr_addr,
+    input  logic [15:0] spr_wr_data,
+    input  logic        spr_wr_en,
+
+    // ── Sprite Pixel Output (Step 8) ──────────────────────────────────────
+    // {priority[1:0], palette[5:0], pen[3:0]}; pen==0 → transparent
+    output logic [11:0] spr_pixel_out
 );
 
 // =============================================================================
@@ -220,29 +229,37 @@ logic cs_text;
 logic cs_char;
 logic cs_pf   [0:3];   // PF1=0, PF2=1, PF3=2, PF4=3
 logic cs_line;          // Line RAM (Step 5)
+logic cs_spr;           // Sprite RAM (Step 8): chip word addr 0x20000–0x27FFF
 
 always_comb begin
     cs_ctrl  = 1'b0;
     cs_text  = 1'b0;
     cs_char  = 1'b0;
     cs_line  = 1'b0;
+    cs_spr   = 1'b0;
     for (int p = 0; p < 4; p++) cs_pf[p] = 1'b0;
     if (cpu_cs) begin
-        // Line RAM has highest priority (large address range checked first)
-        // cpu_addr[18:16] = {(W>>17)&1, (W>>16)&1, (W>>15)&1}
-        // 3'b010 → W in [0x10000, 0x18000) = 0x10000–0x17FFF (32K words = 64KB)
-        if (cpu_addr[18:16] == 3'b010) begin
-            cs_line = 1'b1;   // Line RAM: 0x10000–0x17FFF
+        // Decode priority (highest first):
+        //   Sprite RAM: 0x20000–0x27FFF  → cpu_addr[18:16] == 3'b100
+        //   Line RAM:   0x10000–0x17FFF  → cpu_addr[18:16] == 3'b010
+        //   PF/Text/Char/Ctrl: lower addresses
+        // Note: cpu_addr is [18:1] (bit 1 = LSB), so cpu_addr[18:16] checks
+        //       integer bits 17:15 (Verilator shifts [N] → bit N-1).
+        //       3'b100 → bits17:15=4 → addresses 0x20000–0x27FFF.
+        //       3'b010 → bits17:15=2 → addresses 0x10000–0x17FFF.
+        if (cpu_addr[18:16] == 3'b100) begin
+            cs_spr = 1'b1;  // Sprite RAM: word addr 0x20000–0x27FFF (32K words)
+        end else if (cpu_addr[18:16] == 3'b010) begin
+            cs_line = 1'b1; // Line RAM: 0x10000–0x17FFF
         end else begin
-            // cpu_addr[18:13] = C++ value >> 12 (6 bits select 8KB block)
             unique case (cpu_addr[18:13])
-                6'h04, 6'h05: cs_pf[0] = 1'b1;   // PF1: 0x04000–0x057FF
-                6'h06, 6'h07: cs_pf[1] = 1'b1;   // PF2: 0x06000–0x077FF
-                6'h08, 6'h09: cs_pf[2] = 1'b1;   // PF3: 0x08000–0x097FF
-                6'h0A, 6'h0B: cs_pf[3] = 1'b1;   // PF4: 0x0A000–0x0B7FF
-                6'h0F:         cs_char = 1'b1;    // Char RAM: 0x0F000–0x0FFFF
-                6'h0E:         cs_text = 1'b1;    // Text RAM: 0x0E000–0x0EFFF
-                default:       cs_ctrl = 1'b1;    // ctrl regs and all other
+                6'h04, 6'h05: cs_pf[0] = 1'b1;
+                6'h06, 6'h07: cs_pf[1] = 1'b1;
+                6'h08, 6'h09: cs_pf[2] = 1'b1;
+                6'h0A, 6'h0B: cs_pf[3] = 1'b1;
+                6'h0F:         cs_char = 1'b1;
+                6'h0E:         cs_text = 1'b1;
+                default:       cs_ctrl = 1'b1;
             endcase
         end
     end
@@ -420,6 +437,95 @@ generate
 endgenerate
 
 // =============================================================================
+// Sprite RAM (32K × 16-bit = 64KB) — Step 8
+// CPU word address range: 0x20000–0x27FFF (chip-relative)
+// cpu_addr[15:1] = 15-bit word offset within Sprite RAM (0..32767)
+// Dual access: CPU read/write via cs_spr; sprite scanner via spr_scan_addr
+// =============================================================================
+logic [15:0] spr_ram [0:32767];
+
+logic [14:0] spr_cpu_addr;
+assign spr_cpu_addr = cpu_addr[15:1];
+
+always_ff @(posedge clk) begin
+    // CPU write
+    if (cs_spr && !cpu_rw) begin
+        if (cpu_be[1]) spr_ram[spr_cpu_addr][15:8] <= cpu_din[15:8];
+        if (cpu_be[0]) spr_ram[spr_cpu_addr][ 7:0] <= cpu_din[ 7:0];
+    end
+    // Testbench direct write port
+    if (spr_wr_en) spr_ram[spr_wr_addr] <= spr_wr_data;
+end
+
+logic [15:0] spr_cpu_rdata;
+always_ff @(posedge clk) begin
+    if (!rst_n)
+        spr_cpu_rdata <= 16'b0;
+    else if (cs_spr && cpu_rw)
+        spr_cpu_rdata <= spr_ram[spr_cpu_addr];
+end
+
+// Sprite scanner read port (combinational)
+// The scanner FSM issues an address and reads data in the NEXT state (1-cycle
+// latency from address-issue to data-read), which matches the scanner's design.
+// A registered read would require the FSM to wait 2 cycles (addr issued at N →
+// data available at N+2), but the scanner only waits 1 cycle (addr at N →
+// read at N+1).  Combinational read gives the correct 0-cycle read latency so
+// the overall addr→read pipeline is 1 cycle as intended.
+logic [14:0] scan_spr_addr;
+logic [15:0] scan_spr_data;
+assign scan_spr_data = spr_ram[scan_spr_addr];
+
+// =============================================================================
+// Sprite count BRAM (232 × 7-bit) — Step 8
+// Holds the number of sprites on each screen scanline (0..64).
+// 7-bit to hold values 0..64 (max 64 sprites per scanline).
+// Written by scanner, read by renderer.
+// =============================================================================
+logic [ 6:0] scount_ram [0:231];
+
+// Scanner write port
+logic        scan_scount_wr;
+logic [ 7:0] scan_scount_wr_addr;
+logic [ 6:0] scan_scount_wr_data;
+
+always_ff @(posedge clk) begin
+    if (scan_scount_wr)
+        scount_ram[scan_scount_wr_addr] <= scan_scount_wr_data;
+end
+
+// Renderer read port (combinational — see spr_ram scanner port comment above)
+logic [ 7:0] rend_scount_rd_addr;
+logic [ 6:0] rend_scount_rd_data;
+assign rend_scount_rd_data = scount_ram[rend_scount_rd_addr];
+
+// Scanner read port (not used by scanner; driven to 0)
+logic [ 7:0] scan_scount_rd_addr;
+logic [ 6:0] scan_scount_rd_data;
+assign scan_scount_rd_data = scount_ram[scan_scount_rd_addr];
+
+// =============================================================================
+// Sprite list BRAM (232 × 64 × 64-bit) — Step 8
+// 14-bit address: {screen_scan[7:0], slot[5:0]}
+// =============================================================================
+logic [63:0] slist_ram [0:14847];  // 232*64 = 14848
+
+// Scanner write port
+logic        scan_slist_wr;
+logic [13:0] scan_slist_addr;
+logic [63:0] scan_slist_data;
+
+always_ff @(posedge clk) begin
+    if (scan_slist_wr)
+        slist_ram[scan_slist_addr] <= scan_slist_data;
+end
+
+// Renderer read port (combinational — see spr_ram scanner port comment above)
+logic [13:0] rend_slist_rd_addr;
+logic [63:0] rend_slist_rd_data;
+assign rend_slist_rd_data = slist_ram[rend_slist_rd_addr];
+
+// =============================================================================
 // GFX ROM (32-bit wide, 4M words = 16MB — simulable BRAM for testbench)
 // CPU writes via gfx_wr_* ports. BG modules read via per-instance async ports.
 // In real hardware this is external SDRAM; here it's an on-chip BRAM model.
@@ -447,12 +553,18 @@ logic        bg_gfx_rd   [0:3];
 
 generate
     for (gi = 0; gi < 4; gi++) begin : gen_gfx_rd
-        // Combinational read (addr truncated to GFX_ROM_WORDS range)
         assign bg_gfx_data[gi] = (bg_gfx_addr[gi] < 22'(GFX_ROM_WORDS))
                                   ? gfx_rom[bg_gfx_addr[gi][11:0]]
                                   : 32'b0;
     end
 endgenerate
+
+// Sprite renderer read port (combinational — same BRAM, 32-bit)
+logic [21:0] spr_gfx_addr;
+logic [31:0] spr_gfx_data;
+assign spr_gfx_data = (spr_gfx_addr < 22'(GFX_ROM_WORDS))
+                      ? gfx_rom[spr_gfx_addr[11:0]]
+                      : 32'b0;
 
 // =============================================================================
 // CPU read data mux
@@ -461,6 +573,7 @@ logic [15:0] line_cpu_dout;   // from tc0630fdp_lineram
 
 always_comb begin
     unique case (1'b1)
+        cs_spr:    cpu_dout = spr_cpu_rdata;
         cs_line:   cpu_dout = line_cpu_dout;
         cs_ctrl:   cpu_dout = ctrl_rdata;
         cs_text:   cpu_dout = text_cpu_rdata;
@@ -563,6 +676,44 @@ generate
 endgenerate
 
 // =============================================================================
+// tc0630fdp_sprite_scan — Sprite Walker (Step 8)
+// =============================================================================
+tc0630fdp_sprite_scan u_sprite_scan (
+    .clk             (clk),
+    .rst_n           (rst_n),
+    .vblank_rise     (vblank_rise),
+    .spr_rd_addr     (scan_spr_addr),
+    .spr_rd_data     (scan_spr_data),
+    .slist_wr        (scan_slist_wr),
+    .slist_addr      (scan_slist_addr),
+    .slist_data      (scan_slist_data),
+    .scount_wr       (scan_scount_wr),
+    .scount_wr_addr  (scan_scount_wr_addr),
+    .scount_wr_data  (scan_scount_wr_data),
+    .scount_rd_addr  (scan_scount_rd_addr),
+    .scount_rd_data  (scan_scount_rd_data)
+);
+
+// =============================================================================
+// tc0630fdp_sprite_render — Sprite Line Buffer Renderer (Step 8)
+// =============================================================================
+tc0630fdp_sprite_render u_sprite_render (
+    .clk             (clk),
+    .rst_n           (rst_n),
+    .hblank          (hblank),
+    .hblank_fall     (hblank_fall),
+    .vpos            (vpos),
+    .hpos            (hpos),
+    .scount_rd_addr  (rend_scount_rd_addr),
+    .scount_rd_data  (rend_scount_rd_data),
+    .slist_rd_addr   (rend_slist_rd_addr),
+    .slist_rd_data   (rend_slist_rd_data),
+    .gfx_addr        (spr_gfx_addr),
+    .gfx_data        (spr_gfx_data),
+    .spr_pixel       (spr_pixel_out)
+);
+
+// =============================================================================
 // GFX ROM / Palette / RGB stubs
 // =============================================================================
 assign gfx_lo_addr = 25'b0;
@@ -582,8 +733,8 @@ assign _unused = ^{gfx_lo_data,
                    gfx_hi_data,
                    pal_data,
                    pixel_xscroll, pixel_yscroll,
-                   vblank_rise,
-                   bg_gfx_rd[0], bg_gfx_rd[1], bg_gfx_rd[2], bg_gfx_rd[3]};
+                   bg_gfx_rd[0], bg_gfx_rd[1], bg_gfx_rd[2], bg_gfx_rd[3],
+                   scan_scount_rd_data};
 /* verilator lint_on UNUSED */
 
 endmodule

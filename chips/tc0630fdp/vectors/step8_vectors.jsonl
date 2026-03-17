@@ -1,0 +1,919 @@
+{"op": "reset", "note": "reset for single sprite position test"}
+{"op": "write_gfx", "gfx_addr": 32, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=0 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 33, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=0 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 34, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=1 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 35, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=1 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 36, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=2 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 37, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=2 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 38, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=3 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 39, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=3 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 40, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=4 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 41, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=4 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 42, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 43, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=5 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 44, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=6 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 45, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=6 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 46, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=7 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 47, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=7 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 48, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=8 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 49, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=8 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 50, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=9 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 51, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=9 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 52, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=10 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 53, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=10 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 54, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=11 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 55, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=11 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 56, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=12 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 57, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=12 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 58, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=13 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 59, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=13 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 60, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=14 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 61, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=14 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 62, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=15 pen=0x5"}
+{"op": "write_gfx", "gfx_addr": 63, "gfx_data": 1431655765, "note": "gfx solid tile=1 row=15 pen=0x5"}
+{"op": "write_sprite", "addr": 131072, "data": 1, "be": 3, "note": "spr[0] solid pen=5 at (100,80) word0=tile_lo"}
+{"op": "write_sprite", "addr": 131074, "data": 100, "be": 3, "note": "spr[0] solid pen=5 at (100,80) word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 80, "be": 3, "note": "spr[0] solid pen=5 at (100,80) word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 7, "be": 3, "note": "spr[0] solid pen=5 at (100,80) word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] solid pen=5 at (100,80) word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 100, "exp_pixel": 117, "note": "spr_pos row0 col+0 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 104, "exp_pixel": 117, "note": "spr_pos row0 col+4 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 107, "exp_pixel": 117, "note": "spr_pos row0 col+7 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 108, "exp_pixel": 117, "note": "spr_pos row0 col+8 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 112, "exp_pixel": 117, "note": "spr_pos row0 col+12 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 115, "exp_pixel": 117, "note": "spr_pos row0 col+15 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 87, "screen_col": 100, "exp_pixel": 117, "note": "spr_pos row8 col+0 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 87, "screen_col": 107, "exp_pixel": 117, "note": "spr_pos row8 col+7 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 87, "screen_col": 108, "exp_pixel": 117, "note": "spr_pos row8 col+8 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 87, "screen_col": 115, "exp_pixel": 117, "note": "spr_pos row8 col+15 exp=0x075"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 99, "exp_pixel": 0, "note": "spr_pos outside col=99 (expect transparent)"}
+{"op": "check_sprite_pixel", "vpos": 79, "screen_col": 116, "exp_pixel": 0, "note": "spr_pos outside col=116 (expect transparent)"}
+{"op": "reset", "note": "reset for flipX test"}
+{"op": "write_gfx", "gfx_addr": 64, "gfx_data": 19088743, "note": "gfx gradient tile=2 row=0"}
+{"op": "write_gfx", "gfx_addr": 65, "gfx_data": 2309737967, "note": "gfx gradient tile=2 row=0"}
+{"op": "write_gfx", "gfx_addr": 66, "gfx_data": 286331153, "note": "gfx solid tile=2 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 67, "gfx_data": 286331153, "note": "gfx solid tile=2 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 68, "gfx_data": 286331153, "note": "gfx solid tile=2 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 69, "gfx_data": 286331153, "note": "gfx solid tile=2 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 70, "gfx_data": 286331153, "note": "gfx solid tile=2 row=3 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 71, "gfx_data": 286331153, "note": "gfx solid tile=2 row=3 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 72, "gfx_data": 286331153, "note": "gfx solid tile=2 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 73, "gfx_data": 286331153, "note": "gfx solid tile=2 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 74, "gfx_data": 286331153, "note": "gfx solid tile=2 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 75, "gfx_data": 286331153, "note": "gfx solid tile=2 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 76, "gfx_data": 286331153, "note": "gfx solid tile=2 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 77, "gfx_data": 286331153, "note": "gfx solid tile=2 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 78, "gfx_data": 286331153, "note": "gfx solid tile=2 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 79, "gfx_data": 286331153, "note": "gfx solid tile=2 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 80, "gfx_data": 286331153, "note": "gfx solid tile=2 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 81, "gfx_data": 286331153, "note": "gfx solid tile=2 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 82, "gfx_data": 286331153, "note": "gfx solid tile=2 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 83, "gfx_data": 286331153, "note": "gfx solid tile=2 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 84, "gfx_data": 286331153, "note": "gfx solid tile=2 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 85, "gfx_data": 286331153, "note": "gfx solid tile=2 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 86, "gfx_data": 286331153, "note": "gfx solid tile=2 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 87, "gfx_data": 286331153, "note": "gfx solid tile=2 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 88, "gfx_data": 286331153, "note": "gfx solid tile=2 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 89, "gfx_data": 286331153, "note": "gfx solid tile=2 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 90, "gfx_data": 286331153, "note": "gfx solid tile=2 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 91, "gfx_data": 286331153, "note": "gfx solid tile=2 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 92, "gfx_data": 286331153, "note": "gfx solid tile=2 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 93, "gfx_data": 286331153, "note": "gfx solid tile=2 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 94, "gfx_data": 286331153, "note": "gfx solid tile=2 row=15 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 95, "gfx_data": 286331153, "note": "gfx solid tile=2 row=15 pen=0x1"}
+{"op": "write_sprite", "addr": 131072, "data": 2, "be": 3, "note": "spr[0] flipX gradient word0=tile_lo"}
+{"op": "write_sprite", "addr": 131074, "data": 60, "be": 3, "note": "spr[0] flipX gradient word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 50, "be": 3, "note": "spr[0] flipX gradient word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 522, "be": 3, "note": "spr[0] flipX gradient word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] flipX gradient word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 60, "exp_pixel": 167, "note": "flipX col+0 exp=0x0a7"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 61, "exp_pixel": 166, "note": "flipX col+1 exp=0x0a6"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 67, "exp_pixel": 0, "note": "flipX col+7 exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 68, "exp_pixel": 175, "note": "flipX col+8 exp=0x0af"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 74, "exp_pixel": 169, "note": "flipX col+14 exp=0x0a9"}
+{"op": "check_sprite_pixel", "vpos": 49, "screen_col": 75, "exp_pixel": 168, "note": "flipX col+15 exp=0x0a8"}
+{"op": "reset", "note": "reset for flipY test"}
+{"op": "write_gfx", "gfx_addr": 96, "gfx_data": 858993459, "note": "gfx solid tile=3 row=0 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 97, "gfx_data": 858993459, "note": "gfx solid tile=3 row=0 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 98, "gfx_data": 286331153, "note": "gfx solid tile=3 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 99, "gfx_data": 286331153, "note": "gfx solid tile=3 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 100, "gfx_data": 286331153, "note": "gfx solid tile=3 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 101, "gfx_data": 286331153, "note": "gfx solid tile=3 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 102, "gfx_data": 286331153, "note": "gfx solid tile=3 row=3 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 103, "gfx_data": 286331153, "note": "gfx solid tile=3 row=3 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 104, "gfx_data": 286331153, "note": "gfx solid tile=3 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 105, "gfx_data": 286331153, "note": "gfx solid tile=3 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 106, "gfx_data": 286331153, "note": "gfx solid tile=3 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 107, "gfx_data": 286331153, "note": "gfx solid tile=3 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 108, "gfx_data": 286331153, "note": "gfx solid tile=3 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 109, "gfx_data": 286331153, "note": "gfx solid tile=3 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 110, "gfx_data": 286331153, "note": "gfx solid tile=3 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 111, "gfx_data": 286331153, "note": "gfx solid tile=3 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 112, "gfx_data": 286331153, "note": "gfx solid tile=3 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 113, "gfx_data": 286331153, "note": "gfx solid tile=3 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 114, "gfx_data": 286331153, "note": "gfx solid tile=3 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 115, "gfx_data": 286331153, "note": "gfx solid tile=3 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 116, "gfx_data": 286331153, "note": "gfx solid tile=3 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 117, "gfx_data": 286331153, "note": "gfx solid tile=3 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 118, "gfx_data": 286331153, "note": "gfx solid tile=3 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 119, "gfx_data": 286331153, "note": "gfx solid tile=3 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 120, "gfx_data": 286331153, "note": "gfx solid tile=3 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 121, "gfx_data": 286331153, "note": "gfx solid tile=3 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 122, "gfx_data": 286331153, "note": "gfx solid tile=3 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 123, "gfx_data": 286331153, "note": "gfx solid tile=3 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 124, "gfx_data": 286331153, "note": "gfx solid tile=3 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 125, "gfx_data": 286331153, "note": "gfx solid tile=3 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 126, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=15 pen=0x7"}
+{"op": "write_gfx", "gfx_addr": 127, "gfx_data": 2004318071, "note": "gfx solid tile=3 row=15 pen=0x7"}
+{"op": "write_sprite", "addr": 131072, "data": 3, "be": 3, "note": "spr[0] flipY word0=tile_lo"}
+{"op": "write_sprite", "addr": 131074, "data": 80, "be": 3, "note": "spr[0] flipY word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 100, "be": 3, "note": "spr[0] flipY word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 1045, "be": 3, "note": "spr[0] flipY word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] flipY word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 99, "screen_col": 80, "exp_pixel": 343, "note": "flipY top row (expect pen=7) exp=0x157"}
+{"op": "check_sprite_pixel", "vpos": 99, "screen_col": 88, "exp_pixel": 343, "note": "flipY top row col+8 exp=0x157"}
+{"op": "check_sprite_pixel", "vpos": 114, "screen_col": 80, "exp_pixel": 339, "note": "flipY bottom row (expect pen=3) exp=0x153"}
+{"op": "check_sprite_pixel", "vpos": 107, "screen_col": 80, "exp_pixel": 337, "note": "flipY mid row (expect pen=1) exp=0x151"}
+{"op": "reset", "note": "reset for transparent pen test"}
+{"op": "write_gfx", "gfx_addr": 128, "gfx_data": 101058054, "note": "transparent row=0 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 129, "gfx_data": 101058054, "note": "transparent row=0 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 130, "gfx_data": 101058054, "note": "transparent row=1 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 131, "gfx_data": 101058054, "note": "transparent row=1 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 132, "gfx_data": 101058054, "note": "transparent row=2 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 133, "gfx_data": 101058054, "note": "transparent row=2 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 134, "gfx_data": 101058054, "note": "transparent row=3 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 135, "gfx_data": 101058054, "note": "transparent row=3 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 136, "gfx_data": 101058054, "note": "transparent row=4 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 137, "gfx_data": 101058054, "note": "transparent row=4 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 138, "gfx_data": 101058054, "note": "transparent row=5 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 139, "gfx_data": 101058054, "note": "transparent row=5 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 140, "gfx_data": 101058054, "note": "transparent row=6 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 141, "gfx_data": 101058054, "note": "transparent row=6 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 142, "gfx_data": 101058054, "note": "transparent row=7 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 143, "gfx_data": 101058054, "note": "transparent row=7 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 144, "gfx_data": 101058054, "note": "transparent row=8 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 145, "gfx_data": 101058054, "note": "transparent row=8 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 146, "gfx_data": 101058054, "note": "transparent row=9 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 147, "gfx_data": 101058054, "note": "transparent row=9 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 148, "gfx_data": 101058054, "note": "transparent row=10 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 149, "gfx_data": 101058054, "note": "transparent row=10 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 150, "gfx_data": 101058054, "note": "transparent row=11 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 151, "gfx_data": 101058054, "note": "transparent row=11 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 152, "gfx_data": 101058054, "note": "transparent row=12 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 153, "gfx_data": 101058054, "note": "transparent row=12 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 154, "gfx_data": 101058054, "note": "transparent row=13 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 155, "gfx_data": 101058054, "note": "transparent row=13 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 156, "gfx_data": 101058054, "note": "transparent row=14 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 157, "gfx_data": 101058054, "note": "transparent row=14 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 158, "gfx_data": 101058054, "note": "transparent row=15 pattern=0x06060606"}
+{"op": "write_gfx", "gfx_addr": 159, "gfx_data": 101058054, "note": "transparent row=15 pattern=0x06060606"}
+{"op": "write_sprite", "addr": 131072, "data": 4, "be": 3, "note": "spr[0] transparent pen test word0=tile_lo"}
+{"op": "write_sprite", "addr": 131074, "data": 140, "be": 3, "note": "spr[0] transparent pen test word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 70, "be": 3, "note": "spr[0] transparent pen test word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 31, "be": 3, "note": "spr[0] transparent pen test word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] transparent pen test word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 140, "exp_pixel": 0, "note": "transparent col+0 opaque=False exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 141, "exp_pixel": 502, "note": "transparent col+1 opaque=True exp=0x1f6"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 142, "exp_pixel": 0, "note": "transparent col+2 opaque=False exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 143, "exp_pixel": 502, "note": "transparent col+3 opaque=True exp=0x1f6"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 148, "exp_pixel": 0, "note": "transparent col+8 opaque=False exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 149, "exp_pixel": 502, "note": "transparent col+9 opaque=True exp=0x1f6"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 154, "exp_pixel": 0, "note": "transparent col+14 opaque=False exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 69, "screen_col": 155, "exp_pixel": 502, "note": "transparent col+15 opaque=True exp=0x1f6"}
+{"op": "reset", "note": "reset for overlapping sprites test"}
+{"op": "write_gfx", "gfx_addr": 160, "gfx_data": 858993459, "note": "gfx solid tile=5 row=0 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 161, "gfx_data": 858993459, "note": "gfx solid tile=5 row=0 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 162, "gfx_data": 858993459, "note": "gfx solid tile=5 row=1 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 163, "gfx_data": 858993459, "note": "gfx solid tile=5 row=1 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 164, "gfx_data": 858993459, "note": "gfx solid tile=5 row=2 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 165, "gfx_data": 858993459, "note": "gfx solid tile=5 row=2 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 166, "gfx_data": 858993459, "note": "gfx solid tile=5 row=3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 167, "gfx_data": 858993459, "note": "gfx solid tile=5 row=3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 168, "gfx_data": 858993459, "note": "gfx solid tile=5 row=4 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 169, "gfx_data": 858993459, "note": "gfx solid tile=5 row=4 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 170, "gfx_data": 858993459, "note": "gfx solid tile=5 row=5 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 171, "gfx_data": 858993459, "note": "gfx solid tile=5 row=5 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 172, "gfx_data": 858993459, "note": "gfx solid tile=5 row=6 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 173, "gfx_data": 858993459, "note": "gfx solid tile=5 row=6 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 174, "gfx_data": 858993459, "note": "gfx solid tile=5 row=7 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 175, "gfx_data": 858993459, "note": "gfx solid tile=5 row=7 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 176, "gfx_data": 858993459, "note": "gfx solid tile=5 row=8 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 177, "gfx_data": 858993459, "note": "gfx solid tile=5 row=8 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 178, "gfx_data": 858993459, "note": "gfx solid tile=5 row=9 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 179, "gfx_data": 858993459, "note": "gfx solid tile=5 row=9 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 180, "gfx_data": 858993459, "note": "gfx solid tile=5 row=10 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 181, "gfx_data": 858993459, "note": "gfx solid tile=5 row=10 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 182, "gfx_data": 858993459, "note": "gfx solid tile=5 row=11 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 183, "gfx_data": 858993459, "note": "gfx solid tile=5 row=11 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 184, "gfx_data": 858993459, "note": "gfx solid tile=5 row=12 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 185, "gfx_data": 858993459, "note": "gfx solid tile=5 row=12 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 186, "gfx_data": 858993459, "note": "gfx solid tile=5 row=13 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 187, "gfx_data": 858993459, "note": "gfx solid tile=5 row=13 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 188, "gfx_data": 858993459, "note": "gfx solid tile=5 row=14 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 189, "gfx_data": 858993459, "note": "gfx solid tile=5 row=14 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 190, "gfx_data": 858993459, "note": "gfx solid tile=5 row=15 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 191, "gfx_data": 858993459, "note": "gfx solid tile=5 row=15 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 192, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=0 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 193, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=0 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 194, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=1 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 195, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=1 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 196, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=2 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 197, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=2 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 198, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=3 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 199, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=3 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 200, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=4 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 201, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=4 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 202, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=5 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 203, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=5 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 204, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=6 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 205, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=6 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 206, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=7 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 207, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=7 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 208, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=8 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 209, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=8 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 210, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 211, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=9 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 212, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=10 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 213, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=10 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 214, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=11 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 215, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=11 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 216, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=12 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 217, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=12 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 218, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=13 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 219, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=13 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 220, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=14 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 221, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=14 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 222, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=15 pen=0x9"}
+{"op": "write_gfx", "gfx_addr": 223, "gfx_data": 2576980377, "note": "gfx solid tile=6 row=15 pen=0x9"}
+{"op": "write_sprite", "addr": 131072, "data": 5, "be": 3, "note": "spr[0] pen=3 (top) word0=tile_lo"}
+{"op": "write_sprite", "addr": 131074, "data": 120, "be": 3, "note": "spr[0] pen=3 (top) word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 90, "be": 3, "note": "spr[0] pen=3 (top) word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 5, "be": 3, "note": "spr[0] pen=3 (top) word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] pen=3 (top) word5=tile_hi"}
+{"op": "write_sprite", "addr": 131080, "data": 6, "be": 3, "note": "spr[1] pen=9 (bottom) word0=tile_lo"}
+{"op": "write_sprite", "addr": 131082, "data": 120, "be": 3, "note": "spr[1] pen=9 (bottom) word2=sx"}
+{"op": "write_sprite", "addr": 131083, "data": 90, "be": 3, "note": "spr[1] pen=9 (bottom) word3=sy"}
+{"op": "write_sprite", "addr": 131084, "data": 2, "be": 3, "note": "spr[1] pen=9 (bottom) word4=ctrl"}
+{"op": "write_sprite", "addr": 131085, "data": 0, "be": 3, "note": "spr[1] pen=9 (bottom) word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 89, "screen_col": 120, "exp_pixel": 41, "note": "overlap col+0 (spr0 wins) exp=0x029"}
+{"op": "check_sprite_pixel", "vpos": 89, "screen_col": 124, "exp_pixel": 41, "note": "overlap col+4 (spr0 wins) exp=0x029"}
+{"op": "check_sprite_pixel", "vpos": 89, "screen_col": 127, "exp_pixel": 41, "note": "overlap col+7 (spr0 wins) exp=0x029"}
+{"op": "check_sprite_pixel", "vpos": 89, "screen_col": 128, "exp_pixel": 41, "note": "overlap col+8 (spr0 wins) exp=0x029"}
+{"op": "check_sprite_pixel", "vpos": 89, "screen_col": 132, "exp_pixel": 41, "note": "overlap col+12 (spr0 wins) exp=0x029"}
+{"op": "check_sprite_pixel", "vpos": 89, "screen_col": 135, "exp_pixel": 41, "note": "overlap col+15 (spr0 wins) exp=0x029"}
+{"op": "reset", "note": "reset for priority group test"}
+{"op": "write_gfx", "gfx_addr": 224, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=0 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 225, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=0 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 226, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=1 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 227, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=1 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 228, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=2 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 229, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=2 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 230, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=3 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 231, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=3 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 232, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=4 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 233, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=4 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 234, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=5 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 235, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=5 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 236, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=6 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 237, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=6 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 238, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=7 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 239, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=7 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 240, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=8 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 241, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=8 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 242, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=9 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 243, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=9 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 244, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=10 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 245, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=10 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 246, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=11 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 247, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=11 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 248, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=12 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 249, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=12 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 250, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=13 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 251, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=13 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 252, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=14 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 253, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=14 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 254, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=15 pen=0xc"}
+{"op": "write_gfx", "gfx_addr": 255, "gfx_data": 3435973836, "note": "gfx solid tile=7 row=15 pen=0xc"}
+{"op": "write_sprite", "addr": 131072, "data": 7, "be": 3, "note": "spr[0] prio_group=1 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131074, "data": 50, "be": 3, "note": "spr[0] prio_group=1 word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 120, "be": 3, "note": "spr[0] prio_group=1 word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 87, "be": 3, "note": "spr[0] prio_group=1 word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] prio_group=1 word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 119, "screen_col": 50, "exp_pixel": 1404, "note": "prio_group=1 col+0 exp=0x57c (prio bits=[11:10]=1)"}
+{"op": "check_sprite_pixel", "vpos": 119, "screen_col": 58, "exp_pixel": 1404, "note": "prio_group=1 col+8 exp=0x57c (prio bits=[11:10]=1)"}
+{"op": "check_sprite_pixel", "vpos": 119, "screen_col": 65, "exp_pixel": 1404, "note": "prio_group=1 col+15 exp=0x57c (prio bits=[11:10]=1)"}
+{"op": "reset", "note": "reset for max priority sprite test"}
+{"op": "write_gfx", "gfx_addr": 256, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=0 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 257, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=0 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 258, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=1 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 259, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=1 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 260, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=2 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 261, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=2 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 262, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=3 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 263, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=3 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 264, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=4 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 265, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=4 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 266, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=5 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 267, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=5 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 268, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=6 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 269, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=6 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 270, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=7 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 271, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=7 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 272, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=8 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 273, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=8 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 274, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=9 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 275, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=9 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 276, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=10 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 277, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=10 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 278, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=11 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 279, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=11 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 280, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=12 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 281, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=12 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 282, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=13 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 283, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=13 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 284, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=14 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 285, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=14 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 286, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=15 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 287, "gfx_data": 4008636142, "note": "gfx solid tile=8 row=15 pen=0xe"}
+{"op": "write_sprite", "addr": 131072, "data": 8, "be": 3, "note": "spr[0] max priority (prio=3) word0=tile_lo"}
+{"op": "write_sprite", "addr": 131074, "data": 200, "be": 3, "note": "spr[0] max priority (prio=3) word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 150, "be": 3, "note": "spr[0] max priority (prio=3) word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 255, "be": 3, "note": "spr[0] max priority (prio=3) word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] max priority (prio=3) word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 149, "screen_col": 200, "exp_pixel": 4094, "note": "max_prio col+0 exp=0xffe"}
+{"op": "check_sprite_pixel", "vpos": 149, "screen_col": 207, "exp_pixel": 4094, "note": "max_prio col+7 exp=0xffe"}
+{"op": "check_sprite_pixel", "vpos": 149, "screen_col": 208, "exp_pixel": 4094, "note": "max_prio col+8 exp=0xffe"}
+{"op": "check_sprite_pixel", "vpos": 149, "screen_col": 215, "exp_pixel": 4094, "note": "max_prio col+15 exp=0xffe"}
+{"op": "reset", "note": "reset for left-edge clip test"}
+{"op": "write_gfx", "gfx_addr": 288, "gfx_data": 19088743, "note": "gfx gradient tile=9 row=0"}
+{"op": "write_gfx", "gfx_addr": 289, "gfx_data": 2309737967, "note": "gfx gradient tile=9 row=0"}
+{"op": "write_gfx", "gfx_addr": 290, "gfx_data": 572662306, "note": "gfx solid tile=9 row=1 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 291, "gfx_data": 572662306, "note": "gfx solid tile=9 row=1 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 292, "gfx_data": 572662306, "note": "gfx solid tile=9 row=2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 293, "gfx_data": 572662306, "note": "gfx solid tile=9 row=2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 294, "gfx_data": 572662306, "note": "gfx solid tile=9 row=3 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 295, "gfx_data": 572662306, "note": "gfx solid tile=9 row=3 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 296, "gfx_data": 572662306, "note": "gfx solid tile=9 row=4 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 297, "gfx_data": 572662306, "note": "gfx solid tile=9 row=4 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 298, "gfx_data": 572662306, "note": "gfx solid tile=9 row=5 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 299, "gfx_data": 572662306, "note": "gfx solid tile=9 row=5 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 300, "gfx_data": 572662306, "note": "gfx solid tile=9 row=6 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 301, "gfx_data": 572662306, "note": "gfx solid tile=9 row=6 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 302, "gfx_data": 572662306, "note": "gfx solid tile=9 row=7 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 303, "gfx_data": 572662306, "note": "gfx solid tile=9 row=7 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 304, "gfx_data": 572662306, "note": "gfx solid tile=9 row=8 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 305, "gfx_data": 572662306, "note": "gfx solid tile=9 row=8 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 306, "gfx_data": 572662306, "note": "gfx solid tile=9 row=9 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 307, "gfx_data": 572662306, "note": "gfx solid tile=9 row=9 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 308, "gfx_data": 572662306, "note": "gfx solid tile=9 row=10 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 309, "gfx_data": 572662306, "note": "gfx solid tile=9 row=10 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 310, "gfx_data": 572662306, "note": "gfx solid tile=9 row=11 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 311, "gfx_data": 572662306, "note": "gfx solid tile=9 row=11 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 312, "gfx_data": 572662306, "note": "gfx solid tile=9 row=12 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 313, "gfx_data": 572662306, "note": "gfx solid tile=9 row=12 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 314, "gfx_data": 572662306, "note": "gfx solid tile=9 row=13 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 315, "gfx_data": 572662306, "note": "gfx solid tile=9 row=13 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 316, "gfx_data": 572662306, "note": "gfx solid tile=9 row=14 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 317, "gfx_data": 572662306, "note": "gfx solid tile=9 row=14 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 318, "gfx_data": 572662306, "note": "gfx solid tile=9 row=15 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 319, "gfx_data": 572662306, "note": "gfx solid tile=9 row=15 pen=0x2"}
+{"op": "write_sprite", "addr": 131072, "data": 9, "be": 3, "note": "spr[0] left-edge clip sx=-4 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131074, "data": 4092, "be": 3, "note": "spr[0] left-edge clip sx=-4 word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 60, "be": 3, "note": "spr[0] left-edge clip sx=-4 word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 8, "be": 3, "note": "spr[0] left-edge clip sx=-4 word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] left-edge clip sx=-4 word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 0, "exp_pixel": 132, "note": "left_clip screen_col=0 (tile_px=4) exp=0x084"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 4, "exp_pixel": 136, "note": "left_clip screen_col=4 (tile_px=8) exp=0x088"}
+{"op": "check_sprite_pixel", "vpos": 59, "screen_col": 11, "exp_pixel": 143, "note": "left_clip screen_col=11 (tile_px=15) exp=0x08f"}
+{"op": "reset", "note": "reset for right-edge clip test"}
+{"op": "write_gfx", "gfx_addr": 320, "gfx_data": 19088743, "note": "gfx gradient tile=10 row=0"}
+{"op": "write_gfx", "gfx_addr": 321, "gfx_data": 2309737967, "note": "gfx gradient tile=10 row=0"}
+{"op": "write_gfx", "gfx_addr": 322, "gfx_data": 858993459, "note": "gfx solid tile=10 row=1 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 323, "gfx_data": 858993459, "note": "gfx solid tile=10 row=1 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 324, "gfx_data": 858993459, "note": "gfx solid tile=10 row=2 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 325, "gfx_data": 858993459, "note": "gfx solid tile=10 row=2 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 326, "gfx_data": 858993459, "note": "gfx solid tile=10 row=3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 327, "gfx_data": 858993459, "note": "gfx solid tile=10 row=3 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 328, "gfx_data": 858993459, "note": "gfx solid tile=10 row=4 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 329, "gfx_data": 858993459, "note": "gfx solid tile=10 row=4 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 330, "gfx_data": 858993459, "note": "gfx solid tile=10 row=5 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 331, "gfx_data": 858993459, "note": "gfx solid tile=10 row=5 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 332, "gfx_data": 858993459, "note": "gfx solid tile=10 row=6 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 333, "gfx_data": 858993459, "note": "gfx solid tile=10 row=6 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 334, "gfx_data": 858993459, "note": "gfx solid tile=10 row=7 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 335, "gfx_data": 858993459, "note": "gfx solid tile=10 row=7 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 336, "gfx_data": 858993459, "note": "gfx solid tile=10 row=8 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 337, "gfx_data": 858993459, "note": "gfx solid tile=10 row=8 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 338, "gfx_data": 858993459, "note": "gfx solid tile=10 row=9 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 339, "gfx_data": 858993459, "note": "gfx solid tile=10 row=9 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 340, "gfx_data": 858993459, "note": "gfx solid tile=10 row=10 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 341, "gfx_data": 858993459, "note": "gfx solid tile=10 row=10 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 342, "gfx_data": 858993459, "note": "gfx solid tile=10 row=11 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 343, "gfx_data": 858993459, "note": "gfx solid tile=10 row=11 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 344, "gfx_data": 858993459, "note": "gfx solid tile=10 row=12 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 345, "gfx_data": 858993459, "note": "gfx solid tile=10 row=12 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 346, "gfx_data": 858993459, "note": "gfx solid tile=10 row=13 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 347, "gfx_data": 858993459, "note": "gfx solid tile=10 row=13 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 348, "gfx_data": 858993459, "note": "gfx solid tile=10 row=14 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 349, "gfx_data": 858993459, "note": "gfx solid tile=10 row=14 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 350, "gfx_data": 858993459, "note": "gfx solid tile=10 row=15 pen=0x3"}
+{"op": "write_gfx", "gfx_addr": 351, "gfx_data": 858993459, "note": "gfx solid tile=10 row=15 pen=0x3"}
+{"op": "write_sprite", "addr": 131072, "data": 10, "be": 3, "note": "spr[0] right-edge clip sx=312 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131074, "data": 312, "be": 3, "note": "spr[0] right-edge clip sx=312 word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 130, "be": 3, "note": "spr[0] right-edge clip sx=312 word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 9, "be": 3, "note": "spr[0] right-edge clip sx=312 word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] right-edge clip sx=312 word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 129, "screen_col": 312, "exp_pixel": 0, "note": "right_clip screen_col=312 exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 129, "screen_col": 315, "exp_pixel": 147, "note": "right_clip screen_col=315 exp=0x093"}
+{"op": "check_sprite_pixel", "vpos": 129, "screen_col": 319, "exp_pixel": 151, "note": "right_clip screen_col=319 exp=0x097"}
+{"op": "reset", "note": "reset for all-pen-values test"}
+{"op": "write_gfx", "gfx_addr": 352, "gfx_data": 19088743, "note": "gfx gradient tile=11 row=0"}
+{"op": "write_gfx", "gfx_addr": 353, "gfx_data": 2309737967, "note": "gfx gradient tile=11 row=0"}
+{"op": "write_gfx", "gfx_addr": 354, "gfx_data": 286331153, "note": "gfx solid tile=11 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 355, "gfx_data": 286331153, "note": "gfx solid tile=11 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 356, "gfx_data": 286331153, "note": "gfx solid tile=11 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 357, "gfx_data": 286331153, "note": "gfx solid tile=11 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 358, "gfx_data": 286331153, "note": "gfx solid tile=11 row=3 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 359, "gfx_data": 286331153, "note": "gfx solid tile=11 row=3 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 360, "gfx_data": 286331153, "note": "gfx solid tile=11 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 361, "gfx_data": 286331153, "note": "gfx solid tile=11 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 362, "gfx_data": 286331153, "note": "gfx solid tile=11 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 363, "gfx_data": 286331153, "note": "gfx solid tile=11 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 364, "gfx_data": 286331153, "note": "gfx solid tile=11 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 365, "gfx_data": 286331153, "note": "gfx solid tile=11 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 366, "gfx_data": 286331153, "note": "gfx solid tile=11 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 367, "gfx_data": 286331153, "note": "gfx solid tile=11 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 368, "gfx_data": 286331153, "note": "gfx solid tile=11 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 369, "gfx_data": 286331153, "note": "gfx solid tile=11 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 370, "gfx_data": 286331153, "note": "gfx solid tile=11 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 371, "gfx_data": 286331153, "note": "gfx solid tile=11 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 372, "gfx_data": 286331153, "note": "gfx solid tile=11 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 373, "gfx_data": 286331153, "note": "gfx solid tile=11 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 374, "gfx_data": 286331153, "note": "gfx solid tile=11 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 375, "gfx_data": 286331153, "note": "gfx solid tile=11 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 376, "gfx_data": 286331153, "note": "gfx solid tile=11 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 377, "gfx_data": 286331153, "note": "gfx solid tile=11 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 378, "gfx_data": 286331153, "note": "gfx solid tile=11 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 379, "gfx_data": 286331153, "note": "gfx solid tile=11 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 380, "gfx_data": 286331153, "note": "gfx solid tile=11 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 381, "gfx_data": 286331153, "note": "gfx solid tile=11 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 382, "gfx_data": 286331153, "note": "gfx solid tile=11 row=15 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 383, "gfx_data": 286331153, "note": "gfx solid tile=11 row=15 pen=0x1"}
+{"op": "write_sprite", "addr": 131072, "data": 11, "be": 3, "note": "spr[0] all pens 0..15 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131074, "data": 50, "be": 3, "note": "spr[0] all pens 0..15 word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 40, "be": 3, "note": "spr[0] all pens 0..15 word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 26, "be": 3, "note": "spr[0] all pens 0..15 word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] all pens 0..15 word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 50, "exp_pixel": 0, "note": "allpens col+0 (pen=0) exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 51, "exp_pixel": 417, "note": "allpens col+1 (pen=1) exp=0x1a1"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 52, "exp_pixel": 418, "note": "allpens col+2 (pen=2) exp=0x1a2"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 53, "exp_pixel": 419, "note": "allpens col+3 (pen=3) exp=0x1a3"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 54, "exp_pixel": 420, "note": "allpens col+4 (pen=4) exp=0x1a4"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 55, "exp_pixel": 421, "note": "allpens col+5 (pen=5) exp=0x1a5"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 56, "exp_pixel": 422, "note": "allpens col+6 (pen=6) exp=0x1a6"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 57, "exp_pixel": 423, "note": "allpens col+7 (pen=7) exp=0x1a7"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 58, "exp_pixel": 424, "note": "allpens col+8 (pen=8) exp=0x1a8"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 59, "exp_pixel": 425, "note": "allpens col+9 (pen=9) exp=0x1a9"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 60, "exp_pixel": 426, "note": "allpens col+10 (pen=10) exp=0x1aa"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 61, "exp_pixel": 427, "note": "allpens col+11 (pen=11) exp=0x1ab"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 62, "exp_pixel": 428, "note": "allpens col+12 (pen=12) exp=0x1ac"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 63, "exp_pixel": 429, "note": "allpens col+13 (pen=13) exp=0x1ad"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 64, "exp_pixel": 430, "note": "allpens col+14 (pen=14) exp=0x1ae"}
+{"op": "check_sprite_pixel", "vpos": 39, "screen_col": 65, "exp_pixel": 431, "note": "allpens col+15 (pen=15) exp=0x1af"}
+{"op": "reset", "note": "reset for flipX+flipY combined test"}
+{"op": "write_gfx", "gfx_addr": 384, "gfx_data": 19088743, "note": "gfx gradient tile=12 row=0"}
+{"op": "write_gfx", "gfx_addr": 385, "gfx_data": 2309737967, "note": "gfx gradient tile=12 row=0"}
+{"op": "write_gfx", "gfx_addr": 386, "gfx_data": 572662306, "note": "gfx solid tile=12 row=1 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 387, "gfx_data": 572662306, "note": "gfx solid tile=12 row=1 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 388, "gfx_data": 572662306, "note": "gfx solid tile=12 row=2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 389, "gfx_data": 572662306, "note": "gfx solid tile=12 row=2 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 390, "gfx_data": 572662306, "note": "gfx solid tile=12 row=3 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 391, "gfx_data": 572662306, "note": "gfx solid tile=12 row=3 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 392, "gfx_data": 572662306, "note": "gfx solid tile=12 row=4 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 393, "gfx_data": 572662306, "note": "gfx solid tile=12 row=4 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 394, "gfx_data": 572662306, "note": "gfx solid tile=12 row=5 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 395, "gfx_data": 572662306, "note": "gfx solid tile=12 row=5 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 396, "gfx_data": 572662306, "note": "gfx solid tile=12 row=6 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 397, "gfx_data": 572662306, "note": "gfx solid tile=12 row=6 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 398, "gfx_data": 572662306, "note": "gfx solid tile=12 row=7 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 399, "gfx_data": 572662306, "note": "gfx solid tile=12 row=7 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 400, "gfx_data": 572662306, "note": "gfx solid tile=12 row=8 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 401, "gfx_data": 572662306, "note": "gfx solid tile=12 row=8 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 402, "gfx_data": 572662306, "note": "gfx solid tile=12 row=9 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 403, "gfx_data": 572662306, "note": "gfx solid tile=12 row=9 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 404, "gfx_data": 572662306, "note": "gfx solid tile=12 row=10 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 405, "gfx_data": 572662306, "note": "gfx solid tile=12 row=10 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 406, "gfx_data": 572662306, "note": "gfx solid tile=12 row=11 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 407, "gfx_data": 572662306, "note": "gfx solid tile=12 row=11 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 408, "gfx_data": 572662306, "note": "gfx solid tile=12 row=12 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 409, "gfx_data": 572662306, "note": "gfx solid tile=12 row=12 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 410, "gfx_data": 572662306, "note": "gfx solid tile=12 row=13 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 411, "gfx_data": 572662306, "note": "gfx solid tile=12 row=13 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 412, "gfx_data": 572662306, "note": "gfx solid tile=12 row=14 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 413, "gfx_data": 572662306, "note": "gfx solid tile=12 row=14 pen=0x2"}
+{"op": "write_gfx", "gfx_addr": 414, "gfx_data": 4008636142, "note": "gfx solid tile=12 row=15 pen=0xe"}
+{"op": "write_gfx", "gfx_addr": 415, "gfx_data": 4008636142, "note": "gfx solid tile=12 row=15 pen=0xe"}
+{"op": "write_sprite", "addr": 131072, "data": 12, "be": 3, "note": "spr[0] flipX+flipY word0=tile_lo"}
+{"op": "write_sprite", "addr": 131074, "data": 160, "be": 3, "note": "spr[0] flipX+flipY word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 110, "be": 3, "note": "spr[0] flipX+flipY word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 1553, "be": 3, "note": "spr[0] flipX+flipY word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "spr[0] flipX+flipY word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 160, "exp_pixel": 286, "note": "flipXY top col+0 exp=0x11e"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 167, "exp_pixel": 286, "note": "flipXY top col+7 exp=0x11e"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 168, "exp_pixel": 286, "note": "flipXY top col+8 exp=0x11e"}
+{"op": "check_sprite_pixel", "vpos": 109, "screen_col": 175, "exp_pixel": 286, "note": "flipXY top col+15 exp=0x11e"}
+{"op": "check_sprite_pixel", "vpos": 124, "screen_col": 160, "exp_pixel": 279, "note": "flipXY bot col+0 exp=0x117"}
+{"op": "check_sprite_pixel", "vpos": 124, "screen_col": 167, "exp_pixel": 0, "note": "flipXY bot col+7 exp=0x000"}
+{"op": "check_sprite_pixel", "vpos": 124, "screen_col": 168, "exp_pixel": 287, "note": "flipXY bot col+8 exp=0x11f"}
+{"op": "check_sprite_pixel", "vpos": 124, "screen_col": 175, "exp_pixel": 280, "note": "flipXY bot col+15 exp=0x118"}
+{"op": "reset", "note": "reset for slot overflow test"}
+{"op": "write_gfx", "gfx_addr": 416, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=0 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 417, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=0 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 418, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=1 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 419, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=1 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 420, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=2 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 421, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=2 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 422, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=3 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 423, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=3 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 424, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=4 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 425, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=4 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 426, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=5 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 427, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=5 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 428, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=6 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 429, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=6 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 430, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=7 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 431, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=7 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 432, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=8 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 433, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=8 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 434, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=9 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 435, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=9 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 436, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=10 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 437, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=10 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 438, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=11 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 439, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=11 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 440, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=12 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 441, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=12 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 442, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=13 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 443, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=13 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 444, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=14 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 445, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=14 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 446, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=15 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 447, "gfx_data": 4294967295, "note": "gfx solid tile=13 row=15 pen=0xf"}
+{"op": "write_gfx", "gfx_addr": 448, "gfx_data": 286331153, "note": "gfx solid tile=14 row=0 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 449, "gfx_data": 286331153, "note": "gfx solid tile=14 row=0 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 450, "gfx_data": 286331153, "note": "gfx solid tile=14 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 451, "gfx_data": 286331153, "note": "gfx solid tile=14 row=1 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 452, "gfx_data": 286331153, "note": "gfx solid tile=14 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 453, "gfx_data": 286331153, "note": "gfx solid tile=14 row=2 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 454, "gfx_data": 286331153, "note": "gfx solid tile=14 row=3 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 455, "gfx_data": 286331153, "note": "gfx solid tile=14 row=3 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 456, "gfx_data": 286331153, "note": "gfx solid tile=14 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 457, "gfx_data": 286331153, "note": "gfx solid tile=14 row=4 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 458, "gfx_data": 286331153, "note": "gfx solid tile=14 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 459, "gfx_data": 286331153, "note": "gfx solid tile=14 row=5 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 460, "gfx_data": 286331153, "note": "gfx solid tile=14 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 461, "gfx_data": 286331153, "note": "gfx solid tile=14 row=6 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 462, "gfx_data": 286331153, "note": "gfx solid tile=14 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 463, "gfx_data": 286331153, "note": "gfx solid tile=14 row=7 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 464, "gfx_data": 286331153, "note": "gfx solid tile=14 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 465, "gfx_data": 286331153, "note": "gfx solid tile=14 row=8 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 466, "gfx_data": 286331153, "note": "gfx solid tile=14 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 467, "gfx_data": 286331153, "note": "gfx solid tile=14 row=9 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 468, "gfx_data": 286331153, "note": "gfx solid tile=14 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 469, "gfx_data": 286331153, "note": "gfx solid tile=14 row=10 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 470, "gfx_data": 286331153, "note": "gfx solid tile=14 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 471, "gfx_data": 286331153, "note": "gfx solid tile=14 row=11 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 472, "gfx_data": 286331153, "note": "gfx solid tile=14 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 473, "gfx_data": 286331153, "note": "gfx solid tile=14 row=12 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 474, "gfx_data": 286331153, "note": "gfx solid tile=14 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 475, "gfx_data": 286331153, "note": "gfx solid tile=14 row=13 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 476, "gfx_data": 286331153, "note": "gfx solid tile=14 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 477, "gfx_data": 286331153, "note": "gfx solid tile=14 row=14 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 478, "gfx_data": 286331153, "note": "gfx solid tile=14 row=15 pen=0x1"}
+{"op": "write_gfx", "gfx_addr": 479, "gfx_data": 286331153, "note": "gfx solid tile=14 row=15 pen=0x1"}
+{"op": "write_sprite", "addr": 131072, "data": 14, "be": 3, "note": "slot_fill[0] sx=0 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131074, "data": 0, "be": 3, "note": "slot_fill[0] sx=0 word2=sx"}
+{"op": "write_sprite", "addr": 131075, "data": 200, "be": 3, "note": "slot_fill[0] sx=0 word3=sy"}
+{"op": "write_sprite", "addr": 131076, "data": 1, "be": 3, "note": "slot_fill[0] sx=0 word4=ctrl"}
+{"op": "write_sprite", "addr": 131077, "data": 0, "be": 3, "note": "slot_fill[0] sx=0 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131080, "data": 14, "be": 3, "note": "slot_fill[1] sx=16 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131082, "data": 16, "be": 3, "note": "slot_fill[1] sx=16 word2=sx"}
+{"op": "write_sprite", "addr": 131083, "data": 200, "be": 3, "note": "slot_fill[1] sx=16 word3=sy"}
+{"op": "write_sprite", "addr": 131084, "data": 1, "be": 3, "note": "slot_fill[1] sx=16 word4=ctrl"}
+{"op": "write_sprite", "addr": 131085, "data": 0, "be": 3, "note": "slot_fill[1] sx=16 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131088, "data": 14, "be": 3, "note": "slot_fill[2] sx=32 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131090, "data": 32, "be": 3, "note": "slot_fill[2] sx=32 word2=sx"}
+{"op": "write_sprite", "addr": 131091, "data": 200, "be": 3, "note": "slot_fill[2] sx=32 word3=sy"}
+{"op": "write_sprite", "addr": 131092, "data": 1, "be": 3, "note": "slot_fill[2] sx=32 word4=ctrl"}
+{"op": "write_sprite", "addr": 131093, "data": 0, "be": 3, "note": "slot_fill[2] sx=32 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131096, "data": 14, "be": 3, "note": "slot_fill[3] sx=48 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131098, "data": 48, "be": 3, "note": "slot_fill[3] sx=48 word2=sx"}
+{"op": "write_sprite", "addr": 131099, "data": 200, "be": 3, "note": "slot_fill[3] sx=48 word3=sy"}
+{"op": "write_sprite", "addr": 131100, "data": 1, "be": 3, "note": "slot_fill[3] sx=48 word4=ctrl"}
+{"op": "write_sprite", "addr": 131101, "data": 0, "be": 3, "note": "slot_fill[3] sx=48 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131104, "data": 14, "be": 3, "note": "slot_fill[4] sx=64 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131106, "data": 64, "be": 3, "note": "slot_fill[4] sx=64 word2=sx"}
+{"op": "write_sprite", "addr": 131107, "data": 200, "be": 3, "note": "slot_fill[4] sx=64 word3=sy"}
+{"op": "write_sprite", "addr": 131108, "data": 1, "be": 3, "note": "slot_fill[4] sx=64 word4=ctrl"}
+{"op": "write_sprite", "addr": 131109, "data": 0, "be": 3, "note": "slot_fill[4] sx=64 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131112, "data": 14, "be": 3, "note": "slot_fill[5] sx=80 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131114, "data": 80, "be": 3, "note": "slot_fill[5] sx=80 word2=sx"}
+{"op": "write_sprite", "addr": 131115, "data": 200, "be": 3, "note": "slot_fill[5] sx=80 word3=sy"}
+{"op": "write_sprite", "addr": 131116, "data": 1, "be": 3, "note": "slot_fill[5] sx=80 word4=ctrl"}
+{"op": "write_sprite", "addr": 131117, "data": 0, "be": 3, "note": "slot_fill[5] sx=80 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131120, "data": 14, "be": 3, "note": "slot_fill[6] sx=96 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131122, "data": 96, "be": 3, "note": "slot_fill[6] sx=96 word2=sx"}
+{"op": "write_sprite", "addr": 131123, "data": 200, "be": 3, "note": "slot_fill[6] sx=96 word3=sy"}
+{"op": "write_sprite", "addr": 131124, "data": 1, "be": 3, "note": "slot_fill[6] sx=96 word4=ctrl"}
+{"op": "write_sprite", "addr": 131125, "data": 0, "be": 3, "note": "slot_fill[6] sx=96 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131128, "data": 14, "be": 3, "note": "slot_fill[7] sx=112 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131130, "data": 112, "be": 3, "note": "slot_fill[7] sx=112 word2=sx"}
+{"op": "write_sprite", "addr": 131131, "data": 200, "be": 3, "note": "slot_fill[7] sx=112 word3=sy"}
+{"op": "write_sprite", "addr": 131132, "data": 1, "be": 3, "note": "slot_fill[7] sx=112 word4=ctrl"}
+{"op": "write_sprite", "addr": 131133, "data": 0, "be": 3, "note": "slot_fill[7] sx=112 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131136, "data": 14, "be": 3, "note": "slot_fill[8] sx=128 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131138, "data": 128, "be": 3, "note": "slot_fill[8] sx=128 word2=sx"}
+{"op": "write_sprite", "addr": 131139, "data": 200, "be": 3, "note": "slot_fill[8] sx=128 word3=sy"}
+{"op": "write_sprite", "addr": 131140, "data": 1, "be": 3, "note": "slot_fill[8] sx=128 word4=ctrl"}
+{"op": "write_sprite", "addr": 131141, "data": 0, "be": 3, "note": "slot_fill[8] sx=128 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131144, "data": 14, "be": 3, "note": "slot_fill[9] sx=144 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131146, "data": 144, "be": 3, "note": "slot_fill[9] sx=144 word2=sx"}
+{"op": "write_sprite", "addr": 131147, "data": 200, "be": 3, "note": "slot_fill[9] sx=144 word3=sy"}
+{"op": "write_sprite", "addr": 131148, "data": 1, "be": 3, "note": "slot_fill[9] sx=144 word4=ctrl"}
+{"op": "write_sprite", "addr": 131149, "data": 0, "be": 3, "note": "slot_fill[9] sx=144 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131152, "data": 14, "be": 3, "note": "slot_fill[10] sx=160 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131154, "data": 160, "be": 3, "note": "slot_fill[10] sx=160 word2=sx"}
+{"op": "write_sprite", "addr": 131155, "data": 200, "be": 3, "note": "slot_fill[10] sx=160 word3=sy"}
+{"op": "write_sprite", "addr": 131156, "data": 1, "be": 3, "note": "slot_fill[10] sx=160 word4=ctrl"}
+{"op": "write_sprite", "addr": 131157, "data": 0, "be": 3, "note": "slot_fill[10] sx=160 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131160, "data": 14, "be": 3, "note": "slot_fill[11] sx=250 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131162, "data": 250, "be": 3, "note": "slot_fill[11] sx=250 word2=sx"}
+{"op": "write_sprite", "addr": 131163, "data": 200, "be": 3, "note": "slot_fill[11] sx=250 word3=sy"}
+{"op": "write_sprite", "addr": 131164, "data": 1, "be": 3, "note": "slot_fill[11] sx=250 word4=ctrl"}
+{"op": "write_sprite", "addr": 131165, "data": 0, "be": 3, "note": "slot_fill[11] sx=250 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131168, "data": 14, "be": 3, "note": "slot_fill[12] sx=250 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131170, "data": 250, "be": 3, "note": "slot_fill[12] sx=250 word2=sx"}
+{"op": "write_sprite", "addr": 131171, "data": 200, "be": 3, "note": "slot_fill[12] sx=250 word3=sy"}
+{"op": "write_sprite", "addr": 131172, "data": 1, "be": 3, "note": "slot_fill[12] sx=250 word4=ctrl"}
+{"op": "write_sprite", "addr": 131173, "data": 0, "be": 3, "note": "slot_fill[12] sx=250 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131176, "data": 14, "be": 3, "note": "slot_fill[13] sx=208 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131178, "data": 208, "be": 3, "note": "slot_fill[13] sx=208 word2=sx"}
+{"op": "write_sprite", "addr": 131179, "data": 200, "be": 3, "note": "slot_fill[13] sx=208 word3=sy"}
+{"op": "write_sprite", "addr": 131180, "data": 1, "be": 3, "note": "slot_fill[13] sx=208 word4=ctrl"}
+{"op": "write_sprite", "addr": 131181, "data": 0, "be": 3, "note": "slot_fill[13] sx=208 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131184, "data": 14, "be": 3, "note": "slot_fill[14] sx=224 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131186, "data": 224, "be": 3, "note": "slot_fill[14] sx=224 word2=sx"}
+{"op": "write_sprite", "addr": 131187, "data": 200, "be": 3, "note": "slot_fill[14] sx=224 word3=sy"}
+{"op": "write_sprite", "addr": 131188, "data": 1, "be": 3, "note": "slot_fill[14] sx=224 word4=ctrl"}
+{"op": "write_sprite", "addr": 131189, "data": 0, "be": 3, "note": "slot_fill[14] sx=224 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131192, "data": 14, "be": 3, "note": "slot_fill[15] sx=240 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131194, "data": 240, "be": 3, "note": "slot_fill[15] sx=240 word2=sx"}
+{"op": "write_sprite", "addr": 131195, "data": 200, "be": 3, "note": "slot_fill[15] sx=240 word3=sy"}
+{"op": "write_sprite", "addr": 131196, "data": 1, "be": 3, "note": "slot_fill[15] sx=240 word4=ctrl"}
+{"op": "write_sprite", "addr": 131197, "data": 0, "be": 3, "note": "slot_fill[15] sx=240 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131200, "data": 14, "be": 3, "note": "slot_fill[16] sx=256 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131202, "data": 256, "be": 3, "note": "slot_fill[16] sx=256 word2=sx"}
+{"op": "write_sprite", "addr": 131203, "data": 200, "be": 3, "note": "slot_fill[16] sx=256 word3=sy"}
+{"op": "write_sprite", "addr": 131204, "data": 1, "be": 3, "note": "slot_fill[16] sx=256 word4=ctrl"}
+{"op": "write_sprite", "addr": 131205, "data": 0, "be": 3, "note": "slot_fill[16] sx=256 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131208, "data": 14, "be": 3, "note": "slot_fill[17] sx=272 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131210, "data": 272, "be": 3, "note": "slot_fill[17] sx=272 word2=sx"}
+{"op": "write_sprite", "addr": 131211, "data": 200, "be": 3, "note": "slot_fill[17] sx=272 word3=sy"}
+{"op": "write_sprite", "addr": 131212, "data": 1, "be": 3, "note": "slot_fill[17] sx=272 word4=ctrl"}
+{"op": "write_sprite", "addr": 131213, "data": 0, "be": 3, "note": "slot_fill[17] sx=272 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131216, "data": 14, "be": 3, "note": "slot_fill[18] sx=288 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131218, "data": 288, "be": 3, "note": "slot_fill[18] sx=288 word2=sx"}
+{"op": "write_sprite", "addr": 131219, "data": 200, "be": 3, "note": "slot_fill[18] sx=288 word3=sy"}
+{"op": "write_sprite", "addr": 131220, "data": 1, "be": 3, "note": "slot_fill[18] sx=288 word4=ctrl"}
+{"op": "write_sprite", "addr": 131221, "data": 0, "be": 3, "note": "slot_fill[18] sx=288 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131224, "data": 14, "be": 3, "note": "slot_fill[19] sx=304 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131226, "data": 304, "be": 3, "note": "slot_fill[19] sx=304 word2=sx"}
+{"op": "write_sprite", "addr": 131227, "data": 200, "be": 3, "note": "slot_fill[19] sx=304 word3=sy"}
+{"op": "write_sprite", "addr": 131228, "data": 1, "be": 3, "note": "slot_fill[19] sx=304 word4=ctrl"}
+{"op": "write_sprite", "addr": 131229, "data": 0, "be": 3, "note": "slot_fill[19] sx=304 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131232, "data": 14, "be": 3, "note": "slot_fill[20] sx=0 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131234, "data": 0, "be": 3, "note": "slot_fill[20] sx=0 word2=sx"}
+{"op": "write_sprite", "addr": 131235, "data": 200, "be": 3, "note": "slot_fill[20] sx=0 word3=sy"}
+{"op": "write_sprite", "addr": 131236, "data": 1, "be": 3, "note": "slot_fill[20] sx=0 word4=ctrl"}
+{"op": "write_sprite", "addr": 131237, "data": 0, "be": 3, "note": "slot_fill[20] sx=0 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131240, "data": 14, "be": 3, "note": "slot_fill[21] sx=16 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131242, "data": 16, "be": 3, "note": "slot_fill[21] sx=16 word2=sx"}
+{"op": "write_sprite", "addr": 131243, "data": 200, "be": 3, "note": "slot_fill[21] sx=16 word3=sy"}
+{"op": "write_sprite", "addr": 131244, "data": 1, "be": 3, "note": "slot_fill[21] sx=16 word4=ctrl"}
+{"op": "write_sprite", "addr": 131245, "data": 0, "be": 3, "note": "slot_fill[21] sx=16 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131248, "data": 14, "be": 3, "note": "slot_fill[22] sx=32 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131250, "data": 32, "be": 3, "note": "slot_fill[22] sx=32 word2=sx"}
+{"op": "write_sprite", "addr": 131251, "data": 200, "be": 3, "note": "slot_fill[22] sx=32 word3=sy"}
+{"op": "write_sprite", "addr": 131252, "data": 1, "be": 3, "note": "slot_fill[22] sx=32 word4=ctrl"}
+{"op": "write_sprite", "addr": 131253, "data": 0, "be": 3, "note": "slot_fill[22] sx=32 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131256, "data": 14, "be": 3, "note": "slot_fill[23] sx=48 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131258, "data": 48, "be": 3, "note": "slot_fill[23] sx=48 word2=sx"}
+{"op": "write_sprite", "addr": 131259, "data": 200, "be": 3, "note": "slot_fill[23] sx=48 word3=sy"}
+{"op": "write_sprite", "addr": 131260, "data": 1, "be": 3, "note": "slot_fill[23] sx=48 word4=ctrl"}
+{"op": "write_sprite", "addr": 131261, "data": 0, "be": 3, "note": "slot_fill[23] sx=48 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131264, "data": 14, "be": 3, "note": "slot_fill[24] sx=64 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131266, "data": 64, "be": 3, "note": "slot_fill[24] sx=64 word2=sx"}
+{"op": "write_sprite", "addr": 131267, "data": 200, "be": 3, "note": "slot_fill[24] sx=64 word3=sy"}
+{"op": "write_sprite", "addr": 131268, "data": 1, "be": 3, "note": "slot_fill[24] sx=64 word4=ctrl"}
+{"op": "write_sprite", "addr": 131269, "data": 0, "be": 3, "note": "slot_fill[24] sx=64 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131272, "data": 14, "be": 3, "note": "slot_fill[25] sx=80 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131274, "data": 80, "be": 3, "note": "slot_fill[25] sx=80 word2=sx"}
+{"op": "write_sprite", "addr": 131275, "data": 200, "be": 3, "note": "slot_fill[25] sx=80 word3=sy"}
+{"op": "write_sprite", "addr": 131276, "data": 1, "be": 3, "note": "slot_fill[25] sx=80 word4=ctrl"}
+{"op": "write_sprite", "addr": 131277, "data": 0, "be": 3, "note": "slot_fill[25] sx=80 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131280, "data": 14, "be": 3, "note": "slot_fill[26] sx=96 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131282, "data": 96, "be": 3, "note": "slot_fill[26] sx=96 word2=sx"}
+{"op": "write_sprite", "addr": 131283, "data": 200, "be": 3, "note": "slot_fill[26] sx=96 word3=sy"}
+{"op": "write_sprite", "addr": 131284, "data": 1, "be": 3, "note": "slot_fill[26] sx=96 word4=ctrl"}
+{"op": "write_sprite", "addr": 131285, "data": 0, "be": 3, "note": "slot_fill[26] sx=96 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131288, "data": 14, "be": 3, "note": "slot_fill[27] sx=112 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131290, "data": 112, "be": 3, "note": "slot_fill[27] sx=112 word2=sx"}
+{"op": "write_sprite", "addr": 131291, "data": 200, "be": 3, "note": "slot_fill[27] sx=112 word3=sy"}
+{"op": "write_sprite", "addr": 131292, "data": 1, "be": 3, "note": "slot_fill[27] sx=112 word4=ctrl"}
+{"op": "write_sprite", "addr": 131293, "data": 0, "be": 3, "note": "slot_fill[27] sx=112 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131296, "data": 14, "be": 3, "note": "slot_fill[28] sx=128 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131298, "data": 128, "be": 3, "note": "slot_fill[28] sx=128 word2=sx"}
+{"op": "write_sprite", "addr": 131299, "data": 200, "be": 3, "note": "slot_fill[28] sx=128 word3=sy"}
+{"op": "write_sprite", "addr": 131300, "data": 1, "be": 3, "note": "slot_fill[28] sx=128 word4=ctrl"}
+{"op": "write_sprite", "addr": 131301, "data": 0, "be": 3, "note": "slot_fill[28] sx=128 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131304, "data": 14, "be": 3, "note": "slot_fill[29] sx=144 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131306, "data": 144, "be": 3, "note": "slot_fill[29] sx=144 word2=sx"}
+{"op": "write_sprite", "addr": 131307, "data": 200, "be": 3, "note": "slot_fill[29] sx=144 word3=sy"}
+{"op": "write_sprite", "addr": 131308, "data": 1, "be": 3, "note": "slot_fill[29] sx=144 word4=ctrl"}
+{"op": "write_sprite", "addr": 131309, "data": 0, "be": 3, "note": "slot_fill[29] sx=144 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131312, "data": 14, "be": 3, "note": "slot_fill[30] sx=160 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131314, "data": 160, "be": 3, "note": "slot_fill[30] sx=160 word2=sx"}
+{"op": "write_sprite", "addr": 131315, "data": 200, "be": 3, "note": "slot_fill[30] sx=160 word3=sy"}
+{"op": "write_sprite", "addr": 131316, "data": 1, "be": 3, "note": "slot_fill[30] sx=160 word4=ctrl"}
+{"op": "write_sprite", "addr": 131317, "data": 0, "be": 3, "note": "slot_fill[30] sx=160 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131320, "data": 14, "be": 3, "note": "slot_fill[31] sx=250 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131322, "data": 250, "be": 3, "note": "slot_fill[31] sx=250 word2=sx"}
+{"op": "write_sprite", "addr": 131323, "data": 200, "be": 3, "note": "slot_fill[31] sx=250 word3=sy"}
+{"op": "write_sprite", "addr": 131324, "data": 1, "be": 3, "note": "slot_fill[31] sx=250 word4=ctrl"}
+{"op": "write_sprite", "addr": 131325, "data": 0, "be": 3, "note": "slot_fill[31] sx=250 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131328, "data": 14, "be": 3, "note": "slot_fill[32] sx=250 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131330, "data": 250, "be": 3, "note": "slot_fill[32] sx=250 word2=sx"}
+{"op": "write_sprite", "addr": 131331, "data": 200, "be": 3, "note": "slot_fill[32] sx=250 word3=sy"}
+{"op": "write_sprite", "addr": 131332, "data": 1, "be": 3, "note": "slot_fill[32] sx=250 word4=ctrl"}
+{"op": "write_sprite", "addr": 131333, "data": 0, "be": 3, "note": "slot_fill[32] sx=250 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131336, "data": 14, "be": 3, "note": "slot_fill[33] sx=208 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131338, "data": 208, "be": 3, "note": "slot_fill[33] sx=208 word2=sx"}
+{"op": "write_sprite", "addr": 131339, "data": 200, "be": 3, "note": "slot_fill[33] sx=208 word3=sy"}
+{"op": "write_sprite", "addr": 131340, "data": 1, "be": 3, "note": "slot_fill[33] sx=208 word4=ctrl"}
+{"op": "write_sprite", "addr": 131341, "data": 0, "be": 3, "note": "slot_fill[33] sx=208 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131344, "data": 14, "be": 3, "note": "slot_fill[34] sx=224 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131346, "data": 224, "be": 3, "note": "slot_fill[34] sx=224 word2=sx"}
+{"op": "write_sprite", "addr": 131347, "data": 200, "be": 3, "note": "slot_fill[34] sx=224 word3=sy"}
+{"op": "write_sprite", "addr": 131348, "data": 1, "be": 3, "note": "slot_fill[34] sx=224 word4=ctrl"}
+{"op": "write_sprite", "addr": 131349, "data": 0, "be": 3, "note": "slot_fill[34] sx=224 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131352, "data": 14, "be": 3, "note": "slot_fill[35] sx=240 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131354, "data": 240, "be": 3, "note": "slot_fill[35] sx=240 word2=sx"}
+{"op": "write_sprite", "addr": 131355, "data": 200, "be": 3, "note": "slot_fill[35] sx=240 word3=sy"}
+{"op": "write_sprite", "addr": 131356, "data": 1, "be": 3, "note": "slot_fill[35] sx=240 word4=ctrl"}
+{"op": "write_sprite", "addr": 131357, "data": 0, "be": 3, "note": "slot_fill[35] sx=240 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131360, "data": 14, "be": 3, "note": "slot_fill[36] sx=256 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131362, "data": 256, "be": 3, "note": "slot_fill[36] sx=256 word2=sx"}
+{"op": "write_sprite", "addr": 131363, "data": 200, "be": 3, "note": "slot_fill[36] sx=256 word3=sy"}
+{"op": "write_sprite", "addr": 131364, "data": 1, "be": 3, "note": "slot_fill[36] sx=256 word4=ctrl"}
+{"op": "write_sprite", "addr": 131365, "data": 0, "be": 3, "note": "slot_fill[36] sx=256 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131368, "data": 14, "be": 3, "note": "slot_fill[37] sx=272 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131370, "data": 272, "be": 3, "note": "slot_fill[37] sx=272 word2=sx"}
+{"op": "write_sprite", "addr": 131371, "data": 200, "be": 3, "note": "slot_fill[37] sx=272 word3=sy"}
+{"op": "write_sprite", "addr": 131372, "data": 1, "be": 3, "note": "slot_fill[37] sx=272 word4=ctrl"}
+{"op": "write_sprite", "addr": 131373, "data": 0, "be": 3, "note": "slot_fill[37] sx=272 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131376, "data": 14, "be": 3, "note": "slot_fill[38] sx=288 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131378, "data": 288, "be": 3, "note": "slot_fill[38] sx=288 word2=sx"}
+{"op": "write_sprite", "addr": 131379, "data": 200, "be": 3, "note": "slot_fill[38] sx=288 word3=sy"}
+{"op": "write_sprite", "addr": 131380, "data": 1, "be": 3, "note": "slot_fill[38] sx=288 word4=ctrl"}
+{"op": "write_sprite", "addr": 131381, "data": 0, "be": 3, "note": "slot_fill[38] sx=288 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131384, "data": 14, "be": 3, "note": "slot_fill[39] sx=304 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131386, "data": 304, "be": 3, "note": "slot_fill[39] sx=304 word2=sx"}
+{"op": "write_sprite", "addr": 131387, "data": 200, "be": 3, "note": "slot_fill[39] sx=304 word3=sy"}
+{"op": "write_sprite", "addr": 131388, "data": 1, "be": 3, "note": "slot_fill[39] sx=304 word4=ctrl"}
+{"op": "write_sprite", "addr": 131389, "data": 0, "be": 3, "note": "slot_fill[39] sx=304 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131392, "data": 14, "be": 3, "note": "slot_fill[40] sx=0 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131394, "data": 0, "be": 3, "note": "slot_fill[40] sx=0 word2=sx"}
+{"op": "write_sprite", "addr": 131395, "data": 200, "be": 3, "note": "slot_fill[40] sx=0 word3=sy"}
+{"op": "write_sprite", "addr": 131396, "data": 1, "be": 3, "note": "slot_fill[40] sx=0 word4=ctrl"}
+{"op": "write_sprite", "addr": 131397, "data": 0, "be": 3, "note": "slot_fill[40] sx=0 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131400, "data": 14, "be": 3, "note": "slot_fill[41] sx=16 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131402, "data": 16, "be": 3, "note": "slot_fill[41] sx=16 word2=sx"}
+{"op": "write_sprite", "addr": 131403, "data": 200, "be": 3, "note": "slot_fill[41] sx=16 word3=sy"}
+{"op": "write_sprite", "addr": 131404, "data": 1, "be": 3, "note": "slot_fill[41] sx=16 word4=ctrl"}
+{"op": "write_sprite", "addr": 131405, "data": 0, "be": 3, "note": "slot_fill[41] sx=16 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131408, "data": 14, "be": 3, "note": "slot_fill[42] sx=32 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131410, "data": 32, "be": 3, "note": "slot_fill[42] sx=32 word2=sx"}
+{"op": "write_sprite", "addr": 131411, "data": 200, "be": 3, "note": "slot_fill[42] sx=32 word3=sy"}
+{"op": "write_sprite", "addr": 131412, "data": 1, "be": 3, "note": "slot_fill[42] sx=32 word4=ctrl"}
+{"op": "write_sprite", "addr": 131413, "data": 0, "be": 3, "note": "slot_fill[42] sx=32 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131416, "data": 14, "be": 3, "note": "slot_fill[43] sx=48 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131418, "data": 48, "be": 3, "note": "slot_fill[43] sx=48 word2=sx"}
+{"op": "write_sprite", "addr": 131419, "data": 200, "be": 3, "note": "slot_fill[43] sx=48 word3=sy"}
+{"op": "write_sprite", "addr": 131420, "data": 1, "be": 3, "note": "slot_fill[43] sx=48 word4=ctrl"}
+{"op": "write_sprite", "addr": 131421, "data": 0, "be": 3, "note": "slot_fill[43] sx=48 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131424, "data": 14, "be": 3, "note": "slot_fill[44] sx=64 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131426, "data": 64, "be": 3, "note": "slot_fill[44] sx=64 word2=sx"}
+{"op": "write_sprite", "addr": 131427, "data": 200, "be": 3, "note": "slot_fill[44] sx=64 word3=sy"}
+{"op": "write_sprite", "addr": 131428, "data": 1, "be": 3, "note": "slot_fill[44] sx=64 word4=ctrl"}
+{"op": "write_sprite", "addr": 131429, "data": 0, "be": 3, "note": "slot_fill[44] sx=64 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131432, "data": 14, "be": 3, "note": "slot_fill[45] sx=80 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131434, "data": 80, "be": 3, "note": "slot_fill[45] sx=80 word2=sx"}
+{"op": "write_sprite", "addr": 131435, "data": 200, "be": 3, "note": "slot_fill[45] sx=80 word3=sy"}
+{"op": "write_sprite", "addr": 131436, "data": 1, "be": 3, "note": "slot_fill[45] sx=80 word4=ctrl"}
+{"op": "write_sprite", "addr": 131437, "data": 0, "be": 3, "note": "slot_fill[45] sx=80 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131440, "data": 14, "be": 3, "note": "slot_fill[46] sx=96 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131442, "data": 96, "be": 3, "note": "slot_fill[46] sx=96 word2=sx"}
+{"op": "write_sprite", "addr": 131443, "data": 200, "be": 3, "note": "slot_fill[46] sx=96 word3=sy"}
+{"op": "write_sprite", "addr": 131444, "data": 1, "be": 3, "note": "slot_fill[46] sx=96 word4=ctrl"}
+{"op": "write_sprite", "addr": 131445, "data": 0, "be": 3, "note": "slot_fill[46] sx=96 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131448, "data": 14, "be": 3, "note": "slot_fill[47] sx=112 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131450, "data": 112, "be": 3, "note": "slot_fill[47] sx=112 word2=sx"}
+{"op": "write_sprite", "addr": 131451, "data": 200, "be": 3, "note": "slot_fill[47] sx=112 word3=sy"}
+{"op": "write_sprite", "addr": 131452, "data": 1, "be": 3, "note": "slot_fill[47] sx=112 word4=ctrl"}
+{"op": "write_sprite", "addr": 131453, "data": 0, "be": 3, "note": "slot_fill[47] sx=112 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131456, "data": 14, "be": 3, "note": "slot_fill[48] sx=128 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131458, "data": 128, "be": 3, "note": "slot_fill[48] sx=128 word2=sx"}
+{"op": "write_sprite", "addr": 131459, "data": 200, "be": 3, "note": "slot_fill[48] sx=128 word3=sy"}
+{"op": "write_sprite", "addr": 131460, "data": 1, "be": 3, "note": "slot_fill[48] sx=128 word4=ctrl"}
+{"op": "write_sprite", "addr": 131461, "data": 0, "be": 3, "note": "slot_fill[48] sx=128 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131464, "data": 14, "be": 3, "note": "slot_fill[49] sx=144 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131466, "data": 144, "be": 3, "note": "slot_fill[49] sx=144 word2=sx"}
+{"op": "write_sprite", "addr": 131467, "data": 200, "be": 3, "note": "slot_fill[49] sx=144 word3=sy"}
+{"op": "write_sprite", "addr": 131468, "data": 1, "be": 3, "note": "slot_fill[49] sx=144 word4=ctrl"}
+{"op": "write_sprite", "addr": 131469, "data": 0, "be": 3, "note": "slot_fill[49] sx=144 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131472, "data": 14, "be": 3, "note": "slot_fill[50] sx=160 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131474, "data": 160, "be": 3, "note": "slot_fill[50] sx=160 word2=sx"}
+{"op": "write_sprite", "addr": 131475, "data": 200, "be": 3, "note": "slot_fill[50] sx=160 word3=sy"}
+{"op": "write_sprite", "addr": 131476, "data": 1, "be": 3, "note": "slot_fill[50] sx=160 word4=ctrl"}
+{"op": "write_sprite", "addr": 131477, "data": 0, "be": 3, "note": "slot_fill[50] sx=160 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131480, "data": 14, "be": 3, "note": "slot_fill[51] sx=250 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131482, "data": 250, "be": 3, "note": "slot_fill[51] sx=250 word2=sx"}
+{"op": "write_sprite", "addr": 131483, "data": 200, "be": 3, "note": "slot_fill[51] sx=250 word3=sy"}
+{"op": "write_sprite", "addr": 131484, "data": 1, "be": 3, "note": "slot_fill[51] sx=250 word4=ctrl"}
+{"op": "write_sprite", "addr": 131485, "data": 0, "be": 3, "note": "slot_fill[51] sx=250 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131488, "data": 14, "be": 3, "note": "slot_fill[52] sx=250 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131490, "data": 250, "be": 3, "note": "slot_fill[52] sx=250 word2=sx"}
+{"op": "write_sprite", "addr": 131491, "data": 200, "be": 3, "note": "slot_fill[52] sx=250 word3=sy"}
+{"op": "write_sprite", "addr": 131492, "data": 1, "be": 3, "note": "slot_fill[52] sx=250 word4=ctrl"}
+{"op": "write_sprite", "addr": 131493, "data": 0, "be": 3, "note": "slot_fill[52] sx=250 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131496, "data": 14, "be": 3, "note": "slot_fill[53] sx=208 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131498, "data": 208, "be": 3, "note": "slot_fill[53] sx=208 word2=sx"}
+{"op": "write_sprite", "addr": 131499, "data": 200, "be": 3, "note": "slot_fill[53] sx=208 word3=sy"}
+{"op": "write_sprite", "addr": 131500, "data": 1, "be": 3, "note": "slot_fill[53] sx=208 word4=ctrl"}
+{"op": "write_sprite", "addr": 131501, "data": 0, "be": 3, "note": "slot_fill[53] sx=208 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131504, "data": 14, "be": 3, "note": "slot_fill[54] sx=224 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131506, "data": 224, "be": 3, "note": "slot_fill[54] sx=224 word2=sx"}
+{"op": "write_sprite", "addr": 131507, "data": 200, "be": 3, "note": "slot_fill[54] sx=224 word3=sy"}
+{"op": "write_sprite", "addr": 131508, "data": 1, "be": 3, "note": "slot_fill[54] sx=224 word4=ctrl"}
+{"op": "write_sprite", "addr": 131509, "data": 0, "be": 3, "note": "slot_fill[54] sx=224 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131512, "data": 14, "be": 3, "note": "slot_fill[55] sx=240 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131514, "data": 240, "be": 3, "note": "slot_fill[55] sx=240 word2=sx"}
+{"op": "write_sprite", "addr": 131515, "data": 200, "be": 3, "note": "slot_fill[55] sx=240 word3=sy"}
+{"op": "write_sprite", "addr": 131516, "data": 1, "be": 3, "note": "slot_fill[55] sx=240 word4=ctrl"}
+{"op": "write_sprite", "addr": 131517, "data": 0, "be": 3, "note": "slot_fill[55] sx=240 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131520, "data": 14, "be": 3, "note": "slot_fill[56] sx=256 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131522, "data": 256, "be": 3, "note": "slot_fill[56] sx=256 word2=sx"}
+{"op": "write_sprite", "addr": 131523, "data": 200, "be": 3, "note": "slot_fill[56] sx=256 word3=sy"}
+{"op": "write_sprite", "addr": 131524, "data": 1, "be": 3, "note": "slot_fill[56] sx=256 word4=ctrl"}
+{"op": "write_sprite", "addr": 131525, "data": 0, "be": 3, "note": "slot_fill[56] sx=256 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131528, "data": 14, "be": 3, "note": "slot_fill[57] sx=272 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131530, "data": 272, "be": 3, "note": "slot_fill[57] sx=272 word2=sx"}
+{"op": "write_sprite", "addr": 131531, "data": 200, "be": 3, "note": "slot_fill[57] sx=272 word3=sy"}
+{"op": "write_sprite", "addr": 131532, "data": 1, "be": 3, "note": "slot_fill[57] sx=272 word4=ctrl"}
+{"op": "write_sprite", "addr": 131533, "data": 0, "be": 3, "note": "slot_fill[57] sx=272 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131536, "data": 14, "be": 3, "note": "slot_fill[58] sx=288 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131538, "data": 288, "be": 3, "note": "slot_fill[58] sx=288 word2=sx"}
+{"op": "write_sprite", "addr": 131539, "data": 200, "be": 3, "note": "slot_fill[58] sx=288 word3=sy"}
+{"op": "write_sprite", "addr": 131540, "data": 1, "be": 3, "note": "slot_fill[58] sx=288 word4=ctrl"}
+{"op": "write_sprite", "addr": 131541, "data": 0, "be": 3, "note": "slot_fill[58] sx=288 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131544, "data": 14, "be": 3, "note": "slot_fill[59] sx=304 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131546, "data": 304, "be": 3, "note": "slot_fill[59] sx=304 word2=sx"}
+{"op": "write_sprite", "addr": 131547, "data": 200, "be": 3, "note": "slot_fill[59] sx=304 word3=sy"}
+{"op": "write_sprite", "addr": 131548, "data": 1, "be": 3, "note": "slot_fill[59] sx=304 word4=ctrl"}
+{"op": "write_sprite", "addr": 131549, "data": 0, "be": 3, "note": "slot_fill[59] sx=304 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131552, "data": 14, "be": 3, "note": "slot_fill[60] sx=0 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131554, "data": 0, "be": 3, "note": "slot_fill[60] sx=0 word2=sx"}
+{"op": "write_sprite", "addr": 131555, "data": 200, "be": 3, "note": "slot_fill[60] sx=0 word3=sy"}
+{"op": "write_sprite", "addr": 131556, "data": 1, "be": 3, "note": "slot_fill[60] sx=0 word4=ctrl"}
+{"op": "write_sprite", "addr": 131557, "data": 0, "be": 3, "note": "slot_fill[60] sx=0 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131560, "data": 14, "be": 3, "note": "slot_fill[61] sx=16 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131562, "data": 16, "be": 3, "note": "slot_fill[61] sx=16 word2=sx"}
+{"op": "write_sprite", "addr": 131563, "data": 200, "be": 3, "note": "slot_fill[61] sx=16 word3=sy"}
+{"op": "write_sprite", "addr": 131564, "data": 1, "be": 3, "note": "slot_fill[61] sx=16 word4=ctrl"}
+{"op": "write_sprite", "addr": 131565, "data": 0, "be": 3, "note": "slot_fill[61] sx=16 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131568, "data": 14, "be": 3, "note": "slot_fill[62] sx=32 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131570, "data": 32, "be": 3, "note": "slot_fill[62] sx=32 word2=sx"}
+{"op": "write_sprite", "addr": 131571, "data": 200, "be": 3, "note": "slot_fill[62] sx=32 word3=sy"}
+{"op": "write_sprite", "addr": 131572, "data": 1, "be": 3, "note": "slot_fill[62] sx=32 word4=ctrl"}
+{"op": "write_sprite", "addr": 131573, "data": 0, "be": 3, "note": "slot_fill[62] sx=32 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131576, "data": 14, "be": 3, "note": "slot_fill[63] sx=48 word0=tile_lo"}
+{"op": "write_sprite", "addr": 131578, "data": 48, "be": 3, "note": "slot_fill[63] sx=48 word2=sx"}
+{"op": "write_sprite", "addr": 131579, "data": 200, "be": 3, "note": "slot_fill[63] sx=48 word3=sy"}
+{"op": "write_sprite", "addr": 131580, "data": 1, "be": 3, "note": "slot_fill[63] sx=48 word4=ctrl"}
+{"op": "write_sprite", "addr": 131581, "data": 0, "be": 3, "note": "slot_fill[63] sx=48 word5=tile_hi"}
+{"op": "write_sprite", "addr": 131584, "data": 13, "be": 3, "note": "spr[64] OVERFLOW should be invisible word0=tile_lo"}
+{"op": "write_sprite", "addr": 131586, "data": 180, "be": 3, "note": "spr[64] OVERFLOW should be invisible word2=sx"}
+{"op": "write_sprite", "addr": 131587, "data": 200, "be": 3, "note": "spr[64] OVERFLOW should be invisible word3=sy"}
+{"op": "write_sprite", "addr": 131588, "data": 62, "be": 3, "note": "spr[64] OVERFLOW should be invisible word4=ctrl"}
+{"op": "write_sprite", "addr": 131589, "data": 0, "be": 3, "note": "spr[64] OVERFLOW should be invisible word5=tile_hi"}
+{"op": "check_sprite_pixel", "vpos": 199, "screen_col": 180, "exp_pixel": 0, "note": "overflow spr[64] at col=180 exp=0x000 (transparent=0)"}
