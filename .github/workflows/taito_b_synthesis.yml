@@ -23,10 +23,20 @@ jobs:
 
       - name: Run Quartus synthesis (Docker)
         run: |
+          set +e
           docker run --rm \
             -v "${{ github.workspace }}:/workspace" \
             raetro/quartus:17.0 \
-            sh -c "cd /workspace/chips/taito_b/quartus && /opt/intelFPGA/quartus/bin/quartus_sh --flow compile taito_b 2>&1 | tee /workspace/taito_b_synthesis.log; QEXIT=\${PIPESTATUS[0]}; echo \"Quartus exit: \$QEXIT\"; [ \$QEXIT -le 2 ] && exit 0 || exit 1"
+            bash -c "cd /workspace/chips/taito_b/quartus && /opt/intelFPGA/quartus/bin/quartus_sh --flow compile taito_b 2>&1 | tee /workspace/taito_b_synthesis.log; exit \${PIPESTATUS[0]}"
+          QEXIT=$?
+          echo "Quartus exit code: $QEXIT"
+          if [ $QEXIT -le 2 ]; then
+            echo "Synthesis OK (0=clean 2=timing-only, both acceptable)"
+            exit 0
+          else
+            echo "Synthesis FAILED (hard error)"
+            exit 1
+          fi
 
       - name: Synthesis report
         if: always()
