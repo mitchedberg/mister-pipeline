@@ -145,7 +145,7 @@ module tc0630fdp_lineram (
     // Zero when rowscroll is disabled for that PF.
     output logic [15:0] ls_rowscroll   [0:3],
     // alt_tilemap[n]: 1 → PF(n+1) reads tile data from +0x1800 offset in PF RAM.
-    output logic        ls_alt_tilemap [0:3],
+    output logic [3:0]       ls_alt_tilemap,
     // zoom_x[n]: X zoom factor for PF(n+1).  0x00 = no zoom (1:1).
     // Zero (no zoom) when zoom is disabled for that PF.
     output logic [ 7:0] ls_zoom_x      [0:3],
@@ -198,7 +198,7 @@ module tc0630fdp_lineram (
     output logic [ 1:0] ls_pf_blend  [0:3],
     // Sprite blend modes from §9.4 bits[7:0] (2 bits per group):
     //   bits[7:6]=group0xC0, bits[5:4]=group0x80, bits[3:2]=group0x40, bits[1:0]=group0x00
-    output logic [ 1:0] ls_spr_blend [0:3],
+    output logic [3:0][1:0]  ls_spr_blend,
 
     // ── Step 14: Reverse blend B coefficients ────────────────────────────────
     // B_src: source contribution for reverse blend mode B (0=transparent, 8=opaque)

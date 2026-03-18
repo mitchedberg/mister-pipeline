@@ -270,7 +270,7 @@ logic [7:0]  spr_rom_data_r;     // fed back to GP9001
 // Gate 3/4 BG and sprite outputs (unused in stub — silence)
 logic [3:0]  bg_pix_valid_w;
 logic [7:0]  bg_pix_color_w [0:3];
-logic        bg_pix_priority_w [0:3];
+logic [3:0]  bg_pix_priority_w;
 logic [15:0] vram_dout_w;
 
 // Gate 4 sprite outputs

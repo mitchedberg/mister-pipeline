@@ -188,7 +188,7 @@ module gp9001 #(
     // ── Gate 3: Tilemap pixel pipeline outputs ────────────────────────────────
     output logic [3:0]  bg_pix_valid,          // one bit per layer (4 max)
     output logic [7:0]  bg_pix_color  [0:3],   // 8-bit color {palette[3:0], index[3:0]}
-    output logic        bg_pix_priority [0:3], // priority bit per layer
+    output logic [3:0]  bg_pix_priority,        // priority bit per layer
 
     // ── Gate 3: Tile ROM interface (time-multiplexed, 4bpp packed) ────────────
     output logic [19:0] bg_rom_addr,   // tile ROM byte address

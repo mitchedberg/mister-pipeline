@@ -102,7 +102,7 @@ module tc0630fdp (
     // ── BG Layer Pixel Outputs (Step 3) ───────────────────────────────────
     // Format: {palette[8:0], pen[3:0]}  (pen==0 → transparent)
     // Used by testbench to validate BG tile rendering.
-    output logic [12:0] bg_pixel_out [0:3],
+    output logic [3:0][12:0] bg_pixel_out,
 
     // ── GFX ROM Write Port (Step 3 testbench) ─────────────────────────────
     input  logic [21:0] gfx_wr_addr,
@@ -715,7 +715,7 @@ assign hblank_fall = hblank & ~hblank_r2;
 // =============================================================================
 // Per-scanline outputs from Line RAM parser
 logic [15:0] ls_rowscroll   [0:3];
-logic        ls_alt_tilemap [0:3];
+logic [3:0]       ls_alt_tilemap;
 logic [ 7:0] ls_zoom_x      [0:3];   // Step 6: X zoom per PF
 logic [ 7:0] ls_zoom_y      [0:3];   // Step 6: Y zoom per PF
 logic [ 8:0] ls_colscroll   [0:3];   // Step 7: column scroll offset per PF
@@ -735,7 +735,7 @@ logic        ls_spr_clip_sense;
 logic [ 3:0] ls_a_src;
 logic [ 3:0] ls_a_dst;
 logic [ 1:0] ls_pf_blend  [0:3];
-logic [ 1:0] ls_spr_blend [0:3];
+logic [3:0][1:0]  ls_spr_blend;
 // Step 14: reverse blend B coefficients
 logic [ 3:0] ls_b_src;
 logic [ 3:0] ls_b_dst;

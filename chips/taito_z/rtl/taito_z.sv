@@ -334,7 +334,7 @@ tc0480scp u_scp (
 // =============================================================================
 logic [15:0] nio_dout;
 /* verilator lint_off UNUSED */
-logic [7:0] nio_out_reg [0:3];
+logic [3:0][7:0] nio_out_reg;
 /* verilator lint_on UNUSED */
 
 tc0510nio u_nio (

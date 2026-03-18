@@ -57,7 +57,7 @@ module tc0510nio (
     input  logic [ 7:0] pedal,          // gas pedal analog (P1)
 
     // Output registers (coin lockout, etc. — drive to mechanical outputs)
-    output logic [ 7:0] out_reg [0:3]
+    output logic [3:0][7:0] out_reg
 );
 
 // Input register array (read-only, directly from input ports)
