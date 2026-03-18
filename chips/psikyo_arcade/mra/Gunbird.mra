@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Gunbird (gunbird) — Psikyo SH201B, 1994
+  MC68EC020 @ 16 MHz (emulated as MC68000 @ 16 MHz — placeholder)
+  PS2001B sprites, PS3103 tilemap (2 layers), YMF278B audio (stubbed)
+  Native resolution: 320×240 (vertical shooter, rotated 90° CW for display)
+
+  SDRAM layout (byte addresses):
+    0x000000  CPU program ROM (2 MB)
+    0x200000  Sprite ROM (PS2001B / Gate 3)
+    0x600000  BG tile ROM (PS3103 / Gate 4)
+
+  ROM names from MAME gunbird driver (src/mame/psikyo/psikyo.cpp)
+  CRCs are placeholders (00000000) — replace with actual MAME ROM dump CRCs.
+-->
+<misterromdescription>
+  <name>Gunbird</name>
+  <setname>gunbird</setname>
+  <rbf>psikyo_arcade</rbf>
+  <mameversion>0245</mameversion>
+  <year>1994</year>
+  <manufacturer>Psikyo</manufacturer>
+  <category>Shooter / Vertical</category>
+  <rotation>270</rotation>
+  <buttons names="Shot,Bomb,Btn3,Start,Coin" default="A,B,C,Start,Select"/>
+  <!--
+    index 0: CPU program ROM (2 MB, SDRAM base 0x000000)
+    index 1: Sprite ROM (SDRAM base 0x200000)
+    index 2: BG tile ROM (SDRAM base 0x600000)
+    0xFE: DIP switches
+  -->
+
+  <!-- CPU program ROM (2 MB) -->
+  <rom index="0" zip="gunbird.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="gunbird.u23" crc="00000000" offset="0x000000" length="0x200000"/>
+  </rom>
+
+  <!-- Sprite ROM (Gate 3 — PS2001B) -->
+  <!-- Loaded to SDRAM offset 0x200000 -->
+  <rom index="1" zip="gunbird.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="gunbird.u1"  crc="00000000" offset="0x000000" length="0x200000"/>
+    <part name="gunbird.u2"  crc="00000000" offset="0x200000" length="0x200000"/>
+  </rom>
+
+  <!-- BG tile ROM (Gate 4 — PS3103) -->
+  <!-- Loaded to SDRAM offset 0x600000 -->
+  <rom index="2" zip="gunbird.zip" type="merged" md5="00000000000000000000000000000000">
+    <part name="gunbird.u3"  crc="00000000" offset="0x000000" length="0x200000"/>
+    <part name="gunbird.u4"  crc="00000000" offset="0x200000" length="0x200000"/>
+  </rom>
+
+  <!-- DIP switch defaults -->
+  <!-- Byte 0: lives, difficulty; Byte 1: credits, misc -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>

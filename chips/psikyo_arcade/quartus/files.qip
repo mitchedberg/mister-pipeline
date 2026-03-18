@@ -1,0 +1,69 @@
+# =============================================================================
+# Psikyo Arcade Core — QIP File (Quartus Source Files)
+# =============================================================================
+#
+# Add core-specific RTL files here.
+# System framework files (sys.qip) are sourced from sys/sys.tcl.
+#
+# WARNING: Do not add files through Quartus IDE — edit this file directly!
+#
+# =============================================================================
+
+# =========================================================================
+# TOP-LEVEL EMU WRAPPER
+# =========================================================================
+
+set_global_assignment -name SYSTEMVERILOG_FILE emu.sv
+
+# =========================================================================
+# PLL (Phase-Locked Loop)
+# =========================================================================
+# Generates sys_clk (32 MHz) and sdram_clk (143 MHz) from 50 MHz reference
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/pll.sv
+
+# =========================================================================
+# PSIKYO ARCADE CORE (Main Integration)
+# =========================================================================
+# MC68000 (placeholder for MC68EC020), psikyo Gates 1-5, palette RAM, work RAM
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/psikyo_arcade.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sdram_b.sv
+
+# =========================================================================
+# PSIKYO GATE MODULES (shared graphics pipeline)
+# =========================================================================
+
+# Gate 1+2: CPU interface, register file, PS2001B sprite scanner
+set_global_assignment -name SYSTEMVERILOG_FILE ../../psikyo/rtl/psikyo.sv
+
+# Gate 3: Per-scanline sprite rasterizer
+set_global_assignment -name SYSTEMVERILOG_FILE ../../psikyo/rtl/psikyo_gate3.sv
+
+# Gate 4: BG tilemap renderer (PS3103, 2 layers)
+set_global_assignment -name SYSTEMVERILOG_FILE ../../psikyo/rtl/psikyo_gate4.sv
+
+# Gate 5: Priority mixer / colour compositor
+set_global_assignment -name SYSTEMVERILOG_FILE ../../psikyo/rtl/psikyo_gate5.sv
+
+# =========================================================================
+# MC68000 CPU CORE
+# =========================================================================
+# fx68k: Cycle-accurate 68000 implementation by Jorge Cwik
+# Source: https://github.com/ijor/fx68k
+# NOTE: Placeholder for MC68EC020 — see psikyo_arcade.sv header comment.
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/fx68k.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/fx68kAlu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/uaddrPla.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/rtl/fx68k_adapter.sv
+
+# =========================================================================
+# TIMING CONSTRAINTS
+# =========================================================================
+
+set_global_assignment -name SDC_FILE psikyo_arcade.sdc
+
+# =============================================================================
+# END OF FILES.QIP
+# =============================================================================
