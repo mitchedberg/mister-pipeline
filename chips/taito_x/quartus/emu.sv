@@ -207,9 +207,7 @@ assign LED_DISK  = 2'd0;
 assign LED_POWER = 2'd0;
 assign BUTTONS   = 2'd0;
 
-// Audio: silence until YM2610/YM2151 module is implemented
-assign AUDIO_L = 16'h0;
-assign AUDIO_R = 16'h0;
+// Audio: wired to YM2610 (jt10) snd_left / snd_right below
 
 // LED: blink during ROM download
 assign LED_USER = ioctl_download;
@@ -565,9 +563,26 @@ wire [7:0] z80_core_din;
 // but RAM and ROM must be muxed here before feeding into core
 wire [7:0] z80_io_dout;   // from taito_x I/O decoder (sound command)
 
-// z80_din fed to Z80 core: priority ROM > RAM > I/O
+// ── YM2610 I/O chip-select decode ────────────────────────────────────────
+//
+// Z80 I/O port map (addr[7:0]):
+//   0x00           : Sound command latch (handled in taito_x module)
+//   0x01           : YM2610 address write, bank A   (jt10 addr=2'b00)
+//   0x02           : YM2610 data read/write, bank A  (jt10 addr=2'b01)
+//   0x03           : YM2610 address write, bank B   (jt10 addr=2'b10)
+//   0x04           : YM2610 data read/write, bank B  (jt10 addr=2'b11)
+//
+// cs_n active (low) for IORQ cycles targeting ports 0x01–0x04.
+wire ym_cs_n  = ~(!z80_iorq_n && (z80_addr[7:0] >= 8'h01) && (z80_addr[7:0] <= 8'h04));
+// addr[1:0]: port 0x01→00, 0x02→01, 0x03→10, 0x04→11
+wire [1:0] ym_addr = z80_addr[1:0] - 2'b01;  // 0x01→00, 0x02→01, 0x03→10, 0x04→11
+
+wire [7:0] ym_dout;     // YM2610 → Z80 data bus
+
+// z80_din fed to Z80 core: priority ROM > RAM > YM I/O > sound-cmd I/O
 assign z80_core_din = !z80_rom_cs_n ? z80_rom_byte
                     : !z80_ram_cs_n  ? z80_ram_dout
+                    : !ym_cs_n       ? ym_dout
                     :                  z80_io_dout;
 
 // T80pa: standard MiSTer Z80 soft-core (T80 with pipeline)
@@ -597,6 +612,75 @@ T80pa u_z80
     .DI      (z80_core_din),
     .DO      (z80_dout)
 );
+
+//////////////////////////////////////////////////////////////////
+// YM2610 (jt10) — FM synthesis + ADPCM audio
+//
+// jt10 is Jose Tejada's open-source YM2610 (OPNB) implementation,
+// part of the JT12 family (vendor/jtcores/modules/jt12/hdl/jt10.v).
+//
+// Clock: jt10 expects ~8 MHz. We use clk_sys (32 MHz) with ce_z80
+// (4 MHz) as the clock enable.  The YM2610 hardware runs at 8 MHz
+// but jt10 works correctly with 4–8 MHz cen input.
+//
+// ADPCM-A / ADPCM-B sample ROMs: Taito X does not include ADPCM
+// sample ROMs in the SDRAM layout (only Z80 audio program ROM is
+// mapped). The ADPCM inputs are tied to 0x00 so the chip will
+// produce silence for ADPCM channels; FM channels work normally.
+//
+// Audio output: jt10 snd_left / snd_right are signed 16-bit stereo.
+// Wired directly to MiSTer AUDIO_L / AUDIO_R (AUDIO_S = 1 = signed).
+//////////////////////////////////////////////////////////////////
+
+wire signed [15:0] ym_snd_left;
+wire signed [15:0] ym_snd_right;
+wire               ym_irq_n;
+
+jt10 u_ym2610
+(
+    .rst        (~reset_n),         // active-high reset
+    .clk        (clk_sys),          // 32 MHz system clock
+    .cen        (ce_z80),           // 4 MHz clock enable (matches Z80 rate)
+
+    // Z80 bus interface
+    .cs_n       (ym_cs_n),          // chip-select (active low, decoded above)
+    .wr_n       (z80_wr_n),         // write strobe (active low)
+    .addr       (ym_addr),          // [1:0] register address (bank A/B × addr/data)
+    .din        (z80_dout),         // data from Z80 (write path)
+    .dout       (ym_dout),          // data to Z80 (read path)
+    .irq_n      (ym_irq_n),         // YM2610 IRQ (timer; not connected to Z80 in Taito X)
+
+    // ADPCM-A sample ROM: tied off (no ADPCM ROM in this SDRAM map)
+    .adpcma_addr  (/* open */),
+    .adpcma_bank  (/* open */),
+    .adpcma_roe_n (/* open */),
+    .adpcma_data  (8'h00),          // ROM returns 0 → ADPCM-A silent
+
+    // ADPCM-B sample ROM: tied off
+    .adpcmb_addr  (/* open */),
+    .adpcmb_roe_n (/* open */),
+    .adpcmb_data  (8'h00),          // ROM returns 0 → ADPCM-B silent
+
+    // PSG (SSG) outputs: not used by MiSTer audio path (FM only)
+    .psg_A      (/* open */),
+    .psg_B      (/* open */),
+    .psg_C      (/* open */),
+    .psg_snd    (/* open */),
+    .fm_snd     (/* open */),
+    .snd_sample (/* open */),
+
+    // Channel enables: all 6 ADPCM-A channels enabled
+    .ch_enable  (6'b111111),
+
+    // Stereo FM + ADPCM mixed output
+    .snd_left   (ym_snd_left),
+    .snd_right  (ym_snd_right)
+);
+
+// Wire YM2610 stereo audio to MiSTer AUDIO outputs
+// (AUDIO_S = 1'b1 declared above — signed samples)
+assign AUDIO_L = ym_snd_left;
+assign AUDIO_R = ym_snd_right;
 
 //////////////////////////////////////////////////////////////////
 // Taito X Core
@@ -728,7 +812,8 @@ wire _unused = &{
     direct_video,
     joystick_0[31:10], joystick_1[31:10],
     dsw[2], dsw[3],
-    cpu_reset_n_out
+    cpu_reset_n_out,
+    ym_irq_n               // YM2610 timer IRQ not connected to Z80 INT in Taito X
 };
 /* verilator lint_on UNUSED */
 
