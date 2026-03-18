@@ -680,7 +680,7 @@ kaneko_arcade u_kaneko_arcade
 // Native resolution: 256×224, 24-bit RGB from RGB555 palette (expanded to R8G8B8).
 //////////////////////////////////////////////////////////////////
 
-arcade_video #(.WIDTH(256), .HEIGHT(224), .DW(24), .GAMMA(1)) u_arcade_video
+arcade_video #(.WIDTH(256), .DW(24), .GAMMA(1)) u_arcade_video
 (
     .clk_video  (clk_sys),
     .ce_pix     (ce_pix),

@@ -651,7 +651,7 @@ assign AUDIO_R = snd_right_w;
 // Video pipeline
 //////////////////////////////////////////////////////////////////
 
-arcade_video #(.WIDTH(256), .HEIGHT(224), .DW(24), .GAMMA(1)) u_arcade_video
+arcade_video #(.WIDTH(256), .DW(24), .GAMMA(1)) u_arcade_video
 (
     .clk_video  (clk_sys),
     .ce_pix     (ce_pix),

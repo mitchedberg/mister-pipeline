@@ -712,7 +712,7 @@ always_ff @(posedge clk or negedge rst_n) begin
                     sx = $signed({chunk_curx[9], chunk_curx}) + $signed({5'b0, px_out});
 
                     if (pix != 4'd0 && sx >= 11'sd0 && sx < 11'sd320) begin
-                        lb_wr_y    <= row_screen_y(chunk_cury, tile_row)[7:0];
+                        lb_wr_y    <= row_screen_y(chunk_cury, tile_row);
                         lb_wr_x    <= sx[8:0];
                         lb_wr_data <= {e_priority, e_color, pix};
                         lb_wr_en   <= 1'b1;

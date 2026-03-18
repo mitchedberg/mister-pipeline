@@ -228,7 +228,7 @@ assign pal_cs  = (cpu_addr[23:11] == 13'hB00) && !cpu_as_n;
 //   word base 0x680000; top 14 bits from [23:9] == 14'h3400, then sub-range check
 logic yram_cs;
 assign yram_cs = (cpu_addr[23:9] == 15'h3400) && !cpu_as_n
-                 && (cpu_addr[8:0] < 9'h180);  // 0x180 word entries (0x300 bytes / 2)
+                 && (cpu_addr[9:1] < 9'h180);  // 0x180 word entries (0x300 bytes / 2)
 
 // Sprite ctrl: 0xD00600–0xD00607  (4 × 16-bit registers, 2-bit index)
 //   word base 0x680300; [23:2] = 22 bits == 22'h1A00C0
