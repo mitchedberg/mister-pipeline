@@ -487,22 +487,49 @@ assign gfx_rom_addr = gfx_pending_addr;
 // =============================================================================
 
 `ifdef QUARTUS
-(* ramstyle = "M10K" *) logic [15:0] work_ram [0:WRAM_WORDS-1];
+// altsyncram SINGLE_PORT with byteena_a=2.
+// The M10K hint + conditional byte-slice writes causes MAP OOM in Quartus 17.0.
+logic [15:0] wram_dout_r;
+altsyncram #(
+    .operation_mode         ("SINGLE_PORT"),
+    .width_a                (16),
+    .widthad_a              (WRAM_ABITS),
+    .numwords_a             (WRAM_WORDS),
+    .outdata_reg_a          ("CLOCK0"),
+    .clock_enable_input_a   ("BYPASS"),
+    .clock_enable_output_a  ("BYPASS"),
+    .intended_device_family ("Cyclone V"),
+    .lpm_type               ("altsyncram"),
+    .ram_block_type         ("M10K"),
+    .width_byteena_a        (2),
+    .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_a ("NEW_DATA_NO_NBE_READ")
+) work_ram_inst (
+    .clock0     (clk_sys),
+    .address_a  (cpu_addr[WRAM_ABITS:1]),
+    .data_a     (cpu_dout),
+    .wren_a     (wram_cs && !cpu_rw),
+    .byteena_a  ({~cpu_uds_n, ~cpu_lds_n}),
+    .q_a        (wram_dout_r),
+    .aclr0(1'b0), .addressstall_a(1'b0), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(1'b1)
+);
 `else
 logic [15:0] work_ram [0:WRAM_WORDS-1];
-`endif
 logic [15:0] wram_dout_r;
-
 always_ff @(posedge clk_sys) begin
     if (wram_cs && !cpu_rw) begin
         if (!cpu_uds_n) work_ram[cpu_addr[WRAM_ABITS:1]][15:8] <= cpu_dout[15:8];
         if (!cpu_lds_n) work_ram[cpu_addr[WRAM_ABITS:1]][ 7:0] <= cpu_dout[ 7:0];
     end
 end
+`endif
 
+`ifndef QUARTUS
 always_ff @(posedge clk_sys) begin
     if (wram_cs) wram_dout_r <= work_ram[cpu_addr[WRAM_ABITS:1]];
 end
+`endif
 
 // =============================================================================
 // Palette RAM — 512 × 16-bit synchronous block RAM

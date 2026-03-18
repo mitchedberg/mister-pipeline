@@ -70,10 +70,12 @@ localparam int W       = 320;
 // =============================================================================
 
 `ifdef QUARTUS
-// MLAB supports combinational (asynchronous) reads — matches the FSM pattern
-// where state N sets the address and state N+1 reads the data without a wait state.
-// Avoids synthesizing 65,536 flip-flops which would exhaust Cyclone V ALMs.
-(* ramstyle = "MLAB" *) logic [15:0] road_ram [0:4095];
+// Two 8-bit MLABs (one per byte lane) to support combinational read + byte-enable write.
+// Byte-slice writes to a 16-bit MLAB trigger Warning 10999 and fall back to flip-flops.
+// Each lane has a plain write-enable on the full 8-bit word — the canonical MLAB pattern.
+// Internal read port reconstructed from {road_ram_hi, road_ram_lo}.
+(* ramstyle = "MLAB" *) logic [7:0] road_ram_hi [0:4095]; // [15:8]
+(* ramstyle = "MLAB" *) logic [7:0] road_ram_lo [0:4095]; // [ 7:0]
 `else
 logic [15:0] road_ram [0:4095];
 `endif
@@ -81,22 +83,35 @@ logic [15:0] road_ram [0:4095];
 // CPU port — byte-enable write, 1-cycle DTACK
 always_ff @(posedge clk) begin
     cpu_dtack_n <= 1'b0;
+`ifdef QUARTUS
+    if (cpu_cs && cpu_we && cpu_be[1]) road_ram_hi[cpu_addr] <= cpu_din[15:8];
+    if (cpu_cs && cpu_we && cpu_be[0]) road_ram_lo[cpu_addr] <= cpu_din[ 7:0];
+`else
     if (cpu_cs && cpu_we) begin
         if (cpu_be[1]) road_ram[cpu_addr][15:8] <= cpu_din[15:8];
         if (cpu_be[0]) road_ram[cpu_addr][ 7:0] <= cpu_din[ 7:0];
     end
+`endif
 end
 
 always_ff @(posedge clk) begin
     if (cpu_cs && !cpu_we)
+`ifdef QUARTUS
+        cpu_dout <= {road_ram_hi[cpu_addr], road_ram_lo[cpu_addr]};
+`else
         cpu_dout <= road_ram[cpu_addr];
+`endif
 end
 
 // Internal read port — combinational (address-to-data with no register stage)
 // Each FSM state sets ram_rd_addr; the data appears immediately on ram_rd_data
 // for the NEXT state to latch, since the NBA for ram_rd_addr commits between cycles.
 logic [11:0] ram_rd_addr;
-wire  [15:0] ram_rd_data = road_ram[ram_rd_addr];
+`ifdef QUARTUS
+wire [15:0] ram_rd_data = {road_ram_hi[ram_rd_addr], road_ram_lo[ram_rd_addr]};
+`else
+wire [15:0] ram_rd_data = road_ram[ram_rd_addr];
+`endif
 
 // =============================================================================
 // Step 2 — Control-word decode + RAM-reader FSM state signals
