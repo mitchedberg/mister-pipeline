@@ -9,6 +9,12 @@
 # SDRAM clock:  143.0 MHz (PLL output)
 # Reference:    50 MHz (FPGA_CLK1_50)
 #
+# Clock-enable divide ratios (all CEN logic runs on clk_sys = 40 MHz):
+#   MC68000 CPU : 40 MHz / 4  = 10 MHz  → 4-cycle multicycle
+#   Z80 sound   : 40 MHz / 5  =  8 MHz  → 5-cycle multicycle
+#   YM2203 FM   : 40 MHz / 27 ≈  1.5 MHz → 27-cycle multicycle (false-path safe)
+#   OKI M6295   : 40 MHz / 40 =  1 MHz  → 40-cycle multicycle (false-path safe)
+#
 # =============================================================================
 
 # =========================================================================
@@ -126,6 +132,44 @@ set_false_path -from {ascal|o_hsize* ascal|o_vsize*}
 
 set_false_path -from {mcp23009|flg_*}
 set_false_path -to   {sysmem|fpga_interfaces|clocks_resets|f2h*}
+
+# =============================================================================
+# MULTI-CYCLE PATHS — Clock-Enable-Gated Subsystems
+#
+# All subsystems run on clk_sys but are gated by a 1-cycle-wide CEN pulse.
+# Quartus treats CEN paths as single-cycle by default, causing false violations.
+# set_multicycle_path relaxes setup/hold to match the actual clock rate.
+#
+# Formula: setup = divide_ratio, hold = divide_ratio - 1
+# =============================================================================
+
+# MC68000 main CPU — 40 MHz / 4 = 10 MHz (4-cycle multicycle)
+# The CPU bus signals (addr, data, strobes) all propagate only when the CPU
+# advances, giving 4 master cycles = 100 ns to settle.
+set_multicycle_path -from [get_registers {*cpu*}]  -to [get_registers {*cpu*}]  -setup 4
+set_multicycle_path -from [get_registers {*cpu*}]  -to [get_registers {*cpu*}]  -hold  3
+
+# Z80 sound CPU — 40 MHz / 5 = 8 MHz (5-cycle multicycle)
+# T80s instance (u_z80), CEN = ce_z80 (clk_sys / 5).
+set_multicycle_path -from [get_registers {*u_z80*}] -to [get_registers {*u_z80*}] -setup 5
+set_multicycle_path -from [get_registers {*u_z80*}] -to [get_registers {*u_z80*}] -hold  4
+
+# Z80 clock-enable counter and auxiliary Z80-domain registers
+set_multicycle_path -from [get_registers {*ce_z80*}] -to [get_registers {*ce_z80*}] -setup 5
+set_multicycle_path -from [get_registers {*ce_z80*}] -to [get_registers {*ce_z80*}] -hold  4
+
+# YM2203 FM (jt03) — 40 MHz / 27 ≈ 1.48 MHz
+# Paths internal to u_ym2203 can use false-path; the CEN output is also very slow.
+set_false_path -from [get_registers {*u_ym2203*}] -to [get_registers {*u_ym2203*}]
+
+# OKI M6295 (jt6295) — 40 MHz / 40 = 1 MHz
+# Similar treatment — internal state only advances at 1 MHz.
+set_false_path -from [get_registers {*u_oki_m6295*}] -to [get_registers {*u_oki_m6295*}]
+
+# NMK16 graphics chip (u_nmk16) — clocked at full 40 MHz, pixel CE = /4
+# Internal pixel-pipeline registers only latch valid data every 4th cycle.
+set_multicycle_path -from [get_registers {*u_nmk16*}] -to [get_registers {*u_nmk16*}] -setup 4
+set_multicycle_path -from [get_registers {*u_nmk16*}] -to [get_registers {*u_nmk16*}] -hold  3
 
 # =============================================================================
 # END OF TIMING CONSTRAINTS
