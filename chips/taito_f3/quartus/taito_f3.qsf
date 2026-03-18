@@ -2,6 +2,7 @@
 #
 # MiSTer project — Taito F3 Core
 # tc0180vcu: switched to two DUAL_PORT instances per proven tc0110pcr pattern
+# [touch to re-trigger CI after tc0630fdp lineram reset-loop OOM fix]
 #
 # WARNING WARNING WARNING:
 # Do not add files to project in Quartus IDE! It will mess this file!
