@@ -69,6 +69,7 @@ module nmk16 #(
     output logic [1:0]              display_list_size [0:255],
     output logic [3:0]              display_list_palette [0:255],
     output logic                    display_list_valid [0:255],
+    output logic                    display_list_priority [0:255], // Priority bit: 0=below BG0, 1=above all
     output logic [7:0]              display_list_count,         // Number of visible sprites
     output logic                    display_list_ready,         // 1-cycle pulse when scan done
     output logic                    irq_vblank_pulse,           // 1-cycle pulse at scan end
@@ -90,6 +91,7 @@ module nmk16 #(
     input  logic [8:0]  spr_rd_addr,        // pixel X address to read (0..319)
     output logic [7:0]  spr_rd_color,       // {palette[3:0], nybble[3:0]}
     output logic        spr_rd_valid,       // 1 = opaque sprite pixel at this X
+    output logic        spr_rd_priority,    // priority bit of sprite pixel at this X
 
     // Done strobe
     output logic        spr_render_done,    // 1-cycle pulse when scanline render complete
@@ -133,7 +135,25 @@ module nmk16 #(
     // Per-layer BG pixel outputs (updated every 2 clocks: layer 0 then layer 1)
     output logic [1:0]  bg_pix_valid,      // [layer]: 1 = opaque pixel
     output logic [7:0]  bg_pix_color [0:1],// [layer]: {palette[3:0], index[3:0]}
-    output logic [1:0]  bg_pix_priority    // [layer]: priority bit from tilemap word
+    output logic [1:0]  bg_pix_priority,   // [layer]: priority bit from tilemap word
+
+    // ======== GATE 5: PRIORITY MIXER / COLOR COMPOSITOR ========
+    //
+    // Purely combinational.  Consumes sprite pixels (Gate 3 scanline buffer
+    // read-back at position spr_rd_addr) and BG layer pixels (Gate 4
+    // pipeline outputs) to produce a single winning pixel.
+    //
+    // Priority order (painter's algorithm, lowest → highest):
+    //   BG1 (bottom, always active)
+    //   Sprite with spr_rd_priority=0 (below BG0)
+    //   BG0 (foreground, always active)
+    //   Sprite with spr_rd_priority=1 (above all)
+    //
+    // Transparent pixel: valid=0 → falls through to layer below.
+
+    // Gate 5 outputs
+    output logic [7:0]  final_color,       // winning pixel color {palette[3:0], index[3:0]}
+    output logic        final_valid        // 1 = at least one opaque layer contributed
 );
 
     // ========== ADDRESS DECODE ==========
@@ -323,6 +343,7 @@ module nmk16 #(
     logic [1:0]  _display_list_size [0:255];
     logic [3:0]  _display_list_palette [0:255];
     logic        _display_list_valid [0:255];
+    logic        _display_list_priority [0:255];  // ATTR[11]: 0=below BG0, 1=above all
 
     // Temporary sprite read data (will be replaced by buffered capture)
     logic [8:0]  sprite_y_pos, sprite_x_pos;
@@ -482,27 +503,29 @@ module nmk16 #(
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             for (int i = 0; i < 256; i = i + 1) begin
-                _display_list_x[i] <= 9'h000;
-                _display_list_y[i] <= 9'h000;
-                _display_list_tile[i] <= 12'h000;
-                _display_list_flip_x[i] <= 1'b0;
-                _display_list_flip_y[i] <= 1'b0;
-                _display_list_size[i] <= 2'b00;
-                _display_list_palette[i] <= 4'h0;
-                _display_list_valid[i] <= 1'b0;
+                _display_list_x[i]        <= 9'h000;
+                _display_list_y[i]        <= 9'h000;
+                _display_list_tile[i]     <= 12'h000;
+                _display_list_flip_x[i]   <= 1'b0;
+                _display_list_flip_y[i]   <= 1'b0;
+                _display_list_size[i]     <= 2'b00;
+                _display_list_palette[i]  <= 4'h0;
+                _display_list_valid[i]    <= 1'b0;
+                _display_list_priority[i] <= 1'b0;
             end
         end else if (scanner_state == SCAN && sprite_scan_idx[1:0] == 2'b11 && sprite_is_visible) begin
             // When word 3 (attributes) is presented and sprite is visible, write to display list.
             // Use sprite_data_rd_muxed directly for attr fields: sprite_word_attr is registered
             // on this same edge so it still holds the previous sprite's attr.
-            _display_list_y[display_list_idx]       <= sprite_y_pos;
-            _display_list_x[display_list_idx]       <= sprite_x_pos;
-            _display_list_tile[display_list_idx]    <= sprite_word_tile[11:0];
-            _display_list_flip_x[display_list_idx]  <= sprite_data_rd_muxed[10];
-            _display_list_flip_y[display_list_idx]  <= sprite_data_rd_muxed[9];
-            _display_list_size[display_list_idx]    <= sprite_data_rd_muxed[15:14];
-            _display_list_palette[display_list_idx] <= sprite_data_rd_muxed[7:4];
-            _display_list_valid[display_list_idx]   <= 1'b1;
+            _display_list_y[display_list_idx]        <= sprite_y_pos;
+            _display_list_x[display_list_idx]        <= sprite_x_pos;
+            _display_list_tile[display_list_idx]     <= sprite_word_tile[11:0];
+            _display_list_flip_x[display_list_idx]   <= sprite_data_rd_muxed[10];
+            _display_list_flip_y[display_list_idx]   <= sprite_data_rd_muxed[9];
+            _display_list_size[display_list_idx]     <= sprite_data_rd_muxed[15:14];
+            _display_list_palette[display_list_idx]  <= sprite_data_rd_muxed[7:4];
+            _display_list_valid[display_list_idx]    <= 1'b1;
+            _display_list_priority[display_list_idx] <= sprite_data_rd_muxed[11];  // ATTR[11]
         end
     end
 
@@ -510,14 +533,15 @@ module nmk16 #(
 
     always_comb begin
         for (int i = 0; i < 256; i = i + 1) begin
-            display_list_x[i] = _display_list_x[i];
-            display_list_y[i] = _display_list_y[i];
-            display_list_tile[i] = _display_list_tile[i];
-            display_list_flip_x[i] = _display_list_flip_x[i];
-            display_list_flip_y[i] = _display_list_flip_y[i];
-            display_list_size[i] = _display_list_size[i];
-            display_list_palette[i] = _display_list_palette[i];
-            display_list_valid[i] = _display_list_valid[i];
+            display_list_x[i]        = _display_list_x[i];
+            display_list_y[i]        = _display_list_y[i];
+            display_list_tile[i]     = _display_list_tile[i];
+            display_list_flip_x[i]   = _display_list_flip_x[i];
+            display_list_flip_y[i]   = _display_list_flip_y[i];
+            display_list_size[i]     = _display_list_size[i];
+            display_list_palette[i]  = _display_list_palette[i];
+            display_list_valid[i]    = _display_list_valid[i];
+            display_list_priority[i] = _display_list_priority[i];
         end
 
         display_list_count = display_list_idx;
@@ -600,6 +624,7 @@ module nmk16 #(
     logic [11:0] g3_tile_base;    // sprite.tile_code (12-bit)
     logic        g3_flip_x;
     logic [3:0]  g3_palette;
+    logic        g3_priority;     // ATTR[11]: 0=below BG0, 1=above all
     logic [1:0]  g3_size;         // 0=16px, 1=32px, 2=64px, 3=128px
 
     // Derived geometry (combinational)
@@ -611,13 +636,15 @@ module nmk16 #(
     logic [13:0] g3_full_tile;    // tile_base + tile_row*tiles_wide + tile_col (14-bit max)
 
     // ── Scanline pixel buffer ─────────────────────────────────────────────
-    logic [7:0]  spr_pix_color [0:319];
-    logic        spr_pix_valid [0:319];
+    logic [7:0]  spr_pix_color    [0:319];
+    logic        spr_pix_valid    [0:319];
+    logic        spr_pix_priority [0:319];  // priority bit per pixel (from sprite ATTR[11])
 
     // ── Read-back port (combinational) ────────────────────────────────────
     always_comb begin
-        spr_rd_color = spr_pix_color[spr_rd_addr];
-        spr_rd_valid = spr_pix_valid[spr_rd_addr];
+        spr_rd_color    = spr_pix_color[spr_rd_addr];
+        spr_rd_valid    = spr_pix_valid[spr_rd_addr];
+        spr_rd_priority = spr_pix_priority[spr_rd_addr];
     end
 
     // ── ROM address drive (combinational) ────────────────────────────────
@@ -648,12 +675,14 @@ module nmk16 #(
             g3_flip_x       <= 1'b0;
             g3_flip_y_saved <= 1'b0;
             g3_palette      <= 4'h0;
+            g3_priority     <= 1'b0;
             g3_size         <= 2'h0;
             g3_row_in_spr   <= 8'h00;
             spr_render_done <= 1'b0;
             for (int i = 0; i < 320; i++) begin
-                spr_pix_color[i] <= 8'h00;
-                spr_pix_valid[i] <= 1'b0;
+                spr_pix_color[i]    <= 8'h00;
+                spr_pix_valid[i]    <= 1'b0;
+                spr_pix_priority[i] <= 1'b0;
             end
         end else begin
             spr_render_done <= 1'b0;  // default: not done
@@ -663,8 +692,9 @@ module nmk16 #(
                 G3_IDLE: begin
                     if (scan_trigger) begin
                         for (int i = 0; i < 320; i++) begin
-                            spr_pix_color[i] <= 8'h00;
-                            spr_pix_valid[i] <= 1'b0;
+                            spr_pix_color[i]    <= 8'h00;
+                            spr_pix_valid[i]    <= 1'b0;
+                            spr_pix_priority[i] <= 1'b0;
                         end
                         g3_spr_idx <= 8'h00;
                         g3_state   <= G3_CHECK;
@@ -683,11 +713,12 @@ module nmk16 #(
                             automatic logic [8:0]  e_y      = display_list_y[g3_spr_idx];
                             automatic logic [8:0]  e_x      = display_list_x[g3_spr_idx];
                             automatic logic [11:0] e_tile   = display_list_tile[g3_spr_idx];
-                            automatic logic        e_flip_x = display_list_flip_x[g3_spr_idx];
-                            automatic logic        e_flip_y = display_list_flip_y[g3_spr_idx];
-                            automatic logic [1:0]  e_size   = display_list_size[g3_spr_idx];
-                            automatic logic [3:0]  e_pal    = display_list_palette[g3_spr_idx];
-                            automatic logic        e_valid  = display_list_valid[g3_spr_idx];
+                            automatic logic        e_flip_x   = display_list_flip_x[g3_spr_idx];
+                            automatic logic        e_flip_y   = display_list_flip_y[g3_spr_idx];
+                            automatic logic [1:0]  e_size     = display_list_size[g3_spr_idx];
+                            automatic logic [3:0]  e_pal      = display_list_palette[g3_spr_idx];
+                            automatic logic        e_valid    = display_list_valid[g3_spr_idx];
+                            automatic logic        e_priority = display_list_priority[g3_spr_idx];
 
                             if (e_valid) begin
                                 // Sprite height = tiles_tall * 16, tiles_tall = 1<<size
@@ -701,6 +732,7 @@ module nmk16 #(
                                     g3_flip_x       <= e_flip_x;
                                     g3_flip_y_saved <= e_flip_y;
                                     g3_palette      <= e_pal;
+                                    g3_priority     <= e_priority;
                                     g3_size         <= e_size;
 
                                     // Row within sprite (with flip_y)
@@ -767,13 +799,15 @@ module nmk16 #(
                         /* verilator lint_off WIDTHTRUNC */
                         // Write low pixel
                         if (px_lo_x < 10'd320 && eff_nib_lo != 4'h0) begin
-                            spr_pix_color[px_lo_x[8:0]] <= {g3_palette, eff_nib_lo};
-                            spr_pix_valid[px_lo_x[8:0]] <= 1'b1;
+                            spr_pix_color[px_lo_x[8:0]]    <= {g3_palette, eff_nib_lo};
+                            spr_pix_valid[px_lo_x[8:0]]    <= 1'b1;
+                            spr_pix_priority[px_lo_x[8:0]] <= g3_priority;
                         end
                         // Write high pixel
                         if (px_hi_x < 10'd320 && eff_nib_hi != 4'h0) begin
-                            spr_pix_color[px_hi_x[8:0]] <= {g3_palette, eff_nib_hi};
-                            spr_pix_valid[px_hi_x[8:0]] <= 1'b1;
+                            spr_pix_color[px_hi_x[8:0]]    <= {g3_palette, eff_nib_hi};
+                            spr_pix_valid[px_hi_x[8:0]]    <= 1'b1;
+                            spr_pix_priority[px_hi_x[8:0]] <= g3_priority;
                         end
                         /* verilator lint_on WIDTHTRUNC */
                     end
@@ -996,6 +1030,55 @@ module nmk16 #(
     end
 
     // =========================================================================
+    // Gate 5: Priority mixer / color compositor
+    // =========================================================================
+    //
+    // Purely combinational painter's algorithm:
+    //   Start transparent (final_valid = 0).
+    //   Iterate layers from lowest to highest priority; each opaque pixel
+    //   overwrites the current winner.
+    //
+    // Priority order for NMK16 (2 BG layers + sprites):
+    //   1. BG1 (background / bottom, always active)
+    //   2. Sprite with spr_rd_priority=0 (below foreground BG)
+    //   3. BG0 (foreground, always active — highest BG priority)
+    //   4. Sprite with spr_rd_priority=1 (above all layers)
+    //
+    // Inputs from Gate 3 read-back (spr_rd_color, spr_rd_valid, spr_rd_priority)
+    // and Gate 4 outputs (bg_pix_color, bg_pix_valid) are consumed directly.
+    // =========================================================================
+
+    always_comb begin : gate5_colmix
+        // Default: transparent
+        final_color = 8'h00;
+        final_valid = 1'b0;
+
+        // ── Layer 1 (BG1 — bottom, always active) ────────────────────────────
+        if (bg_pix_valid[1]) begin
+            final_color = bg_pix_color[1];
+            final_valid = 1'b1;
+        end
+
+        // ── Sprite priority=0 (below BG0, above BG1) ─────────────────────────
+        if (!spr_rd_priority && spr_rd_valid) begin
+            final_color = spr_rd_color;
+            final_valid = 1'b1;
+        end
+
+        // ── Layer 0 (BG0 — foreground, always active) ────────────────────────
+        if (bg_pix_valid[0]) begin
+            final_color = bg_pix_color[0];
+            final_valid = 1'b1;
+        end
+
+        // ── Sprite priority=1 (above all BG layers) ───────────────────────────
+        if (spr_rd_priority && spr_rd_valid) begin
+            final_color = spr_rd_color;
+            final_valid = 1'b1;
+        end
+    end
+
+    // =========================================================================
     // LINT SUPPRESSION
     // =========================================================================
 
@@ -1003,7 +1086,7 @@ module nmk16 #(
     logic _unused = &{lds_n, uds_n, addr[20:12], status_reg,
                       sprite_word_y[15:9], sprite_word_x[15:9],
                       sprite_word_tile[15:12], sprite_word_attr[13:11], sprite_word_attr[8:0],
-                      g3_flip_y_saved, g3_spr_y,
+                      g3_flip_y_saved, g3_spr_y, bg_pix_priority,
                       1'b0};
     /* verilator lint_on UNUSEDSIGNAL */
 

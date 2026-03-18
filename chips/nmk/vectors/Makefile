@@ -7,9 +7,10 @@ OBJ_DIR_G1 := obj_gate1
 OBJ_DIR_G2 := obj_gate2
 OBJ_DIR_G3 := obj_gate3
 OBJ_DIR_G4 := obj_gate4
+OBJ_DIR_G5 := obj_gate5
 RTL := ../rtl/nmk16.sv
 
-.PHONY: gate1 gate2 gate3 gate4 all clean
+.PHONY: gate1 gate2 gate3 gate4 gate5 all clean
 
 # Gate 1 targets
 gate1: gate1_vectors.jsonl gate1_build gate1_test
@@ -95,13 +96,35 @@ gate4_test: gate4_build gate4_vectors.jsonl
 $(OBJ_DIR_G4):
 	mkdir -p $(OBJ_DIR_G4)
 
+# Gate 5 targets
+gate5: gate5_vectors.jsonl gate5_build gate5_test
+
+gate5_vectors.jsonl: generate_gate5.py gate5_model.py
+	python3 generate_gate5.py
+
+gate5_build: $(OBJ_DIR_G5)/Vnmk16
+
+$(OBJ_DIR_G5)/Vnmk16: $(RTL) tb_gate5.cpp | $(OBJ_DIR_G5)
+	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR_G5) -Wall --top-module nmk16 \
+		-Wno-MODMISSING \
+		-O0 -fno-dfg -fno-dfg-peephole \
+		$(RTL) tb_gate5.cpp --build -CFLAGS "-O2 -std=c++17" 2>&1
+
+gate5_test: gate5_build gate5_vectors.jsonl
+	cd $(OBJ_DIR_G5) && ./Vnmk16 ../gate5_vectors.jsonl 2>&1 | tee gate5_test.log
+	@grep -q "Failed: 0" $(OBJ_DIR_G5)/gate5_test.log && echo "✓ Gate 5: All tests passed" || (echo "✗ Gate 5: Some tests failed" && exit 1)
+
+$(OBJ_DIR_G5):
+	mkdir -p $(OBJ_DIR_G5)
+
 # Combined targets
-all: gate1 gate2 gate3 gate4
+all: gate1 gate2 gate3 gate4 gate5
 	@echo ""
 	@echo "=== ALL GATES PASSED ==="
 
 clean:
-	rm -rf $(OBJ_DIR_G1) $(OBJ_DIR_G2) $(OBJ_DIR_G3) $(OBJ_DIR_G4) \
-		gate1_vectors.jsonl gate2_vectors.jsonl gate3_vectors.jsonl gate4_vectors.jsonl *.log
+	rm -rf $(OBJ_DIR_G1) $(OBJ_DIR_G2) $(OBJ_DIR_G3) $(OBJ_DIR_G4) $(OBJ_DIR_G5) \
+		gate1_vectors.jsonl gate2_vectors.jsonl gate3_vectors.jsonl gate4_vectors.jsonl \
+		gate5_vectors.jsonl *.log
 
 .SILENT: clean
