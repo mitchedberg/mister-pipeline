@@ -433,19 +433,24 @@ logic [7:0] char_ram [0:8191];
 logic [11:0] char_word_addr;
 assign char_word_addr = cpu_addr[12:1];
 
+`ifdef QUARTUS
+// Precomputed 4-bit byte-enable: maps cpu_be[1:0] into the correct byte lanes of the
+// 32-bit word based on which 16-bit half is being addressed (char_word_addr[0]).
+// All four writes target a single word address — the canonical pattern Quartus 17.0
+// infers as MLAB (conditional bit-range branches inside always_ff confuse the engine).
+logic [3:0] char_be4;
+logic [31:0] char_din32;
+assign char_be4   = char_word_addr[0] ? {cpu_be, 2'b00} : {2'b00, cpu_be};
+assign char_din32 = {cpu_din, cpu_din};   // duplicate; byte enables select the live half
+`endif
+
 always_ff @(posedge clk) begin
     if (cs_char && !cpu_rw) begin
 `ifdef QUARTUS
-        // 32-bit array: word_addr = char_word_addr[11:1] (11-bit → 2048 entries)
-        // half_sel = char_word_addr[0]: 0 = lower 16 bits [15:0], 1 = upper [31:16]
-        // 4-byte-enable pattern (single word address) — MLAB-inferrable
-        if (!char_word_addr[0]) begin
-            if (cpu_be[1]) char_ram[char_word_addr[11:1]][15:8] <= cpu_din[15:8];
-            if (cpu_be[0]) char_ram[char_word_addr[11:1]][ 7:0] <= cpu_din[ 7:0];
-        end else begin
-            if (cpu_be[1]) char_ram[char_word_addr[11:1]][31:24] <= cpu_din[15:8];
-            if (cpu_be[0]) char_ram[char_word_addr[11:1]][23:16] <= cpu_din[ 7:0];
-        end
+        if (char_be4[3]) char_ram[char_word_addr[11:1]][31:24] <= char_din32[31:24];
+        if (char_be4[2]) char_ram[char_word_addr[11:1]][23:16] <= char_din32[23:16];
+        if (char_be4[1]) char_ram[char_word_addr[11:1]][15: 8] <= char_din32[15: 8];
+        if (char_be4[0]) char_ram[char_word_addr[11:1]][ 7: 0] <= char_din32[ 7: 0];
 `else
         if (cpu_be[1]) char_ram[{char_word_addr, 1'b0}] <= cpu_din[15:8];
         if (cpu_be[0]) char_ram[{char_word_addr, 1'b1}] <= cpu_din[ 7:0];
