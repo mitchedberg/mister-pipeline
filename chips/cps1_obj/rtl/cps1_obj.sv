@@ -599,7 +599,8 @@ assign sib_done = sib_index_valid;
 // Front bank: vcount[0] (combinational — only read during active display,
 //   well after the hblank, so no mid-hblank hazard).
 // =============================================================================
-logic [8:0] linebuf [0:1][0:511];
+logic [8:0] linebuf_0 [0:511];
+logic [8:0] linebuf_1 [0:511];
 logic back_bank;
 logic front_bank;
 assign front_bank = vcount[0];
@@ -621,8 +622,8 @@ always_ff @(posedge clk) begin
         lbinit_active <= 1'b1;
         lbinit_addr   <= 9'd0;
     end else if (lbinit_active) begin
-        linebuf[0][lbinit_addr] <= 9'h1FF;
-        linebuf[1][lbinit_addr] <= 9'h1FF;
+        linebuf_0[lbinit_addr] <= 9'h1FF;
+        linebuf_1[lbinit_addr] <= 9'h1FF;
         if (lbinit_addr == 9'd511) lbinit_active <= 1'b0;
         lbinit_addr <= lbinit_addr + 9'd1;
     end
@@ -880,8 +881,10 @@ always_ff @(posedge clk) begin
                             px = (r_tile_px + 9'd7 - 9'(i)) & 9'h1FF;
                         else
                             px = (r_tile_px + 9'(i)) & 9'h1FF;
-                        if (pd != 4'hF)
-                            linebuf[back_bank][px] <= {r_spr_color, pd};
+                        if (pd != 4'hF) begin
+                            if (back_bank) linebuf_1[px] <= {r_spr_color, pd};
+                            else           linebuf_0[px] <= {r_spr_color, pd};
+                        end
                     end
                 end
                 // Issue half-1 fetch
@@ -916,8 +919,10 @@ always_ff @(posedge clk) begin
                             px = (r_tile_px + 9'd15 - 9'(i)) & 9'h1FF;
                         else
                             px = (r_tile_px + 9'd8 + 9'(i)) & 9'h1FF;
-                        if (pd != 4'hF)
-                            linebuf[back_bank][px] <= {r_spr_color, pd};
+                        if (pd != 4'hF) begin
+                            if (back_bank) linebuf_1[px] <= {r_spr_color, pd};
+                            else           linebuf_0[px] <= {r_spr_color, pd};
+                        end
                     end
                 end
 
@@ -995,8 +1000,9 @@ always_ff @(posedge clk) begin
     end else begin
         pixel_valid <= active_display;
         if (active_display) begin
-            pixel_out               <= linebuf[front_bank][hcount];
-            linebuf[front_bank][hcount] <= 9'h1FF;  // self-erase
+            pixel_out <= front_bank ? linebuf_1[hcount] : linebuf_0[hcount];
+            if (front_bank) linebuf_1[hcount] <= 9'h1FF;  // self-erase
+            else            linebuf_0[hcount] <= 9'h1FF;  // self-erase
         end else begin
             pixel_out <= 9'h1FF;
         end
