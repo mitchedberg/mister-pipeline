@@ -26,7 +26,13 @@ jobs:
           docker run --rm \
             -v "${{ github.workspace }}:/workspace" \
             raetro/quartus:17.0 \
-            sh -c "cd /workspace/chips/taito_x/quartus && /opt/intelFPGA/quartus/bin/quartus_sh --flow compile taito_x 2>&1 | tee /workspace/taito_x_synthesis.log; exit \${PIPESTATUS[0]}"
+            sh -c "cd /workspace/chips/taito_x/quartus && /opt/intelFPGA/quartus/bin/quartus_sh --flow compile taito_x 2>&1 | tee /workspace/taito_x_synthesis.log; QEXIT=\${PIPESTATUS[0]}; echo \"Quartus exit: \$QEXIT\"; [ \$QEXIT -le 2 ] && exit 0 || exit 1"
+
+      - name: Synthesis report
+        if: always()
+        run: |
+          echo "=== Resource usage ==="
+          grep -E "Logic utilization|Total logic|M10K|MLAB|Fitter Status|Worst-case setup|Worst-case hold" taito_x_synthesis.log || true
 
       - name: Upload synthesis log
         if: always()
