@@ -387,7 +387,11 @@ assign extend_mode = ctrl[15][7];
 // =============================================================================
 // Text RAM (4096 × 16-bit = 8KB)
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [15:0] text_ram [0:4095];
+`else
 logic [15:0] text_ram [0:4095];
+`endif
 
 logic [11:0] text_wr_addr;
 logic [11:0] text_cpu_raddr;
@@ -417,7 +421,11 @@ assign text_q_w = text_ram[text_rd_addr_w];
 // =============================================================================
 // Character RAM (256 tiles × 8 rows × 4 bytes = 8KB)
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [7:0] char_ram [0:8191];
+`else
 logic [7:0] char_ram [0:8191];
+`endif
 
 logic [11:0] char_word_addr;
 assign char_word_addr = cpu_addr[12:1];
@@ -454,7 +462,11 @@ assign char_q_w = {char_ram[{char_rd_addr_w, 2'd3}],
 //   But PF RAM is 0x1800 words → addr[12:0] is sufficient (13 bits: 0..0x17FF)
 //   We use cpu_addr[13:1] = 13 bits for the PF word offset.
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [15:0] pf_ram [0:3][0:6143];    // 0x1800 = 6144 words per PF
+`else
 logic [15:0] pf_ram [0:3][0:6143];    // 0x1800 = 6144 words per PF
+`endif
 
 logic [12:0] pf_cpu_addr [0:3];
 // PF CPU word address: cpu_addr[13:1] gives 13-bit offset within PF RAM block
@@ -501,7 +513,11 @@ endgenerate
 // cpu_addr[15:1] = 15-bit word offset within Sprite RAM (0..32767)
 // Dual access: CPU read/write via cs_spr; sprite scanner via spr_scan_addr
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [15:0] spr_ram [0:32767];
+`else
 logic [15:0] spr_ram [0:32767];
+`endif
 
 logic [14:0] spr_cpu_addr;
 assign spr_cpu_addr = cpu_addr[15:1];
@@ -547,7 +563,11 @@ assign scan_spr_data = spr_ram[scan_spr_addr];
 //   Each 32-bit word holds one tile pixel row.
 // Testbench write port: pvt_wr_addr[13:0] = 32-bit word address (14 bits, 0..16383).
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [31:0] pivot_ram [0:16383];
+`else
 logic [31:0] pivot_ram [0:16383];
+`endif
 
 // CPU write port (16-bit halfword writes into 32-bit array)
 // cpu_addr[15:2] = 14-bit 32-bit word index (0..16383)
@@ -623,7 +643,14 @@ assign scan_scount_rd_data = scount_ram[scan_scount_rd_addr];
 // 72-bit descriptor carries full x_zoom[7:0] and y_zoom[7:0] fields.
 // 14-bit address: {screen_scan[7:0], slot[5:0]}
 // =============================================================================
+`ifdef QUARTUS
+// Force M10K: slist_ram is 14848×72 = 1Mbit — too large for MLAB (would use 37% of
+// device ALMs).  Renderer FSM has a 1-cycle gap (S_ADDR issues addr, S_LATCH reads
+// data), so registered M10K read matches the existing timing.
+(* ramstyle = "M10K" *) logic [71:0] slist_ram [0:14847];  // 232*64 = 14848
+`else
 logic [71:0] slist_ram [0:14847];  // 232*64 = 14848
+`endif
 
 // Scanner write port
 logic        scan_slist_wr;
@@ -635,10 +662,18 @@ always_ff @(posedge clk) begin
         slist_ram[scan_slist_addr] <= scan_slist_data;
 end
 
-// Renderer read port (combinational — see spr_ram scanner port comment above)
+// Renderer read port
 logic [13:0] rend_slist_rd_addr;
 logic [71:0] rend_slist_rd_data;
+`ifdef QUARTUS
+// Registered read for M10K BRAM inference (1-cycle latency).
+// Renderer FSM: S_ADDR issues rend_slist_rd_addr → S_LATCH consumes rend_slist_rd_data
+// one cycle later, so registered output arrives exactly when needed.
+always_ff @(posedge clk)
+    rend_slist_rd_data <= slist_ram[rend_slist_rd_addr];
+`else
 assign rend_slist_rd_data = slist_ram[rend_slist_rd_addr];
+`endif
 
 // =============================================================================
 // GFX ROM (32-bit wide, 4M words = 16MB — simulable BRAM for testbench)
@@ -651,7 +686,11 @@ assign rend_slist_rd_data = slist_ram[rend_slist_rd_addr];
 // =============================================================================
 // Size: 4096 × 32-bit words = 16KB (enough for test tiles; expand as needed)
 localparam int GFX_ROM_WORDS = 4096;
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [31:0] gfx_rom [0:GFX_ROM_WORDS-1];
+`else
 logic [31:0] gfx_rom [0:GFX_ROM_WORDS-1];
+`endif
 
 // CPU write port
 always_ff @(posedge clk) begin
@@ -912,7 +951,11 @@ tc0630fdp_pivot u_pivot (
 // Two async read ports for colmix (src + dst), one testbench write port.
 // Format: bits[15:12]=R(4), bits[11:8]=G(4), bits[7:4]=B(4), bits[3:0]=don't care.
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "M10K" *) logic [15:0] pal_ram [0:8191];
+`else
 logic [15:0] pal_ram [0:8191];
+`endif
 
 // Testbench write port
 always_ff @(posedge clk) begin
