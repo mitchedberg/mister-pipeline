@@ -581,7 +581,11 @@ jt10 u_ym2610 (
 // (SDRAM base 0x0C0000 = word 0x060000; ROM is 16-bit word-organised)
 
 // Z80 2KB work RAM (0xC000–0xC7FF)
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [7:0] z80_ram [0:2047];
+`else
 logic [7:0] z80_ram [0:2047];
+`endif
 logic [7:0] z80_ram_dout;
 
 always_ff @(posedge clk_sys) begin
@@ -682,7 +686,11 @@ T80s u_z80 (
 //   CPU A: 0x200000–0x20FFFF  (byte) = word base 0x100000, 15-bit word index
 //   CPU B: 0x110000–0x11FFFF  (byte) = word base 0x088000, 15-bit word index
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "M10K" *) logic [15:0] shared_ram [0:32767];
+`else
 logic [15:0] shared_ram [0:32767];
+`endif
 logic [15:0] shram_a_dout;
 logic [15:0] shram_b_dout;
 
@@ -705,7 +713,11 @@ end
 // Work RAM A — 64KB BRAM (CPU A private, 0x100000–0x10FFFF)
 // Only 16KB (0x100000–0x103FFF) used in dblaxle; full 64KB declared for margin.
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "M10K" *) logic [15:0] work_ram_a [0:32767];
+`else
 logic [15:0] work_ram_a [0:32767];
+`endif
 logic [15:0] wrama_dout;
 
 always_ff @(posedge clk_sys) begin
@@ -720,7 +732,11 @@ end
 // Work RAM B — 32KB BRAM (CPU B private, 0x100000–0x107FFF)
 // dblaxle CPU B uses only 0x100000–0x103FFF (16KB). 32KB declared for margin.
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "M10K" *) logic [15:0] work_ram_b [0:16383];
+`else
 logic [15:0] work_ram_b [0:16383];
+`endif
 logic [15:0] wramb_dout;
 
 always_ff @(posedge clk_sys) begin
@@ -735,7 +751,11 @@ end
 // Network RAM — 16KB BRAM (CPU B 0x500000–0x503FFF)
 // Inert for single-cabinet operation. Plain RAM, no external interface.
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "M10K" *) logic [15:0] net_ram [0:8191];
+`else
 logic [15:0] net_ram [0:8191];
+`endif
 logic [15:0] netram_dout;
 
 always_ff @(posedge clk_sys) begin

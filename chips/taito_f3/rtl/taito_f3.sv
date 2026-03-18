@@ -611,7 +611,11 @@ assign snd_dtack_n = 1'b0;   // BRAM always ready
 // cpu_addr[16:1] selects the 32-bit longword (2^16 = 64K words × 4 bytes = 256KB;
 // but the physical RAM is 128KB so cpu_addr[16] is the mirror bit, ignored).
 
+`ifdef QUARTUS
+(* ramstyle = "M10K" *) logic [31:0] work_ram [0:32767];   // 32K × 32-bit = 128KB
+`else
 logic [31:0] work_ram [0:32767];   // 32K × 32-bit = 128KB
+`endif
 logic [31:0] wram_dout_r;
 logic [14:0] wram_idx;
 assign wram_idx = cpu_addr[15:1];  // 15-bit longword index into 128KB

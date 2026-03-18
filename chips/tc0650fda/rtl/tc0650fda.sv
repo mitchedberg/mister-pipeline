@@ -98,8 +98,13 @@ assign cpu_dtack_n = 1'b0;
 //   bits[15:8]  — G[7:0]
 //   bits[7:0]   — B[7:0]
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "M10K" *) logic [31:0] src_bram [0:8191];
+(* ramstyle = "M10K" *) logic [31:0] dst_bram [0:8191];
+`else
 logic [31:0] src_bram [0:8191];
 logic [31:0] dst_bram [0:8191];
+`endif
 
 // ── CPU write port (system clock, no pixel-clock gating) ──────────────────
 always_ff @(posedge clk) begin

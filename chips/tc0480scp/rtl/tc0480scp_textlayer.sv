@@ -205,7 +205,11 @@ end
 // =============================================================================
 // Line buffer: 320 × 10-bit {color[5:0], pen[3:0]}
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [9:0] linebuf [0:319];
+`else
 logic [9:0] linebuf [0:319];
+`endif
 
 // Output: screen column from hpos (active area starts at hpos=0)
 logic [8:0] scol;
