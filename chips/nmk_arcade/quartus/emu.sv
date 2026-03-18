@@ -21,18 +21,18 @@
 //
 // ROM loading (ioctl_index values, set in .mra file):
 //   0x00 — CPU prog ROM (sequential, SDRAM base 0x000000)
-//   0x01 — Sprite ROM   (SDRAM 0x0C0000)
-//   0x02 — BG tile ROM  (SDRAM 0x140000)
+//   0x01 — Sprite ROM   (SDRAM 0x0C0000, up to 1MB)
+//   0x02 — BG tile ROM  (SDRAM 0x1C0000, up to 128KB — tile_idx is 10-bit)
 //   0x03 — ADPCM ROM    (SDRAM 0x200000)   ← OKI M6295 sample ROM
 //   0x04 — Z80 sound ROM (SDRAM 0x280000)
 //   0xFE — DIP switch / NVRAM init data
 //
 // SDRAM layout (IS42S16320F, 32 MB):
 //   0x000000 – 0x07FFFF   512KB   CPU program ROM
-//   0x0C0000 – 0x13FFFF   512KB   Sprite ROM
-//   0x140000 – 0x1BFFFF   512KB   BG tile ROM
+//   0x0C0000 – 0x1BFFFF     1MB   Sprite ROM   (SPR_ROM_BASE=0x0C0000; 21-bit addr)
+//   0x1C0000 – 0x1DFFFF   128KB   BG tile ROM  (BG_ROM_BASE=0x1C0000; 10-bit tile_idx)
 //   0x200000 – 0x27FFFF   512KB   ADPCM sample ROM (OKI M6295)
-//   0x280000 – 0x28BFFF   48KB    Z80 sound ROM
+//   0x280000 – 0x28BFFF    48KB   Z80 sound ROM
 // -------------------------------------------------------------------------
 
 module emu

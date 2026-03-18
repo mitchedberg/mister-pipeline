@@ -40,10 +40,14 @@ module nmk_arcade #(
 
     // ── GFX ROM SDRAM base ─────────────────────────────────────────────────────
     // Sprite ROM base address in SDRAM (byte address, stored at SDRAM offset)
+    // Sprite address is 21-bit → max 2MB → sprites occupy 0x0C0000–0x1BFFFF for 1MB ROMs
     parameter logic [26:0] SPR_ROM_BASE = 27'h0C0000,
 
     // BG tile ROM base in SDRAM
-    parameter logic [26:0] BG_ROM_BASE  = 27'h140000
+    // Must start AFTER the sprite region: 0x0C0000 + 1MB = 0x1C0000
+    // NMK16 tile_idx is 10-bit → only 128KB of tile data is addressable (1024 tiles × 128B)
+    // For Thunder Dragon: load fgtile (91070.6, 128KB) here; bgtile needs extended tile_idx
+    parameter logic [26:0] BG_ROM_BASE  = 27'h1C0000
 ) (
     // ── Clocks / Reset ──────────────────────────────────────────────────────────
     input  logic        clk_sys,        // master system clock (e.g. 40 MHz)

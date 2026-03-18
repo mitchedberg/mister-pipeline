@@ -772,15 +772,17 @@ module nmk16 #(
                         g3_state        <= G3_IDLE;
                     end else begin
                         begin
-                            // Read fields from display_list arrays
-                            automatic logic [8:0]  e_y      = display_list_y[g3_spr_idx];
-                            automatic logic [8:0]  e_x      = display_list_x[g3_spr_idx];
-                            automatic logic [11:0] e_tile   = display_list_tile[g3_spr_idx];
-                            automatic logic        e_flip_x   = display_list_flip_x[g3_spr_idx];
-                            automatic logic        e_flip_y   = display_list_flip_y[g3_spr_idx];
-                            automatic logic [1:0]  e_size     = display_list_size[g3_spr_idx];
-                            automatic logic [3:0]  e_pal      = display_list_palette[g3_spr_idx];
-                            automatic logic        e_valid    = display_list_valid[g3_spr_idx];
+                            // Read fields from internal packed arrays (not flat output ports).
+                            // Flat ports like display_list_y[2303:0] yield single-bit extraction;
+                            // internal [255:0][N:0] arrays yield correct N-bit fields.
+                            automatic logic [8:0]  e_y      = _display_list_y[g3_spr_idx];
+                            automatic logic [8:0]  e_x      = _display_list_x[g3_spr_idx];
+                            automatic logic [11:0] e_tile   = _display_list_tile[g3_spr_idx];
+                            automatic logic        e_flip_x   = _display_list_flip_x[g3_spr_idx];
+                            automatic logic        e_flip_y   = _display_list_flip_y[g3_spr_idx];
+                            automatic logic [1:0]  e_size     = _display_list_size[g3_spr_idx];
+                            automatic logic [3:0]  e_pal      = _display_list_palette[g3_spr_idx];
+                            automatic logic        e_valid    = _display_list_valid[g3_spr_idx];
                             automatic logic        e_priority = display_list_priority[g3_spr_idx];
 
                             if (e_valid) begin

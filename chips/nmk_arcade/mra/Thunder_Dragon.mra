@@ -1,15 +1,29 @@
 <!--
-    Thunder Dragon
-    NMK16 hardware
-    MC68000 @ 10 MHz, Z80 @ 3.58 MHz (sound — stubbed)
+    Thunder Dragon (1991) — NMK
+    MiSTer ROM descriptor for NMK16 core
 
-    ROM loading:
-      ioctl_index 0x00 — CPU program ROM (512KB, SDRAM 0x000000)
-      ioctl_index 0x01 — Sprite ROM      (512KB, SDRAM 0x0C0000)
-      ioctl_index 0x02 — BG tile ROM     (512KB, SDRAM 0x140000)
-      ioctl_index 0xFE — DIP switches
+    Hardware:
+      MC68000 @ 10 MHz
+      NMK004 MCU (sound controller, drives dual OKI M6295)
+      YM2203 FM + OKI M6295 (one instance in FPGA core)
 
     MAME driver: nmk16.cpp, set: tdragon
+    ROM set CRCs verified from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 256KB interleaved from 2×128KB)
+      0x0C0000   Sprite ROM (91070.4, 1MB — sprites: 21-bit SDRAM address)
+      0x1C0000   BG/FG tile ROM (91070.6, 128KB — 10-bit tile_idx, 1024 tiles)
+      0x200000   ADPCM ROM (91070.3, 512KB OKI M6295 sample bank 0)
+      0x280000   Z80 sound ROM (91070.1, 64KB NMK004 MCU code → Z80 slot)
+
+    NOTE: bgtile (91070.5, 1MB) is NOT loaded — NMK16 tile_idx is 10-bit,
+    addressing only 128KB. Full bgtile support requires extended tile_idx.
+    91070.6 (fgtile) covers both BG layers for now.
+
+    NOTE: oki2 (91070.2, 512KB) is not loaded — core has one OKI instance.
+    The NMK004 MCU bank-switches between oki1 and oki2 on hardware; FPGA
+    uses only oki1 (bank 0 samples).
 -->
 <misterromdescription>
     <name>Thunder Dragon</name>
@@ -18,8 +32,6 @@
     <mameversion>0.245</mameversion>
 
     <switches default="FF,FF">
-        <!-- DIP SW1: Coinage, Lives, Difficulty -->
-        <!-- DIP SW2: Screen flip, Demo sound -->
         <dip name="Coinage"     ids="0,0" bits="0,1" values="1 Coin/1 Credit,2 Coins/1 Credit,1 Coin/2 Credits,Free Play"/>
         <dip name="Lives"       ids="0,0" bits="2,3" values="3,4,5,2"/>
         <dip name="Difficulty"  ids="0,0" bits="4,5" values="Normal,Hard,Easy,Very Hard"/>
@@ -27,22 +39,40 @@
         <dip name="Screen Flip" ids="1,1" bits="1,1" values="Normal,Flipped"/>
     </switches>
 
-    <!-- CPU Program ROM (512KB) — loaded at SDRAM 0x000000 -->
-    <rom index="0" zip="tdragon.zip" md5="placeholder" address="0x000000">
-        <part name="11.bin" crc="placeholder"/>
-        <part name="12.bin" crc="placeholder"/>
+    <!-- CPU Program ROM (256KB interleaved) — loaded at SDRAM 0x000000 -->
+    <!-- 68000: .8 = even bytes (D15:D8), .7 = odd bytes (D7:D0) -->
+    <rom index="0" zip="tdragon.zip" md5="None">
+        <interleave output="16">
+            <part name="91070_68k.8" crc="121c3ae7" map="10"/>  <!-- even bytes → D15:D8 -->
+            <part name="91070_68k.7" crc="6e154d8e" map="01"/>  <!-- odd bytes  → D7:D0  -->
+        </interleave>
     </rom>
 
-    <!-- Sprite ROM (512KB) — loaded at SDRAM 0x0C0000 -->
-    <rom index="1" zip="tdragon.zip" md5="placeholder" address="0x0C0000">
-        <part name="spr1.bin" crc="placeholder"/>
-        <part name="spr2.bin" crc="placeholder"/>
+    <!-- Sprite ROM (1MB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="tdragon.zip" md5="None">
+        <part name="91070.4" crc="3eedc2fe"/>
     </rom>
 
-    <!-- BG Tile ROM (512KB) — loaded at SDRAM 0x140000 -->
-    <rom index="2" zip="tdragon.zip" md5="placeholder" address="0x140000">
-        <part name="bg1.bin" crc="placeholder"/>
-        <part name="bg2.bin" crc="placeholder"/>
+    <!-- BG/FG Tile ROM (128KB) — loaded at SDRAM 0x1C0000 -->
+    <!-- Only fgtile loaded; bgtile (91070.5) needs extended tile_idx RTL work -->
+    <rom index="2" zip="tdragon.zip" md5="None">
+        <part name="91070.6" crc="fe365920"/>
+    </rom>
+
+    <!-- ADPCM ROM (512KB) — loaded at SDRAM 0x200000 (OKI M6295 bank 0) -->
+    <rom index="3" zip="tdragon.zip" md5="None">
+        <part name="91070.3" crc="ae6875a8"/>
+    </rom>
+
+    <!-- Z80 sound ROM slot (64KB) — loaded at SDRAM 0x280000 -->
+    <!-- NMK004 MCU code; Z80 sound CPU in FPGA reads from this slot -->
+    <rom index="4" zip="tdragon.zip" md5="None">
+        <part name="91070.1" crc="bf493d74"/>
+    </rom>
+
+    <!-- DIP switches (index 0xFE) -->
+    <rom index="254">
+        <part>FF FF</part>
     </rom>
 
 </misterromdescription>
