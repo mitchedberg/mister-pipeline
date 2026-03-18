@@ -305,20 +305,11 @@ end
 always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         ref_cnt <= '0;
-        ref_req <= 1'b0;
     end else begin
-        if (ref_cnt == REFRESH_CYCLES) begin
+        if (ref_cnt == REFRESH_CYCLES)
             ref_cnt <= '0;
-            ref_req <= 1'b1;
-        end else begin
+        else
             ref_cnt <= ref_cnt + 1'b1;
-        end
-        // Clear ref_req when we issue AUTO REFRESH command
-        if (state == S_INIT_REF1 || state == S_INIT_REF2 ||
-            (state == S_IDLE && ref_req && wr_fifo_empty &&
-             !cpu_req_pend && !gfx_req_pend && !adpcm_req_pend && !z80_req_pend)) begin
-            // cleared below in main FSM
-        end
     end
 end
 
@@ -359,6 +350,9 @@ always_ff @(posedge clk or negedge rst_n) begin
         cmd_r   <= CMD_NOP;
         dq_oe   <= 1'b0;
         dqm_out <= 2'b11;
+
+        // Latch refresh request when counter expires
+        if (ref_cnt == REFRESH_CYCLES) ref_req <= 1'b1;
 
         case (state)
 
