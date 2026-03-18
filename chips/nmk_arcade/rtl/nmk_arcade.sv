@@ -261,7 +261,7 @@ logic [255:0]       dl_prio;
 logic  [7:0] dl_count;
 logic        dl_ready;
 logic [1:0]  bg_pix_valid;
-logic [1:0][7:0]  bg_pix_color;
+logic [15:0]      bg_pix_color;  // [15:8]=layer1, [7:0]=layer0
 logic [1:0]  bg_pix_priority;
 logic [7:0]  spr_rd_color;
 logic        spr_rd_valid;
@@ -936,7 +936,7 @@ assign _unused = ^{
     dl_pal[0], dl_valid[0], dl_prio[0],
     dl_count, dl_ready,
     bg_pix_valid,
-    bg_pix_color[0], bg_pix_color[1],
+    bg_pix_color[7:0], bg_pix_color[15:8],
     bg_pix_priority,
     spr_rd_color, spr_rd_valid, spr_rd_priority,
     spr_render_done,

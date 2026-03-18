@@ -602,8 +602,11 @@ fx68k_adapter u_cpu (
     .cpu_reset_n_out(cpu_reset_n_out)
 );
 
-// SDRAM cpu address: wire 27-bit (word addr + SDRAM base offset 0)
-assign cpu_sdr_addr = {8'b0, cpu_addr[19:1]};
+// prog_rom_addr from kaneko_arcade core drives SDRAM CH1 address.
+// Using a separate wire avoids multi-driver: kaneko_arcade outputs prog_rom_addr (OUTPUT)
+// which previously conflicted with a direct assign from cpu_addr.
+wire [19:1] prog_rom_addr_w;
+assign cpu_sdr_addr = {8'b0, prog_rom_addr_w[19:1]};
 
 kaneko_arcade u_kaneko_arcade
 (
@@ -623,7 +626,7 @@ kaneko_arcade u_kaneko_arcade
     .cpu_ipl_n   (cpu_ipl_n),
 
     // ── Program ROM (SDRAM CH1) ───────────────────────────────────────────────
-    .prog_rom_addr ({cpu_sdr_addr[18:0]}),
+    .prog_rom_addr (prog_rom_addr_w),
     .prog_rom_data (cpu_sdr_data),
     .prog_rom_req  (cpu_sdr_req),
     .prog_rom_ack  (cpu_sdr_ack),
