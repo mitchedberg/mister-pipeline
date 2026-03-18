@@ -295,7 +295,7 @@ end
 always_comb begin
     vram_rd   = 1'b0;
     vram_addr = 15'b0;
-    unique case (state)
+    case (state)
         BG_IDLE:     begin end   // no attr prefetch; BG_PRE_CODE issues correct attr read
         BG_PRE_CODE: begin vram_addr = vram_attr_cur_c; vram_rd = 1'b1; end
         BG_CODE:     begin vram_addr = vram_code_cur_c; vram_rd = 1'b1; end
@@ -328,7 +328,7 @@ end
 always_comb begin
     scram_rd   = 1'b0;
     scram_addr = 15'b0;
-    unique case (state)
+    case (state)
         BG_S0: begin
             scram_rd = 1'b1;
             if (LAYER >= 2)
@@ -429,7 +429,7 @@ end
 always_comb begin
     gfx_rd   = 1'b0;
     gfx_addr = 21'b0;
-    unique case (state)
+    case (state)
         BG_GFX0: begin gfx_addr = gfx_left_addr_c; gfx_rd = 1'b1; end
         BG_GFX1: begin gfx_addr = gfx_right_r;     gfx_rd = 1'b1; end
         default: begin end
@@ -501,7 +501,7 @@ always_ff @(posedge clk) begin
             sx_base_r <= sx_zoom_c;
         end
 
-        unique case (state)
+        case (state)
 
             // ── BG_IDLE: wait for hblank_rise ────────────────────────────
             BG_IDLE: begin

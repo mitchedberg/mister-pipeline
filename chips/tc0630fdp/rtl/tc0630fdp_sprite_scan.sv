@@ -278,7 +278,7 @@ always_ff @(posedge clk) begin
         slist_wr  <= 1'b0;
         scount_wr <= 1'b0;
 
-        unique case (state)
+        case (state)
 
             // ─ Idle: wait for VBLANK ─────────────────────────────────────
             S_IDLE: begin

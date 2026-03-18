@@ -408,6 +408,113 @@ fi
 echo ""
 
 # =============================================================================
+# CHECK 9: Synchronous reset (should be asynchronous for FPGA flip-flop CLR pins)
+# Flags: always @(posedge clk) with if(rst) body but rst NOT in sensitivity list
+# Pattern-ledger: Pattern 1 — async reset maps to dedicated CLR pin, saves LUT layer
+# =============================================================================
+echo "--- Check 9: Synchronous reset (should be async posedge rst) ---"
+SYNC_RST_HITS=$(python3 - $RTL_FILES << 'PYEOF' 2>/dev/null || true
+import sys, re
+
+RESET_NAMES = {'rst', 'reset', 'rst_n', 'reset_n', 'arst', 'arst_n'}
+
+for filepath in sys.argv[1:]:
+    try:
+        with open(filepath) as fp:
+            content = fp.read()
+    except Exception:
+        continue
+
+    lines = content.split('\n')
+    for i, line in enumerate(lines):
+        # Match always @(posedge clk) or always @(posedge clk_N)
+        if not re.search(r'always\s*@\s*\(\s*posedge\s+\w+\s*\)', line):
+            continue
+        # Check: no 'posedge rst' / 'negedge rst_n' in sensitivity list
+        sens = re.search(r'always\s*@\s*\(([^)]*)\)', line)
+        if not sens:
+            continue
+        sens_list = sens.group(1).lower()
+        has_rst_in_sens = any(name in sens_list for name in RESET_NAMES)
+        if has_rst_in_sens:
+            continue  # already async — good
+        # Now look in next ~5 lines for if(rst) / if(!rst_n)
+        block = '\n'.join(lines[i:i+6])
+        rst_match = re.search(r'if\s*\(\s*(!?\s*\w+)\s*\)', block)
+        if rst_match:
+            cond = rst_match.group(1).strip().lstrip('!')
+            if cond.lower() in RESET_NAMES:
+                print(f"  {filepath}:{i+1}: synchronous reset '{cond}' — add 'posedge {cond}' to sensitivity list")
+PYEOF
+)
+
+if [[ -n "$SYNC_RST_HITS" ]]; then
+    while IFS= read -r line; do
+        warn "sync-reset: $line"
+    done <<< "$SYNC_RST_HITS"
+    echo "  (sync reset works but wastes LUTs — use async: always @(posedge clk, posedge rst))"
+else
+    pass "All reset styles are asynchronous or not applicable"
+fi
+echo ""
+
+# =============================================================================
+# CHECK 10: SystemVerilog keywords that Quartus 17.0 may not handle correctly
+# Flags: interface, struct, enum, unique case, priority case in synthesized RTL
+# Pattern-ledger: Pattern 9 — Quartus 17.0 limited SV; use reg/wire only for RAM
+# =============================================================================
+echo "--- Check 10: Quartus 17.0 incompatible SystemVerilog constructs ---"
+SV_HITS=""
+for f in $RTL_FILES; do
+    # Only .sv files can have SV-specific constructs
+    [[ "$f" == *.sv ]] || continue
+    # Check for known-problematic SV constructs
+    matches=$(python3 - "$f" << 'PYEOF' 2>/dev/null || true
+import sys, re
+
+# Only hard-fails in Quartus 17.0 — struct packed and enum are supported in .sv
+# interface declarations (as modules) and modport are not supported
+BANNED = [
+    (r'\binterface\b\s+\w+\s*[;(#]', 'interface module declaration (Quartus 17.0 unsupported)'),
+    (r'\bmodport\b',                  'modport (requires interface, Quartus 17.0 unsupported)'),
+    (r'\bunique\s+case\b',            'unique case (may warn in Q17.0 — use plain case)'),
+    (r'\bpriority\s+case\b',          'priority case (use plain case)'),
+    (r'\bunique\s+if\b',              'unique if'),
+]
+
+with open(sys.argv[1]) as fp:
+    lines = fp.readlines()
+
+in_sim_block = False
+for i, line in enumerate(lines):
+    stripped = line.strip()
+    if '`ifdef SIMULATION' in stripped or ('`ifndef QUARTUS' in stripped):
+        in_sim_block = True
+    if in_sim_block and '`endif' in stripped:
+        in_sim_block = False
+        continue
+    if in_sim_block:
+        continue
+    # Strip line comments before checking
+    code = re.sub(r'//.*$', '', line)
+    for pattern, label in BANNED:
+        if re.search(pattern, code):
+            print(f"  {sys.argv[1]}:{i+1}: {label} — may fail Quartus 17.0")
+PYEOF
+    )
+    [[ -n "$matches" ]] && SV_HITS+="$matches"$'\n'
+done
+
+if [[ -n "$SV_HITS" ]]; then
+    while IFS= read -r line; do
+        [[ -n "$line" ]] && warn "sv-compat: $line"
+    done <<< "$SV_HITS"
+else
+    pass "No Quartus 17.0-incompatible SV constructs found"
+fi
+echo ""
+
+# =============================================================================
 # SUMMARY
 # =============================================================================
 echo "=== Summary ==="

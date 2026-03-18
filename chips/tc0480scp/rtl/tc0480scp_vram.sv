@@ -165,7 +165,7 @@ end
 `ifdef QUARTUS
 logic [14:0] bg_tf_mux_addr;
 always_comb begin
-    priority casez (bg_tf_rd)
+    casez (bg_tf_rd)
         4'b???1: bg_tf_mux_addr = bg_tf_addr[0];
         4'b??10: bg_tf_mux_addr = bg_tf_addr[1];
         4'b?100: bg_tf_mux_addr = bg_tf_addr[2];
@@ -251,7 +251,7 @@ end
 `ifdef QUARTUS
 logic [14:0] bg_sc_mux_addr;
 always_comb begin
-    priority casez (bg_sc_rd)
+    casez (bg_sc_rd)
         4'b???1: bg_sc_mux_addr = bg_sc_addr[0];
         4'b??10: bg_sc_mux_addr = bg_sc_addr[1];
         4'b?100: bg_sc_mux_addr = bg_sc_addr[2];

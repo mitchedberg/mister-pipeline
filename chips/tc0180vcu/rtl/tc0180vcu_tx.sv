@@ -121,7 +121,7 @@ end
 always_comb begin
     gfx_rd   = 1'b0;
     gfx_addr = 23'b0;
-    unique case (state)
+    case (state)
         TX_VRAM: begin
             gfx_addr = {1'b0, gfx_base_c};                   // plane 0
             gfx_rd   = 1'b1;
@@ -171,7 +171,7 @@ always_ff @(posedge clk) begin
         gfx_b1_r   <= 8'b0;
         gfx_b2_r   <= 8'b0;
     end else begin
-        unique case (state)
+        case (state)
             TX_IDLE: begin
                 if (hblank_fall) begin
                     tx_col <= 6'b0;

@@ -305,7 +305,7 @@ logic [ 2:0] spr_word_offset_c;
 
 always_comb begin
     spr_base_c = (12'd407 - {3'b0, sprite_idx}) << 3;
-    unique case (state)
+    case (state)
         SP_LOAD0: spr_word_offset_c = 3'd0;
         SP_LOAD1: spr_word_offset_c = 3'd1;
         SP_LOAD2: spr_word_offset_c = 3'd2;
@@ -324,7 +324,7 @@ assign spr_rd_addr = spr_base_c + {9'b0, spr_word_offset_c};
 always_comb begin
     gfx_rd   = 1'b0;
     gfx_addr = 23'b0;
-    unique case (state)
+    case (state)
         SP_ROWL0: begin gfx_addr = gfx_cb_l_c;          gfx_rd = 1'b1; end
         SP_ROWL1: begin gfx_addr = gfx_cb_l_c + 23'd1;  gfx_rd = 1'b1; end
         SP_ROWL2: begin gfx_addr = gfx_cb_l_c + 23'd16; gfx_rd = 1'b1; end
@@ -433,7 +433,7 @@ always_ff @(posedge clk) begin
         row_x_base_r   <= 9'b0;
         row_y_r        <= 8'b0;
     end else begin
-        unique case (state)
+        case (state)
 
             // ----------------------------------------------------------------
             SP_IDLE: begin

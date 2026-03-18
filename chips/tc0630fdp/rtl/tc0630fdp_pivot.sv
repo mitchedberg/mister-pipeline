@@ -141,7 +141,7 @@ assign next_tile_idx     = {next_cur_tile_col, fetch_row};
 //   PV_NEXT:     drives tx_col+1 addr   → data ready for subsequent PV_TILE entries
 `ifdef QUARTUS
 always_comb begin
-    unique case (state)
+    case (state)
         PV_PREFETCH: pvt_rd_addr = {tile_idx,      fetch_py};  // pre-fetch tile 0
         PV_NEXT:     pvt_rd_addr = {next_tile_idx, fetch_py};  // pre-fetch tile tx_col+1
         default:     pvt_rd_addr = 14'b0;
@@ -205,7 +205,7 @@ always_ff @(posedge clk) begin
         state  <= PV_IDLE;
         tx_col <= 6'b0;
     end else begin
-        unique case (state)
+        case (state)
             PV_IDLE: begin
                 if (hblank_rise) begin
                     tx_col <= 6'b0;

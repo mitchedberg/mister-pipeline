@@ -483,7 +483,7 @@ logic        gfx_is_sprite;   // 1=sprite request, 0=BG request
 // Byte-lane mux (combinational)
 logic [7:0] gfx_byte_out;
 always_comb begin
-    unique case (gfx_pending_byte_sel)
+    case (gfx_pending_byte_sel)
         2'b00: gfx_byte_out = gfx_rom_data[7:0];
         2'b01: gfx_byte_out = gfx_rom_data[15:8];
         2'b10: gfx_byte_out = gfx_rom_data[23:16];

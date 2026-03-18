@@ -306,7 +306,7 @@ always_comb begin
         end else if (cpu_addr[18:16] == 3'b010) begin
             cs_line = 1'b1; // Line RAM: 0x10000–0x17FFF
         end else begin
-            unique case (cpu_addr[18:13])
+            case (cpu_addr[18:13])
                 6'h04, 6'h05: cs_pf[0] = 1'b1;
                 6'h06, 6'h07: cs_pf[1] = 1'b1;
                 6'h08, 6'h09: cs_pf[2] = 1'b1;
@@ -1016,7 +1016,7 @@ assign spr_gfx_data = (spr_gfx_addr < 22'(GFX_ROM_WORDS))
 logic [15:0] line_cpu_dout;   // from tc0630fdp_lineram
 
 always_comb begin
-    unique case (1'b1)
+    case (1'b1)
         cs_spr:    cpu_dout = spr_cpu_rdata;
         cs_pivot:  cpu_dout = pvt_cpu_rdata;
         cs_line:   cpu_dout = line_cpu_dout;

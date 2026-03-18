@@ -163,7 +163,7 @@ function automatic logic eval_clip(
     for (int p = 0; p < 4; p++) begin
         if (clip_en[p]) begin
             any_en = 1'b1;
-            unique case (p)
+            case (p)
                 0: begin lp = l0; rp = r0; end
                 1: begin lp = l1; rp = r1; end
                 2: begin lp = l2; rp = r2; end
@@ -188,7 +188,7 @@ logic [1:0] spr_blend_val;
 assign spr_grp = spr_pixel[11:10];
 
 always_comb begin
-    unique case (spr_grp)
+    case (spr_grp)
         2'd0:    begin spr_prio_val = ls_spr_prio[0]; spr_blend_val = ls_spr_blend[0]; end
         2'd1:    begin spr_prio_val = ls_spr_prio[1]; spr_blend_val = ls_spr_blend[1]; end
         2'd2:    begin spr_prio_val = ls_spr_prio[2]; spr_blend_val = ls_spr_blend[2]; end
@@ -561,7 +561,7 @@ always_ff @(posedge clk) begin
     if (!rst_n) begin
         blend_rgb_out <= 24'b0;
     end else begin
-        unique case (blend_mode_r)
+        case (blend_mode_r)
             2'b01: begin
                 // Normal blend A: src*A_src/8 + dst*A_dst/8
                 blend_rgb_out <= {
@@ -606,7 +606,7 @@ logic       win_do_blend_c;
 
 always_comb begin
     win_do_blend_c = (win_bmode == 2'b01) || (win_bmode == 2'b10);
-    unique case (win_bmode)
+    case (win_bmode)
         2'b01: begin
             // Normal blend A
             win_src_coeff = ls_a_src;

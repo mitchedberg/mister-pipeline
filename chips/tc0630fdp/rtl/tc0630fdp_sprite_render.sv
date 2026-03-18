@@ -344,7 +344,7 @@ always_ff @(posedge clk) begin
         scount_rd_addr <= vpos[7:0] - 8'(V_START) + 8'd1;
         state          <= S_CNT;
     end else begin
-        unique case (state)
+        case (state)
 
             S_IDLE: begin end
 

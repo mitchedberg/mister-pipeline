@@ -194,7 +194,7 @@ always_comb begin
     vram_map_addr = 15'b0;
     vram_gfx_rd   = 1'b0;
     vram_gfx_addr = 15'b0;
-    unique case (state)
+    case (state)
         TL_MAP:  begin vram_map_addr = map_addr_c;  vram_map_rd  = 1'b1; end
         TL_GFX0: begin vram_gfx_addr = gfx0_addr_c; vram_gfx_rd = 1'b1; end
         TL_GFX1: begin vram_gfx_addr = gfx1_addr_c; vram_gfx_rd = 1'b1; end
@@ -236,7 +236,7 @@ always_ff @(posedge clk) begin
         gfx_base_r    <= 15'b0;
         run_py_r      <= 3'b0;
     end else begin
-        unique case (state)
+        case (state)
 
             TL_IDLE: begin
                 if (hblank_rise) begin

@@ -180,7 +180,7 @@ always_ff @(posedge clk) begin
         state  <= TX_IDLE;
         tx_col <= 6'b0;
     end else begin
-        unique case (state)
+        case (state)
 
             TX_IDLE: begin
                 if (hblank_rise) begin

@@ -247,7 +247,7 @@ logic [11:0] tile_map_idx_c;
 assign tile_map_idx_c = {fetch_ty, cur_map_col_c};  // 6+6 = 12 bits
 
 always_comb begin
-    unique case (state)
+    case (state)
         BG_CODE: vram_rd_addr = {bank0[2:0], tile_map_idx_c};
         BG_ATTR: vram_rd_addr = {bank1[2:0], tile_map_idx_c};
         default: vram_rd_addr = 15'b0;
@@ -260,7 +260,7 @@ end
 // scroll block for this scanline.
 // =============================================================================
 always_comb begin
-    unique case (state)
+    case (state)
         BG_IDLE: scroll_rd_addr = SCROLL_BASE + scroll_off_c;          // scrollX for this block
         BG_SYRD: scroll_rd_addr = SCROLL_BASE + scroll_off_c + 10'd1;  // scrollY for this block
         default: scroll_rd_addr = 10'b0;
@@ -278,7 +278,7 @@ end
 always_comb begin
     gfx_rd   = 1'b0;
     gfx_addr = 23'b0;
-    unique case (state)
+    case (state)
         BG_GFX0: begin gfx_addr = gfx_base_l_r;          gfx_rd = 1'b1; end
         BG_GFX1: begin gfx_addr = gfx_base_l_r + 23'd1;  gfx_rd = 1'b1; end
         BG_GFX2: begin gfx_addr = gfx_base_l_r + 23'd16; gfx_rd = 1'b1; end
@@ -337,7 +337,7 @@ always_ff @(posedge clk) begin
         gfx_r2_r         <= 8'b0;
         for (int i = 0; i < 8; i++) left_px[i] <= 10'b0;
     end else begin
-        unique case (state)
+        case (state)
 
             // ── Idle ─────────────────────────────────────────────────────────
             // scroll_rd_addr = SCROLL_BASE (scrollX) is driven while in IDLE.

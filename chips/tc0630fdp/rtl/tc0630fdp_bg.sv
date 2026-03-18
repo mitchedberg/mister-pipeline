@@ -313,7 +313,7 @@ end
 //   BG_WRITE    → BG_ATTR : BG_WRITE drives pf_attr_addr_next_c   → BG_ATTR reads pf_q
 `ifdef QUARTUS
 always_comb begin
-    unique case (state)
+    case (state)
         BG_PREFETCH: pf_rd_addr = pf_attr_addr_c;       // pre-fetch attr (first tile)
         BG_ATTR:     pf_rd_addr = pf_code_addr_c;       // pre-fetch code while latching attr
         BG_WRITE:    pf_rd_addr = pf_attr_addr_next_c;  // pre-fetch attr for next tile
@@ -322,7 +322,7 @@ always_comb begin
 end
 `else
 always_comb begin
-    unique case (state)
+    case (state)
         BG_ATTR:  pf_rd_addr = pf_attr_addr_c;
         BG_CODE:  pf_rd_addr = pf_code_addr_c;
         default:  pf_rd_addr = 13'b0;
@@ -351,7 +351,7 @@ assign attr_flipy_c    = pf_q[15];
 always_comb begin
     gfx_rd   = 1'b0;
     gfx_addr = 22'b0;
-    unique case (state)
+    case (state)
         BG_GFX0: begin gfx_addr = gfx_left_r;  gfx_rd = 1'b1; end
         BG_GFX1: begin gfx_addr = gfx_right_r; gfx_rd = 1'b1; end
         default: begin gfx_addr = 22'b0;        gfx_rd = 1'b0; end
@@ -434,7 +434,7 @@ always_ff @(posedge clk) begin
         gfx_left_data_r    <= 32'b0;
         gfx_right_data_r   <= 32'b0;
     end else begin
-        unique case (state)
+        case (state)
 
             // ─── Wait for HBLANK ────────────────────────────────────────────
             // Geometry is combinational — fetch_ty/fetch_first_tx are valid NOW.
