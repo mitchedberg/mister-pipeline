@@ -69,7 +69,14 @@ localparam int W       = 320;
 // Step 1 — Road RAM (0x1000 × 16-bit)
 // =============================================================================
 
+`ifdef QUARTUS
+// MLAB supports combinational (asynchronous) reads — matches the FSM pattern
+// where state N sets the address and state N+1 reads the data without a wait state.
+// Avoids synthesizing 65,536 flip-flops which would exhaust Cyclone V ALMs.
+(* ramstyle = "MLAB" *) logic [15:0] road_ram [0:4095];
+`else
 logic [15:0] road_ram [0:4095];
+`endif
 
 // CPU port — byte-enable write, 1-cycle DTACK
 always_ff @(posedge clk) begin

@@ -13,20 +13,30 @@ module tc0370mso_fbuf (
     input  logic  [7:0] wr_y,
     input  logic  [8:0] wr_x,
     input  logic [12:0] wr_data,
-    // Combinational read port (output stage during active display)
+    // Read port (output stage during active display)
     input  logic  [7:0] rd_y,
     input  logic  [8:0] rd_x,
     output logic [12:0] rd_data
 );
     /* verilator no_inline_module */
+`ifdef QUARTUS
+    // Force M10K BRAM inference.  Combinational reads on a 256×320×13-bit array
+    // (1,064,960 bits) prevent BRAM inference → Quartus tries 1M flip-flops → OOM.
+    // Registered read adds 1-cycle latency; caller pre-advances rd_x by 1 to compensate.
+    (* ramstyle = "M10K" *) logic [12:0] mem [0:255][0:319];
+    always_ff @(posedge clk) begin
+        if (wr_en)
+            mem[wr_y][wr_x] <= wr_data;
+        rd_data <= mem[rd_y][rd_x];
+    end
+`else
     logic [12:0] mem [0:255][0:319];
-
     always_ff @(posedge clk) begin
         if (wr_en)
             mem[wr_y][wr_x] <= wr_data;
     end
-
     assign rd_data = mem[rd_y][rd_x];
+`endif
 endmodule
 
 // =============================================================================
@@ -106,7 +116,14 @@ localparam int V_END   = 256;
 // Step 1 — Sprite RAM (0x2000 × 16-bit dual-port)
 // =============================================================================
 
+`ifdef QUARTUS
+// MLAB supports combinational (asynchronous) reads — matches the scanner FSM
+// where state N sets scan_rd_addr and state N+1 reads scan_rd_data.
+// Avoids synthesizing 131,072 flip-flops which would exhaust Cyclone V ALMs.
+(* ramstyle = "MLAB" *) logic [15:0] spr_ram [0:8191];
+`else
 logic [15:0] spr_ram [0:8191];
+`endif
 
 // CPU write port, byte-enable, 1-cycle DTACK
 always_ff @(posedge clk) begin
@@ -781,7 +798,13 @@ always_comb begin
                 && hpos < 9'(H_END)) begin
     /* verilator lint_on UNSIGNED */
         out_rd_y = vpos;
+`ifdef QUARTUS
+        // BRAM read is registered (1-cycle latency) in synthesis.
+        // Pre-advance rd_x by 1 so the data arrives at the correct pixel clock.
+        out_rd_x = hpos[8:0] + 9'd1;
+`else
         out_rd_x = hpos[8:0];
+`endif
     end else begin
         out_rd_y = 8'd0;
         out_rd_x = 9'd0;
