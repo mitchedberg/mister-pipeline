@@ -106,10 +106,11 @@ always_ff @(posedge clk) begin
 end
 
 // FSM state
-typedef enum logic [1:0] {
-    PV_IDLE = 2'd0,
-    PV_TILE = 2'd1,
-    PV_NEXT = 2'd2
+typedef enum logic [2:0] {
+    PV_IDLE     = 3'd0,
+    PV_TILE     = 3'd1,
+    PV_NEXT     = 3'd2,
+    PV_PREFETCH = 3'd3   // QUARTUS: registered-read pre-fetch cycle before first PV_TILE
 } pv_state_t;
 
 pv_state_t  state;
@@ -123,13 +124,37 @@ assign cur_tile_col = (xscr_tile + bank_off + tx_col) & 6'h3F;
 logic [10:0] tile_idx;
 assign tile_idx = {cur_tile_col, fetch_row};
 
-// Pivot RAM address (valid when state == PV_TILE)
+`ifdef QUARTUS
+// Next tile's column and index (used in PV_NEXT to pre-issue the address for tx_col+1).
+// tx_col is about to be incremented; compute combinationally with tx_col+1 so the
+// registered M10K read has data ready when we enter PV_TILE.
+logic [5:0]  next_cur_tile_col;
+logic [10:0] next_tile_idx;
+assign next_cur_tile_col = (xscr_tile + bank_off + (tx_col + 6'd1)) & 6'h3F;
+assign next_tile_idx     = {next_cur_tile_col, fetch_row};
+`endif
+
+// Pivot RAM address driver:
+// Simulation: combinational from PV_TILE state (async read, 0-cycle latency).
+// QUARTUS: pre-issued one cycle before PV_TILE (registered M10K read, 1-cycle latency).
+//   PV_PREFETCH: drives tile 0 address  → data ready for first PV_TILE
+//   PV_NEXT:     drives tx_col+1 addr   → data ready for subsequent PV_TILE entries
+`ifdef QUARTUS
+always_comb begin
+    unique case (state)
+        PV_PREFETCH: pvt_rd_addr = {tile_idx,      fetch_py};  // pre-fetch tile 0
+        PV_NEXT:     pvt_rd_addr = {next_tile_idx, fetch_py};  // pre-fetch tile tx_col+1
+        default:     pvt_rd_addr = 14'b0;
+    endcase
+end
+`else
 always_comb begin
     if (state == PV_TILE)
         pvt_rd_addr = {tile_idx, fetch_py};
     else
         pvt_rd_addr = 14'b0;
 end
+`endif
 
 // Line buffer 320 × 8-bit
 logic [7:0] linebuf [0:319];
@@ -184,11 +209,25 @@ always_ff @(posedge clk) begin
             PV_IDLE: begin
                 if (hblank_rise) begin
                     tx_col <= 6'b0;
+`ifdef QUARTUS
+                    state  <= PV_PREFETCH;  // registered read: pre-fetch tile 0 before PV_TILE
+`else
                     state  <= PV_TILE;
+`endif
                 end
             end
+
+            // ─── [QUARTUS only] Pre-fetch first tile ────────────────────────
+            // pvt_rd_addr = {tile_idx(tx_col=0), fetch_py} driven combinationally above.
+            // Registered M10K read fires at this clock edge → pvt_q valid in PV_TILE.
+            // Simulation: this state is never entered (PV_IDLE goes directly to PV_TILE).
+            PV_PREFETCH: begin
+                state <= PV_TILE;
+            end
+
             PV_TILE: begin
-                // pvt_q is async from pivot RAM.
+                // QUARTUS: pvt_q is registered data from previous cycle (PV_PREFETCH or PV_NEXT).
+                // Simulation: pvt_q is async (combinational) from pvt_rd_addr set in this state.
                 // Charlayout nibble decode: pvt_q = {b3,b2,b1,b0}
                 //   px0=pvt_q[23:20]  px1=pvt_q[19:16]
                 //   px2=pvt_q[31:28]  px3=pvt_q[27:24]
@@ -206,6 +245,8 @@ always_ff @(posedge clk) begin
                 state <= PV_NEXT;
             end
             PV_NEXT: begin
+                // QUARTUS: pvt_rd_addr = next_tile_idx (pre-fetch for tx_col+1),
+                // driven combinationally from PV_NEXT above.
                 if (tx_col == 6'd39)
                     state <= PV_IDLE;
                 else begin

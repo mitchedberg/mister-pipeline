@@ -194,12 +194,13 @@ end
 // FSM states
 // =============================================================================
 typedef enum logic [2:0] {
-    BG_IDLE  = 3'd0,
-    BG_ATTR  = 3'd1,
-    BG_CODE  = 3'd2,
-    BG_GFX0  = 3'd3,
-    BG_GFX1  = 3'd4,
-    BG_WRITE = 3'd5
+    BG_IDLE     = 3'd0,
+    BG_ATTR     = 3'd1,
+    BG_CODE     = 3'd2,
+    BG_GFX0     = 3'd3,
+    BG_GFX1     = 3'd4,
+    BG_WRITE    = 3'd5,
+    BG_PREFETCH = 3'd6   // QUARTUS: registered-read pre-fetch cycle before BG_ATTR
 } bg_state_t;
 
 bg_state_t  state;
@@ -285,6 +286,41 @@ always_comb begin
     next_zoom_acc_fp = run_zoom_acc_fp + {6'b0, step16};
 end
 
+`ifdef QUARTUS
+// Next tile's attr address: computed from next_zoom_acc_fp during BG_WRITE.
+// Pre-issued from BG_WRITE so that the registered M10K read has attr data
+// ready when BG_ATTR begins (tiles 2–21).
+logic [12:0] pf_attr_addr_next_c;
+always_comb begin
+    logic [11:0] tileword_base;
+    logic [12:0] base_addr;
+    logic [5:0]  next_map_tx;
+    next_map_tx   = next_zoom_acc_fp[17:12] & (run_extend ? 6'h3F : 6'h1F);
+    if (run_extend)
+        tileword_base = {map_ty, next_map_tx, 1'b0};
+    else
+        tileword_base = {1'b0, map_ty, next_map_tx[4:0], 1'b0};
+    base_addr = {1'b0, tileword_base} + (run_alt ? 13'h1000 : 13'h0000);
+    pf_attr_addr_next_c = base_addr;
+end
+`endif
+
+// pf_rd_addr mux:
+// Simulation (async pf_q):  address driven in the state that CONSUMES the data.
+// QUARTUS (registered pf_q): address pre-issued one cycle before the consuming state.
+//   BG_PREFETCH → BG_ATTR : BG_PREFETCH drives pf_attr_addr_c    → BG_ATTR reads pf_q
+//   BG_ATTR     → BG_CODE : BG_ATTR drives pf_code_addr_c         → BG_CODE reads pf_q
+//   BG_WRITE    → BG_ATTR : BG_WRITE drives pf_attr_addr_next_c   → BG_ATTR reads pf_q
+`ifdef QUARTUS
+always_comb begin
+    unique case (state)
+        BG_PREFETCH: pf_rd_addr = pf_attr_addr_c;       // pre-fetch attr (first tile)
+        BG_ATTR:     pf_rd_addr = pf_code_addr_c;       // pre-fetch code while latching attr
+        BG_WRITE:    pf_rd_addr = pf_attr_addr_next_c;  // pre-fetch attr for next tile
+        default:     pf_rd_addr = 13'b0;
+    endcase
+end
+`else
 always_comb begin
     unique case (state)
         BG_ATTR:  pf_rd_addr = pf_attr_addr_c;
@@ -292,6 +328,7 @@ always_comb begin
         default:  pf_rd_addr = 13'b0;
     endcase
 end
+`endif
 
 // =============================================================================
 // Combinational: attribute decode (from pf_q in BG_ATTR)
@@ -435,12 +472,25 @@ always_ff @(posedge clk) begin
                     // Latch palette addition: section1 §9.10 raw value = palette_offset * 16,
                     // so palette_offset = raw >> 4. Take low 9 bits for 9-bit palette wrap.
                     run_pal_add_lines <= ls_pal_add[12:4];  // bits[12:4] = (raw/16) & 0x1FF
+`ifdef QUARTUS
+                    state              <= BG_PREFETCH;  // registered read: pre-fetch before BG_ATTR
+`else
                     state              <= BG_ATTR;
+`endif
                 end
             end
 
+            // ─── [QUARTUS only] Pre-fetch attr data for first tile ────────────
+            // pf_rd_addr = pf_attr_addr_c is driven combinationally above.
+            // Registered M10K read fires at this clock edge → attr data available in BG_ATTR.
+            // Simulation: this state is never entered (BG_IDLE goes directly to BG_ATTR).
+            BG_PREFETCH: begin
+                state <= BG_ATTR;
+            end
+
             // ─── Latch attribute word ────────────────────────────────────────
-            // pf_rd_addr = pf_attr_addr_c (combinational → pf_q = attr word).
+            // QUARTUS: pf_q = registered attr data from previous cycle (BG_PREFETCH or BG_WRITE).
+            // Simulation: pf_rd_addr = pf_attr_addr_c (async) → pf_q = attr word this cycle.
             BG_ATTR: begin
                 tile_palette_r  <= attr_palette_c;
                 tile_blend_r    <= attr_blend_c;
@@ -451,7 +501,8 @@ always_ff @(posedge clk) begin
             end
 
             // ─── Latch tile code; compute GFX ROM addresses ──────────────────
-            // pf_rd_addr = pf_code_addr_c → pf_q = tile code word.
+            // QUARTUS: pf_q = registered code data (address pre-issued in BG_ATTR).
+            // Simulation: pf_rd_addr = pf_code_addr_c (async) → pf_q = code word.
             // tile_flipy_r is freshly latched in BG_ATTR, stable here.
             // Compute GFX addresses from pf_q (raw tile code) since tile_code_r
             // won't hold pf_q until after this clock edge.

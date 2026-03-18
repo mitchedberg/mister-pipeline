@@ -499,7 +499,7 @@ assign char_q_w = {char_ram[{char_rd_addr_w, 2'd3}],
 //   We use cpu_addr[13:1] = 13 bits for the PF word offset.
 // =============================================================================
 `ifdef QUARTUS
-(* ramstyle = "MLAB" *) logic [15:0] pf_ram [0:3][0:6143];    // 0x1800 = 6144 words per PF
+(* ramstyle = "M10K" *) logic [15:0] pf_ram [0:3][0:6143];    // 0x1800 = 6144 words per PF
 `else
 logic [15:0] pf_ram [0:3][0:6143];    // 0x1800 = 6144 words per PF
 `endif
@@ -517,6 +517,18 @@ logic [15:0] pf_cpu_rdata [0:3];
 genvar gi;
 generate
     for (gi = 0; gi < 4; gi++) begin : gen_pf_ram
+`ifdef QUARTUS
+        // M10K TDP port A: CPU write + unconditional read at same address.
+        // Merged into a single always_ff for reliable M10K TDP inference.
+        // (Separate write/read blocks are seen as two ports by Quartus, preventing TDP.)
+        always_ff @(posedge clk) begin
+            if (cs_pf[gi] && !cpu_rw) begin
+                if (cpu_be[1]) pf_ram[gi][pf_cpu_addr[gi]][15:8] <= cpu_din[15:8];
+                if (cpu_be[0]) pf_ram[gi][pf_cpu_addr[gi]][ 7:0] <= cpu_din[ 7:0];
+            end
+            pf_cpu_rdata[gi] <= pf_ram[gi][pf_cpu_addr[gi]];
+        end
+`else
         // CPU write
         always_ff @(posedge clk) begin
             if (cs_pf[gi] && !cpu_rw) begin
@@ -531,15 +543,23 @@ generate
             else if (cs_pf[gi] && cpu_rw)
                 pf_cpu_rdata[gi] <= pf_ram[gi][pf_cpu_addr[gi]];
         end
+`endif
     end
 endgenerate
 
-// Async read ports for tc0630fdp_bg submodules
+// BG read ports — M10K TDP port B (registered) under QUARTUS, async in simulation.
+// Under QUARTUS: registered read eliminates the async mux-tree elaboration OOM
+// (each 6144×16 async assign expands to ~98K nodes; 4 planes × this = ~393K nodes).
 logic [12:0] pf_rd_addr_w [0:3];
 logic [15:0] pf_q_w [0:3];
 generate
     for (gi = 0; gi < 4; gi++) begin : gen_pf_rd
+`ifdef QUARTUS
+        always_ff @(posedge clk)
+            pf_q_w[gi] <= pf_ram[gi][pf_rd_addr_w[gi]];
+`else
         assign pf_q_w[gi] = pf_ram[gi][pf_rd_addr_w[gi]];
+`endif
     end
 endgenerate
 
@@ -550,7 +570,7 @@ endgenerate
 // Dual access: CPU read/write via cs_spr; sprite scanner via spr_scan_addr
 // =============================================================================
 `ifdef QUARTUS
-(* ramstyle = "MLAB" *) logic [15:0] spr_ram [0:32767];
+(* ramstyle = "M10K" *) logic [15:0] spr_ram [0:32767];
 `else
 logic [15:0] spr_ram [0:32767];
 `endif
@@ -558,39 +578,46 @@ logic [15:0] spr_ram [0:32767];
 logic [14:0] spr_cpu_addr;
 assign spr_cpu_addr = cpu_addr[15:1];
 
+logic [15:0] spr_cpu_rdata;
+logic [14:0] scan_spr_addr;
+logic [15:0] scan_spr_data;
+
+`ifdef QUARTUS
+// M10K TDP: port A = CPU write + unconditional read (same addr); port B = scanner read.
+// Merged write+read for port A ensures reliable TDP inference.
+// Scanner reads in the state AFTER issuing the address (1-cycle pipeline), which
+// matches registered read latency exactly — no FSM changes needed.
 always_ff @(posedge clk) begin
-    // CPU write
     if (cs_spr && !cpu_rw) begin
         if (cpu_be[1]) spr_ram[spr_cpu_addr][15:8] <= cpu_din[15:8];
         if (cpu_be[0]) spr_ram[spr_cpu_addr][ 7:0] <= cpu_din[ 7:0];
     end
-`ifndef QUARTUS
+    spr_cpu_rdata <= spr_ram[spr_cpu_addr];  // port A unconditional read
+end
+always_ff @(posedge clk)  // M10K TDP port B
+    scan_spr_data <= spr_ram[scan_spr_addr];
+`else
+// Simulation path (unchanged).
+always_ff @(posedge clk) begin
+    if (cs_spr && !cpu_rw) begin
+        if (cpu_be[1]) spr_ram[spr_cpu_addr][15:8] <= cpu_din[15:8];
+        if (cpu_be[0]) spr_ram[spr_cpu_addr][ 7:0] <= cpu_din[ 7:0];
+    end
     // Testbench direct write port (simulation only).
     // Excluded from FPGA build: in synthesis spr_wr_en is tied to 0 by the
     // parent, but Quartus's BRAM inference engine sees the structural two-write-port
     // pattern before constant propagation and refuses to infer MLAB.
     if (spr_wr_en) spr_ram[spr_wr_addr] <= spr_wr_data;
-`endif
 end
-
-logic [15:0] spr_cpu_rdata;
 always_ff @(posedge clk) begin
     if (!rst_n)
         spr_cpu_rdata <= 16'b0;
     else if (cs_spr && cpu_rw)
         spr_cpu_rdata <= spr_ram[spr_cpu_addr];
 end
-
-// Sprite scanner read port (combinational)
-// The scanner FSM issues an address and reads data in the NEXT state (1-cycle
-// latency from address-issue to data-read), which matches the scanner's design.
-// A registered read would require the FSM to wait 2 cycles (addr issued at N →
-// data available at N+2), but the scanner only waits 1 cycle (addr at N →
-// read at N+1).  Combinational read gives the correct 0-cycle read latency so
-// the overall addr→read pipeline is 1 cycle as intended.
-logic [14:0] scan_spr_addr;
-logic [15:0] scan_spr_data;
+// Sprite scanner async read (simulation only — 32K×16 async assign OOMs quartus_map)
 assign scan_spr_data = spr_ram[scan_spr_addr];
+`endif
 
 // =============================================================================
 // Pivot RAM (16384 × 32-bit = 64KB) — Step 16
@@ -605,7 +632,7 @@ assign scan_spr_data = spr_ram[scan_spr_addr];
 // Testbench write port: pvt_wr_addr[13:0] = 32-bit word address (14 bits, 0..16383).
 // =============================================================================
 `ifdef QUARTUS
-(* ramstyle = "MLAB" *) logic [31:0] pivot_ram [0:16383];
+(* ramstyle = "M10K" *) logic [31:0] pivot_ram [0:16383];
 `else
 logic [31:0] pivot_ram [0:16383];
 `endif
@@ -618,6 +645,16 @@ logic        pvt_cpu_half;
 assign pvt_cpu_waddr = cpu_addr[15:2];  // 14-bit 32-bit word address
 assign pvt_cpu_half  = cpu_addr[1];     // 0=lower half, 1=upper half
 
+logic [15:0] pvt_cpu_rdata;
+logic [13:0] pvt_engine_rd_addr;
+logic [31:0] pvt_engine_q;
+
+`ifdef QUARTUS
+// M10K TDP: port A = CPU write + unconditional 32-bit read (same addr);
+// port B = engine registered read.
+// pvt_cpu_half_r: registered half-select aligns with the 1-cycle read latency.
+logic [31:0] pvt_port_a_q;    // registered 32-bit output from port A
+logic        pvt_cpu_half_r;  // registered half-select
 always_ff @(posedge clk) begin
     if (cs_pivot && !cpu_rw) begin
         if (!pvt_cpu_half) begin
@@ -630,13 +667,30 @@ always_ff @(posedge clk) begin
             if (cpu_be[0]) pivot_ram[pvt_cpu_waddr][23:16] <= cpu_din[ 7:0];
         end
     end
-`ifndef QUARTUS
+    pvt_port_a_q   <= pivot_ram[pvt_cpu_waddr];  // port A unconditional 32-bit read
+    pvt_cpu_half_r <= pvt_cpu_half;
+end
+assign pvt_cpu_rdata = pvt_cpu_half_r ? pvt_port_a_q[31:16] : pvt_port_a_q[15:0];
+
+always_ff @(posedge clk)  // M10K TDP port B: engine registered read
+    pvt_engine_q <= pivot_ram[pvt_engine_rd_addr];
+`else
+// Simulation path (unchanged).
+always_ff @(posedge clk) begin
+    if (cs_pivot && !cpu_rw) begin
+        if (!pvt_cpu_half) begin
+            // Lower half: write to bits[15:0]
+            if (cpu_be[1]) pivot_ram[pvt_cpu_waddr][15:8] <= cpu_din[15:8];
+            if (cpu_be[0]) pivot_ram[pvt_cpu_waddr][ 7:0] <= cpu_din[ 7:0];
+        end else begin
+            // Upper half: write to bits[31:16]
+            if (cpu_be[1]) pivot_ram[pvt_cpu_waddr][31:24] <= cpu_din[15:8];
+            if (cpu_be[0]) pivot_ram[pvt_cpu_waddr][23:16] <= cpu_din[ 7:0];
+        end
+    end
     // Testbench direct write port (simulation only — same reason as spr_ram above)
     if (pvt_wr_en) pivot_ram[pvt_wr_addr] <= pvt_wr_data;
-`endif
 end
-
-logic [15:0] pvt_cpu_rdata;
 always_ff @(posedge clk) begin
     if (!rst_n)
         pvt_cpu_rdata <= 16'b0;
@@ -647,11 +701,9 @@ always_ff @(posedge clk) begin
             pvt_cpu_rdata <= pivot_ram[pvt_cpu_waddr][31:16];
     end
 end
-
-// Engine async read port (32-bit)
-logic [13:0] pvt_engine_rd_addr;
-logic [31:0] pvt_engine_q;
+// Engine async read port (simulation only — 16K×32 async assign OOMs quartus_map)
 assign pvt_engine_q = pivot_ram[pvt_engine_rd_addr];
+`endif
 
 // =============================================================================
 // Sprite count BRAM (232 × 7-bit) — Step 8
