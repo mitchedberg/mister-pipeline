@@ -12,15 +12,15 @@
   
   <rom index="0" zip="racingb.zip" type="merged" md5="00000000000000000000000000000000">
     
-    <part name="c84-23.ic19" crc="00000000" offset="0x000000" length="0x020000" />
-    <part name="c84-22.ic7" crc="00000000" offset="0x020000" length="0x020000" />
-    <part name="c84-25.ic18" crc="00000000" offset="0x040000" length="0x020000" />
-    <part name="c84-24.ic6" crc="00000000" offset="0x060000" length="0x020000" />
+    <part name="c84-23.ic19" crc="119a8d3b" offset="0x000000" length="0x020000" />
+    <part name="c84-22.ic7" crc="1f095692" offset="0x020000" length="0x020000" />
+    <part name="c84-25.ic18" crc="37077fc6" offset="0x040000" length="0x020000" />
+    <part name="c84-24.ic6" crc="4ca1d1c2" offset="0x060000" length="0x020000" />
     
-    <part name="c84-27.ic35" crc="00000000" offset="0x080000" length="0x020000" />
-    <part name="c84-26.ic35" crc="00000000" offset="0x0A0000" length="0x020000" />
+    <part name="c84-27.ic35" crc="24778f40" offset="0x080000" length="0x020000" />
+    <part name="c84-26.ic35" crc="2b99258a" offset="0x0A0000" length="0x020000" />
     
-    <part name="c84-28.ic32" crc="00000000" offset="0x0C0000" length="0x020000" />
+    <part name="c84-28.ic32" crc="9322106e" offset="0x0C0000" length="0x020000" />
   </rom>
 
   
@@ -31,15 +31,15 @@
 
   
   <rom index="2" zip="racingb.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="c84-08.ic25" crc="00000000" offset="0x000000" length="0x100000" />
-    <part name="c84-07.ic33" crc="00000000" offset="0x100000" length="0x100000" />
-    <part name="c84-06.ic23" crc="00000000" offset="0x200000" length="0x100000" />
-    <part name="c84-05.ic31" crc="00000000" offset="0x300000" length="0x100000" />
+    <part name="c84-08.ic25" crc="56e8fd55" offset="0x000000" length="0x100000" />
+    <part name="c84-07.ic33" crc="6117c19b" offset="0x100000" length="0x100000" />
+    <part name="c84-06.ic23" crc="b1b0146c" offset="0x200000" length="0x100000" />
+    <part name="c84-05.ic31" crc="8837bb4e" offset="0x300000" length="0x100000" />
   </rom>
 
   
   <rom index="3" zip="racingb.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="c84-09.ic28" crc="00000000" offset="0x000000" length="0x080000" />
+    <part name="c84-09.ic28" crc="83ee0e8d" offset="0x000000" length="0x080000" />
   </rom>
 
   
@@ -49,9 +49,9 @@
 
   
   <rom index="5" zip="racingb.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="c84-01.ic42" crc="00000000" offset="0x000000" length="0x100000" />
-    <part name="c84-02.ic43" crc="00000000" offset="0x100000" length="0x080000" />
-    <part name="c84-03.ic44" crc="00000000" offset="0x180000" length="0x080000" />
+    <part name="c84-01.ic42" crc="98d9771e" offset="0x000000" length="0x100000" />
+    <part name="c84-02.ic43" crc="aae43c87" offset="0x100000" length="0x080000" />
+    <part name="c84-03.ic44" crc="34dc486b" offset="0x180000" length="0x080000" />
   </rom>
 
   

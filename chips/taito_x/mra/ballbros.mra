@@ -31,13 +31,13 @@
   <rom index="0" zip="ballbros.zip" type="merged" md5="00000000000000000000000000000000">
     <part name="e07-09.ic52" crc="00000000" offset="0x000000" length="0x040000"/>
     <part name="e07-08.ic51" crc="00000000" offset="0x040000" length="0x040000"/>
-    <part name="e07-10.ic28" crc="00000000" offset="0x080000" length="0x010000"/>
+    <part name="e07-10.ic28" crc="d1c515af" offset="0x080000" length="0x010000"/>
   </rom>
 
   <!-- Sprite/Tile GFX ROM (X1-001A) -->
   <rom index="1" zip="ballbros.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="e07-01.ic14" crc="00000000" offset="0x000000" length="0x080000"/>
-    <part name="e07-02.ic15" crc="00000000" offset="0x080000" length="0x080000"/>
+    <part name="e07-01.ic14" crc="92111f96" offset="0x000000" length="0x080000"/>
+    <part name="e07-02.ic15" crc="ca0ac419" offset="0x080000" length="0x080000"/>
   </rom>
 
   <rom index="0xFE">

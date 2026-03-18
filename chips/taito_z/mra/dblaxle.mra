@@ -13,15 +13,15 @@
   
   <rom index="0" zip="dblaxle.zip" type="merged" md5="00000000000000000000000000000000">
     
-    <part name="c78-31.ic19" crc="00000000" offset="0x000000" length="0x020000" />
-    <part name="c78-32.ic7" crc="00000000" offset="0x020000" length="0x020000" />
-    <part name="c78-29.ic18" crc="00000000" offset="0x040000" length="0x020000" />
-    <part name="c78-30.ic6" crc="00000000" offset="0x060000" length="0x020000" />
+    <part name="c78-31.ic19" crc="a6f0c631" offset="0x000000" length="0x020000" />
+    <part name="c78-32.ic7" crc="ef24e83b" offset="0x020000" length="0x020000" />
+    <part name="c78-29.ic18" crc="8b0440f4" offset="0x040000" length="0x020000" />
+    <part name="c78-30.ic6" crc="2bb91763" offset="0x060000" length="0x020000" />
     
-    <part name="c78-33.ic35" crc="00000000" offset="0x080000" length="0x020000" />
-    <part name="c78-34.ic35" crc="00000000" offset="0x0A0000" length="0x020000" />
+    <part name="c78-33.ic35" crc="026aac18" offset="0x080000" length="0x020000" />
+    <part name="c78-34.ic35" crc="67ce23e8" offset="0x0A0000" length="0x020000" />
     
-    <part name="c78-35.ic32" crc="00000000" offset="0x0C0000" length="0x020000" />
+    <part name="c78-35.ic32" crc="f2186943" offset="0x0C0000" length="0x020000" />
   </rom>
 
   
@@ -34,16 +34,16 @@
   
   
   <rom index="2" zip="dblaxle.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="c78-08.ic25" crc="00000000" offset="0x000000" length="0x100000" />
-    <part name="c78-07.ic33" crc="00000000" offset="0x100000" length="0x100000" />
-    <part name="c78-06.ic23" crc="00000000" offset="0x200000" length="0x100000" />
-    <part name="c78-05.ic31" crc="00000000" offset="0x300000" length="0x100000" />
+    <part name="c78-08.ic25" crc="6c725211" offset="0x000000" length="0x100000" />
+    <part name="c78-07.ic33" crc="9da00d5b" offset="0x100000" length="0x100000" />
+    <part name="c78-06.ic23" crc="8309e91b" offset="0x200000" length="0x100000" />
+    <part name="c78-05.ic31" crc="90001f68" offset="0x300000" length="0x100000" />
   </rom>
 
   
   
   <rom index="3" zip="dblaxle.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="c78-09.ic28" crc="00000000" offset="0x000000" length="0x080000" />
+    <part name="c78-09.ic28" crc="44b1897c" offset="0x000000" length="0x080000" />
   </rom>
 
   
@@ -56,10 +56,10 @@
   
   <rom index="5" zip="dblaxle.zip" type="merged" md5="00000000000000000000000000000000">
     
-    <part name="c78-01.ic42" crc="00000000" offset="0x000000" length="0x100000" />
-    <part name="c78-02.ic43" crc="00000000" offset="0x100000" length="0x080000" />
+    <part name="c78-01.ic42" crc="b0267404" offset="0x000000" length="0x100000" />
+    <part name="c78-02.ic43" crc="7db3d4a3" offset="0x100000" length="0x080000" />
     
-    <part name="c78-03.ic44" crc="00000000" offset="0x180000" length="0x080000" />
+    <part name="c78-03.ic44" crc="0dbde6f5" offset="0x180000" length="0x080000" />
   </rom>
 
   

@@ -19,9 +19,9 @@
 
   
   <rom index="1" zip="gigandes.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="east_04.ic14" crc="00000000" offset="0x000000" length="0x080000" />
-    <part name="east_05.ic15" crc="00000000" offset="0x080000" length="0x080000" />
-    <part name="east_06.ic16" crc="00000000" offset="0x100000" length="0x080000" />
+    <part name="east_04.ic14" crc="75eece28" offset="0x000000" length="0x080000" />
+    <part name="east_05.ic15" crc="b179a76a" offset="0x080000" length="0x080000" />
+    <part name="east_06.ic16" crc="5c5e6898" offset="0x100000" length="0x080000" />
   </rom>
 
   <rom index="0xFE">

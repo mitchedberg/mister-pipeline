@@ -30,7 +30,7 @@
   <rom index="0" zip="kageki.zip" type="merged" md5="00000000000000000000000000000000">
     <part name="a71-12.ic52" crc="00000000" offset="0x000000" length="0x040000"/>
     <part name="a71-11.ic51" crc="00000000" offset="0x040000" length="0x040000"/>
-    <part name="a71-13.ic28" crc="00000000" offset="0x080000" length="0x010000"/>
+    <part name="a71-13.ic28" crc="dc4b025f" offset="0x080000" length="0x010000"/>
   </rom>
 
   <!-- Sprite/Tile GFX ROM (X1-001A) -->

@@ -22,8 +22,8 @@
 
   
   <rom index="2" zip="crimec.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="crimec.c11" crc="00000000" offset="0x000000" length="0x080000" />
-    <part name="crimec.c12" crc="00000000" offset="0x080000" length="0x080000" />
+    <part name="crimec.c11" crc="2a5d4a26" offset="0x000000" length="0x080000" />
+    <part name="crimec.c12" crc="a19e373a" offset="0x080000" length="0x080000" />
   </rom>
 
   

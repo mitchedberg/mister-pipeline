@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <misterromdescription>
   <name>Elevator Action Returns</name>
   <setname>elvactr</setname>
@@ -7,17 +7,17 @@
   <year>1994</year>
   <manufacturer>Taito</manufacturer>
   <category>Arcade</category>
-  <buttons names="Button1,Button2,Button3,Start,Coin" default="A,B,X,Y,Start,Select"/>
+  <buttons names="Button1,Button2,Button3,Start,Coin" default="A,B,X,Y,Start,Select" />
   <rom index="0" zip="elvactr.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="elvactr.01" crc="00000000" offset="0x0000000" length="0x00200000"/>
-    <part name="elvactr.03" crc="00000000" offset="0x0200000" length="0x00200000"/>
-    <part name="elvactr.05" crc="00000000" offset="0x0A00000" length="0x00200000"/>
-    <part name="elvactr.07" crc="00000000" offset="0x0E00000" length="0x00200000"/>
-    <part name="elvactr.08" crc="00000000" offset="0x1200000" length="0x00200000"/>
-    <part name="elvactr.09" crc="00000000" offset="0x1400000" length="0x00200000"/>
-    <part name="elvactr.11" crc="00000000" offset="0x1600000" length="0x00400000"/>
-    <part name="elvactr.12" crc="00000000" offset="0x1A00000" length="0x00100000"/>
-    <part name="elvactr.13" crc="00000000" offset="0x1B00000" length="0x00100000"/>
-    <part name="elvactr.14" crc="00000000" offset="0x1C00000" length="0x00080000"/>
+    <part name="elvactr.01" crc="c884ebb5" offset="0x0000000" length="0x00200000" />
+    <part name="elvactr.03" crc="c8e06cfb" offset="0x0200000" length="0x00200000" />
+    <part name="elvactr.05" crc="2ba94726" offset="0x0A00000" length="0x00200000" />
+    <part name="elvactr.07" crc="29c9bd02" offset="0x0E00000" length="0x00200000" />
+    <part name="elvactr.08" crc="5eeee925" offset="0x1200000" length="0x00200000" />
+    <part name="elvactr.09" crc="4c8726e9" offset="0x1400000" length="0x00200000" />
+    <part name="elvactr.11" crc="00000000" offset="0x1600000" length="0x00400000" />
+    <part name="elvactr.12" crc="00000000" offset="0x1A00000" length="0x00100000" />
+    <part name="elvactr.13" crc="00000000" offset="0x1B00000" length="0x00100000" />
+    <part name="elvactr.14" crc="ea5f5a32" offset="0x1C00000" length="0x00080000" />
   </rom>
 </misterromdescription>

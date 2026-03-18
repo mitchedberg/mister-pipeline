@@ -23,8 +23,8 @@
 
   
   <rom index="2" zip="pbobble.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="pb-05.rom" crc="00000000" offset="0x000000" length="0x080000" />
-    <part name="pb-06.rom" crc="00000000" offset="0x080000" length="0x080000" />
+    <part name="pb-05.rom" crc="55f90ea4" offset="0x000000" length="0x080000" />
+    <part name="pb-06.rom" crc="3253aac9" offset="0x080000" length="0x080000" />
   </rom>
 
   
