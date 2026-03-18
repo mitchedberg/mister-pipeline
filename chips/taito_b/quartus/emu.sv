@@ -232,10 +232,6 @@ assign LED_DISK  = 2'd0;
 assign LED_POWER = 2'd0;
 assign BUTTONS   = 2'd0;
 
-// Audio: silence until YM2610 sound module is implemented
-assign AUDIO_L = 16'h0;
-assign AUDIO_R = 16'h0;
-
 // LED: blink during ROM download
 assign LED_USER = ioctl_download;
 
@@ -348,6 +344,21 @@ end
 
 // Pixel clock enable: same rate as CPU clock (8 MHz).
 wire ce_pix = ce_cpu;
+
+// Sound clock enable: 4 MHz (16 MHz / 4).
+// The YM2610 and Z80 both run at 4 MHz on the Taito B hardware.
+// We generate a clock-enable pulse every 4th clk_sys cycle.
+logic [1:0] ce_snd_cnt;
+logic ce_snd;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ce_snd_cnt <= 2'd0;
+        ce_snd     <= 1'b0;
+    end else begin
+        ce_snd_cnt <= ce_snd_cnt + 2'd1;
+        ce_snd     <= (ce_snd_cnt == 2'd3);
+    end
+end
 
 //////////////////////////////////////////////////////////////////
 // Reset
@@ -472,6 +483,11 @@ wire [7:0] core_rgb_r, core_rgb_g, core_rgb_b;
 wire       core_hsync_n, core_vsync_n;
 wire       core_hblank, core_vblank;
 
+// Audio output from core (YM2610 via jt10)
+wire signed [15:0] core_snd_left, core_snd_right;
+assign AUDIO_L = core_snd_left;
+assign AUDIO_R = core_snd_right;
+
 //////////////////////////////////////////////////////////////////
 // fx68k_adapter — MC68000 @ 8 MHz
 //////////////////////////////////////////////////////////////////
@@ -504,12 +520,21 @@ fx68k_adapter u_cpu (
     .cpu_reset_n_out(cpu_reset_n_out)
 );
 
+// Z80 debug bus outputs (all driven internally by T80s inside taito_b)
+wire [15:0] z80_addr_dbg;
+wire  [7:0] z80_din_dbg, z80_dout_dbg;
+wire        z80_rd_n_dbg, z80_wr_n_dbg, z80_mreq_n_dbg, z80_iorq_n_dbg;
+wire        z80_int_n_dbg;
+wire        z80_rom_cs0_n_dbg, z80_rom_cs1_n_dbg, z80_ram_cs_n_dbg;
+wire        z80_rom_a14_dbg, z80_rom_a15_dbg, z80_opx_n_dbg, z80_reset_n_dbg;
+
 taito_b u_taito_b
 (
     .clk_sys    (clk_sys),
     .clk_pix    (ce_pix),
     .clk_pix2x  (1'b1),    // dummy: TC0260DAR ce_double (not used in Taito B)
     .reset_n    (reset_n),
+    .clk_sound  (ce_snd),   // ~4 MHz clock enable for YM2610 + Z80
 
     // ── CPU bus ──────────────────────────────────────────────────────────────
     .cpu_addr    (cpu_addr),
@@ -522,21 +547,26 @@ taito_b u_taito_b
     .cpu_dtack_n (cpu_dtack_n),
     .cpu_ipl_n   (cpu_ipl_n),
 
-    // ── Z80 Sound CPU (stub outputs) ──────────────────────────────────────────
-    .z80_addr    (/* unused */),
-    .z80_din     (/* unused */),
-    .z80_dout    (/* unused */),
-    .z80_rd_n    (/* unused */),
-    .z80_wr_n    (/* unused */),
-    .z80_mreq_n  (/* unused */),
-    .z80_int_n   (/* unused */),
-    .z80_rom_cs0_n (/* unused */),
-    .z80_rom_cs1_n (/* unused */),
-    .z80_ram_cs_n  (/* unused */),
-    .z80_rom_a14   (/* unused */),
-    .z80_rom_a15   (/* unused */),
-    .z80_opx_n     (/* unused */),
-    .z80_reset_n   (/* unused */),
+    // ── Z80 Sound CPU (now internal T80s; ports are debug outputs) ────────────
+    .z80_addr      (z80_addr_dbg),
+    .z80_din       (z80_din_dbg),
+    .z80_dout      (z80_dout_dbg),
+    .z80_rd_n      (z80_rd_n_dbg),
+    .z80_wr_n      (z80_wr_n_dbg),
+    .z80_mreq_n    (z80_mreq_n_dbg),
+    .z80_iorq_n    (z80_iorq_n_dbg),
+    .z80_int_n     (z80_int_n_dbg),
+    .z80_rom_cs0_n (z80_rom_cs0_n_dbg),
+    .z80_rom_cs1_n (z80_rom_cs1_n_dbg),
+    .z80_ram_cs_n  (z80_ram_cs_n_dbg),
+    .z80_rom_a14   (z80_rom_a14_dbg),
+    .z80_rom_a15   (z80_rom_a15_dbg),
+    .z80_opx_n     (z80_opx_n_dbg),
+    .z80_reset_n   (z80_reset_n_dbg),
+
+    // ── Audio output (YM2610 via jt10) ───────────────────────────────────────
+    .snd_left    (core_snd_left),
+    .snd_right   (core_snd_right),
 
     // ── GFX ROM (TC0180VCU) ──────────────────────────────────────────────────
     .gfx_rom_addr (gfx_sdr_addr),
@@ -628,11 +658,16 @@ wire _unused = &{
     direct_video,
     joystick_0[31:11], joystick_1[31:10],
     dsw[2], dsw[3],
-    cpu_reset_n_out,    // CPU RESET instruction output (not used at top level)
-    cpu_sdr_addr,       // CPU ROM address
-    cpu_sdr_data,       // CPU ROM data (will be wired to CP/M bus if needed)
+    cpu_reset_n_out,       // CPU RESET instruction output (not used at top level)
+    cpu_sdr_addr,          // CPU ROM address (TODO: wire to 68K bus)
+    cpu_sdr_data,          // CPU ROM data
     cpu_sdr_req,
-    cpu_sdr_ack
+    cpu_sdr_ack,
+    // Z80 debug bus outputs (informational only)
+    z80_addr_dbg, z80_din_dbg, z80_dout_dbg,
+    z80_rd_n_dbg, z80_wr_n_dbg, z80_mreq_n_dbg, z80_iorq_n_dbg, z80_int_n_dbg,
+    z80_rom_cs0_n_dbg, z80_rom_cs1_n_dbg, z80_ram_cs_n_dbg,
+    z80_rom_a14_dbg, z80_rom_a15_dbg, z80_opx_n_dbg, z80_reset_n_dbg
 };
 /* verilator lint_on UNUSED */
 

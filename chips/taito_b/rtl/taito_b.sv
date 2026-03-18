@@ -84,13 +84,16 @@ module taito_b #(
     output logic [2:0]  cpu_ipl_n,       // interrupt priority level (active low encoded)
 
     // ── Z80 Sound CPU Bus ───────────────────────────────────────────────────
-    input  logic [15:0] z80_addr,
-    input  logic  [7:0] z80_din,         // data from Z80 (write)
-    output logic  [7:0] z80_dout,        // data to Z80 (read) — lower nibble from SYT
-    input  logic        z80_rd_n,
-    input  logic        z80_wr_n,
-    input  logic        z80_mreq_n,
-    output logic        z80_int_n,       // Z80 /INT from TC0140SYT (NMI-like)
+    // Z80 CPU is now instantiated inside taito_b (T80s u_z80).
+    // These ports are outputs for external debug probing only.
+    output logic [15:0] z80_addr,
+    output logic  [7:0] z80_din,         // data driven by Z80 (write to bus)
+    output logic  [7:0] z80_dout,        // data read by Z80 (from peripheral mux)
+    output logic        z80_rd_n,
+    output logic        z80_wr_n,
+    output logic        z80_mreq_n,
+    output logic        z80_iorq_n,      // IORQ (not used by hardware but exported)
+    output logic        z80_int_n,       // YM2610 /IRQ → Z80 /INT
 
     // Z80 decoded outputs (drive Z80 peripheral chip selects directly)
     output logic        z80_rom_cs0_n,   // ROM bank 0/1 CS (A[15:14]=00 or banked even)
@@ -132,6 +135,13 @@ module taito_b #(
     input  logic  [7:0] vpos,            // vertical scanline counter
     input  logic        hsync_n_in,      // hsync from timing generator
     input  logic        vsync_n_in,      // vsync from timing generator
+
+    // ── Sound Clock ─────────────────────────────────────────────────────────
+    input  logic        clk_sound,       // ~4 MHz clock enable for YM2610 / Z80
+
+    // ── Audio Output ─────────────────────────────────────────────────────────
+    output logic signed [15:0] snd_left,
+    output logic signed [15:0] snd_right,
 
     // ── Player Inputs ───────────────────────────────────────────────────────
     // Active-low convention matching Taito B hardware (joy[0]=UP, etc.)
@@ -424,6 +434,23 @@ logic [3:0] syt_mdout;
 // Z80 lower nibble from SYT
 logic [3:0] syt_z80_dout;
 
+// ADPCM data buses: SYT fetches ROM bytes for the YM2610
+logic [7:0] ym_ya_dout;    // ADPCM-A ROM byte from SYT → jt10
+logic [7:0] ym_yb_dout;    // ADPCM-B ROM byte from SYT → jt10
+
+// YM2610 (jt10) ADPCM ROM address outputs → into SYT
+logic [19:0] ym_adpcma_addr;
+logic  [3:0] ym_adpcma_bank;
+logic        ym_adpcma_roe_n;
+logic [23:0] ym_adpcmb_addr;
+logic        ym_adpcmb_roe_n;
+
+// Construct the 24-bit YAA / YBA addresses that TC0140SYT expects:
+// ADPCM-A: 20-bit addr + 4-bit bank → 24-bit: {bank[3:0], addr[19:0]}
+logic [23:0] syt_yaa, syt_yba;
+assign syt_yaa = { ym_adpcma_bank, ym_adpcma_addr };
+assign syt_yba = { 4'b0,           ym_adpcmb_addr[23:4] };  // YM2610 ADPCM-B is 24-bit
+
 TC0140SYT #(
     .ADPCMA_ROM_BASE (ADPCMA_ROM_BASE),
     .ADPCMB_ROM_BASE (ADPCMB_ROM_BASE)
@@ -458,19 +485,15 @@ TC0140SYT #(
     .ROMA15  (z80_rom_a15),
     .OPXn    (z80_opx_n),
 
-    // ADPCM ROM via YM2610 address buses
-    // These connect to the YM2610 core (instantiated in HPS wrapper, not here)
-    // The HPS wrapper must wire YAOEn/YBOEn/YAA/YBA from YM2610 to these ports.
-    // For now these are promoted to top-level ports — see ym2610_* in future.
-    // Since YM2610 is not part of this module, tie them off (ADPCM silent):
-    .YAOEn   (1'b1),                // tie inactive — no ADPCM-A fetches
-    .YBOEn   (1'b1),                // tie inactive — no ADPCM-B fetches
-    .YAA     (24'b0),
-    .YBA     (24'b0),
-    /* verilator lint_off PINCONNECTEMPTY */
-    .YAD     (),                    // ADPCM-A data to YM2610 — leave unconnected
-    .YBD     (),                    // ADPCM-B data to YM2610 — leave unconnected
+    // ADPCM ROM: YM2610 drives OEn + address, SYT fetches bytes from SDRAM
+    .YAOEn   (ym_adpcma_roe_n),    // ADPCM-A output-enable from jt10
+    .YBOEn   (ym_adpcmb_roe_n),    // ADPCM-B output-enable from jt10
+    .YAA     (syt_yaa),             // ADPCM-A address (24-bit to SYT)
+    .YBA     (ym_adpcmb_addr),      // ADPCM-B address (24-bit to SYT)
+    .YAD     (ym_ya_dout),          // ADPCM-A data byte → jt10 adpcma_data
+    .YBD     (ym_yb_dout),          // ADPCM-B data byte → jt10 adpcmb_data
 
+    /* verilator lint_off PINCONNECTEMPTY */
     // Unused peripheral outputs
     .CSAn    (),
     .CSBn    (),
@@ -485,10 +508,129 @@ TC0140SYT #(
     .sdr_ack     (sdr_ack)
 );
 
-// Z80 data bus: lower nibble from SYT, upper nibble from Z80 itself
-// Full byte reconstruction: {4'b0, syt_z80_dout} — SYT only drives [3:0]
-assign z80_dout    = {4'b0, syt_z80_dout};
-assign z80_int_n   = 1'b1;   // SYT NMI/INT not implemented (nmi_enabled tracked internally)
+// =============================================================================
+// YM2610 (jt10) — FM synthesis + ADPCM-A + ADPCM-B
+// =============================================================================
+// jt10 is the YM2610 wrapper in the JT12 library.
+// Clock: clk_sound (~4 MHz, provided by emu.sv clock divider).
+// Bus: Z80 drives addr[1:0] + din + cs_n + wr_n; jt10 outputs dout.
+// ADPCM ROM: addresses sent to TC0140SYT; byte data returned via YAD/YBD.
+// Audio: snd_left/snd_right are 16-bit signed PCM at the jt10 sample rate.
+//
+// z80_opx_n is the YM2610 chip-select decoded by TC0140SYT.
+// z80_addr[1:0] selects the YM2610 register address port.
+logic [7:0] ym_dout;
+
+/* verilator lint_off PINCONNECTEMPTY */
+jt10 u_ym2610 (
+    .rst          (~z80_reset_n),
+    .clk          (clk_sys),
+    .cen          (clk_sound),
+    .din          (z80_din),
+    .addr         (z80_addr[1:0]),
+    .cs_n         (z80_opx_n),
+    .wr_n         (z80_wr_n),
+
+    .dout         (ym_dout),
+    .irq_n        (z80_int_n),      // YM2610 /IRQ → Z80 /INT
+
+    // ADPCM-A ROM interface (TC0140SYT handles SDRAM fetches)
+    .adpcma_addr  (ym_adpcma_addr),
+    .adpcma_bank  (ym_adpcma_bank),
+    .adpcma_roe_n (ym_adpcma_roe_n),
+    .adpcma_data  (ym_ya_dout),
+
+    // ADPCM-B ROM interface
+    .adpcmb_addr  (ym_adpcmb_addr),
+    .adpcmb_roe_n (ym_adpcmb_roe_n),
+    .adpcmb_data  (ym_yb_dout),
+
+    // Audio output
+    .snd_left     (snd_left),
+    .snd_right    (snd_right),
+    .snd_sample   (),
+
+    // Separated outputs (unused — combined output used)
+    .psg_A        (),
+    .psg_B        (),
+    .psg_C        (),
+    .psg_snd      (),
+    .fm_snd       (),
+
+    // ADPCM-A channel enable: all 6 channels active
+    .ch_enable    (6'h3f)
+);
+/* verilator lint_on PINCONNECTEMPTY */
+
+// =============================================================================
+// Z80 Sound CPU (T80s)
+// =============================================================================
+// The Z80 runs at ~4 MHz (clk_sound clock enable) and accesses:
+//   0x0000–0x7FFF  Z80 ROM (from SDRAM 0x080000; TODO: add Z80 ROM SDRAM channel)
+//   0x8000–0xBFFF  banked ROM (via TC0140SYT ROMCS1n / ROMA14-15)
+//   0xC000–0xDFFF  Z80 work RAM (2KB, internal BRAM — mirrors to fill 8KB)
+//   0xE000–0xE0FF  YM2610 registers (TC0140SYT decodes → z80_opx_n)
+//   0xE200         TC0140SYT comm register (decoded by TC0140SYT itself)
+//
+// TODO: Add a Z80 ROM SDRAM read channel. For now the Z80 ROM path is stubbed
+// (reads return 0xFF = NOP equivalent). The TC0140SYT sound comms will still
+// work once a real Z80 ROM is loaded, so this is a correct-if-silent skeleton.
+//
+// Z80 internal 2KB work RAM (0xC000–0xC7FF, mirrored to 0xDFFF).
+logic [7:0] z80_ram [0:2047];
+logic [7:0] z80_ram_dout;
+
+always_ff @(posedge clk_sys) begin
+    if (!z80_ram_cs_n && !z80_wr_n && clk_sound)
+        z80_ram[z80_addr[10:0]] <= z80_din;
+end
+
+always_ff @(posedge clk_sys) begin
+    if (!z80_ram_cs_n)
+        z80_ram_dout <= z80_ram[z80_addr[10:0]];
+end
+
+// Z80 data input mux:
+//   SYT lower nibble | YM2610 dout | RAM dout | open bus (0xFF)
+logic [7:0] z80_cpu_din;
+always_comb begin
+    if (!z80_opx_n)
+        z80_cpu_din = ym_dout;
+    else if (!z80_ram_cs_n)
+        z80_cpu_din = z80_ram_dout;
+    else
+        z80_cpu_din = {4'hF, syt_z80_dout};  // SYT nibble in lower 4 bits
+end
+
+// Z80 CPU — T80s (Verilog-synthesised T80)
+logic z80_m1_n, z80_rfsh_n, z80_halt_n, z80_busak_n;
+
+T80s u_z80 (
+    .RESET_n (z80_reset_n),
+    .CLK     (clk_sys),
+    .CEN     (clk_sound),
+    .WAIT_n  (1'b1),               // no wait states
+    .INT_n   (z80_int_n),          // from jt10 irq_n
+    .NMI_n   (1'b1),               // no NMI
+    .BUSRQ_n (1'b1),               // no bus request
+    .OUT0    (1'b0),
+    .DI      (z80_cpu_din),
+    .M1_n    (z80_m1_n),
+    .MREQ_n  (z80_mreq_n),
+    .IORQ_n  (z80_iorq_n),
+    .RD_n    (z80_rd_n),
+    .WR_n    (z80_wr_n),
+    .RFSH_n  (z80_rfsh_n),
+    .HALT_n  (z80_halt_n),
+    .BUSAK_n (z80_busak_n),
+    .A       (z80_addr),
+    .DOUT    (z80_din)
+);
+
+// z80_dout is what the Z80 reads (the input mux above feeds DI on T80s).
+// The taito_b port z80_dout is legacy — it was the output before the Z80
+// was instantiated internally. We keep it driven for external debug probing.
+assign z80_dout    = z80_cpu_din;
 
 // =============================================================================
 // Work RAM — synchronous block RAM (68000 general purpose)
@@ -655,7 +797,8 @@ assign vsync_n  = vsync_n_in;
 // =============================================================================
 /* verilator lint_off UNUSED */
 logic _unused;
-assign _unused = ^{vcu_pixel_valid, z80_din[7:4], pal_ram_addr[13]};
+assign _unused = ^{vcu_pixel_valid, pal_ram_addr[13],
+                   z80_rfsh_n, z80_halt_n, z80_busak_n, z80_m1_n};
 /* verilator lint_on UNUSED */
 
 endmodule
