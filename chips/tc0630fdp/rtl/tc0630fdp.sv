@@ -498,9 +498,7 @@ assign char_q_w = {char_ram[{char_rd_addr_w, 2'd3}],
 //   But PF RAM is 0x1800 words → addr[12:0] is sufficient (13 bits: 0..0x17FF)
 //   We use cpu_addr[13:1] = 13 bits for the PF word offset.
 // =============================================================================
-`ifdef QUARTUS
-(* ramstyle = "M10K" *) logic [15:0] pf_ram [0:3][0:6143];    // 0x1800 = 6144 words per PF
-`else
+`ifndef QUARTUS
 logic [15:0] pf_ram [0:3][0:6143];    // 0x1800 = 6144 words per PF
 `endif
 
@@ -514,20 +512,76 @@ assign pf_cpu_addr[3] = cpu_addr[13:1];
 
 logic [15:0] pf_cpu_rdata [0:3];
 
+logic [12:0] pf_rd_addr_w [0:3];
+logic [15:0] pf_q_w [0:3];
+
 genvar gi;
 generate
     for (gi = 0; gi < 4; gi++) begin : gen_pf_ram
 `ifdef QUARTUS
-        // M10K TDP port A: CPU write + unconditional read at same address.
-        // Merged into a single always_ff for reliable M10K TDP inference.
-        // (Separate write/read blocks are seen as two ports by Quartus, preventing TDP.)
-        always_ff @(posedge clk) begin
-            if (cs_pf[gi] && !cpu_rw) begin
-                if (cpu_be[1]) pf_ram[gi][pf_cpu_addr[gi]][15:8] <= cpu_din[15:8];
-                if (cpu_be[0]) pf_ram[gi][pf_cpu_addr[gi]][ 7:0] <= cpu_din[ 7:0];
-            end
-            pf_cpu_rdata[gi] <= pf_ram[gi][pf_cpu_addr[gi]];
-        end
+        // altsyncram DUAL_PORT: CPU read/write path (port A write, port B CPU readback)
+        altsyncram #(
+            .operation_mode                ("DUAL_PORT"),
+            .width_a                       (16), .widthad_a (13), .numwords_a (8192),
+            .width_b                       (16), .widthad_b (13), .numwords_b (8192),
+            .outdata_reg_b                 ("CLOCK1"),
+            .address_reg_b                 ("CLOCK1"),
+            .clock_enable_input_a          ("BYPASS"),
+            .clock_enable_input_b          ("BYPASS"),
+            .clock_enable_output_b         ("BYPASS"),
+            .intended_device_family        ("Cyclone V"),
+            .lpm_type                      ("altsyncram"),
+            .ram_block_type                ("M10K"),
+            .width_byteena_a               (2),
+            .power_up_uninitialized        ("FALSE"),
+            .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+        ) pf_cpu_inst (
+            .clock0         ( clk                      ), .clock1         ( clk                      ),
+            .address_a      ( pf_cpu_addr[gi]          ), .data_a         ( cpu_din                  ),
+            .wren_a         ( cs_pf[gi] & !cpu_rw      ), .byteena_a      ( cpu_be                   ),
+            .address_b      ( pf_cpu_addr[gi]          ), .q_b            ( pf_cpu_rdata[gi]         ),
+            .wren_b         ( 1'b0                     ), .data_b         ( 16'd0                    ),
+            .q_a            (                          ),
+            .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+            .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+            .byteena_b      ( 2'b11                    ),
+            .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+            .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+            .eccstatus      (      ), .rden_a         (       ),
+            .rden_b         ( 1'b1                     )
+        );
+
+        // altsyncram DUAL_PORT: BG engine read path (port A write, port B BG read)
+        altsyncram #(
+            .operation_mode                ("DUAL_PORT"),
+            .width_a                       (16), .widthad_a (13), .numwords_a (8192),
+            .width_b                       (16), .widthad_b (13), .numwords_b (8192),
+            .outdata_reg_b                 ("CLOCK1"),
+            .address_reg_b                 ("CLOCK1"),
+            .clock_enable_input_a          ("BYPASS"),
+            .clock_enable_input_b          ("BYPASS"),
+            .clock_enable_output_b         ("BYPASS"),
+            .intended_device_family        ("Cyclone V"),
+            .lpm_type                      ("altsyncram"),
+            .ram_block_type                ("M10K"),
+            .width_byteena_a               (2),
+            .power_up_uninitialized        ("FALSE"),
+            .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+        ) pf_bg_inst (
+            .clock0         ( clk                      ), .clock1         ( clk                      ),
+            .address_a      ( pf_cpu_addr[gi]          ), .data_a         ( cpu_din                  ),
+            .wren_a         ( cs_pf[gi] & !cpu_rw      ), .byteena_a      ( cpu_be                   ),
+            .address_b      ( pf_rd_addr_w[gi]         ), .q_b            ( pf_q_w[gi]               ),
+            .wren_b         ( 1'b0                     ), .data_b         ( 16'd0                    ),
+            .q_a            (                          ),
+            .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+            .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+            .byteena_b      ( 2'b11                    ),
+            .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+            .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+            .eccstatus      (      ), .rden_a         (       ),
+            .rden_b         ( 1'b1                     )
+        );
 `else
         // CPU write
         always_ff @(posedge clk) begin
@@ -543,21 +597,7 @@ generate
             else if (cs_pf[gi] && cpu_rw)
                 pf_cpu_rdata[gi] <= pf_ram[gi][pf_cpu_addr[gi]];
         end
-`endif
-    end
-endgenerate
-
-// BG read ports — M10K TDP port B (registered) under QUARTUS, async in simulation.
-// Under QUARTUS: registered read eliminates the async mux-tree elaboration OOM
-// (each 6144×16 async assign expands to ~98K nodes; 4 planes × this = ~393K nodes).
-logic [12:0] pf_rd_addr_w [0:3];
-logic [15:0] pf_q_w [0:3];
-generate
-    for (gi = 0; gi < 4; gi++) begin : gen_pf_rd
-`ifdef QUARTUS
-        always_ff @(posedge clk)
-            pf_q_w[gi] <= pf_ram[gi][pf_rd_addr_w[gi]];
-`else
+        // BG read (async)
         assign pf_q_w[gi] = pf_ram[gi][pf_rd_addr_w[gi]];
 `endif
     end
@@ -569,9 +609,7 @@ endgenerate
 // cpu_addr[15:1] = 15-bit word offset within Sprite RAM (0..32767)
 // Dual access: CPU read/write via cs_spr; sprite scanner via spr_scan_addr
 // =============================================================================
-`ifdef QUARTUS
-(* ramstyle = "M10K" *) logic [15:0] spr_ram [0:32767];
-`else
+`ifndef QUARTUS
 logic [15:0] spr_ram [0:32767];
 `endif
 
@@ -583,19 +621,69 @@ logic [14:0] scan_spr_addr;
 logic [15:0] scan_spr_data;
 
 `ifdef QUARTUS
-// M10K TDP: port A = CPU write + unconditional read (same addr); port B = scanner read.
-// Merged write+read for port A ensures reliable TDP inference.
-// Scanner reads in the state AFTER issuing the address (1-cycle pipeline), which
-// matches registered read latency exactly — no FSM changes needed.
-always_ff @(posedge clk) begin
-    if (cs_spr && !cpu_rw) begin
-        if (cpu_be[1]) spr_ram[spr_cpu_addr][15:8] <= cpu_din[15:8];
-        if (cpu_be[0]) spr_ram[spr_cpu_addr][ 7:0] <= cpu_din[ 7:0];
-    end
-    spr_cpu_rdata <= spr_ram[spr_cpu_addr];  // port A unconditional read
-end
-always_ff @(posedge clk)  // M10K TDP port B
-    scan_spr_data <= spr_ram[scan_spr_addr];
+// altsyncram DUAL_PORT: CPU read/write path (port A write, port B CPU readback)
+altsyncram #(
+    .operation_mode                ("DUAL_PORT"),
+    .width_a                       (16), .widthad_a (15), .numwords_a (32768),
+    .width_b                       (16), .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b                 ("CLOCK1"),
+    .address_reg_b                 ("CLOCK1"),
+    .clock_enable_input_a          ("BYPASS"),
+    .clock_enable_input_b          ("BYPASS"),
+    .clock_enable_output_b         ("BYPASS"),
+    .intended_device_family        ("Cyclone V"),
+    .lpm_type                      ("altsyncram"),
+    .ram_block_type                ("M10K"),
+    .width_byteena_a               (2),
+    .power_up_uninitialized        ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) spr_cpu_inst (
+    .clock0         ( clk                  ), .clock1         ( clk                  ),
+    .address_a      ( spr_cpu_addr         ), .data_a         ( cpu_din              ),
+    .wren_a         ( cs_spr & !cpu_rw     ), .byteena_a      ( cpu_be               ),
+    .address_b      ( spr_cpu_addr         ), .q_b            ( spr_cpu_rdata        ),
+    .wren_b         ( 1'b0                 ), .data_b         ( 16'd0                ),
+    .q_a            (                      ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 2'b11                ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                 )
+);
+
+// altsyncram DUAL_PORT: sprite scanner read path (port A write, port B scanner read)
+altsyncram #(
+    .operation_mode                ("DUAL_PORT"),
+    .width_a                       (16), .widthad_a (15), .numwords_a (32768),
+    .width_b                       (16), .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b                 ("CLOCK1"),
+    .address_reg_b                 ("CLOCK1"),
+    .clock_enable_input_a          ("BYPASS"),
+    .clock_enable_input_b          ("BYPASS"),
+    .clock_enable_output_b         ("BYPASS"),
+    .intended_device_family        ("Cyclone V"),
+    .lpm_type                      ("altsyncram"),
+    .ram_block_type                ("M10K"),
+    .width_byteena_a               (2),
+    .power_up_uninitialized        ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) spr_scan_inst (
+    .clock0         ( clk                  ), .clock1         ( clk                  ),
+    .address_a      ( spr_cpu_addr         ), .data_a         ( cpu_din              ),
+    .wren_a         ( cs_spr & !cpu_rw     ), .byteena_a      ( cpu_be               ),
+    .address_b      ( scan_spr_addr        ), .q_b            ( scan_spr_data        ),
+    .wren_b         ( 1'b0                 ), .data_b         ( 16'd0                ),
+    .q_a            (                      ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 2'b11                ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                 )
+);
 `else
 // Simulation path (unchanged).
 always_ff @(posedge clk) begin
@@ -631,9 +719,7 @@ assign scan_spr_data = spr_ram[scan_spr_addr];
 //   Each 32-bit word holds one tile pixel row.
 // Testbench write port: pvt_wr_addr[13:0] = 32-bit word address (14 bits, 0..16383).
 // =============================================================================
-`ifdef QUARTUS
-(* ramstyle = "M10K" *) logic [31:0] pivot_ram [0:16383];
-`else
+`ifndef QUARTUS
 logic [31:0] pivot_ram [0:16383];
 `endif
 
@@ -650,30 +736,86 @@ logic [13:0] pvt_engine_rd_addr;
 logic [31:0] pvt_engine_q;
 
 `ifdef QUARTUS
-// M10K TDP: port A = CPU write + unconditional 32-bit read (same addr);
-// port B = engine registered read.
+// pvt_port_a_q: registered 32-bit output from CPU read port (port B of pivot_cpu_inst)
 // pvt_cpu_half_r: registered half-select aligns with the 1-cycle read latency.
-logic [31:0] pvt_port_a_q;    // registered 32-bit output from port A
+logic [31:0] pvt_port_a_q;    // registered 32-bit output from port B (CPU readback)
 logic        pvt_cpu_half_r;  // registered half-select
-always_ff @(posedge clk) begin
-    if (cs_pivot && !cpu_rw) begin
-        if (!pvt_cpu_half) begin
-            // Lower half: write to bits[15:0]
-            if (cpu_be[1]) pivot_ram[pvt_cpu_waddr][15:8] <= cpu_din[15:8];
-            if (cpu_be[0]) pivot_ram[pvt_cpu_waddr][ 7:0] <= cpu_din[ 7:0];
-        end else begin
-            // Upper half: write to bits[31:16]
-            if (cpu_be[1]) pivot_ram[pvt_cpu_waddr][31:24] <= cpu_din[15:8];
-            if (cpu_be[0]) pivot_ram[pvt_cpu_waddr][23:16] <= cpu_din[ 7:0];
-        end
-    end
-    pvt_port_a_q   <= pivot_ram[pvt_cpu_waddr];  // port A unconditional 32-bit read
+
+// Byte-enable expansion: map 16-bit cpu_be to 4-bit byteena for 32-bit word
+// pvt_cpu_half=0 → write lower 16 bits [15:0]; pvt_cpu_half=1 → upper [31:16]
+logic [3:0] pvt_byteena;
+assign pvt_byteena = { pvt_cpu_half  & cpu_be[1], pvt_cpu_half  & cpu_be[0],
+                      ~pvt_cpu_half  & cpu_be[1], ~pvt_cpu_half  & cpu_be[0] };
+
+// Register pvt_cpu_half so readback aligns with 1-cycle altsyncram latency
+always_ff @(posedge clk)
     pvt_cpu_half_r <= pvt_cpu_half;
-end
+
 assign pvt_cpu_rdata = pvt_cpu_half_r ? pvt_port_a_q[31:16] : pvt_port_a_q[15:0];
 
-always_ff @(posedge clk)  // M10K TDP port B: engine registered read
-    pvt_engine_q <= pivot_ram[pvt_engine_rd_addr];
+// altsyncram DUAL_PORT: CPU read/write path (port A write, port B CPU readback)
+altsyncram #(
+    .operation_mode                ("DUAL_PORT"),
+    .width_a                       (32), .widthad_a (14), .numwords_a (16384),
+    .width_b                       (32), .widthad_b (14), .numwords_b (16384),
+    .outdata_reg_b                 ("CLOCK1"),
+    .address_reg_b                 ("CLOCK1"),
+    .clock_enable_input_a          ("BYPASS"),
+    .clock_enable_input_b          ("BYPASS"),
+    .clock_enable_output_b         ("BYPASS"),
+    .intended_device_family        ("Cyclone V"),
+    .lpm_type                      ("altsyncram"),
+    .ram_block_type                ("M10K"),
+    .width_byteena_a               (4),
+    .power_up_uninitialized        ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) pivot_cpu_inst (
+    .clock0         ( clk                      ), .clock1         ( clk                      ),
+    .address_a      ( pvt_cpu_waddr            ), .data_a         ( {cpu_din, cpu_din}        ),
+    .wren_a         ( cs_pivot & !cpu_rw       ), .byteena_a      ( pvt_byteena              ),
+    .address_b      ( pvt_cpu_waddr            ), .q_b            ( pvt_port_a_q             ),
+    .wren_b         ( 1'b0                     ), .data_b         ( 32'd0                    ),
+    .q_a            (                          ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 4'b1111                  ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                     )
+);
+
+// altsyncram DUAL_PORT: pivot engine read path (port A write, port B engine read)
+altsyncram #(
+    .operation_mode                ("DUAL_PORT"),
+    .width_a                       (32), .widthad_a (14), .numwords_a (16384),
+    .width_b                       (32), .widthad_b (14), .numwords_b (16384),
+    .outdata_reg_b                 ("CLOCK1"),
+    .address_reg_b                 ("CLOCK1"),
+    .clock_enable_input_a          ("BYPASS"),
+    .clock_enable_input_b          ("BYPASS"),
+    .clock_enable_output_b         ("BYPASS"),
+    .intended_device_family        ("Cyclone V"),
+    .lpm_type                      ("altsyncram"),
+    .ram_block_type                ("M10K"),
+    .width_byteena_a               (4),
+    .power_up_uninitialized        ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) pivot_eng_inst (
+    .clock0         ( clk                      ), .clock1         ( clk                      ),
+    .address_a      ( pvt_cpu_waddr            ), .data_a         ( {cpu_din, cpu_din}        ),
+    .wren_a         ( cs_pivot & !cpu_rw       ), .byteena_a      ( pvt_byteena              ),
+    .address_b      ( pvt_engine_rd_addr       ), .q_b            ( pvt_engine_q             ),
+    .wren_b         ( 1'b0                     ), .data_b         ( 32'd0                    ),
+    .q_a            (                          ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 4'b1111                  ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                     )
+);
 `else
 // Simulation path (unchanged).
 always_ff @(posedge clk) begin
@@ -738,12 +880,7 @@ assign scan_scount_rd_data = scount_ram[scan_scount_rd_addr];
 // 72-bit descriptor carries full x_zoom[7:0] and y_zoom[7:0] fields.
 // 14-bit address: {screen_scan[7:0], slot[5:0]}
 // =============================================================================
-`ifdef QUARTUS
-// Force M10K: slist_ram is 14848×72 = 1Mbit — too large for MLAB (would use 37% of
-// device ALMs).  Renderer FSM has a 1-cycle gap (S_ADDR issues addr, S_LATCH reads
-// data), so registered M10K read matches the existing timing.
-(* ramstyle = "M10K" *) logic [71:0] slist_ram [0:14847];  // 232*64 = 14848
-`else
+`ifndef QUARTUS
 logic [71:0] slist_ram [0:14847];  // 232*64 = 14848
 `endif
 
@@ -752,21 +889,49 @@ logic        scan_slist_wr;
 logic [13:0] scan_slist_addr;
 logic [71:0] scan_slist_data;
 
+// Renderer read port
+logic [13:0] rend_slist_rd_addr;
+logic [71:0] rend_slist_rd_data;
+
+`ifdef QUARTUS
+// altsyncram DUAL_PORT: SDP — scanner write (port A), renderer registered read (port B)
+// slist_ram is 14848×72 = 1Mbit; numwords rounded up to 16384 (next power of 2 ≥14848).
+// No byteena needed: scanner always writes full 72-bit words.
+altsyncram #(
+    .operation_mode                ("DUAL_PORT"),
+    .width_a                       (72), .widthad_a (14), .numwords_a (16384),
+    .width_b                       (72), .widthad_b (14), .numwords_b (16384),
+    .outdata_reg_b                 ("CLOCK1"),
+    .address_reg_b                 ("CLOCK1"),
+    .clock_enable_input_a          ("BYPASS"),
+    .clock_enable_input_b          ("BYPASS"),
+    .clock_enable_output_b         ("BYPASS"),
+    .intended_device_family        ("Cyclone V"),
+    .lpm_type                      ("altsyncram"),
+    .ram_block_type                ("M10K"),
+    .power_up_uninitialized        ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) slist_inst (
+    .clock0         ( clk                  ), .clock1         ( clk                  ),
+    .address_a      ( scan_slist_addr      ), .data_a         ( scan_slist_data      ),
+    .wren_a         ( scan_slist_wr        ), .byteena_a      ( 1'b1                 ),
+    .address_b      ( rend_slist_rd_addr   ), .q_b            ( rend_slist_rd_data   ),
+    .wren_b         ( 1'b0                 ), .data_b         ( 72'd0                ),
+    .q_a            (                      ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 1'b1                 ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                 )
+);
+`else
 always_ff @(posedge clk) begin
     if (scan_slist_wr)
         slist_ram[scan_slist_addr] <= scan_slist_data;
 end
-
-// Renderer read port
-logic [13:0] rend_slist_rd_addr;
-logic [71:0] rend_slist_rd_data;
-`ifdef QUARTUS
-// Registered read for M10K BRAM inference (1-cycle latency).
-// Renderer FSM: S_ADDR issues rend_slist_rd_addr → S_LATCH consumes rend_slist_rd_data
-// one cycle later, so registered output arrives exactly when needed.
-always_ff @(posedge clk)
-    rend_slist_rd_data <= slist_ram[rend_slist_rd_addr];
-`else
+// Renderer read port (async in simulation)
 assign rend_slist_rd_data = slist_ram[rend_slist_rd_addr];
 `endif
 
@@ -781,11 +946,26 @@ assign rend_slist_rd_data = slist_ram[rend_slist_rd_addr];
 // =============================================================================
 // Size: 4096 × 32-bit words = 16KB (enough for test tiles; expand as needed)
 localparam int GFX_ROM_WORDS = 4096;
+
+// Async read ports (one per BG instance)
+logic [21:0] bg_gfx_addr [0:3];
+logic [31:0] bg_gfx_data [0:3];
+logic        bg_gfx_rd   [0:3];
+
+// Sprite renderer read port (combinational — same BRAM, 32-bit)
+logic [21:0] spr_gfx_addr;
+logic [31:0] spr_gfx_data;
+
 `ifdef QUARTUS
-(* ramstyle = "MLAB" *) logic [31:0] gfx_rom [0:GFX_ROM_WORDS-1];
+// GFX ROM: real hardware uses SDRAM; stub as 0 for synthesis CI
+generate
+    for (gi = 0; gi < 4; gi++) begin : gen_gfx_rd
+        assign bg_gfx_data[gi] = 32'b0;
+    end
+endgenerate
+assign spr_gfx_data = 32'b0;
 `else
 logic [31:0] gfx_rom [0:GFX_ROM_WORDS-1];
-`endif
 
 // CPU write port
 always_ff @(posedge clk) begin
@@ -796,10 +976,6 @@ always_ff @(posedge clk) begin
 end
 
 // Async read ports (one per BG instance)
-logic [21:0] bg_gfx_addr [0:3];
-logic [31:0] bg_gfx_data [0:3];
-logic        bg_gfx_rd   [0:3];
-
 generate
     for (gi = 0; gi < 4; gi++) begin : gen_gfx_rd
         assign bg_gfx_data[gi] = (bg_gfx_addr[gi] < 22'(GFX_ROM_WORDS))
@@ -808,12 +984,11 @@ generate
     end
 endgenerate
 
-// Sprite renderer read port (combinational — same BRAM, 32-bit)
-logic [21:0] spr_gfx_addr;
-logic [31:0] spr_gfx_data;
+// Sprite renderer read port
 assign spr_gfx_data = (spr_gfx_addr < 22'(GFX_ROM_WORDS))
                       ? gfx_rom[spr_gfx_addr[11:0]]
                       : 32'b0;
+`endif
 
 // =============================================================================
 // CPU read data mux
@@ -1046,11 +1221,76 @@ tc0630fdp_pivot u_pivot (
 // Two async read ports for colmix (src + dst), one testbench write port.
 // Format: bits[15:12]=R(4), bits[11:8]=G(4), bits[7:4]=B(4), bits[3:0]=don't care.
 // =============================================================================
+// Colmix palette read ports
+logic [12:0] colmix_pal_addr_src;
+logic [12:0] colmix_pal_addr_dst;
+logic [15:0] colmix_pal_rdata_src;
+logic [15:0] colmix_pal_rdata_dst;
+
 `ifdef QUARTUS
-(* ramstyle = "M10K" *) logic [15:0] pal_ram [0:8191];
+// altsyncram DUAL_PORT: src read path (port A = testbench write, port B = src read)
+altsyncram #(
+    .operation_mode                ("DUAL_PORT"),
+    .width_a                       (16), .widthad_a (13), .numwords_a (8192),
+    .width_b                       (16), .widthad_b (13), .numwords_b (8192),
+    .outdata_reg_b                 ("CLOCK1"),
+    .address_reg_b                 ("CLOCK1"),
+    .clock_enable_input_a          ("BYPASS"),
+    .clock_enable_input_b          ("BYPASS"),
+    .clock_enable_output_b         ("BYPASS"),
+    .intended_device_family        ("Cyclone V"),
+    .lpm_type                      ("altsyncram"),
+    .ram_block_type                ("M10K"),
+    .power_up_uninitialized        ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) pal_src_inst (
+    .clock0         ( clk                      ), .clock1         ( clk                      ),
+    .address_a      ( pal_wr_addr              ), .data_a         ( pal_wr_data              ),
+    .wren_a         ( pal_wr_en                ), .byteena_a      ( 2'b11                    ),
+    .address_b      ( colmix_pal_addr_src      ), .q_b            ( colmix_pal_rdata_src     ),
+    .wren_b         ( 1'b0                     ), .data_b         ( 16'd0                    ),
+    .q_a            (                          ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 2'b11                    ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                     )
+);
+
+// altsyncram DUAL_PORT: dst read path (port A = testbench write, port B = dst read)
+altsyncram #(
+    .operation_mode                ("DUAL_PORT"),
+    .width_a                       (16), .widthad_a (13), .numwords_a (8192),
+    .width_b                       (16), .widthad_b (13), .numwords_b (8192),
+    .outdata_reg_b                 ("CLOCK1"),
+    .address_reg_b                 ("CLOCK1"),
+    .clock_enable_input_a          ("BYPASS"),
+    .clock_enable_input_b          ("BYPASS"),
+    .clock_enable_output_b         ("BYPASS"),
+    .intended_device_family        ("Cyclone V"),
+    .lpm_type                      ("altsyncram"),
+    .ram_block_type                ("M10K"),
+    .power_up_uninitialized        ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) pal_dst_inst (
+    .clock0         ( clk                      ), .clock1         ( clk                      ),
+    .address_a      ( pal_wr_addr              ), .data_a         ( pal_wr_data              ),
+    .wren_a         ( pal_wr_en                ), .byteena_a      ( 2'b11                    ),
+    .address_b      ( colmix_pal_addr_dst      ), .q_b            ( colmix_pal_rdata_dst     ),
+    .wren_b         ( 1'b0                     ), .data_b         ( 16'd0                    ),
+    .q_a            (                          ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 2'b11                    ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                     )
+);
 `else
 logic [15:0] pal_ram [0:8191];
-`endif
 
 // Testbench write port
 always_ff @(posedge clk) begin
@@ -1059,11 +1299,6 @@ always_ff @(posedge clk) begin
 end
 
 // Colmix palette read ports (registered — 1-cycle latency)
-logic [12:0] colmix_pal_addr_src;
-logic [12:0] colmix_pal_addr_dst;
-logic [15:0] colmix_pal_rdata_src;
-logic [15:0] colmix_pal_rdata_dst;
-
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         colmix_pal_rdata_src <= 16'b0;
@@ -1073,6 +1308,7 @@ always_ff @(posedge clk) begin
         colmix_pal_rdata_dst <= pal_ram[colmix_pal_addr_dst];
     end
 end
+`endif
 
 // =============================================================================
 // tc0630fdp_colmix — Layer Compositor (Step 14: +Alpha Blend Mode B)
