@@ -20,15 +20,50 @@ module tc0370mso_fbuf (
 );
     /* verilator no_inline_module */
 `ifdef QUARTUS
-    // Force M10K BRAM inference.  Combinational reads on a 256×320×13-bit array
-    // (1,064,960 bits) prevent BRAM inference → Quartus tries 1M flip-flops → OOM.
-    // Registered read adds 1-cycle latency; caller pre-advances rd_x by 1 to compensate.
-    (* ramstyle = "M10K" *) logic [12:0] mem [0:255][0:319];
-    always_ff @(posedge clk) begin
-        if (wr_en)
-            mem[wr_y][wr_x] <= wr_data;
-        rd_data <= mem[rd_y][rd_x];
-    end
+    // Explicit altsyncram DUAL_PORT M10K — bypasses behavioral 2D-array elaboration/map OOM.
+    // 256×320×13-bit 2D array flattened: addr = {y[7:0], x[8:0]} = 17-bit → 131072 depth.
+    // Registered read (outdata_reg_b=CLOCK1) adds 1-cycle latency; caller pre-advances rd_x.
+    logic [16:0] fbuf_wr_addr;
+    logic [16:0] fbuf_rd_addr;
+    assign fbuf_wr_addr = {wr_y, wr_x};
+    assign fbuf_rd_addr = {rd_y, rd_x};
+
+    altsyncram #(
+        .operation_mode            ("DUAL_PORT"),
+        .width_a                   (13),
+        .widthad_a                 (17),
+        .numwords_a                (131072),
+        .width_b                   (13),
+        .widthad_b                 (17),
+        .numwords_b                (131072),
+        .outdata_reg_b             ("CLOCK1"),
+        .address_reg_b             ("CLOCK1"),
+        .clock_enable_input_a      ("BYPASS"),
+        .clock_enable_input_b      ("BYPASS"),
+        .clock_enable_output_b     ("BYPASS"),
+        .intended_device_family    ("Cyclone V"),
+        .lpm_type                  ("altsyncram"),
+        .ram_block_type            ("M10K"),
+        .power_up_uninitialized    ("FALSE"),
+        .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+    ) fbuf_inst (
+        .clock0     ( clk          ),
+        .clock1     ( clk          ),
+        .address_a  ( fbuf_wr_addr ),
+        .data_a     ( wr_data      ),
+        .wren_a     ( wr_en        ),
+        .address_b  ( fbuf_rd_addr ),
+        .q_b        ( rd_data      ),
+        .wren_b     ( 1'b0         ),
+        .data_b     ( 13'd0        ),
+        .q_a        (              ),
+        .aclr0(1'b0), .aclr1(1'b0),
+        .addressstall_a(1'b0), .addressstall_b(1'b0),
+        .byteena_a(1'b1), .byteena_b(1'b1),
+        .clocken0(1'b1), .clocken1(1'b1),
+        .clocken2(1'b1), .clocken3(1'b1),
+        .eccstatus(), .rden_a(), .rden_b(1'b1)
+    );
 `else
     logic [12:0] mem [0:255][0:319];
     always_ff @(posedge clk) begin

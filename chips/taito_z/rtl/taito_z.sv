@@ -685,15 +685,74 @@ T80s u_z80 (
 // Shared RAM — 64KB dual-port BRAM
 //   CPU A: 0x200000–0x20FFFF  (byte) = word base 0x100000, 15-bit word index
 //   CPU B: 0x110000–0x11FFFF  (byte) = word base 0x088000, 15-bit word index
+// Two altsyncram instances share port A (write), each has distinct port B (read).
 // =============================================================================
-`ifdef QUARTUS
-(* ramstyle = "M10K" *) logic [15:0] shared_ram [0:32767];
-`else
-logic [15:0] shared_ram [0:32767];
-`endif
 logic [15:0] shram_a_dout;
 logic [15:0] shram_b_dout;
 
+`ifdef QUARTUS
+// Shared write path (CPU A priority)
+logic        shram_we_a;
+logic        shram_we_b;
+logic        shram_we;
+logic [14:0] shram_wr_addr;
+logic [15:0] shram_wr_data;
+logic  [1:0] shram_be;
+assign shram_we_a    = shram_a_cs & ~cpua_rw;
+assign shram_we_b    = shram_b_cs & ~cpub_rw & ~shram_we_a;
+assign shram_we      = shram_we_a | shram_we_b;
+assign shram_wr_addr = shram_we_a ? cpua_addr[15:1] : cpub_addr[15:1];
+assign shram_wr_data = shram_we_a ? cpua_din        : cpub_din;
+assign shram_be      = shram_we_a ? {~cpua_uds_n, ~cpua_lds_n}
+                                  : {~cpub_uds_n, ~cpub_lds_n};
+
+// CPU A read port
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16),  .widthad_a (15), .numwords_a (32768),
+    .width_b                   (16),  .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) shram_a_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(shram_wr_addr), .data_a(shram_wr_data),
+    .wren_a(shram_we),         .byteena_a(shram_be),
+    .address_b(cpua_addr[15:1]), .q_b(shram_a_dout),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'b11), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// CPU B read port
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16),  .widthad_a (15), .numwords_a (32768),
+    .width_b                   (16),  .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) shram_b_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(shram_wr_addr), .data_a(shram_wr_data),
+    .wren_a(shram_we),         .byteena_a(shram_be),
+    .address_b(cpub_addr[15:1]), .q_b(shram_b_dout),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'b11), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+`else
+logic [15:0] shared_ram [0:32767];
 // Port A and Port B combined — single always_ff driver for shared_ram (avoids Error 10028)
 always_ff @(posedge clk_sys) begin
     // Write: Port A has priority over Port B on same-address collision
@@ -708,18 +767,38 @@ always_ff @(posedge clk_sys) begin
     shram_a_dout <= shared_ram[cpua_addr[15:1]];
     shram_b_dout <= shared_ram[cpub_addr[15:1]];
 end
+`endif
 
 // =============================================================================
 // Work RAM A — 64KB BRAM (CPU A private, 0x100000–0x10FFFF)
 // Only 16KB (0x100000–0x103FFF) used in dblaxle; full 64KB declared for margin.
 // =============================================================================
-`ifdef QUARTUS
-(* ramstyle = "M10K" *) logic [15:0] work_ram_a [0:32767];
-`else
-logic [15:0] work_ram_a [0:32767];
-`endif
 logic [15:0] wrama_dout;
 
+`ifdef QUARTUS
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16),  .widthad_a (15), .numwords_a (32768),
+    .width_b                   (16),  .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) wrama_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpua_addr[15:1]), .data_a(cpua_din),
+    .wren_a(wrama_cs & ~cpua_rw), .byteena_a({~cpua_uds_n, ~cpua_lds_n}),
+    .address_b(cpua_addr[15:1]), .q_b(wrama_dout),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'b11), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+`else
+logic [15:0] work_ram_a [0:32767];
 always_ff @(posedge clk_sys) begin
     if (wrama_cs && !cpua_rw) begin
         if (!cpua_uds_n) work_ram_a[cpua_addr[15:1]][15:8] <= cpua_din[15:8];
@@ -727,18 +806,38 @@ always_ff @(posedge clk_sys) begin
     end
     wrama_dout <= work_ram_a[cpua_addr[15:1]];
 end
+`endif
 
 // =============================================================================
 // Work RAM B — 32KB BRAM (CPU B private, 0x100000–0x107FFF)
 // dblaxle CPU B uses only 0x100000–0x103FFF (16KB). 32KB declared for margin.
 // =============================================================================
-`ifdef QUARTUS
-(* ramstyle = "M10K" *) logic [15:0] work_ram_b [0:16383];
-`else
-logic [15:0] work_ram_b [0:16383];
-`endif
 logic [15:0] wramb_dout;
 
+`ifdef QUARTUS
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16),  .widthad_a (14), .numwords_a (16384),
+    .width_b                   (16),  .widthad_b (14), .numwords_b (16384),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) wramb_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpub_addr[14:1]), .data_a(cpub_din),
+    .wren_a(wramb_cs & ~cpub_rw), .byteena_a({~cpub_uds_n, ~cpub_lds_n}),
+    .address_b(cpub_addr[14:1]), .q_b(wramb_dout),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'b11), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+`else
+logic [15:0] work_ram_b [0:16383];
 always_ff @(posedge clk_sys) begin
     if (wramb_cs && !cpub_rw) begin
         if (!cpub_uds_n) work_ram_b[cpub_addr[14:1]][15:8] <= cpub_din[15:8];
@@ -746,18 +845,38 @@ always_ff @(posedge clk_sys) begin
     end
     wramb_dout <= work_ram_b[cpub_addr[14:1]];
 end
+`endif
 
 // =============================================================================
 // Network RAM — 16KB BRAM (CPU B 0x500000–0x503FFF)
 // Inert for single-cabinet operation. Plain RAM, no external interface.
 // =============================================================================
-`ifdef QUARTUS
-(* ramstyle = "M10K" *) logic [15:0] net_ram [0:8191];
-`else
-logic [15:0] net_ram [0:8191];
-`endif
 logic [15:0] netram_dout;
 
+`ifdef QUARTUS
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16),  .widthad_a (13), .numwords_a (8192),
+    .width_b                   (16),  .widthad_b (13), .numwords_b (8192),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) netram_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpub_addr[13:1]), .data_a(cpub_din),
+    .wren_a(netram_cs & ~cpub_rw), .byteena_a({~cpub_uds_n, ~cpub_lds_n}),
+    .address_b(cpub_addr[13:1]), .q_b(netram_dout),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'b11), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+`else
+logic [15:0] net_ram [0:8191];
 always_ff @(posedge clk_sys) begin
     if (netram_cs && !cpub_rw) begin
         if (!cpub_uds_n) net_ram[cpub_addr[13:1]][15:8] <= cpub_din[15:8];
@@ -765,6 +884,7 @@ always_ff @(posedge clk_sys) begin
     end
     netram_dout <= net_ram[cpub_addr[13:1]];
 end
+`endif
 
 // =============================================================================
 // CPU B Reset Register (CPU A write at 0x600000–0x600001)
