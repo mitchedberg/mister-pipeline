@@ -232,17 +232,14 @@ module psikyo (
         cs_ps3103: begin
           // PS3103 tilemap control registers (4 layers)
           // Each layer has 4 registers spaced at 0x10 bytes (8 words)
-          /* verilator lint_off IMPLICITSTATIC */
-          logic [1:0] layer_idx = addr[5:4];
-          logic [2:0] reg_offset = addr[3:1];
-          /* verilator lint_on IMPLICITSTATIC */
-
-          case (reg_offset)
-            3'b000: ps3103_ctrl_shadow[layer_idx] <= din[7:0];
-            3'b001: ps3103_scroll_x_shadow[layer_idx] <= din;
-            3'b010: ps3103_scroll_y_shadow[layer_idx] <= din;
-            3'b011: ps3103_tilemap_base_shadow[layer_idx][15:0] <= din;
-            3'b100: ps3103_tilemap_base_shadow[layer_idx][31:16] <= din;
+          // addr[5:4] = layer_idx (0..3), addr[3:1] = reg_offset (0..4)
+          // Inline local variable declarations removed (Error 10748 in Quartus 17.0)
+          case (addr[3:1])
+            3'b000: ps3103_ctrl_shadow[addr[5:4]] <= din[7:0];
+            3'b001: ps3103_scroll_x_shadow[addr[5:4]] <= din;
+            3'b010: ps3103_scroll_y_shadow[addr[5:4]] <= din;
+            3'b011: ps3103_tilemap_base_shadow[addr[5:4]][15:0] <= din;
+            3'b100: ps3103_tilemap_base_shadow[addr[5:4]][31:16] <= din;
             default: ;
           endcase
         end

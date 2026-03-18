@@ -291,12 +291,10 @@ module nmk16 #(
     logic [15:0] sprite_data_rd_muxed;
 
     // Write port (from CPU)
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (~rst_n) begin
-            for (int i = 0; i < 1024; i++) begin
-                sprite_ram_storage[i] <= 16'h01FF;
-            end
-        end else if (~cs_n & ~wr_n & is_sprite) begin
+    // No reset initialization — Cyclone V M10K powers up to 0 (CPU writes before use).
+    // Reset loop removed to avoid Error 10028 (multiple constant drivers) in Quartus 17.0.
+    always_ff @(posedge clk) begin
+        if (~cs_n & ~wr_n & is_sprite) begin
             sprite_ram_storage[addr[10:1]] <= din;
         end
     end
@@ -881,10 +879,10 @@ module nmk16 #(
 
     always_comb tram_cpu_addr = addr[11:1];  // addr[11]=layer, addr[10:5]=row, addr[4:1]=col
 
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (~rst_n) begin
-            for (int i = 0; i < 2048; i++) tilemap_ram[i] <= 16'h0000;
-        end else if (~cs_n & ~wr_n & is_tilemap) begin
+    // No reset initialization — Cyclone V M10K powers up to 0 (CPU writes before use).
+    // Reset loop removed to avoid Error 10028 (multiple constant drivers) in Quartus 17.0.
+    always_ff @(posedge clk) begin
+        if (~cs_n & ~wr_n & is_tilemap) begin
             tilemap_ram[tram_cpu_addr] <= din;
         end
     end
@@ -1009,9 +1007,7 @@ module nmk16 #(
         if (~rst_n) begin
             bg_pix_valid    <= 2'h0;
             bg_pix_priority <= 2'h0;
-            for (int i = 0; i < 2; i++) begin
-                bg_pix_color[i] <= 8'h00;
-            end
+            bg_pix_color    <= '0;  // direct packed-array reset (no loop — avoids Error 10028)
         end else begin
             // Update only the layer just processed (s1_layer)
             for (int i = 0; i < 2; i++) begin

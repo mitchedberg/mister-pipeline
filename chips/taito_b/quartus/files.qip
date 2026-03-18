@@ -35,8 +35,11 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sdram_b.sv
 # SUPPORT CHIPS (shared across Taito families)
 # =========================================================================
 
-# TC0180VCU: Tilemap engine + sprite controller
+# TC0180VCU: Tilemap engine + sprite controller (top-level + sub-modules)
 set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0180vcu/rtl/tc0180vcu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0180vcu/rtl/tc0180vcu_tx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0180vcu/rtl/tc0180vcu_bg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0180vcu/rtl/tc0180vcu_sprite.sv
 
 # TC0260DAR: Palette DAC (RGB444/RGB555 modes)
 set_global_assignment -name SYSTEMVERILOG_FILE ../../taito_support/tc0260dar.sv
@@ -75,6 +78,7 @@ set_global_assignment -name VERILOG_FILE ../../../vendor/t80/T80s.v
 # All required support files are listed below.
 
 set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt12/jt10.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt12/jt10_acc.v
 set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt12/jt12_top.v
 set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt12/jt12_acc.v
 set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt12/jt12_csr.v

@@ -85,9 +85,20 @@ localparam int H_END   = 366;
 // ---------------------------------------------------------------------------
 // Dual ping-pong line buffers
 // ---------------------------------------------------------------------------
-logic [11:0] lbuf [0:1][0:319];
+// Declared as two separate 2D arrays instead of one 3D array.
+// Quartus 17 OOM-crashes (quartus_map) when a 3D array's first dimension
+// is selected by a variable at runtime (e.g. lbuf[front_buf][col]).
+// Two independent 2D arrays avoid that elaboration explosion.
+// FPGAs power up BRAM contents to 0, so no reset initialisation loop is needed.
+logic [11:0] lbuf0 [0:319];
+logic [11:0] lbuf1 [0:319];
 logic back_buf;
 logic front_buf;
+
+// Counter used to sequentially clear the new back buffer after ping-pong swap.
+// Runs 0→319 over 320 cycles starting at the hblank_end event.
+logic        lbuf_clr_active;
+logic [8:0]  lbuf_clr_idx;
 
 // Pre-active edge: fires one cycle before H_START (hpos == H_START-1 = 45).
 logic hblank_end;
@@ -123,7 +134,7 @@ end
 
 always_comb begin
     if (hpos >= 10'(H_START) && hpos < 10'(H_END))
-        spr_pixel = lbuf[front_buf][spr_scol_snap];
+        spr_pixel = front_buf ? lbuf1[spr_scol_snap] : lbuf0[spr_scol_snap];
     else
         spr_pixel = 12'd0;
 end
@@ -275,42 +286,58 @@ always_comb begin
 end
 
 // ---------------------------------------------------------------------------
-// FSM
+// FSM + ping-pong clear in a single always_ff block.
+// ---------------------------------------------------------------------------
+// The line buffer clear uses a sequential counter (lbuf_clr_active / lbuf_clr_idx)
+// rather than a 320-iteration for-loop.  A for-loop inside always_ff creates
+// 320 enable muxes and explodes Quartus 17 elaboration memory (OOM crash).
+// The counter-based approach synthesises to a simple increment chain.
 // ---------------------------------------------------------------------------
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        state          <= S_IDLE;
-        back_buf       <= 1'b0;
-        front_buf      <= 1'b1;
-        render_scan    <= 8'd0;
-        spr_count      <= 7'd0;
-        spr_slot       <= 6'd0;
-        scount_rd_addr <= 8'd0;
-        addr_scan      <= 8'd0;
-        addr_slot      <= 6'd0;
-        gfx_addr       <= 22'd0;
-        r_tile         <= 17'd0;
-        r_sx           <= 12'd0;
-        r_sy           <= 12'd0;
-        r_palette      <= 6'd0;
-        r_prio         <= 2'd0;
-        r_flipy        <= 1'b0;
-        r_flipx        <= 1'b0;
-        r_x_zoom       <= 8'd0;
-        r_y_zoom       <= 8'd0;
-        r_dst_row      <= 5'd0;
-        gfx_left_r     <= 32'd0;
-        for (int i = 0; i < 320; i++) begin
-            lbuf[0][i] <= 12'd0;
-            lbuf[1][i] <= 12'd0;
+        state           <= S_IDLE;
+        back_buf        <= 1'b0;
+        front_buf       <= 1'b1;
+        render_scan     <= 8'd0;
+        spr_count       <= 7'd0;
+        spr_slot        <= 6'd0;
+        scount_rd_addr  <= 8'd0;
+        addr_scan       <= 8'd0;
+        addr_slot       <= 6'd0;
+        gfx_addr        <= 22'd0;
+        r_tile          <= 17'd0;
+        r_sx            <= 12'd0;
+        r_sy            <= 12'd0;
+        r_palette       <= 6'd0;
+        r_prio          <= 2'd0;
+        r_flipy         <= 1'b0;
+        r_flipx         <= 1'b0;
+        r_x_zoom        <= 8'd0;
+        r_y_zoom        <= 8'd0;
+        r_dst_row       <= 5'd0;
+        gfx_left_r      <= 32'd0;
+        // lbuf0/lbuf1 BRAM powers up to 0 — no reset loop needed.
+        lbuf_clr_active <= 1'b0;
+        lbuf_clr_idx    <= 9'd0;
+    end else begin
+        // ── Sequential back-buffer clear (runs after each ping-pong swap) ─
+        if (lbuf_clr_active) begin
+            if (back_buf) lbuf1[lbuf_clr_idx] <= 12'd0;
+            else          lbuf0[lbuf_clr_idx] <= 12'd0;
+            if (lbuf_clr_idx == 9'd319)
+                lbuf_clr_active <= 1'b0;
+            else
+                lbuf_clr_idx <= lbuf_clr_idx + 9'd1;
         end
-    end else if (hblank_end) begin
+
+        if (hblank_end) begin
         // End of HBLANK: swap front/back so the just-rendered back becomes
         // the new front, visible during the upcoming active display.
-        front_buf <= back_buf;
-        back_buf  <= front_buf;
-        for (int i = 0; i < 320; i++)
-            lbuf[front_buf][i] <= 12'd0;   // clear old front = new back
+        front_buf       <= back_buf;
+        back_buf        <= front_buf;
+        // Kick off sequential clear of the new back (old front) buffer.
+        lbuf_clr_active <= 1'b1;
+        lbuf_clr_idx    <= 9'd0;
     end else if (hblank_fall) begin
         // Start of HBLANK: begin rendering sprite list for (vpos+1).
         render_scan    <= vpos[7:0] - 8'(V_START) + 8'd1;
@@ -378,8 +405,12 @@ always_ff @(posedge clk) begin
                             if (scol_of[dst_x] >= 13'sd0 &&
                                 scol_of[dst_x] <  13'sd320 &&
                                 pen_of[dst_x]  != 4'd0) begin
-                                lbuf[back_buf][scol_of[dst_x][8:0]] <=
-                                    {r_prio, r_palette, pen_of[dst_x]};
+                                if (back_buf)
+                                    lbuf1[scol_of[dst_x][8:0]] <=
+                                        {r_prio, r_palette, pen_of[dst_x]};
+                                else
+                                    lbuf0[scol_of[dst_x][8:0]] <=
+                                        {r_prio, r_palette, pen_of[dst_x]};
                             end
                         end
                     end
@@ -396,8 +427,9 @@ always_ff @(posedge clk) begin
 
             default: state <= S_IDLE;
         endcase
-    end
-end
+    end  // else (not hblank_end, not hblank_fall)
+    end  // else begin (!rst_n)
+end  // always_ff
 
 /* verilator lint_off UNUSED */
 logic _unused;

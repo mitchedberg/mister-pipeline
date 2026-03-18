@@ -593,14 +593,14 @@ assign z80_core_din = !z80_rom_cs_n ? z80_rom_byte
                     : !ym_cs_n       ? ym_dout
                     :                  z80_io_dout;
 
-// T80pa: standard MiSTer Z80 soft-core (T80 with pipeline)
-// Source: sys/T80pa.v in MiSTer framework
-T80pa u_z80
+// T80s: standard MiSTer Z80 soft-core
+// Source: vendor/t80/T80s.v
+T80s u_z80
 (
     .RESET_n (z80_reset_n),
     .CLK     (clk_sys),
-    .CEN_p   (ce_z80),
-    .CEN_n   (1'b0),           // negative edge CE not used (CEN_p drives all)
+    .CEN     (ce_z80),
+    .OUT0    (1'b0),           // legacy output mode pin — tie low
 
     .WAIT_n  (1'b1),           // no WAIT state
     .INT_n   (z80_int_n),
@@ -618,7 +618,7 @@ T80pa u_z80
 
     .A       (z80_addr),
     .DI      (z80_core_din),
-    .DO      (z80_dout)
+    .DOUT    (z80_dout)
 );
 
 //////////////////////////////////////////////////////////////////

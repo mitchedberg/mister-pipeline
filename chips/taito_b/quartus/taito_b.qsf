@@ -113,6 +113,7 @@ set_global_assignment -name SEED 1
 # ==========================================================================
 
 set_global_assignment -name VERILOG_MACRO "QUARTUS=1"
+set_global_assignment -name VERILOG_MACRO "NOSSG=1"
 
 source files.qip
 

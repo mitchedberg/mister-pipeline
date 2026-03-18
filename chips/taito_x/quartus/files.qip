@@ -47,10 +47,12 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/uaddrPla.s
 set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/rtl/fx68k_adapter.sv
 
 # =========================================================================
-# Z80 SOFT-CORE (T80 with pipelining)
+# Z80 SOFT-CORE (T80s)
 # =========================================================================
-# Standard MiSTer Z80 — T80pa.v (from sys framework)
+# Standard MiSTer Z80 — T80s.v (from vendor/t80)
 # Instantiated inline in emu.sv for audio subsystem
+
+set_global_assignment -name VERILOG_FILE ../../../vendor/t80/T80s.v
 
 # =========================================================================
 # YM2610 AUDIO (jt10 / jt12 family)

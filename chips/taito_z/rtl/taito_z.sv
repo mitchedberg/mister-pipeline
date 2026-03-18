@@ -686,21 +686,18 @@ logic [15:0] shared_ram [0:32767];
 logic [15:0] shram_a_dout;
 logic [15:0] shram_b_dout;
 
-// Port A (CPU A)
+// Port A and Port B combined — single always_ff driver for shared_ram (avoids Error 10028)
 always_ff @(posedge clk_sys) begin
+    // Write: Port A has priority over Port B on same-address collision
     if (shram_a_cs && !cpua_rw) begin
         if (!cpua_uds_n) shared_ram[cpua_addr[15:1]][15:8] <= cpua_din[15:8];
         if (!cpua_lds_n) shared_ram[cpua_addr[15:1]][ 7:0] <= cpua_din[ 7:0];
-    end
-    shram_a_dout <= shared_ram[cpua_addr[15:1]];
-end
-
-// Port B (CPU B)
-always_ff @(posedge clk_sys) begin
-    if (shram_b_cs && !cpub_rw) begin
+    end else if (shram_b_cs && !cpub_rw) begin
         if (!cpub_uds_n) shared_ram[cpub_addr[15:1]][15:8] <= cpub_din[15:8];
         if (!cpub_lds_n) shared_ram[cpub_addr[15:1]][ 7:0] <= cpub_din[ 7:0];
     end
+    // Read: both ports always active
+    shram_a_dout <= shared_ram[cpua_addr[15:1]];
     shram_b_dout <= shared_ram[cpub_addr[15:1]];
 end
 

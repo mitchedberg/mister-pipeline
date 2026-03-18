@@ -338,7 +338,7 @@ module kaneko16 #(
             shadow_gfx_bank <= 7'h00;
 
             shadow_video_int_ctrl <= 8'h00;
-            shadow_watchdog_counter <= 8'h00;
+            // shadow_watchdog_counter reset handled in watchdog always_ff block below
 
             shadow_joystick_1 <= 16'h0000;
             shadow_joystick_2 <= 16'h0000;
