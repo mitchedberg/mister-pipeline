@@ -147,10 +147,13 @@ altsyncram #(
     .outdata_reg_a          ("CLOCK0"),
     .outdata_reg_b          ("CLOCK0"),
     .address_reg_b          ("CLOCK0"),
-    .rdcontrol_reg_b        ("CLOCK0")
+    .rdcontrol_reg_b        ("CLOCK0"),
+    .indata_reg_b           ("CLOCK0"),
+    .wrcontrol_wraddressstall_b ("CLOCK0")
 ) pal_ram_inst (
     // Port A — CPU
     .clock0     (clk),
+    .clock1     (clk),
     .address_a  (cpu_pal_addr[10:0]),
     .data_a     (cpu_pal_din),
     .wren_a     (cpu_pal_cs && cpu_pal_we),

@@ -183,10 +183,13 @@ altsyncram #(
     .outdata_reg_b          ("CLOCK0"),
     .address_reg_b          ("CLOCK0"),
     .rdcontrol_reg_b        ("CLOCK0"),
+    .indata_reg_b           ("CLOCK0"),
+    .wrcontrol_wraddressstall_b ("CLOCK0"),
     .numwords_a             (32768),
     .numwords_b             (32768)
 ) vram_inst (
     .clock0    (clk),
+    .clock1    (clk),
     .address_a (cpu_addr[14:0]),
     .data_a    (cpu_din),
     .wren_a    (sel_vram && cpu_we),

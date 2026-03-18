@@ -1079,11 +1079,12 @@ module nmk16 #(
     // =========================================================================
 
     /* verilator lint_off UNUSEDSIGNAL */
-    logic _unused = &{lds_n, uds_n, addr[20:12], status_reg,
-                      sprite_word_y[15:9], sprite_word_x[15:9],
-                      sprite_word_tile[15:12], sprite_word_attr[13:11], sprite_word_attr[8:0],
-                      g3_flip_y_saved, g3_spr_y, bg_pix_priority,
-                      1'b0};
+    logic _unused;
+    assign _unused = &{lds_n, uds_n, addr[20:12], status_reg,
+                       sprite_word_y[15:9], sprite_word_x[15:9],
+                       sprite_word_tile[15:12], sprite_word_attr[13:11], sprite_word_attr[8:0],
+                       g3_flip_y_saved, g3_spr_y, bg_pix_priority,
+                       1'b0};
     /* verilator lint_on UNUSEDSIGNAL */
 
 endmodule

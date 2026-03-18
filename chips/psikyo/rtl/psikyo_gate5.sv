@@ -45,7 +45,8 @@ module psikyo_gate5 (
 );
 
     // ── Unused: bg_pix_priority is carried through for upstream use only ─────
-    logic _unused_bg_prio = &{bg_pix_priority[0], bg_pix_priority[1], 1'b0};
+    logic _unused_bg_prio;
+    assign _unused_bg_prio = &{bg_pix_priority[0], bg_pix_priority[1], 1'b0};
 
     // ── Priority mixer (painter's algorithm) ─────────────────────────────────
     //

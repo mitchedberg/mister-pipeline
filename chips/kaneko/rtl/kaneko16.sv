@@ -1280,7 +1280,8 @@ module kaneko16 #(
 
     /* verilator lint_off UNUSEDPARAM */
     /* verilator lint_off UNUSEDSIGNAL */
-    logic _unused = &{hsync_n, bg_pix_priority, 1'b0};
+    logic _unused;
+    assign _unused = &{hsync_n, bg_pix_priority, 1'b0};
     /* verilator lint_on UNUSEDPARAM */
     /* verilator lint_on UNUSEDSIGNAL */
 

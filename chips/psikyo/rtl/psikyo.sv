@@ -182,8 +182,10 @@ module psikyo (
 
   // ====== Write Logic ======
 
-  logic write_strobe = ~wr_n & ~cs_n;
-  logic read_strobe  = ~rd_n & ~cs_n;
+  logic write_strobe;
+  logic read_strobe;
+  assign write_strobe = ~wr_n & ~cs_n;
+  assign read_strobe  = ~rd_n & ~cs_n;
 
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -291,7 +293,8 @@ module psikyo (
     end
   end
 
-  logic vsync_rising_edge = vsync_n_r & ~vsync_n;
+  logic vsync_rising_edge;
+  assign vsync_rising_edge = vsync_n_r & ~vsync_n;
 
   // Copy shadow → active on VSYNC rising edge
   always_ff @(posedge clk or negedge rst_n) begin
@@ -542,7 +545,8 @@ module psikyo (
   end
 
   // ====== Lint suppression ======
-  logic _unused_dsn = &{dsn, 1'b0};
+  logic _unused_dsn;
+  assign _unused_dsn = &{dsn, 1'b0};
 
 endmodule
 /* verilator lint_on UNUSEDSIGNAL */
