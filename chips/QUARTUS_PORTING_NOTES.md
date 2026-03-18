@@ -90,34 +90,76 @@ Without `QUARTUS=1`, any 3D array or large flat array in the RTL will reach the 
 
 ## 5. `altsyncram` Parameter Requirements
 
-### BIDIR_DUAL_PORT — Must specify `address_reg_b` and `numwords`
+### ⚠️ DO NOT USE `BIDIR_DUAL_PORT` — Use Two `DUAL_PORT` Instances Instead
 
-Without `.address_reg_b("CLOCK0")`, Quartus defaults to `CLOCK1` and then errors:
-```
-Error (272006): Must connect clock1 port
-```
+`BIDIR_DUAL_PORT` mode in Quartus 17.0 triggers a cascade of errors (272006, 287078)
+that are extremely difficult to fully resolve because of undocumented requirements around
+`byteena_b`, the "clear box" feature, and port-B clock domain consistency. **Do not use it.**
 
-Without `.numwords_a()` / `.numwords_b()`, Quartus hits a "clear box feature" assertion:
-```
-Error (287078): ...
-```
+**The correct approach** (from `tc0110pcr.sv`) is to use **two `DUAL_PORT` instances**:
+- Instance 1 (`_pxl`): port A = CPU write, port B = display read
+- Instance 2 (`_cpu`): port A = CPU write, port B = CPU readback (same address_b as CPU)
 
-**Required parameters for BIDIR_DUAL_PORT:**
+This splits the true-dual-port semantics into two simple-dual-port instances, which Quartus
+17.0 handles perfectly with no clock-domain errors.
+
+**Template (copy this — it works):**
 ```verilog
+logic [15:0] ram_pxl_q;  // display read result
+logic [15:0] ram_cpu_q;  // CPU readback result
+
+// ── Display pixel read ─────────────────────────────────────────────────────
 altsyncram #(
-    .operation_mode     ("BIDIR_DUAL_PORT"),
-    .width_a            (W),
-    .widthad_a          (N),        // address bits port A
-    .numwords_a         (1 << N),   // REQUIRED: 2^N
-    .width_b            (W),
-    .widthad_b          (N),
-    .numwords_b         (1 << N),   // REQUIRED: 2^N
-    .address_reg_b      ("CLOCK0"), // REQUIRED: avoids needing clock1
-    .outdata_reg_a      ("UNREGISTERED"),
-    .outdata_reg_b      ("UNREGISTERED"),
-    ...
-) inst ( .clock0(clk), ... );
+    .operation_mode              ("DUAL_PORT"),
+    .width_a                     (W), .widthad_a (N), .numwords_a (1<<N),
+    .width_b                     (W), .widthad_b (N), .numwords_b (1<<N),
+    .outdata_reg_b               ("CLOCK1"),
+    .address_reg_b               ("CLOCK1"),
+    .clock_enable_input_a        ("BYPASS"),
+    .clock_enable_input_b        ("BYPASS"),
+    .clock_enable_output_b       ("BYPASS"),
+    .intended_device_family      ("Cyclone V"),
+    .lpm_type                    ("altsyncram"),
+    .ram_block_type              ("M10K"),
+    .width_byteena_a             (2),          // omit if no byte enables
+    .power_up_uninitialized      ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) ram_pxl_inst (
+    .clock0         ( clk           ),  .clock1         ( clk     ),
+    .address_a      ( cpu_addr      ),  .data_a         ( cpu_din ),
+    .wren_a         ( cpu_we        ),  .byteena_a      ( cpu_be  ),
+    .address_b      ( pxl_addr      ),  .q_b            ( ram_pxl_q ),
+    .wren_b         ( 1'b0          ),  .data_b         ( {W{1'b0}} ),
+    .q_a            (               ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0 ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0 ),
+    .byteena_b      ( {(W/8){1'b1}} ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1 ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1 ),
+    .eccstatus      (      ), .rden_a         (      ),
+    .rden_b         ( 1'b1 )
+);
+
+// ── CPU readback ──────────────────────────────────────────────────────────
+altsyncram #(
+    // ... identical params ...
+) ram_cpu_inst (
+    .clock0         ( clk           ),  .clock1         ( clk     ),
+    .address_a      ( cpu_addr      ),  .data_a         ( cpu_din ),
+    .wren_a         ( cpu_we        ),  .byteena_a      ( cpu_be  ),
+    .address_b      ( cpu_addr      ),  .q_b            ( ram_cpu_q ),  // same address!
+    // ... identical port connects ...
+);
 ```
+
+**Key points:**
+- `clock0` and `clock1` are BOTH connected to `clk` (same signal, different port names)
+- Port B is on `CLOCK1` (even though it's the same clock) — this satisfies Quartus 17.0
+- ALL optional ports must be connected explicitly: `aclr0`, `aclr1`, `addressstall_a/b`,
+  `byteena_b`, `clocken0-3`, `eccstatus`, `rden_a`, `rden_b`
+- CPU readback uses `address_b = cpu_addr` (same as port A) to mirror the write address
+- 1-cycle registered read latency: address_reg_b("CLOCK1") + outdata_reg_b("CLOCK1")
+  are the M10K internal address+output registers, not two separate pipeline stages
 
 ### SINGLE_PORT — Must specify `numwords_a`
 
@@ -272,6 +314,109 @@ A full `/private/tmp` filesystem causes `git push` to fail with a 403 error that
 df -h /private/tmp
 ```
 Also: Fine-grained GitHub PATs can have `push: true` in the API response but still be read-only for certain repos if the repo permission wasn't explicitly granted. If auth looks right, try a classic PAT.
+
+---
+
+## 13. Non-Constant Variable Initializers (Error 10748)
+
+Quartus 17.0 does NOT support initializing a `logic` variable with a non-constant expression at declaration:
+
+```verilog
+// FAILS — Quartus Error 10748:
+logic _unused = &{lds_n, uds_n, 1'b0};
+logic write_strobe = ~wr_n & ~cs_n;
+logic vsync_rise = vsync_n_r & ~vsync_n;
+```
+
+**Fix: separate declaration from assignment:**
+```verilog
+// Correct:
+logic _unused;
+assign _unused = &{lds_n, uds_n, 1'b0};
+
+logic write_strobe;
+assign write_strobe = ~wr_n & ~cs_n;
+
+logic vsync_rise;
+assign vsync_rise = vsync_n_r & ~vsync_n;
+```
+
+This affects both lint-suppression dummies (`_unused`) and functional combinational signals.
+
+---
+
+## 14. `always_comb` Loop Driving Packed Output Array (Error 10028 / `<auto-generated>`)
+
+Driving a packed output array from an `always_comb` for-loop causes Quartus to generate
+phantom `<auto-generated>` signals and report a multi-driver error:
+
+```verilog
+// FAILS — generates <auto-generated> multi-driver error:
+output logic [255:0][9:0] display_list_x,
+logic [255:0][9:0] _dl_x;  // internal
+
+always_comb begin
+    for (int k = 0; k < 256; k++)
+        display_list_x[k] = _dl_x[k];  // ← Quartus can't handle this
+end
+```
+
+**Fix: replace the always_comb copy loop with a direct `assign`:**
+```verilog
+// Correct:
+assign display_list_x = _dl_x;  // whole-array assign — Quartus handles this fine
+```
+
+This only works when the internal array `_dl_x` has the same packed type as the output.
+Convert the internal array from unpacked to packed first if needed.
+
+---
+
+## 15. Reset Loop >5000 Iterations (Error 10106)
+
+Quartus 17.0 refuses to synthesize reset initialization loops with more than 5000 iterations:
+```
+Error (10106): Design contains 8192 always constructs that are too complex to synthesize
+```
+
+```verilog
+// FAILS — loop iterates 8192 times:
+always_ff @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        for (int i = 0; i < 8192; i++) sprite_ram[i] <= 16'h01FF;
+    end else ...
+end
+```
+
+**Fix: remove the reset initialization loop.** The CPU or game code initializes the RAM before
+use; hardware reset of BRAM contents is unnecessary for synthesis correctness:
+```verilog
+// Correct: no reset loop (Cyclone V M10K power-up initializes to 0 anyway)
+always_ff @(posedge clk) begin
+    if (cpu_wr) sprite_ram[cpu_addr] <= cpu_data;
+end
+```
+
+The 5000-iteration limit applies per-loop, not per-array. If you must initialize on reset,
+use a counter FSM instead of a for-loop.
+
+---
+
+## 16. CI Lint Gate: Verilator Flag Compatibility
+
+The CI uses Verilator for strict lint. Flag support varies by Verilator version:
+
+| Flag | Supported Since | Notes |
+|------|----------------|-------|
+| `-Wno-MODMISSING` | Verilator 4.038+ | Not available in Ubuntu apt Verilator |
+| `-Wno-PINMISSING` | Older versions | Use this for CI compatibility |
+
+If CI fails with `%Error: Unknown warning specified: -Wno-MODMISSING`, the CI Verilator
+is too old. Change the synthesis.yml flag to `-Wno-PINMISSING`.
+
+**IMPORTANT:** Pushing `.github/workflows/` changes requires a PAT with `workflow` scope.
+Fine-grained PATs with only `contents: write` cannot push workflow files. Create a new
+classic PAT with `workflow` scope or update the existing fine-grained PAT.
 
 ---
 
