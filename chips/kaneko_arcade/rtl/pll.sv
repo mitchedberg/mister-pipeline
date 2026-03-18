@@ -1,5 +1,5 @@
 // =============================================================================
-// pll.sv — Altera ALTPLL megafunction for Kaneko16 on MiSTer DE-10 Nano
+// pll.sv — Altera altera_pll megafunction for Kaneko16 on MiSTer DE-10 Nano
 // =============================================================================
 //
 // Target device : Intel Cyclone V 5CSEBA6U23I7 (DE-10 Nano)
@@ -13,107 +13,87 @@
 //   ce_pix  = clk_sys / 5  → 6.4 MHz pixel clock (hardware: ~6 MHz)
 //   ce_z80  = clk_sys / 8  → 4 MHz Z80 sound clock
 //
-// This file is synthesisable with Quartus Prime (ALTPLL primitive).
+// This file is synthesisable with Quartus Prime (altera_pll primitive).
 // =============================================================================
+`timescale 1ns/10ps
 `default_nettype none
 
 module pll (
-    input  wire refclk,    // 50 MHz from DE10-Nano CLK_50M
-    input  wire rst,       // active-high async reset
-
-    output wire outclk_0,  // 32 MHz — clk_sys
-    output wire outclk_1,  // ~143 MHz — clk_sdram (phase-shifted -2.5 ns)
-
-    output wire locked     // asserts when PLL has acquired lock
+    input  wire refclk,   // 50 MHz
+    input  wire rst,
+    output wire outclk_0, // sys_clk  — 32.0 MHz
+    output wire outclk_1, // sdram_clk — 142.857143 MHz, phase -2500 ps
+    output wire locked
 );
 
-altpll #(
-    .bandwidth_type                 ("AUTO"),
-    .clk0_divide_by                 (25),
-    .clk0_duty_cycle                (50),
-    .clk0_multiply_by               (16),
-    .clk0_phase_shift               ("0"),
-    .clk1_divide_by                 (7),
-    .clk1_duty_cycle                (50),
-    .clk1_multiply_by               (20),
-    .clk1_phase_shift               ("-2500"),
-    .compensate_clock               ("CLK0"),
-    .inclk0_input_frequency         (20000),
-    .intended_device_family         ("Cyclone V"),
-    .lpm_hint                       ("CBX_MODULE_PREFIX=pll"),
-    .lpm_type                       ("altpll"),
-    .operation_mode                 ("NORMAL"),
-    .pll_type                       ("AUTO"),
-    .port_activeclock               ("PORT_UNUSED"),
-    .port_areset                    ("PORT_USED"),
-    .port_clkbad0                   ("PORT_UNUSED"),
-    .port_clkbad1                   ("PORT_UNUSED"),
-    .port_clkloss                   ("PORT_UNUSED"),
-    .port_clkswitch                 ("PORT_UNUSED"),
-    .port_configupdate              ("PORT_UNUSED"),
-    .port_fbin                      ("PORT_UNUSED"),
-    .port_inclk0                    ("PORT_USED"),
-    .port_inclk1                    ("PORT_UNUSED"),
-    .port_locked                    ("PORT_USED"),
-    .port_pfdena                    ("PORT_UNUSED"),
-    .port_phasecounterselect        ("PORT_UNUSED"),
-    .port_phasedone                 ("PORT_UNUSED"),
-    .port_phasestep                 ("PORT_UNUSED"),
-    .port_phaseupdown               ("PORT_UNUSED"),
-    .port_pllena                    ("PORT_UNUSED"),
-    .port_scanaclr                  ("PORT_UNUSED"),
-    .port_scanclk                   ("PORT_UNUSED"),
-    .port_scanclkena                ("PORT_UNUSED"),
-    .port_scandata                  ("PORT_UNUSED"),
-    .port_scandataout               ("PORT_UNUSED"),
-    .port_scandone                  ("PORT_UNUSED"),
-    .port_scanread                  ("PORT_UNUSED"),
-    .port_scanwrite                 ("PORT_UNUSED"),
-    .port_clk0                      ("PORT_USED"),
-    .port_clk1                      ("PORT_USED"),
-    .port_clk2                      ("PORT_UNUSED"),
-    .port_clk3                      ("PORT_UNUSED"),
-    .port_clk4                      ("PORT_UNUSED"),
-    .port_clk5                      ("PORT_UNUSED"),
-    .using_fbmux_clk                ("FALSE")
-) altpll_component (
-    .areset                         (rst),
-    .inclk                          ({1'b0, refclk}),
-    .clk                            ({5'b00000, outclk_1, outclk_0}),
-    .locked                         (locked),
-    .activeclock                    (),
-    .clkbad                         (),
-    .clkena                         ({6{1'b1}}),
-    .clkloss                        (),
-    .clkswitch                      (1'b0),
-    .configupdate                   (1'b0),
-    .enable0                        (),
-    .enable1                        (),
-    .extclk                         (),
-    .extclkena                      ({4{1'b1}}),
-    .fbin                           (1'b1),
-    .fbmimicbidir                   (),
-    .fbout                          (),
-    .fref                           (),
-    .icdrclk                        (),
-    .pfdena                         (1'b1),
-    .phasecounterselect             ({4{1'b1}}),
-    .phasedone                      (),
-    .phasestep                      (1'b1),
-    .phaseupdown                    (1'b1),
-    .pllena                         (1'b1),
-    .scanaclr                       (1'b0),
-    .scanclk                        (1'b0),
-    .scanclkena                     (1'b1),
-    .scandata                       (1'b0),
-    .scandataout                    (),
-    .scandone                       (),
-    .scanread                       (1'b0),
-    .scanwrite                      (1'b0),
-    .sclkout0                       (),
-    .sclkout1                       (),
-    .vcooverrange                   (),
-    .vcounderrange                  ()
+altera_pll #(
+    .fractional_vco_multiplier("false"),
+    .reference_clock_frequency("50.0 MHz"),
+    .operation_mode("direct"),
+    .number_of_clocks(2),
+    .output_clock_frequency0("32.0 MHz"),
+    .phase_shift0("0 ps"),
+    .duty_cycle0(50),
+    .output_clock_frequency1("142.857143 MHz"),
+    .phase_shift1("-2500 ps"),
+    .duty_cycle1(50),
+    .output_clock_frequency2("0 MHz"),
+    .phase_shift2("0 ps"),
+    .duty_cycle2(50),
+    .output_clock_frequency3("0 MHz"),
+    .phase_shift3("0 ps"),
+    .duty_cycle3(50),
+    .output_clock_frequency4("0 MHz"),
+    .phase_shift4("0 ps"),
+    .duty_cycle4(50),
+    .output_clock_frequency5("0 MHz"),
+    .phase_shift5("0 ps"),
+    .duty_cycle5(50),
+    .output_clock_frequency6("0 MHz"),
+    .phase_shift6("0 ps"),
+    .duty_cycle6(50),
+    .output_clock_frequency7("0 MHz"),
+    .phase_shift7("0 ps"),
+    .duty_cycle7(50),
+    .output_clock_frequency8("0 MHz"),
+    .phase_shift8("0 ps"),
+    .duty_cycle8(50),
+    .output_clock_frequency9("0 MHz"),
+    .phase_shift9("0 ps"),
+    .duty_cycle9(50),
+    .output_clock_frequency10("0 MHz"),
+    .phase_shift10("0 ps"),
+    .duty_cycle10(50),
+    .output_clock_frequency11("0 MHz"),
+    .phase_shift11("0 ps"),
+    .duty_cycle11(50),
+    .output_clock_frequency12("0 MHz"),
+    .phase_shift12("0 ps"),
+    .duty_cycle12(50),
+    .output_clock_frequency13("0 MHz"),
+    .phase_shift13("0 ps"),
+    .duty_cycle13(50),
+    .output_clock_frequency14("0 MHz"),
+    .phase_shift14("0 ps"),
+    .duty_cycle14(50),
+    .output_clock_frequency15("0 MHz"),
+    .phase_shift15("0 ps"),
+    .duty_cycle15(50),
+    .output_clock_frequency16("0 MHz"),
+    .phase_shift16("0 ps"),
+    .duty_cycle16(50),
+    .output_clock_frequency17("0 MHz"),
+    .phase_shift17("0 ps"),
+    .duty_cycle17(50),
+    .pll_type("General"),
+    .pll_subtype("General")
+) altera_pll_i (
+    .rst(rst),
+    .outclk({outclk_1, outclk_0}),
+    .locked(locked),
+    .fboutclk(),
+    .fbclk(1'b0),
+    .refclk(refclk)
 );
 
 endmodule
