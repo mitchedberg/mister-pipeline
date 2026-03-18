@@ -90,6 +90,61 @@ module kaneko16 #(
     output logic                        display_list_ready,
     output logic                        irq_vblank,
 
+    // ======== GATE 4: BG Tilemap Renderer (VIEW2-CHIP) ========
+    //
+    // Models the VIEW2-CHIP per-pixel BG tile pipeline for layers BG0..BG3.
+    //
+    // Each BG layer is a 32×32-tile scrolling map covering 512×512 pixels.
+    // Tiles are 16×16 pixels, 4bpp, 128 bytes per tile.
+    //
+    // VRAM layout (word-addressed, 12-bit address):
+    //   addr = {layer[1:0], row[4:0], col[4:0]}
+    //   4 layers × 32×32 = 4096 entries
+    //
+    // Tilemap entry (16-bit word, GATE_PLAN.md encoding):
+    //   [15:8] tile_num (0..255)
+    //   [7:4]  palette[3:0]
+    //   [3]    VFLIP
+    //   [2]    HFLIP
+    //   [1:0]  reserved
+    //
+    // Pixel pipeline (2-stage registered):
+    //   Stage 0 (comb): scroll → tile coords → VRAM read → ROM address
+    //   Stage 1 (FF):   register ROM addr + nybble-select metadata
+    //   Stage 2 (comb): use bg_tile_rom_data → assemble pixel
+    //   Output FF:      bg_pix_valid[layer], bg_pix_color[layer]
+    //
+    // Tile ROM format (4bpp packed, byte-addressed, 8 bytes/row):
+    //   byte = tile_num*128 + py*8 + px/2
+    //   lo nybble [3:0] = left pixel (px even), hi nybble [7:4] = right pixel (px odd)
+    //
+    // CPU writes tilemap VRAM via address range 0x130000–0x13FFFF
+    // (handled by the existing register write path; Gate 4 adds a separate
+    //  internal tilemap VRAM accessed by address {layer,row,col}).
+    //
+    // Scroll registers (shadow→active latched on vsync_n falling edge):
+    //   active_scroll_x[layer], active_scroll_y[layer]  (already in Gate 1)
+
+    // Gate 4 tilemap VRAM port (CPU-accessible via 0x130000 range)
+    input  logic [1:0]   bg_layer_sel,     // layer select for CPU VRAM write (0..3)
+    input  logic [4:0]   bg_row_sel,       // tile row for CPU VRAM write (0..31)
+    input  logic [4:0]   bg_col_sel,       // tile col for CPU VRAM write (0..31)
+    input  logic [15:0]  bg_vram_din,      // tile data to write
+    input  logic         bg_vram_wr,       // write strobe (1 cycle)
+
+    // Gate 4 pixel pipeline inputs
+    input  logic [8:0]   bg_hpos,          // horizontal pixel position (0..319)
+    input  logic [8:0]   bg_vpos,          // vertical pixel position   (0..239)
+    input  logic [1:0]   bg_layer_query,   // which layer to compute this cycle
+
+    // Gate 4 BG tile ROM interface (byte-addressed, combinational zero-latency)
+    output logic [20:0]  bg_tile_rom_addr, // byte address into BG tile ROM
+    input  logic [7:0]   bg_tile_rom_data, // ROM data returned combinationally
+
+    // Gate 4 BG pixel outputs (registered, valid 2 cycles after set_pixel)
+    output logic [3:0]   bg_pix_valid,     // one valid bit per layer (4 layers)
+    output logic [7:0]   bg_pix_color  [0:3], // {palette[3:0], nybble[3:0]}
+
     // ======== GATE 3: Per-scanline sprite rasterizer ========
     //
     // On scan_trigger pulse, iterates display_list[0..display_list_count-1].
@@ -958,6 +1013,135 @@ module kaneko16 #(
 
                 default: g3_state <= G3_IDLE;
             endcase
+        end
+    end
+
+    // =========================================================================
+    // Gate 4: BG Tilemap Renderer (VIEW2-CHIP)
+    // =========================================================================
+
+    // ── Tilemap VRAM (4 layers × 32×32 = 4096 words) ─────────────────────────
+    // Address: {layer[1:0], row[4:0], col[4:0]} = 12 bits
+
+    logic [15:0] tilemap_vram [0:4095];
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            for (int i = 0; i < 4096; i++)
+                tilemap_vram[i] <= 16'h0000;
+        end else begin
+            if (bg_vram_wr) begin
+                /* verilator lint_off WIDTHTRUNC */
+                tilemap_vram[{bg_layer_sel, bg_row_sel, bg_col_sel}] <= bg_vram_din;
+                /* verilator lint_on WIDTHTRUNC */
+            end
+        end
+    end
+
+    // ── Stage 0: combinational — scroll + VRAM read + ROM address ────────────
+
+    logic [8:0]  g4s0_tile_x, g4s0_tile_y;
+    logic [4:0]  g4s0_col, g4s0_row;
+    logic [3:0]  g4s0_px,  g4s0_py;
+    logic [11:0] g4s0_vram_addr;
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic [15:0] g4s0_vram_word;   // bits [1:0] reserved (unused by design)
+    /* verilator lint_on UNUSEDSIGNAL */
+    logic [7:0]  g4s0_tile_num;
+    logic [3:0]  g4s0_palette;
+    logic        g4s0_hflip, g4s0_vflip;
+    logic [3:0]  g4s0_fpx,  g4s0_fpy;
+    logic [20:0] g4s0_rom_addr;
+
+    // Select active scroll for queried layer (only lower 9 bits [8:0] used)
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic [15:0] g4s0_scroll_x_sel, g4s0_scroll_y_sel;
+    /* verilator lint_on UNUSEDSIGNAL */
+
+    always_comb begin
+        case (bg_layer_query)
+            2'd0: begin g4s0_scroll_x_sel = active_scroll_x_0; g4s0_scroll_y_sel = active_scroll_y_0; end
+            2'd1: begin g4s0_scroll_x_sel = active_scroll_x_1; g4s0_scroll_y_sel = active_scroll_y_1; end
+            2'd2: begin g4s0_scroll_x_sel = active_scroll_x_2; g4s0_scroll_y_sel = active_scroll_y_2; end
+            2'd3: begin g4s0_scroll_x_sel = active_scroll_x_3; g4s0_scroll_y_sel = active_scroll_y_3; end
+            default: begin g4s0_scroll_x_sel = 16'h0000; g4s0_scroll_y_sel = 16'h0000; end
+        endcase
+    end
+
+    always_comb begin
+        // Scrolled pixel coordinates (9-bit wrap in 512px map)
+        g4s0_tile_x = (bg_hpos + g4s0_scroll_x_sel[8:0]) & 9'h1FF;
+        g4s0_tile_y = (bg_vpos + g4s0_scroll_y_sel[8:0]) & 9'h1FF;
+
+        // Tile column/row and pixel within tile
+        g4s0_col   = g4s0_tile_x[8:4];   // tile_x >> 4 (0..31)
+        g4s0_row   = g4s0_tile_y[8:4];   // tile_y >> 4 (0..31)
+        g4s0_px    = g4s0_tile_x[3:0];   // pixel X in tile (0..15)
+        g4s0_py    = g4s0_tile_y[3:0];   // pixel Y in tile (0..15)
+
+        // VRAM lookup
+        g4s0_vram_addr = {bg_layer_query, g4s0_row, g4s0_col};
+        g4s0_vram_word = tilemap_vram[g4s0_vram_addr];
+
+        // Decode VRAM entry (GATE_PLAN.md encoding):
+        //   [15:8] tile_num, [7:4] palette, [3] VFLIP, [2] HFLIP
+        g4s0_tile_num = g4s0_vram_word[15:8];
+        g4s0_palette  = g4s0_vram_word[7:4];
+        g4s0_vflip    = g4s0_vram_word[3];
+        g4s0_hflip    = g4s0_vram_word[2];
+
+        // Apply flip
+        g4s0_fpx = g4s0_hflip ? (4'd15 - g4s0_px) : g4s0_px;
+        g4s0_fpy = g4s0_vflip ? (4'd15 - g4s0_py) : g4s0_py;
+
+        // Tile ROM byte address: tile_num*128 + fpy*8 + fpx/2
+        // 4bpp packed: 8 bytes/row, lo nybble = left pixel (even fpx), hi = right (odd fpx)
+        g4s0_rom_addr = 21'(g4s0_tile_num) * 21'd128
+                      + 21'(g4s0_fpy)      * 21'd8
+                      + {17'h0, g4s0_fpx[3:1]};  // fpx >> 1
+    end
+
+    // ── Stage 1: registered — latch ROM address + metadata ───────────────────
+
+    logic [1:0]  g4s1_layer;
+    logic [3:0]  g4s1_palette;
+    logic        g4s1_px_lsb;   // fpx[0]: selects hi/lo nybble
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            g4s1_layer        <= 2'h0;
+            g4s1_palette      <= 4'h0;
+            g4s1_px_lsb       <= 1'b0;
+            bg_tile_rom_addr  <= 21'h0;
+        end else begin
+            g4s1_layer       <= bg_layer_query;
+            g4s1_palette     <= g4s0_palette;
+            g4s1_px_lsb      <= g4s0_fpx[0];
+            bg_tile_rom_addr <= g4s0_rom_addr;
+        end
+    end
+
+    // ── Stage 2: combinational — unpack nybble from ROM data ─────────────────
+
+    logic [3:0] g4s2_nybble;
+    always_comb begin
+        g4s2_nybble = g4s1_px_lsb ? bg_tile_rom_data[7:4] : bg_tile_rom_data[3:0];
+    end
+
+    // ── Output registers: update the queried layer slot ───────────────────────
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            bg_pix_valid <= 4'h0;
+            for (int i = 0; i < 4; i++)
+                bg_pix_color[i] <= 8'h00;
+        end else begin
+            for (int i = 0; i < 4; i++) begin
+                if (2'(i) == g4s1_layer) begin
+                    bg_pix_valid[i]  <= (g4s2_nybble != 4'h0);
+                    bg_pix_color[i]  <= {g4s1_palette, g4s2_nybble};
+                end
+            end
         end
     end
 
