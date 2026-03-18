@@ -366,44 +366,55 @@ assign zm_word_pf4_yswap = line_ram[15'h4200 + {7'b0, next_scan}];  // PF4 Y fro
 // Register outputs at hblank_fall
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        for (int i = 0; i < 4; i++) begin
-            ls_rowscroll[i]    <= 16'b0;
-            ls_alt_tilemap[i]  <= 1'b0;
-            ls_zoom_x[i]       <= 8'h00;
-            ls_zoom_y[i]       <= 8'h80;
-            ls_colscroll[i]    <= 9'b0;
-            ls_pal_add[i]      <= 16'b0;
-            ls_pf_prio[i]      <= 4'b0;
-            ls_pf_clip_en[i]   <= 4'b0;
-            ls_pf_clip_inv[i]  <= 4'b0;
-            ls_pf_clip_sense[i]<= 1'b0;
-        end
-        for (int j = 0; j < 4; j++) ls_spr_prio[j] <= 4'b0;
-        for (int k = 0; k < 4; k++) begin
-            ls_clip_left[k]  <= 8'h00;
-            ls_clip_right[k] <= 8'hFF;
-        end
-        ls_spr_clip_en    <= 4'b0;
-        ls_spr_clip_inv   <= 4'b0;
-        ls_spr_clip_sense <= 1'b0;
+        // Explicit element assignments instead of for-loops — avoids Quartus 17
+        // Error 10028 / OOM (293007) from constant-driver loops on packed 2D output ports.
+        ls_rowscroll[0]    <= 16'b0; ls_rowscroll[1]    <= 16'b0;
+        ls_rowscroll[2]    <= 16'b0; ls_rowscroll[3]    <= 16'b0;
+        ls_alt_tilemap[0]  <= 1'b0;  ls_alt_tilemap[1]  <= 1'b0;
+        ls_alt_tilemap[2]  <= 1'b0;  ls_alt_tilemap[3]  <= 1'b0;
+        ls_zoom_x[0]       <= 8'h00; ls_zoom_x[1]       <= 8'h00;
+        ls_zoom_x[2]       <= 8'h00; ls_zoom_x[3]       <= 8'h00;
+        ls_zoom_y[0]       <= 8'h80; ls_zoom_y[1]       <= 8'h80;
+        ls_zoom_y[2]       <= 8'h80; ls_zoom_y[3]       <= 8'h80;
+        ls_colscroll[0]    <= 9'b0;  ls_colscroll[1]    <= 9'b0;
+        ls_colscroll[2]    <= 9'b0;  ls_colscroll[3]    <= 9'b0;
+        ls_pal_add[0]      <= 16'b0; ls_pal_add[1]      <= 16'b0;
+        ls_pal_add[2]      <= 16'b0; ls_pal_add[3]      <= 16'b0;
+        ls_pf_prio[0]      <= 4'b0;  ls_pf_prio[1]      <= 4'b0;
+        ls_pf_prio[2]      <= 4'b0;  ls_pf_prio[3]      <= 4'b0;
+        ls_pf_clip_en[0]   <= 4'b0;  ls_pf_clip_en[1]   <= 4'b0;
+        ls_pf_clip_en[2]   <= 4'b0;  ls_pf_clip_en[3]   <= 4'b0;
+        ls_pf_clip_inv[0]  <= 4'b0;  ls_pf_clip_inv[1]  <= 4'b0;
+        ls_pf_clip_inv[2]  <= 4'b0;  ls_pf_clip_inv[3]  <= 4'b0;
+        ls_pf_clip_sense[0]<= 1'b0;  ls_pf_clip_sense[1]<= 1'b0;
+        ls_pf_clip_sense[2]<= 1'b0;  ls_pf_clip_sense[3]<= 1'b0;
+        ls_spr_prio[0]     <= 4'b0;  ls_spr_prio[1]     <= 4'b0;
+        ls_spr_prio[2]     <= 4'b0;  ls_spr_prio[3]     <= 4'b0;
+        ls_clip_left[0]    <= 8'h00; ls_clip_left[1]    <= 8'h00;
+        ls_clip_left[2]    <= 8'h00; ls_clip_left[3]    <= 8'h00;
+        ls_clip_right[0]   <= 8'hFF; ls_clip_right[1]   <= 8'hFF;
+        ls_clip_right[2]   <= 8'hFF; ls_clip_right[3]   <= 8'hFF;
+        ls_spr_clip_en     <= 4'b0;
+        ls_spr_clip_inv    <= 4'b0;
+        ls_spr_clip_sense  <= 1'b0;
         // Step 13: alpha blend defaults
-        ls_a_src          <= 4'd8;  // default: fully opaque source
-        ls_a_dst          <= 4'd0;  // default: no destination contribution
-        for (int n = 0; n < 4; n++) begin
-            ls_pf_blend[n]  <= 2'b00;  // default: opaque
-            ls_spr_blend[n] <= 2'b00;  // default: opaque
-        end
+        ls_a_src           <= 4'd8;  // default: fully opaque source
+        ls_a_dst           <= 4'd0;  // default: no destination contribution
+        ls_pf_blend[0]     <= 2'b00; ls_pf_blend[1]     <= 2'b00;
+        ls_pf_blend[2]     <= 2'b00; ls_pf_blend[3]     <= 2'b00;
+        ls_spr_blend[0]    <= 2'b00; ls_spr_blend[1]    <= 2'b00;
+        ls_spr_blend[2]    <= 2'b00; ls_spr_blend[3]    <= 2'b00;
         // Step 14: reverse blend B defaults
-        ls_b_src          <= 4'd8;  // default: fully opaque source
-        ls_b_dst          <= 4'd0;  // default: no destination contribution
+        ls_b_src           <= 4'd8;  // default: fully opaque source
+        ls_b_dst           <= 4'd0;  // default: no destination contribution
         // Step 15: mosaic defaults (no mosaic)
-        ls_mosaic_rate    <= 4'b0;
-        ls_pf_mosaic_en   <= 4'b0;
-        ls_spr_mosaic_en  <= 1'b0;
+        ls_mosaic_rate     <= 4'b0;
+        ls_pf_mosaic_en    <= 4'b0;
+        ls_spr_mosaic_en   <= 1'b0;
         // Step 16: pivot defaults (disabled)
-        ls_pivot_en       <= 1'b0;
-        ls_pivot_bank     <= 1'b0;
-        ls_pivot_blend    <= 1'b0;
+        ls_pivot_en        <= 1'b0;
+        ls_pivot_bank      <= 1'b0;
+        ls_pivot_blend     <= 1'b0;
     end else if (hblank_fall) begin
         for (int n = 0; n < 4; n++) begin
             // Rowscroll: enable bit n of en_row_word[3:0]

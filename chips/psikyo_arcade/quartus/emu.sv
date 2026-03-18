@@ -518,7 +518,7 @@ sdram_b u_sdram
 (
     .clk        (clk_sdram),
     .clk_sys    (clk_sys),
-    .reset_n    (reset_n),
+    .rst_n      (reset_n),
 
     // CH0: HPS ROM download write path
     .ioctl_wr   (ioctl_wr & ioctl_download),

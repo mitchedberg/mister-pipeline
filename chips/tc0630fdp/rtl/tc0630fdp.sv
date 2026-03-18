@@ -332,7 +332,12 @@ assign ctrl_idx = cpu_addr[4:1];
 
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        for (int i = 0; i < 16; i++) ctrl[i] <= 16'b0;
+        // Explicit assignments instead of for-loop — avoids Quartus 17 Error 10028
+        // (constant-driver for-loop on unpacked array output ports)
+        ctrl[0]  <= 16'b0; ctrl[1]  <= 16'b0; ctrl[2]  <= 16'b0; ctrl[3]  <= 16'b0;
+        ctrl[4]  <= 16'b0; ctrl[5]  <= 16'b0; ctrl[6]  <= 16'b0; ctrl[7]  <= 16'b0;
+        ctrl[8]  <= 16'b0; ctrl[9]  <= 16'b0; ctrl[10] <= 16'b0; ctrl[11] <= 16'b0;
+        ctrl[12] <= 16'b0; ctrl[13] <= 16'b0; ctrl[14] <= 16'b0; ctrl[15] <= 16'b0;
     end else if (cs_ctrl && !cpu_rw) begin
         if (ctrl_idx != 4'd8  && ctrl_idx != 4'd9  &&
             ctrl_idx != 4'd10 && ctrl_idx != 4'd11 &&

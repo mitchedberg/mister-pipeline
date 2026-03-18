@@ -38,8 +38,12 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sdram_z.sv
 # SUPPORT CHIPS (shared across Taito families)
 # =========================================================================
 
-# TC0480SCP: 4-layer tilemap engine (BG0-BG3 + FG text)
+# TC0480SCP: 4-layer tilemap engine (BG0-BG3 + FG text) + all submodules
 set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0480scp/rtl/tc0480scp.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0480scp/rtl/tc0480scp_vram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0480scp/rtl/tc0480scp_textlayer.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0480scp/rtl/tc0480scp_bg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0480scp/rtl/tc0480scp_colmix.sv
 
 # TC0140SYT: 68000 <-> Z80 sound communication
 set_global_assignment -name SYSTEMVERILOG_FILE ../../taito_support/tc0140syt.sv
@@ -114,6 +118,8 @@ set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt12/jt12_sh24.v
 set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt12/jt12_single_acc.v
 set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt12/jt12_sumch.v
 set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt12/jt12_timers.v
+# jt10_acc: YM2610 accumulator (top-level in jt12/, not in adpcm/)
+set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt12/jt10_acc.v
 # ADPCM sub-module files
 set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt12/adpcm/jt10_adpcm_acc.v
 set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt12/adpcm/jt10_adpcm_cnt.v
