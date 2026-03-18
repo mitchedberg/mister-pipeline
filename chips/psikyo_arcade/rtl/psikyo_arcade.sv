@@ -412,14 +412,15 @@ assign rgb_b = {pal_entry_r[4:0],   pal_entry_r[4:2]};
 // =============================================================================
 
 // Outputs from Gate 1/2
-logic [255:0][9:0]   dl_x;
-logic [255:0][9:0]   dl_y;
-logic [255:0][15:0]  dl_tile;
-logic [255:0][3:0]   dl_palette;
+// Flat 1D wires — matches psikyo's flattened display_list output ports.
+logic [2559:0]       dl_x;       // [255:0]×[9:0]
+logic [2559:0]       dl_y;       // [255:0]×[9:0]
+logic [4095:0]       dl_tile;    // [255:0]×[15:0]
+logic [1023:0]       dl_palette; // [255:0]×[3:0]
 logic [255:0]        dl_flip_x;
 logic [255:0]        dl_flip_y;
-logic [255:0][1:0]   dl_priority;
-logic [255:0][2:0]   dl_size;
+logic [511:0]        dl_priority;// [255:0]×[1:0]
+logic [767:0]        dl_size;    // [255:0]×[2:0]
 logic [255:0]        dl_valid;
 logic [7:0]  dl_count;
 logic        dl_ready;
