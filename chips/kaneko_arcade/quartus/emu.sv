@@ -394,14 +394,18 @@ always_ff @(posedge clk_sys)
 //
 // kaneko_arcade I/O expects active-low inputs:
 //   [7]=BTN3 [6]=BTN2 [5]=BTN1 [4]=START [3]=RIGHT [2]=LEFT [1]=DOWN [0]=UP
+//
+// MiSTer CONF_STR "J1,Button 1,Button 2,Button 3,Start,Coin" assigns:
+//   B1=[4] B2=[5] B3=[6] Start=[7] Coin=[8]
+//   service (unmapped) at [9]
 //////////////////////////////////////////////////////////////////
-wire [7:0] joy_p1 = ~{ joystick_0[6], joystick_0[5], joystick_0[4], joystick_0[8],
+wire [7:0] joy_p1 = ~{ joystick_0[6], joystick_0[5], joystick_0[4], joystick_0[7],
                        joystick_0[0], joystick_0[1], joystick_0[2], joystick_0[3] };
-wire [7:0] joy_p2 = ~{ joystick_1[6], joystick_1[5], joystick_1[4], joystick_1[8],
+wire [7:0] joy_p2 = ~{ joystick_1[6], joystick_1[5], joystick_1[4], joystick_1[7],
                        joystick_1[0], joystick_1[1], joystick_1[2], joystick_1[3] };
 
-wire [1:0] coin    = ~{ joystick_1[9], joystick_0[9] };   // active-low
-wire       service = ~joystick_0[10];                      // active-low
+wire [1:0] coin    = ~{ joystick_1[8], joystick_0[8] };   // active-low
+wire       service = ~joystick_0[9];                       // active-low
 
 //////////////////////////////////////////////////////////////////
 // SDRAM controller
@@ -698,7 +702,7 @@ wire _unused = &{
     USER_IN,
     OSD_STATUS,
     direct_video,
-    joystick_0[31:11], joystick_1[31:10],
+    joystick_0[31:10], joystick_1[31:9],
     dsw[2], dsw[3],
     cpu_reset_n_out,
     gfx_sdr_addr[26:22],  // upper bits not used in 2MB GFX window

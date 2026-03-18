@@ -372,14 +372,19 @@ always_ff @(posedge clk_sys)
 //   [8]=Start [9]=Coin
 //
 // psikyo_arcade expects active-low inputs.
+// joystick_p1[7:0]: [3:0]=UDLR, [7:4]=Btn3/Bomb/Shot/START (active-low)
+//
+// MiSTer CONF_STR "J1,Shot,Bomb,Btn3,Start,Coin" assigns:
+//   Shot=[4] Bomb=[5] Btn3=[6] Start=[7] Coin=[8]
+//   service (unmapped) at [9]
 //////////////////////////////////////////////////////////////////
-wire [7:0] joy_p1 = ~{ joystick_0[7], joystick_0[6], joystick_0[5], joystick_0[4],
+wire [7:0] joy_p1 = ~{ joystick_0[6], joystick_0[5], joystick_0[4], joystick_0[7],
                        joystick_0[3], joystick_0[2], joystick_0[1], joystick_0[0] };
-wire [7:0] joy_p2 = ~{ joystick_1[7], joystick_1[6], joystick_1[5], joystick_1[4],
+wire [7:0] joy_p2 = ~{ joystick_1[6], joystick_1[5], joystick_1[4], joystick_1[7],
                        joystick_1[3], joystick_1[2], joystick_1[1], joystick_1[0] };
 
-wire [1:0] coin    = ~{ joystick_1[9], joystick_0[9] };
-wire       service = ~joystick_0[10];
+wire [1:0] coin    = ~{ joystick_1[8], joystick_0[8] };
+wire       service = ~joystick_0[9];
 
 //////////////////////////////////////////////////////////////////
 // SDRAM controller
@@ -689,7 +694,7 @@ wire _unused = &{
     USER_IN,
     OSD_STATUS,
     direct_video,
-    joystick_0[31:11], joystick_1[31:10],
+    joystick_0[31:10], joystick_1[31:9],
     dsw[2], dsw[3],
     cpu_reset_n_out
 };

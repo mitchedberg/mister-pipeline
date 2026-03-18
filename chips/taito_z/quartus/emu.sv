@@ -416,27 +416,29 @@ always_ff @(posedge clk_sys)
 //////////////////////////////////////////////////////////////////
 // Input mapping for Taito Z racing games
 //
-// MiSTer joystick_0 bit layout (standard):
-//   [0]=Right [1]=Left [2]=Down [3]=Up
-//   [4]=B1(Brake) [5]=B2(Gear) [6]=B3 [7]=B4
-//   [8]=Start [9]=Coin
+// MiSTer CONF_STR "J1,Brake,Gear,Start,Coin" assigns:
+//   Brake=[4] Gear=[5] Start=[6] Coin=[7]
+//   service (unmapped) at [8]
 //
 // TC0510NIO expects active-low inputs (joystick_p1[7:0]):
 //   [3:0] = UP/DOWN/LEFT/RIGHT (active-low directions)
-//   [7:4] = buttons [3:0]      (active-low)
+//   [7:4] = BTN3/BTN2/Gear/Start  (active-low)
+//   (Brake/gas handled via pedal_in analog/digital path below)
 //
 // Steering wheel: mapped from analog axis (joystick_l_analog_0[7:0])
 //   or synthesized from digital left/right for gamepads.
 // Gas pedal: mapped from analog axis (joystick_l_analog_0[15:8])
-//   or button B1 for digital-only.
+//   or Brake button [4] for digital-only.
 //////////////////////////////////////////////////////////////////
-wire [7:0] joy_p1 = ~{ joystick_0[7], joystick_0[6], joystick_0[5], joystick_0[4],
+// joy_p1[7:4] = B3(unused)/B2(unused)/Gear/Start  [7:4]=active-low
+// joy_p1[3:0] = RLDU  (Brake/gas routed via pedal_in)
+wire [7:0] joy_p1 = ~{ 1'b0, 1'b0, joystick_0[5], joystick_0[6],
                        joystick_0[3], joystick_0[2], joystick_0[1], joystick_0[0] };
-wire [7:0] joy_p2 = ~{ joystick_1[7], joystick_1[6], joystick_1[5], joystick_1[4],
+wire [7:0] joy_p2 = ~{ 1'b0, 1'b0, joystick_1[5], joystick_1[6],
                        joystick_1[3], joystick_1[2], joystick_1[1], joystick_1[0] };
 
-wire [1:0] coin    = ~{ joystick_1[9], joystick_0[9] };   // active-low
-wire       service = ~joystick_0[10];                      // active-low
+wire [1:0] coin    = ~{ joystick_1[7], joystick_0[7] };   // active-low
+wire       service = ~joystick_0[8];                       // active-low
 
 // Steering wheel: use analog X axis if connected, else synthesize from d-pad
 // joystick_l_analog_0[7:0] = X axis (-128..+127, signed); remap to 0..255
@@ -451,9 +453,9 @@ wire [7:0] wheel_digital = joystick_0[1] ? 8'h00 :   // left
 wire analog_present = (joystick_l_analog_0[7:0] != 8'h00);
 wire [7:0] wheel_in = analog_present ? wheel_analog : wheel_digital;
 
-// Gas pedal: analog Y axis (joystick_l_analog_0[15:8]) or button B1
+// Gas pedal: analog Y axis (joystick_l_analog_0[15:8]) or Brake button [4]
 wire [7:0] pedal_analog  = joystick_l_analog_0[15:8] + 8'h80;
-wire [7:0] pedal_digital = joystick_0[4] ? 8'hFF : 8'h00;  // B1 = full gas
+wire [7:0] pedal_digital = joystick_0[4] ? 8'hFF : 8'h00;  // Brake = full gas
 wire [7:0] pedal_in      = analog_present ? pedal_analog : pedal_digital;
 
 //////////////////////////////////////////////////////////////////
@@ -1010,7 +1012,7 @@ wire _unused = &{
     USER_IN,
     OSD_STATUS,
     direct_video,
-    joystick_0[31:11], joystick_1[31:10],
+    joystick_0[31:9], joystick_1[31:8],
     dsw[0], dsw[1], dsw[2], dsw[3],
     cpua_reset_n_out,   // CPU A RESET instruction output (not used at top level)
     cpub_reset_n_out    // CPU B RESET instruction output (not used at top level)
