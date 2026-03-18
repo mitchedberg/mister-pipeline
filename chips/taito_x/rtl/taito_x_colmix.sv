@@ -126,45 +126,86 @@ always_ff @(posedge clk) begin
         cpu_pal_dout <= 16'hFFFF;
 end
 `else
-// Quartus: infer M10K via altsyncram BIDIR_DUAL_PORT
-// Port A: CPU read/write (synchronous, byte-enabled)
-// Port B: display pixel read (synchronous, read-only)
+// Quartus: two DUAL_PORT M10K instances (tc0110pcr pattern):
+//   pal_pxl_inst: port A = CPU write, port B = display pixel read
+//   pal_cpu_inst: port A = CPU write, port B = CPU readback
+// Both clocks tied to clk; port B on CLOCK1 to satisfy Quartus 17.0
+// clock-domain consistency check. All optional ports explicitly connected.
 logic [15:0] pal_ram_cpu_q;
 logic [15:0] pal_ram_pix_q;
 
+// ── Video pixel lookup RAM ────────────────────────────────────────────────
 altsyncram #(
-    .operation_mode         ("BIDIR_DUAL_PORT"),
-    .width_a                (16),
-    .widthad_a              (11),
-    .numwords_a             (2048),
-    .width_b                (16),
-    .widthad_b              (11),
-    .numwords_b             (2048),
-    .intended_device_family ("Cyclone V"),
-    .lpm_type               ("altsyncram"),
-    .ram_block_type         ("M10K"),
-    .width_byteena_a        (2),
-    .outdata_reg_a          ("CLOCK0"),
-    .outdata_reg_b          ("CLOCK0"),
-    .address_reg_b          ("CLOCK0"),
-    .rdcontrol_reg_b        ("CLOCK0"),
-    .indata_reg_b           ("CLOCK0"),
-    .wrcontrol_wraddressstall_b ("CLOCK0")
-) pal_ram_inst (
-    // Port A — CPU
-    .clock0     (clk),
-    .clock1     (clk),
-    .address_a  (cpu_pal_addr[10:0]),
-    .data_a     (cpu_pal_din),
-    .wren_a     (cpu_pal_cs && cpu_pal_we),
-    .byteena_a  (cpu_pal_be),
-    .q_a        (pal_ram_cpu_q),
-    // Port B — pixel display read (all port B regs on CLOCK0 via address_reg_b)
-    .address_b  (win_index[10:0]),
-    .data_b     (16'b0),
-    .wren_b     (1'b0),
-    .byteena_b  (2'b11),
-    .q_b        (pal_ram_pix_q)
+    .operation_mode              ("DUAL_PORT"),
+    .width_a                     (16), .widthad_a (11), .numwords_a (2048),
+    .width_b                     (16), .widthad_b (11), .numwords_b (2048),
+    .outdata_reg_b               ("CLOCK1"),
+    .address_reg_b               ("CLOCK1"),
+    .clock_enable_input_a        ("BYPASS"),
+    .clock_enable_input_b        ("BYPASS"),
+    .clock_enable_output_b       ("BYPASS"),
+    .intended_device_family      ("Cyclone V"),
+    .lpm_type                    ("altsyncram"),
+    .ram_block_type              ("M10K"),
+    .width_byteena_a             (2),
+    .power_up_uninitialized      ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) pal_pxl_inst (
+    .clock0         ( clk                        ),
+    .clock1         ( clk                        ),
+    .address_a      ( cpu_pal_addr[10:0]         ),
+    .data_a         ( cpu_pal_din                ),
+    .wren_a         ( cpu_pal_cs && cpu_pal_we   ),
+    .byteena_a      ( cpu_pal_be                 ),
+    .address_b      ( win_index[10:0]            ),
+    .q_b            ( pal_ram_pix_q              ),
+    .wren_b         ( 1'b0                       ),
+    .data_b         ( 16'd0                      ),
+    .q_a            (                            ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 2'b11                      ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                       )
+);
+
+// ── CPU readback RAM ──────────────────────────────────────────────────────
+altsyncram #(
+    .operation_mode              ("DUAL_PORT"),
+    .width_a                     (16), .widthad_a (11), .numwords_a (2048),
+    .width_b                     (16), .widthad_b (11), .numwords_b (2048),
+    .outdata_reg_b               ("CLOCK1"),
+    .address_reg_b               ("CLOCK1"),
+    .clock_enable_input_a        ("BYPASS"),
+    .clock_enable_input_b        ("BYPASS"),
+    .clock_enable_output_b       ("BYPASS"),
+    .intended_device_family      ("Cyclone V"),
+    .lpm_type                    ("altsyncram"),
+    .ram_block_type              ("M10K"),
+    .width_byteena_a             (2),
+    .power_up_uninitialized      ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) pal_cpu_inst (
+    .clock0         ( clk                        ),
+    .clock1         ( clk                        ),
+    .address_a      ( cpu_pal_addr[10:0]         ),
+    .data_a         ( cpu_pal_din                ),
+    .wren_a         ( cpu_pal_cs && cpu_pal_we   ),
+    .byteena_a      ( cpu_pal_be                 ),
+    .address_b      ( cpu_pal_addr[10:0]         ),
+    .q_b            ( pal_ram_cpu_q              ),
+    .wren_b         ( 1'b0                       ),
+    .data_b         ( 16'd0                      ),
+    .q_a            (                            ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 2'b11                      ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                       )
 );
 
 always_ff @(posedge clk) begin

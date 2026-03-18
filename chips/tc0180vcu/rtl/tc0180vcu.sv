@@ -162,43 +162,87 @@ assign fg_vram_q = vram[fg_vram_rd_addr];
 
 `else
 
-// Quartus: infer dual-port M10K via altsyncram (UNREGISTERED output → 1-cycle read via cpu_dout reg)
-// Port A: CPU read/write  Port B: TX video async read
-// Note: BG/FG share port B via mux (Quartus synthesis only supports 2 ports per M10K).
+// Quartus: two DUAL_PORT M10K instances (tc0110pcr pattern):
+//   vram_pxl_inst: port A = CPU write, port B = TX/BG/FG video read
+//   vram_cpu_inst: port A = CPU write, port B = CPU readback
+// Both clocks tied to clk; port B on CLOCK1 to satisfy Quartus 17.0
+// clock-domain consistency check. All optional ports explicitly connected.
 logic [15:0] vram_dout;
 logic [14:0] tx_vram_rd_addr;
 logic [15:0] tx_vram_q;
+
+// ── TX/BG/FG pixel read RAM ───────────────────────────────────────────────
 altsyncram #(
-    .operation_mode         ("BIDIR_DUAL_PORT"),
-    .width_a                (16),
-    .widthad_a              (15),
-    .width_b                (16),
-    .widthad_b              (15),
-    .intended_device_family ("Cyclone V"),
-    .lpm_type               ("altsyncram"),
-    .ram_block_type         ("M10K"),
-    .read_during_write_mode_port_a ("NEW_DATA_WITH_NBE_READ"),
-    .read_during_write_mode_port_b ("NEW_DATA_WITH_NBE_READ"),
-    .outdata_reg_a          ("CLOCK0"),
-    .outdata_reg_b          ("CLOCK0"),
-    .address_reg_b          ("CLOCK0"),
-    .rdcontrol_reg_b        ("CLOCK0"),
-    .indata_reg_b           ("CLOCK0"),
-    .wrcontrol_wraddressstall_b ("CLOCK0"),
-    .numwords_a             (32768),
-    .numwords_b             (32768)
-) vram_inst (
-    .clock0    (clk),
-    .clock1    (clk),
-    .address_a (cpu_addr[14:0]),
-    .data_a    (cpu_din),
-    .wren_a    (sel_vram && cpu_we),
-    .byteena_a (cpu_be),
-    .q_a       (vram_dout),
-    .address_b (tx_vram_rd_addr),
-    .data_b    (16'b0),
-    .wren_b    (1'b0),
-    .q_b       (tx_vram_q)
+    .operation_mode              ("DUAL_PORT"),
+    .width_a                     (16), .widthad_a (15), .numwords_a (32768),
+    .width_b                     (16), .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b               ("CLOCK1"),
+    .address_reg_b               ("CLOCK1"),
+    .clock_enable_input_a        ("BYPASS"),
+    .clock_enable_input_b        ("BYPASS"),
+    .clock_enable_output_b       ("BYPASS"),
+    .intended_device_family      ("Cyclone V"),
+    .lpm_type                    ("altsyncram"),
+    .ram_block_type              ("M10K"),
+    .width_byteena_a             (2),
+    .power_up_uninitialized      ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) vram_pxl_inst (
+    .clock0         ( clk                    ),
+    .clock1         ( clk                    ),
+    .address_a      ( cpu_addr[14:0]         ),
+    .data_a         ( cpu_din                ),
+    .wren_a         ( sel_vram && cpu_we     ),
+    .byteena_a      ( cpu_be                 ),
+    .address_b      ( tx_vram_rd_addr        ),
+    .q_b            ( tx_vram_q              ),
+    .wren_b         ( 1'b0                   ),
+    .data_b         ( 16'd0                  ),
+    .q_a            (                        ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 2'b11                  ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                   )
+);
+
+// ── CPU readback RAM ──────────────────────────────────────────────────────
+altsyncram #(
+    .operation_mode              ("DUAL_PORT"),
+    .width_a                     (16), .widthad_a (15), .numwords_a (32768),
+    .width_b                     (16), .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b               ("CLOCK1"),
+    .address_reg_b               ("CLOCK1"),
+    .clock_enable_input_a        ("BYPASS"),
+    .clock_enable_input_b        ("BYPASS"),
+    .clock_enable_output_b       ("BYPASS"),
+    .intended_device_family      ("Cyclone V"),
+    .lpm_type                    ("altsyncram"),
+    .ram_block_type              ("M10K"),
+    .width_byteena_a             (2),
+    .power_up_uninitialized      ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) vram_cpu_inst (
+    .clock0         ( clk                    ),
+    .clock1         ( clk                    ),
+    .address_a      ( cpu_addr[14:0]         ),
+    .data_a         ( cpu_din                ),
+    .wren_a         ( sel_vram && cpu_we     ),
+    .byteena_a      ( cpu_be                 ),
+    .address_b      ( cpu_addr[14:0]         ),
+    .q_b            ( vram_dout              ),
+    .wren_b         ( 1'b0                   ),
+    .data_b         ( 16'd0                  ),
+    .q_a            (                        ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 2'b11                  ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                   )
 );
 
 // For Quartus: BG/FG VRAM reads are muxed onto port B (time-multiplexed with TX).
