@@ -20,13 +20,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: false
-
-      - name: Checkout jtcores audio module submodules
-        run: |
-          git submodule update --init vendor/jtcores
-          cd vendor/jtcores && git submodule update --init modules/jt12 modules/jt51 modules/jt6295 modules/jtframe
 
       - name: Run Quartus synthesis (Docker)
         run: |

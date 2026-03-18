@@ -63,18 +63,18 @@ set_global_assignment -name VERILOG_FILE ../rtl/t80/T80s.v
 # OKI M6295 ADPCM SOUND CORE (jt6295)
 # =========================================================================
 # Source: https://github.com/jotego/jtcores/tree/master/modules/jt6295
-# Downloaded to: ../../../../vendor/jtcores/modules/jt6295/hdl/
+# Downloaded to: ../../../../vendor/audio/jt6295/
 
-set_global_assignment -name VERILOG_FILE ../../../../vendor/jtcores/modules/jt6295/hdl/jt6295.v
-set_global_assignment -name VERILOG_FILE ../../../../vendor/jtcores/modules/jt6295/hdl/jt6295_acc.v
-set_global_assignment -name VERILOG_FILE ../../../../vendor/jtcores/modules/jt6295/hdl/jt6295_adpcm.v
-set_global_assignment -name VERILOG_FILE ../../../../vendor/jtcores/modules/jt6295/hdl/jt6295_ctrl.v
-set_global_assignment -name VERILOG_FILE ../../../../vendor/jtcores/modules/jt6295/hdl/jt6295_rom.v
-set_global_assignment -name VERILOG_FILE ../../../../vendor/jtcores/modules/jt6295/hdl/jt6295_serial.v
-set_global_assignment -name VERILOG_FILE ../../../../vendor/jtcores/modules/jt6295/hdl/jt6295_sh_rst.v
-set_global_assignment -name VERILOG_FILE ../../../../vendor/jtcores/modules/jt6295/hdl/jt6295_timing.v
-set_global_assignment -name VERILOG_FILE ../../../../vendor/jtcores/modules/jt6295/hdl/jt12_comb.v
-set_global_assignment -name VERILOG_FILE ../../../../vendor/jtcores/modules/jt6295/hdl/jt12_interpol.v
+set_global_assignment -name VERILOG_FILE ../../../../vendor/audio/jt6295/jt6295.v
+set_global_assignment -name VERILOG_FILE ../../../../vendor/audio/jt6295/jt6295_acc.v
+set_global_assignment -name VERILOG_FILE ../../../../vendor/audio/jt6295/jt6295_adpcm.v
+set_global_assignment -name VERILOG_FILE ../../../../vendor/audio/jt6295/jt6295_ctrl.v
+set_global_assignment -name VERILOG_FILE ../../../../vendor/audio/jt6295/jt6295_rom.v
+set_global_assignment -name VERILOG_FILE ../../../../vendor/audio/jt6295/jt6295_serial.v
+set_global_assignment -name VERILOG_FILE ../../../../vendor/audio/jt6295/jt6295_sh_rst.v
+set_global_assignment -name VERILOG_FILE ../../../../vendor/audio/jt6295/jt6295_timing.v
+set_global_assignment -name VERILOG_FILE ../../../../vendor/audio/jt6295/jt12_comb.v
+set_global_assignment -name VERILOG_FILE ../../../../vendor/audio/jt6295/jt12_interpol.v
 
 # YM2149 (AY-3-8910) PSG — jt49 not yet in jtcores modules tree.
 # Add when available:
