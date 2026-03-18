@@ -232,7 +232,11 @@ localparam CONF_STR = {
     "O[5:3],Scandoubler FX,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
     "-;",
     "DIP;",
-    "R[0],Reset;",
+    "O[1:0],Coin,1C1P,1C2P,2C1P,3C1P;",
+    "O[3:2],Lives,1,2,3,5;",
+    "O[5:4],Difficulty,Easy,Normal,Hard,Hardest;",
+    "-;",
+    "T[0],Reset;",
     "J1,Button1,Button2,Button3,Start,Coin;",
     "jn,A,B,X,Start,Select;",
     "V,v",`BUILD_DATE

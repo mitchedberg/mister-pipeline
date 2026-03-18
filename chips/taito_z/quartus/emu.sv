@@ -267,7 +267,11 @@ localparam CONF_STR = {
     "O[5:3],Scandoubler FX,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
     "-;",
     "DIP;",
-    "R[0],Reset;",
+    "O[1:0],Coin,1C1P,1C2P,2C1P,3C1P;",
+    "O[3:2],Time,60,70,80,90;",
+    "O[5:4],Difficulty,Easy,Normal,Hard,Hard;",
+    "-;",
+    "T[0],Reset;",
     // Taito Z racing games: wheel/pedal + 2 buttons + start + coin
     "J1,Brake,Gear,Start,Coin;",
     "jn,A,B,Start,Select;",

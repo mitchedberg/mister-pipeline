@@ -255,7 +255,11 @@ localparam CONF_STR = {
     "O[5:3],Scandoubler FX,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
     "-;",
     "DIP;",
-    "R[0],Reset;",
+    "O[1:0],Coin A,1C1P,2C1P,1C2P,1C3P;",
+    "O[3:2],Lives,1,2,3,5;",
+    "O[5:4],Difficulty,Easy,Normal,Hard,Hardest;",
+    "-;",
+    "T[0],Reset;",
     // Taito B action games: 2 joysticks + 3 buttons + start + coin
     "J1,Button 1,Button 2,Button 3,Start,Coin;",
     "jn,A,B,C,Start,Select;",

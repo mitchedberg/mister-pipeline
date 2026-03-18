@@ -247,7 +247,10 @@ localparam CONF_STR = {
     "O[5:3],Scandoubler FX,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
     "-;",
     "DIP;",
-    "R[0],Reset;",
+    "O[1:0],Difficulty,Easy,Normal,Hard,Hard;",
+    "O[3:2],Lives,1,2,3,3;",
+    "-;",
+    "T[0],Reset;",
     // Kaneko16 action games: 2 joysticks + 3 buttons + start + coin
     "J1,Button 1,Button 2,Button 3,Start,Coin;",
     "jn,A,B,C,Start,Select;",

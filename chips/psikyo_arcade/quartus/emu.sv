@@ -222,7 +222,11 @@ localparam CONF_STR = {
     "O[5:3],Scandoubler FX,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
     "-;",
     "DIP;",
-    "R[0],Reset;",
+    "O[1:0],Lives,1,2,3,5;",
+    "O[3:2],Difficulty,Easy,Normal,Hard,Special;",
+    "O[4],Demo Sound,Off,On;",
+    "-;",
+    "T[0],Reset;",
     // Psikyo vertical shooters: 2 joysticks + 3 buttons + start + coin
     "J1,Shot,Bomb,Btn3,Start,Coin;",
     "jn,A,B,C,Start,Select;",

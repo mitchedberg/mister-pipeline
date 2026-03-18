@@ -254,7 +254,12 @@ localparam CONF_STR = {
     "O[5:3],Scandoubler FX,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
     "-;",
     "DIP;",
-    "R[0],Reset;",
+    "O[1:0],Lives,1,2,3,5;",
+    "O[3:2],Difficulty,Easy,Normal,Hard,Hardest;",
+    "O[4],Demo Sound,Off,On;",
+    "O[5],Continue,Yes,No;",
+    "-;",
+    "T[0],Reset;",
     // Batsugun: 2 players, 3 buttons + start + coin
     "J1,Button 1,Button 2,Button 3,Start,Coin;",
     "jn,A,B,C,Start,Select;",
