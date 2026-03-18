@@ -502,17 +502,17 @@ module nmk16 #(
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
-            for (int i = 0; i < 256; i = i + 1) begin
-                _display_list_x[i]        <= 9'h000;
-                _display_list_y[i]        <= 9'h000;
-                _display_list_tile[i]     <= 12'h000;
-                _display_list_flip_x[i]   <= 1'b0;
-                _display_list_flip_y[i]   <= 1'b0;
-                _display_list_size[i]     <= 2'b00;
-                _display_list_palette[i]  <= 4'h0;
-                _display_list_valid[i]    <= 1'b0;
-                _display_list_priority[i] <= 1'b0;
-            end
+            // Direct packed-array reset — avoids Error 10028 (multiple constant drivers)
+            // and Error 10106 (reset loop >5000 iterations) in Quartus 17.0.
+            _display_list_x        <= '0;
+            _display_list_y        <= '0;
+            _display_list_tile     <= '0;
+            _display_list_flip_x   <= '0;
+            _display_list_flip_y   <= '0;
+            _display_list_size     <= '0;
+            _display_list_palette  <= '0;
+            _display_list_valid    <= '0;
+            _display_list_priority <= '0;
         end else if (scanner_state == SCAN && sprite_scan_idx[1:0] == 2'b11 && sprite_is_visible) begin
             // When word 3 (attributes) is presented and sprite is visible, write to display list.
             // Use sprite_data_rd_muxed directly for attr fields: sprite_word_attr is registered
@@ -632,9 +632,11 @@ module nmk16 #(
     logic [13:0] g3_full_tile;    // tile_base + tile_row*tiles_wide + tile_col (14-bit max)
 
     // ── Scanline pixel buffer ─────────────────────────────────────────────
-    logic [7:0]  spr_pix_color    [0:319];
-    logic        spr_pix_valid    [0:319];
-    logic        spr_pix_priority [0:319];  // priority bit per pixel (from sprite ATTR[11])
+    // Packed arrays required by Quartus 17.0 — avoids Error 10028/10028 with
+    // unpacked synthesis and enables direct '0 reset without a for-loop.
+    logic [319:0][7:0]  spr_pix_color;
+    logic [319:0]       spr_pix_valid;
+    logic [319:0]       spr_pix_priority;  // priority bit per pixel (from sprite ATTR[11])
 
     // ── Read-back port (combinational) ────────────────────────────────────
     always_comb begin
@@ -674,12 +676,10 @@ module nmk16 #(
             g3_priority     <= 1'b0;
             g3_size         <= 2'h0;
             g3_row_in_spr   <= 8'h00;
-            spr_render_done <= 1'b0;
-            for (int i = 0; i < 320; i++) begin
-                spr_pix_color[i]    <= 8'h00;
-                spr_pix_valid[i]    <= 1'b0;
-                spr_pix_priority[i] <= 1'b0;
-            end
+            spr_render_done  <= 1'b0;
+            spr_pix_color    <= '0;
+            spr_pix_valid    <= '0;
+            spr_pix_priority <= '0;
         end else begin
             spr_render_done <= 1'b0;  // default: not done
 
@@ -687,11 +687,10 @@ module nmk16 #(
                 // ── IDLE: wait for trigger, clear pixel buffer ──────────
                 G3_IDLE: begin
                     if (scan_trigger) begin
-                        for (int i = 0; i < 320; i++) begin
-                            spr_pix_color[i]    <= 8'h00;
-                            spr_pix_valid[i]    <= 1'b0;
-                            spr_pix_priority[i] <= 1'b0;
-                        end
+                        // Direct packed-array clear — avoids for-loop in always_ff
+                        spr_pix_color    <= '0;
+                        spr_pix_valid    <= '0;
+                        spr_pix_priority <= '0;
                         g3_spr_idx <= 8'h00;
                         g3_state   <= G3_CHECK;
                     end
