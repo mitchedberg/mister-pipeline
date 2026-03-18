@@ -47,6 +47,80 @@ module taito_z_palette (
 );
 
 // 4096 × 16-bit palette BRAM
+// Two read ports: CPU read (cpu_addr) + pixel lookup (pix_index)
+
+`ifdef QUARTUS
+// Two DUAL_PORT altsyncram instances sharing write port A (byteena_a=2).
+// Port B of instance 1 = CPU read; port B of instance 2 = pixel lookup.
+// Byte-slice writes to behavioral pal_ram cause MAP OOM — altsyncram fix.
+logic [15:0] cpu_rd_data, pix_rd_data;
+
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (12), .numwords_a (4096),
+    .width_b                   (16), .widthad_b (12), .numwords_b (4096),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) pal_cpu_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(cpu_addr),   .data_a(cpu_din),
+    .wren_a(cpu_cs && cpu_we), .byteena_a({cpu_be[1], cpu_be[0]}),
+    .address_b(cpu_addr),   .q_b(cpu_rd_data),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (12), .numwords_a (4096),
+    .width_b                   (16), .widthad_b (12), .numwords_b (4096),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) pal_pix_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(cpu_addr),    .data_a(cpu_din),
+    .wren_a(cpu_cs && cpu_we), .byteena_a({cpu_be[1], cpu_be[0]}),
+    .address_b(pix_index),   .q_b(pix_rd_data),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// CPU read: altsyncram output already registered; output 0xFFFF on non-read cycle
+always_ff @(posedge clk) begin
+    cpu_dout <= (cpu_cs && !cpu_we) ? cpu_rd_data : 16'hFFFF;
+end
+
+// Pixel lookup: pix_rd_data is registered altsyncram output (1-cycle latency)
+always_ff @(posedge clk or negedge reset_n) begin
+    if (!reset_n) begin
+        rgb_r <= 8'h00;
+        rgb_g <= 8'h00;
+        rgb_b <= 8'h00;
+    end else begin
+        if (pix_valid) begin
+            rgb_r <= {pix_rd_data[14:10], pix_rd_data[14:12]};
+            rgb_g <= {pix_rd_data[ 9: 5], pix_rd_data[ 9: 7]};
+            rgb_b <= {pix_rd_data[ 4: 0], pix_rd_data[ 4: 2]};
+        end
+    end
+end
+
+`else
+// Simulation path: behavioral pal_ram
 logic [15:0] pal_ram [0:4095];
 
 // CPU write
@@ -86,5 +160,6 @@ always_ff @(posedge clk or negedge reset_n) begin
         end
     end
 end
+`endif
 
 endmodule
