@@ -4,14 +4,15 @@
 // =============================================================================
 //
 // Wraps a 16Mx16 IS42S16320F (32 MB) SDRAM chip at up to 143 MHz.
-// Provides four access channels:
+// Provides five access channels:
 //
 //   CH0  ioctl write    — HPS ROM download (sequential, byte-wide input)
 //   CH1  cpu read       — CPU A/B program ROM reads (16-bit, toggle-handshake)
 //   CH2  gfx read       — TC0480SCP tile GFX + STY spritemap (16-bit, toggle)
 //   CH3  obj/rod read   — OBJ GFX + TC0150ROD road ROM (16-bit, toggle)
+//   CH4  z80 read       — Z80 audio program ROM (16-bit, toggle-handshake)
 //
-// Arbitration priority: CH0 (write) > CH1 > CH2 > CH3
+// Arbitration priority: CH0 (write) > CH1 > CH2 > CH3 > CH4
 //
 // SDRAM layout (dblaxle byte addresses — from integration_plan.md §7.4):
 //   0x000000    512KB    CPU A program ROM
@@ -68,6 +69,12 @@ module sdram_z (
     output logic [15:0] obj_data,
     input  logic        obj_req,
     output logic        obj_ack,
+
+    // ── CH4: Z80 audio program ROM (16-bit reads) ─────────────────────────────
+    input  logic [26:0] z80_addr,       // SDRAM word address (0x060000 + offset)
+    output logic [15:0] z80_data,
+    input  logic        z80_req,
+    output logic        z80_ack,
 
     // ── SDRAM chip interface ──────────────────────────────────────────────────
     output logic [12:0] SDRAM_A,
@@ -181,11 +188,12 @@ end
 // =============================================================================
 // Active channel tracking
 // =============================================================================
-typedef enum logic [1:0] {
-    CH_NONE  = 2'd0,
-    CH_WRITE = 2'd1,   // ioctl
-    CH_CPU   = 2'd2,   // CPU A/B program ROM
-    CH_GFX   = 2'd3    // gfx (tile/stym) or obj/rod (distinguished by active_obj)
+typedef enum logic [2:0] {
+    CH_NONE  = 3'd0,
+    CH_WRITE = 3'd1,   // ioctl
+    CH_CPU   = 3'd2,   // CPU A/B program ROM
+    CH_GFX   = 3'd3,   // gfx (tile/stym) or obj/rod (distinguished by active_obj)
+    CH_Z80   = 3'd4    // Z80 audio program ROM
 } chan_t;
 
 chan_t active_ch;
@@ -195,11 +203,13 @@ logic  active_obj;      // 0=gfx channel active, 1=obj/rod channel active
 logic cpu_req_r,   cpu_pending;
 logic gfx_req_r,   gfx_pending;
 logic obj_req_r,   obj_pending;
+logic z80_req_r,   z80_pending;
 
 // Saved addresses for in-flight reads
 logic [24:0] cpu_addr_r;
 logic [24:0] gfx_addr_r;
 logic [24:0] obj_addr_r;
+logic [24:0] z80_addr_r;
 
 // CAS read data capture pipeline (CAS=3)
 logic [15:0] cas_pipe [0:2];
@@ -242,18 +252,23 @@ always_ff @(posedge clk or negedge reset_n) begin
         cpu_req_r     <= 1'b0;
         gfx_req_r     <= 1'b0;
         obj_req_r     <= 1'b0;
+        z80_req_r     <= 1'b0;
         cpu_pending   <= 1'b0;
         gfx_pending   <= 1'b0;
         obj_pending   <= 1'b0;
+        z80_pending   <= 1'b0;
         cpu_addr_r    <= 25'h0;
         gfx_addr_r    <= 25'h0;
         obj_addr_r    <= 25'h0;
+        z80_addr_r    <= 25'h0;
         cpu_ack       <= 1'b0;
         gfx_ack       <= 1'b0;
         obj_ack       <= 1'b0;
+        z80_ack       <= 1'b0;
         cpu_data      <= 16'h0;
         gfx_data      <= 16'h0;
         obj_data      <= 16'h0;
+        z80_data      <= 16'h0;
         cas_valid     <= 3'b0;
         cas_cnt       <= 4'h0;
         for (int i = 0; i < 3; i++) cas_pipe[i] <= 16'h0;
@@ -273,6 +288,7 @@ always_ff @(posedge clk or negedge reset_n) begin
         cpu_req_r <= cpu_req;
         gfx_req_r <= gfx_req;
         obj_req_r <= obj_req;
+        z80_req_r <= z80_req;
 
         if (cpu_req != cpu_req_r) begin
             cpu_pending <= 1'b1;
@@ -285,6 +301,10 @@ always_ff @(posedge clk or negedge reset_n) begin
         if (obj_req != obj_req_r) begin
             obj_pending <= 1'b1;
             obj_addr_r  <= obj_addr[24:0];
+        end
+        if (z80_req != z80_req_r) begin
+            z80_pending <= 1'b1;
+            z80_addr_r  <= z80_addr[24:0];
         end
 
         // Refresh counter
@@ -379,6 +399,15 @@ always_ff @(posedge clk or negedge reset_n) begin
                     active_ch   <= CH_GFX;  // reuse slot, distinguished by active_obj
                     active_obj  <= 1'b1;
                     state    <= S_ACTIVATE;
+
+                end else if (z80_pending) begin
+                    z80_pending  <= 1'b0;
+                    cmd_r    <= CMD_ACTIVE;
+                    ba_r     <= get_bank({z80_addr_r[23:0], 1'b0});
+                    addr_r   <= get_row ({z80_addr_r[23:0], 1'b0});
+                    active_ch   <= CH_Z80;
+                    active_obj  <= 1'b0;
+                    state    <= S_ACTIVATE;
                 end
             end
 
@@ -418,6 +447,10 @@ always_ff @(posedge clk or negedge reset_n) begin
                     CH_CPU: begin
                         ba_r   <= get_bank({cpu_addr_r[23:0], 1'b0});
                         addr_r <= {4'b0000, get_col({cpu_addr_r[23:0], 1'b0})};
+                    end
+                    CH_Z80: begin
+                        ba_r   <= get_bank({z80_addr_r[23:0], 1'b0});
+                        addr_r <= {4'b0000, get_col({z80_addr_r[23:0], 1'b0})};
                     end
                     default: begin  // CH_GFX covers both gfx and obj/rod
                         if (!active_obj) begin
@@ -473,6 +506,11 @@ always_ff @(posedge clk or negedge reset_n) begin
                             end
                             state <= S_IDLE;
                         end
+                        CH_Z80: begin
+                            z80_data <= cas_pipe[1];
+                            z80_ack  <= z80_req;
+                            state    <= S_IDLE;
+                        end
                         CH_WRITE: begin
                             state <= S_IDLE;
                         end
@@ -501,7 +539,7 @@ end
 /* verilator lint_off UNUSED */
 logic _unused;
 assign _unused = ^{cpu_addr[26:25], gfx_addr[26:25], obj_addr[26:25],
-                   ioctl_addr[26:25], cas_valid, cas_pipe[0]};
+                   z80_addr[26:25], ioctl_addr[26:25], cas_valid, cas_pipe[0]};
 /* verilator lint_on UNUSED */
 
 endmodule

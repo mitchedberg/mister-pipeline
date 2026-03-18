@@ -125,11 +125,26 @@ module taito_z (
     output logic        rod_rom_req,
     input  logic        rod_rom_ack,
 
-    // ── SDRAM (prog ROM fetch + ADPCM — shared arbiter) ──────────────────────
+    // ── SDRAM (ADPCM ROM via TC0140SYT) ─────────────────────────────────────
     output logic [26:0] sdr_addr,
     input  logic [15:0] sdr_data,
     output logic        sdr_req,
     input  logic        sdr_ack,
+
+    // ── Z80 ROM SDRAM Interface (CH4) ─────────────────────────────────────────
+    // Z80 audio program ROM at SDRAM 0x0C0000 (word addr 0x060000).
+    // Z80 sees this as 0x0000–0xFFFF; TC0140SYT decodes bank select.
+    output logic [26:0] z80_rom_addr,   // SDRAM word address
+    input  logic [15:0] z80_rom_data,   // SDRAM read data (16-bit word)
+    output logic        z80_rom_req,    // request toggle
+    input  logic        z80_rom_ack,    // acknowledge toggle
+
+    // ── Sound Clock ───────────────────────────────────────────────────────────
+    input  logic        clk_sound,      // ~4 MHz clock enable for YM2610 + Z80
+
+    // ── Audio Output ──────────────────────────────────────────────────────────
+    output logic signed [15:0] snd_left,
+    output logic signed [15:0] snd_right,
 
     // ── Video Output ──────────────────────────────────────────────────────────
     output logic [ 7:0] rgb_r,
@@ -407,6 +422,43 @@ taito_z_palette u_pal (
 //   ADPCM-A: SDRAM 0x700000, ADPCM-B: SDRAM 0x880000
 logic [3:0] syt_mdout;
 
+// Z80 bus signals (driven by T80s u_z80 below)
+logic [15:0] z80_addr;
+logic  [7:0] z80_din;       // data Z80 writes to bus
+logic        z80_mreq_n;
+logic        z80_rd_n;
+logic        z80_wr_n;
+logic        z80_iorq_n;
+
+// SYT → Z80 decoded outputs
+logic [3:0] syt_z80_dout;
+logic       z80_reset_n;
+logic       z80_rom_cs0_n;
+logic       z80_rom_cs1_n;
+logic       z80_ram_cs_n;
+logic       z80_rom_a14;
+logic       z80_rom_a15;
+logic       z80_opx_n;
+
+// ADPCM ROM addresses from YM2610 (jt10) → TC0140SYT
+logic [19:0] ym_adpcma_addr;
+logic  [3:0] ym_adpcma_bank;
+logic        ym_adpcma_roe_n;
+logic [23:0] ym_adpcmb_addr;
+logic        ym_adpcmb_roe_n;
+
+// ADPCM data bytes: TC0140SYT → YM2610
+logic [7:0] ym_ya_dout;
+logic [7:0] ym_yb_dout;
+
+// YM2610 /IRQ → Z80 /INT
+logic z80_int_n;
+
+// Construct 24-bit ADPCM addresses for TC0140SYT
+logic [23:0] syt_yaa, syt_yba;
+assign syt_yaa = { ym_adpcma_bank, ym_adpcma_addr };
+assign syt_yba = { 4'b0, ym_adpcmb_addr[23:4] };
+
 TC0140SYT #(
     .ADPCMA_ROM_BASE (27'h700000),
     .ADPCMB_ROM_BASE (27'h880000)
@@ -424,27 +476,32 @@ TC0140SYT #(
     .MWRn    (cpua_rw),       // active-low write: 0 when cpua_rw=0 (write)
     .MRDn    (~cpua_rw),      // active-low read:  0 when cpua_rw=1 (read)
 
-    // Z80 interface — tied off (Z80 instantiated in HPS wrapper)
-    .MREQn   (1'b1),
-    .RDn     (1'b1),
-    .WRn     (1'b1),
-    .A       (16'b0),
-    .Din     (4'b0),
+    // Z80 slave interface (wired to T80s u_z80 below)
+    .MREQn   (z80_mreq_n),
+    .RDn     (z80_rd_n),
+    .WRn     (z80_wr_n),
+    .A       (z80_addr),
+    .Din     (z80_din[3:0]),  // Z80 data lower nibble
+
+    // Z80 control outputs
+    .Dout    (syt_z80_dout),
+    .ROUTn   (z80_reset_n),
+    .ROMCS0n (z80_rom_cs0_n),
+    .ROMCS1n (z80_rom_cs1_n),
+    .RAMCSn  (z80_ram_cs_n),
+    .ROMA14  (z80_rom_a14),
+    .ROMA15  (z80_rom_a15),
+    .OPXn    (z80_opx_n),
+
+    // ADPCM ROM: YM2610 drives OEn + address, SYT fetches bytes from SDRAM
+    .YAOEn   (ym_adpcma_roe_n),
+    .YBOEn   (ym_adpcmb_roe_n),
+    .YAA     (syt_yaa),
+    .YBA     (ym_adpcmb_addr),
+    .YAD     (ym_ya_dout),
+    .YBD     (ym_yb_dout),
+
     /* verilator lint_off PINCONNECTEMPTY */
-    .Dout    (),
-    .ROUTn   (),
-    .ROMCS0n (),
-    .ROMCS1n (),
-    .RAMCSn  (),
-    .ROMA14  (),
-    .ROMA15  (),
-    .OPXn    (),
-    .YAOEn   (1'b1),
-    .YBOEn   (1'b1),
-    .YAA     (24'b0),
-    .YBA     (24'b0),
-    .YAD     (),
-    .YBD     (),
     .CSAn    (),
     .CSBn    (),
     .IOA     (),
@@ -456,6 +513,160 @@ TC0140SYT #(
     .sdr_data    (sdr_data),
     .sdr_req     (sdr_req),
     .sdr_ack     (sdr_ack)
+);
+
+// =============================================================================
+// YM2610 (jt10) — FM synthesis + ADPCM-A + ADPCM-B
+// =============================================================================
+// Clock: clk_sound (~4 MHz, provided by emu.sv clock divider).
+// Bus: Z80 drives addr[1:0] + din + cs_n + wr_n; jt10 outputs dout.
+// ADPCM ROM: addresses sent to TC0140SYT; byte data returned via YAD/YBD.
+logic [7:0] ym_dout;
+
+/* verilator lint_off PINCONNECTEMPTY */
+jt10 u_ym2610 (
+    .rst          (~z80_reset_n),
+    .clk          (clk_sys),
+    .cen          (clk_sound),
+    .din          (z80_din),
+    .addr         (z80_addr[1:0]),
+    .cs_n         (z80_opx_n),
+    .wr_n         (z80_wr_n),
+
+    .dout         (ym_dout),
+    .irq_n        (z80_int_n),      // YM2610 /IRQ → Z80 /INT
+
+    // ADPCM-A ROM interface (TC0140SYT handles SDRAM fetches)
+    .adpcma_addr  (ym_adpcma_addr),
+    .adpcma_bank  (ym_adpcma_bank),
+    .adpcma_roe_n (ym_adpcma_roe_n),
+    .adpcma_data  (ym_ya_dout),
+
+    // ADPCM-B ROM interface
+    .adpcmb_addr  (ym_adpcmb_addr),
+    .adpcmb_roe_n (ym_adpcmb_roe_n),
+    .adpcmb_data  (ym_yb_dout),
+
+    // Audio output
+    .snd_left     (snd_left),
+    .snd_right    (snd_right),
+    .snd_sample   (),
+
+    // Separated outputs (unused — combined output used)
+    .psg_A        (),
+    .psg_B        (),
+    .psg_C        (),
+    .psg_snd      (),
+    .fm_snd       (),
+
+    // ADPCM-A channel enable: all 6 channels active
+    .ch_enable    (6'h3f)
+);
+/* verilator lint_on PINCONNECTEMPTY */
+
+// =============================================================================
+// Z80 Sound CPU (T80s)
+// =============================================================================
+// The Z80 runs at ~4 MHz (clk_sound clock enable) and accesses:
+//   0x0000–0x7FFF  Z80 ROM bank 0 (SDRAM 0x0C0000–0x0C7FFF; 32KB fixed)
+//   0x8000–0xBFFF  banked ROM (via TC0140SYT ROMCS1n / ROMA14-15)
+//   0xC000–0xC7FF  Z80 work RAM (2KB, internal BRAM — mirrors to fill 8KB)
+//   0xE000–0xE001  YM2610 registers (TC0140SYT decodes → z80_opx_n)
+//   0xE200         TC0140SYT comm register (decoded by TC0140SYT itself)
+//
+// Z80 ROM SDRAM reads: when z80_rom_cs0_n or z80_rom_cs1_n is active and the
+// Z80 asserts RD_n, we toggle z80_rom_req to SDRAM CH4 and hold WAIT_n=0
+// until z80_rom_ack matches.
+// Word address = 27'h060000 + {z80_rom_a15, z80_rom_a14, z80_addr[13:1]}
+// (SDRAM base 0x0C0000 = word 0x060000; ROM is 16-bit word-organised)
+
+// Z80 2KB work RAM (0xC000–0xC7FF)
+logic [7:0] z80_ram [0:2047];
+logic [7:0] z80_ram_dout;
+
+always_ff @(posedge clk_sys) begin
+    if (!z80_ram_cs_n && !z80_wr_n && clk_sound)
+        z80_ram[z80_addr[10:0]] <= z80_din;
+end
+
+always_ff @(posedge clk_sys) begin
+    if (!z80_ram_cs_n)
+        z80_ram_dout <= z80_ram[z80_addr[10:0]];
+end
+
+// Z80 ROM chip-select: active when either ROM CS is asserted by TC0140SYT
+logic z80_rom_cs;
+assign z80_rom_cs = !z80_rom_cs0_n | !z80_rom_cs1_n;
+
+// Z80 ROM SDRAM request/stall logic
+logic z80_rom_req_r;
+logic z80_rom_pending;
+logic z80_rom_byte_sel;
+logic z80_wait_n;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        z80_rom_req_r    <= 1'b0;
+        z80_rom_pending  <= 1'b0;
+        z80_rom_byte_sel <= 1'b0;
+        z80_wait_n       <= 1'b1;
+    end else begin
+        if (z80_rom_cs && !z80_rd_n && !z80_mreq_n && !z80_rom_pending) begin
+            // New Z80 ROM read — issue SDRAM request
+            z80_rom_req_r    <= ~z80_rom_req_r;
+            z80_rom_pending  <= 1'b1;
+            z80_rom_byte_sel <= z80_addr[0];
+            z80_wait_n       <= 1'b0;   // stall Z80
+        end else if (z80_rom_pending && (z80_rom_req_r == z80_rom_ack)) begin
+            // SDRAM returned data
+            z80_rom_pending <= 1'b0;
+            z80_wait_n      <= 1'b1;   // release Z80
+        end
+    end
+end
+
+assign z80_rom_req  = z80_rom_req_r;
+assign z80_rom_addr = 27'h060000 + {z80_rom_a15, z80_rom_a14, z80_addr[13:1]};
+
+// Z80 data input mux
+logic [7:0] z80_cpu_din;
+always_comb begin
+    if (!z80_opx_n)
+        z80_cpu_din = ym_dout;
+    else if (!z80_ram_cs_n)
+        z80_cpu_din = z80_ram_dout;
+    else if (z80_rom_cs)
+        // Select byte lane: even address → word[15:8], odd → word[7:0]
+        z80_cpu_din = z80_rom_byte_sel ? z80_rom_data[7:0] : z80_rom_data[15:8];
+    else
+        z80_cpu_din = {4'hF, syt_z80_dout};  // SYT nibble in lower 4 bits
+end
+
+// Z80 CPU — T80s (Verilog-synthesised T80)
+/* verilator lint_off UNUSED */
+logic z80_m1_n, z80_rfsh_n, z80_halt_n, z80_busak_n;
+/* verilator lint_on UNUSED */
+
+T80s u_z80 (
+    .RESET_n (z80_reset_n),
+    .CLK     (clk_sys),
+    .CEN     (clk_sound),
+    .WAIT_n  (z80_wait_n),
+    .INT_n   (z80_int_n),
+    .NMI_n   (1'b1),
+    .BUSRQ_n (1'b1),
+    .OUT0    (1'b0),
+    .DI      (z80_cpu_din),
+    .M1_n    (z80_m1_n),
+    .MREQ_n  (z80_mreq_n),
+    .IORQ_n  (z80_iorq_n),
+    .RD_n    (z80_rd_n),
+    .WR_n    (z80_wr_n),
+    .RFSH_n  (z80_rfsh_n),
+    .HALT_n  (z80_halt_n),
+    .BUSAK_n (z80_busak_n),
+    .A       (z80_addr),
+    .DOUT    (z80_din)
 );
 
 // =============================================================================
@@ -832,7 +1043,9 @@ assign _unused = ^{scp_pixel_active, scp_hblank_fall,
                    scp_hpos[9],           // TC0370MSO/TC0150ROD only need hpos[8:0]
                    scp_vpos[8],           // TC0370MSO/TC0150ROD only need vpos[7:0]
                    gfx_ack,              // TC0480SCP gfx_ack consumed by toggle-bridge
-                   rod_line_priority};   // road priority tag not consumed by compositor
+                   rod_line_priority,    // road priority tag not consumed by compositor
+                   z80_m1_n, z80_rfsh_n, z80_halt_n, z80_busak_n,
+                   z80_iorq_n};
 /* verilator lint_on UNUSED */
 
 endmodule

@@ -242,9 +242,7 @@ assign LED_DISK  = 2'd0;
 assign LED_POWER = 2'd0;
 assign BUTTONS   = 2'd0;
 
-// Audio: silence until YM2610 sound module is implemented
-assign AUDIO_L = 16'h0;
-assign AUDIO_R = 16'h0;
+// Audio: wired to YM2610 (jt10) snd_left/snd_right below
 
 // LED: blink during ROM download
 assign LED_USER = ioctl_download;
@@ -369,6 +367,21 @@ end
 
 // Pixel clock enable: same rate as CPU clock (16 MHz).
 wire ce_pix = ce_cpu;
+
+// Sound clock enable: 4 MHz (32 MHz / 8).
+// The YM2610 and Z80 both run at ~4 MHz on the Taito Z hardware.
+// We generate a clock-enable pulse every 8th clk_sys cycle.
+logic [2:0] ce_snd_cnt;
+logic ce_snd;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ce_snd_cnt <= 3'd0;
+        ce_snd     <= 1'b0;
+    end else begin
+        ce_snd_cnt <= ce_snd_cnt + 3'd1;
+        ce_snd     <= (ce_snd_cnt == 3'd7);
+    end
+end
 
 //////////////////////////////////////////////////////////////////
 // Reset
@@ -724,6 +737,13 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     end
 end
 
+// ── CH4: Z80 ROM SDRAM channel ────────────────────────────────────────────────
+// Z80 audio ROM is at SDRAM byte 0x0C0000 (word 0x060000).
+// taito_z.sv drives z80_rom_addr as a 27-bit word address.
+wire [26:0] z80_sdr_addr;
+wire [15:0] z80_sdr_data;
+wire        z80_sdr_req, z80_sdr_ack;
+
 // ── SDRAM controller instantiation ──────────────────────────────────────────
 sdram_z u_sdram
 (
@@ -754,6 +774,12 @@ sdram_z u_sdram
     .obj_req    (obj_sdr_req),
     .obj_ack    (obj_sdr_ack),
 
+    // CH4: Z80 audio program ROM reads
+    .z80_addr   (z80_sdr_addr),
+    .z80_data   (z80_sdr_data),
+    .z80_req    (z80_sdr_req),
+    .z80_ack    (z80_sdr_ack),
+
     // SDRAM chip pins
     .SDRAM_A    (SDRAM_A),
     .SDRAM_BA   (SDRAM_BA),
@@ -775,6 +801,11 @@ sdram_z u_sdram
 wire [7:0] core_rgb_r, core_rgb_g, core_rgb_b;
 wire       core_hsync_n, core_vsync_n;
 wire       core_hblank, core_vblank;
+
+// Audio output from core (YM2610 via jt10)
+wire signed [15:0] core_snd_left, core_snd_right;
+assign AUDIO_L = core_snd_left;
+assign AUDIO_R = core_snd_right;
 
 //////////////////////////////////////////////////////////////////
 // fx68k_adapter — CPU A (MC68000 @ 16 MHz)
@@ -893,14 +924,24 @@ taito_z u_taito_z
     .rod_rom_req  (rod_rom_req_core),
     .rod_rom_ack  (rod_rom_ack_core),
 
-    // ── SDRAM (CPU program ROM + ADPCM via TC0140SYT) ────────────────────────
-    // TC0140SYT owns this port for ADPCM ROM access.
-    // CPU program ROM accesses are handled here by cpu_sdr_* above,
-    // with DTACK returned from the taito_z sdr_ack port.
+    // ── SDRAM (ADPCM ROM via TC0140SYT) ──────────────────────────────────────
+    // TC0140SYT owns this SDRAM port for ADPCM-A and ADPCM-B ROM access.
+    // CPU program ROM accesses are handled by cpu_sdr_* (CH1) above.
     .sdr_addr    (cpu_sdr_addr),
     .sdr_data    (cpu_sdr_data),
     .sdr_req     (cpu_sdr_req),
     .sdr_ack     (cpu_sdr_ack),
+
+    // ── Z80 ROM SDRAM (CH4) ───────────────────────────────────────────────────
+    .z80_rom_addr (z80_sdr_addr),
+    .z80_rom_data (z80_sdr_data),
+    .z80_rom_req  (z80_sdr_req),
+    .z80_rom_ack  (z80_sdr_ack),
+
+    // ── Sound clock and audio output ──────────────────────────────────────────
+    .clk_sound   (ce_snd),
+    .snd_left    (core_snd_left),
+    .snd_right   (core_snd_right),
 
     // ── Video output ──────────────────────────────────────────────────────────
     .rgb_r       (core_rgb_r),
