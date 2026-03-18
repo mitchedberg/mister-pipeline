@@ -12,3 +12,8 @@ chips/cps1_obj/tier2/cfg/
 
 # OS
 .DS_Store
+
+# Synthesis logs (local output, not committed)
+*_synthesis.log
+*_synthesis_log/
+AUDIO_WIRING_AUDIT.md

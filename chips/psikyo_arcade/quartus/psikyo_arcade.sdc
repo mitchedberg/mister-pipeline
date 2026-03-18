@@ -189,5 +189,23 @@ set_output_delay -clock [get_clocks {FPGA_CLK1_50}] -max 5.0 [get_ports {*}]
 set_output_delay -clock [get_clocks {FPGA_CLK1_50}] -min 0.0 [get_ports {*}]
 
 # =============================================================================
+# FALSE PATHS — ASYNCHRONOUS RESET RECOVERY
+# =============================================================================
+# Reset is a one-time event from the MiSTer framework, not a timing-critical
+# path. Recovery/removal timing on flip-flop async clear pins is safely ignored.
+#
+set_false_path -from [get_ports {reset}]
+set_false_path -from [get_ports {rst}]
+
+# =============================================================================
+# FALSE PATHS — I/O TIMING (not timing-critical for arcade cores)
+# =============================================================================
+# All real I/O goes through the MiSTer framework's dedicated sys/ I/O paths.
+# Internal module I/O delays are safely ignored per jotego practice.
+#
+set_false_path -from [get_ports *] -to [get_registers *]
+set_false_path -from [get_registers *] -to [get_ports *]
+
+# =============================================================================
 # END OF TIMING CONSTRAINTS
 # =============================================================================

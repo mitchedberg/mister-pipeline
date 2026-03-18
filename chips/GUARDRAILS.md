@@ -84,24 +84,46 @@ From `pattern-ledger.md` Pattern 9.
 
 ---
 
-## Chip Status
+## Assembly Line Rules (Iron Law — do not violate)
+
+1. **One chip at a time through the CI queue.** Do not push RTL changes for multiple chips in the same commit. Each commit should touch exactly ONE chip directory.
+2. **Never push `.github/workflows/` changes with `chips/` RTL changes in the same commit.** Workflow changes need `workflow` PAT scope; RTL changes don't. They must be separate.
+3. **Queue discipline:** Only advance the next chip when the current chip is green (CI pass or known-deferred). Don't start new work until current work exits the queue.
+4. **check_rtl.sh PASS before commit.** Not before push — before commit. If check_rtl.sh warns, either fix the warn or document why it's a false positive before committing.
+5. **Quartus exit code 2 = fits device (timing violations).** This is a WARNING state — CI is configured to pass on exit 2. A chip in exit-2 state needs SDC work but is otherwise valid hardware.
+
+## PAT Scope Blocker
+
+All `.github/workflows/` changes require a GitHub PAT with `workflow` scope.
+Current PAT lacks this scope. All CI workflow improvements are committed locally but **not pushed**.
+**User action required:** Regenerate PAT at github.com/settings/tokens with `workflow` scope selected.
+Blocked commits (local only): `f18d609` (exit code 2 fix for 6 workflows).
+
+## CI Queue (2026-03-18)
+
+| Position | Chip | CI Status | Next Action |
+|----------|------|-----------|-------------|
+| **ACTIVE** | nmk_arcade | ⏳ timing -18ns (-4ns recovery fixed in SDC, awaiting CI) | Monitor result |
+| **ACTIVE** | psikyo_arcade | ⏳ timing -42ns (same SDC fix applied) | Monitor result |
+| **IN CI** | kaneko_arcade | 🔄 running | Wait for result |
+| **PREP** | taito_x | 🔧 cram/linebuf fixes needed | Fix x1_001a.sv then queue |
+| **DEFERRED** | toaplan_v2 | ⏸ GP9001 VRAM (32K MLAB → M10K) | Architecture work |
+| **DEFERRED** | taito_b | ⏸ ~165% ALM estimate | Profile then trim |
+| **FROZEN** | taito_f3 | ❌ 53% over budget (TC0630FDP) | Architecture decision |
+| **FROZEN** | taito_z | ❌ 386% over budget (2× fx68k) | Architecture decision |
+
+**Do not touch FROZEN chips.** Do not touch DEFERRED chips until taito_x is green.
+
+## Chip Status (component chips — run standalone after system chips pass)
 
 | Chip | Standalone Harness | Last Standalone Synth | Notes |
 |------|-------------------|-----------------------|-------|
-| tc0630fdp | ✅ `chips/tc0630fdp/standalone_synth/` | Not yet run | |
-| tc0480scp | ✅ `chips/tc0480scp/standalone_synth/` | Not yet run | |
-| tc0370mso | ✅ `chips/tc0370mso/standalone_synth/` | Not yet run | |
-| tc0150rod | ✅ `chips/tc0150rod/standalone_synth/` | Not yet run | |
-| tc0180vcu | ✅ `chips/tc0180vcu/standalone_synth/` | Not yet run | |
-| tc0650fda | ✅ `chips/tc0650fda/standalone_synth/` | Not yet run | |
-| nmk_arcade | ✅ `chips/nmk_arcade/standalone_synth/` | Not yet run | Full system FITS, SDC multicycle added |
-| psikyo_arcade | ✅ `chips/psikyo_arcade/standalone_synth/` | Not yet run | Full system FITS, SDC multicycle added |
-| kaneko_arcade | ✅ `chips/kaneko_arcade/standalone_synth/` | Not yet run | |
-| toaplan_v2 | ✅ `chips/toaplan_v2/standalone_synth/` | Not yet run | GP9001 VRAM deferred (32K MLAB→M10K) |
-| taito_b | ✅ `chips/taito_b/standalone_synth/` | Not yet run | Full system: ~165% ALM est. |
-| taito_f3 | ✅ `chips/taito_f3/standalone_synth/` | Not yet run | Full system: 128K/83K nodes |
-| taito_z | ✅ `chips/taito_z/standalone_synth/` | Not yet run | Full system: 386% ALM overflow |
-| taito_x | ✅ `chips/taito_x/standalone_synth/` | Not yet run | |
+| tc0630fdp | ✅ `chips/tc0630fdp/standalone_synth/` | Not yet run | Taito F3 component — deferred with F3 |
+| tc0480scp | ✅ `chips/tc0480scp/standalone_synth/` | Not yet run | Taito Z component |
+| tc0370mso | ✅ `chips/tc0370mso/standalone_synth/` | Not yet run | Taito Z component |
+| tc0150rod | ✅ `chips/tc0150rod/standalone_synth/` | Not yet run | Taito Z component |
+| tc0180vcu | ✅ `chips/tc0180vcu/standalone_synth/` | Not yet run | Taito B component |
+| tc0650fda | ✅ `chips/tc0650fda/standalone_synth/` | Not yet run | Taito B/F3 component |
 
 ---
 

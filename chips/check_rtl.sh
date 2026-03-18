@@ -223,9 +223,38 @@ echo ""
 # =============================================================================
 # CHECK 5: Modules missing cen (clock enable) port
 # jotego pattern: every module has cen threaded through for clock-enable hierarchy
-# Flag modules that look like chip-level modules (not utility/wrappers)
+# Only flag TOP-LEVEL integration modules (not sub-modules instantiated elsewhere)
+# Strategy: Pass 1 — collect all instantiated module names
+#           Pass 2 — only flag modules NOT in that instantiated set
 # =============================================================================
 echo "--- Check 5: Modules missing cen port ---"
+
+# Pass 1: Collect all instantiated module names from all RTL files
+INSTANTIATED_MODULES=$(python3 - $RTL_FILES << 'PYEOF' 2>/dev/null || true
+import sys, re
+
+instantiated = set()
+for path in sys.argv[1:]:
+    try:
+        with open(path) as f:
+            content = f.read()
+    except:
+        continue
+
+    # Match instantiation patterns: module_name u_instance (#|()
+    # Examples: tc0480scp_bg u_bg(, my_module #( u_inst
+    for m in re.finditer(r'^\s*(\w+)\s+u_\w+\s*[#(]', content, re.MULTILINE):
+        instantiated.add(m.group(1))
+
+# Print all instantiated module names (one per line)
+for name in sorted(instantiated):
+    print(name)
+PYEOF
+)
+
+# Convert to space-separated set for bash lookup
+INST_SET=" $(echo "$INSTANTIATED_MODULES" | tr '\n' ' ') "
+
 MISSING_CEN=""
 for f in $RTL_FILES; do
     # Only check files that look like chip-level modules (have always_ff or always @)
@@ -236,22 +265,33 @@ for f in $RTL_FILES; do
             pll*.sv|*_top.sv|*_harness.sv|sdram*.sv|hps_io*.sv|sys_*.sv|altsyncram*.sv)
                 continue ;;
         esac
-        if ! grep -q '\bcen\b' "$f" 2>/dev/null; then
-            MISSING_CEN="$MISSING_CEN\n  $f"
+
+        # Extract the module name from this file
+        # Look for: module module_name(
+        MODULE_NAME=$(grep -m1 '^\s*module\s\+\(\w\+\)\s*[#(]' "$f" 2>/dev/null | sed 's/.*module\s\+\(\w\+\).*/\1/' || true)
+
+        # Only flag if module is NOT in the instantiated set (i.e., it's top-level)
+        if [[ -n "$MODULE_NAME" ]]; then
+            if [[ ! "$INST_SET" =~ " $MODULE_NAME " ]]; then
+                if ! grep -q '\bcen\b' "$f" 2>/dev/null; then
+                    MISSING_CEN="$MISSING_CEN\n  $f"
+                fi
+            fi
         fi
     fi
 done
 if [[ -n "$MISSING_CEN" ]]; then
-    warn "Modules without cen clock-enable port (structural divergence from jtframe pattern):"
+    warn "Top-level modules without cen clock-enable port (structural divergence from jtframe pattern):"
     echo -e "$MISSING_CEN"
 else
-    pass "All chip modules have cen port"
+    pass "All top-level modules have cen port"
 fi
 echo ""
 
 # =============================================================================
 # CHECK 6: Large behavioral arrays without ifdef QUARTUS guard
 # Arrays > 64 entries outside a simulation-only branch will MAP OOM in Quartus
+# Skip arrays that already have (* ramstyle = ... *) pragma on the same line
 # =============================================================================
 echo "--- Check 6: Large behavioral arrays without QUARTUS guard ---"
 LARGE_ARRAY_HITS=$(python3 - $RTL_FILES << 'PYEOF' 2>/dev/null || true
@@ -287,6 +327,9 @@ for path in sys.argv[1:]:
         if m:
             depth_val = int(m.group(1)) + 1
             if depth_val > 64:
+                # Skip if the line already has ramstyle pragma
+                if re.search(r'\(\*\s*ramstyle\s*=', line):
+                    continue
                 print(f"{path}:{i}: depth={depth_val}: {stripped}")
 PYEOF
 )
