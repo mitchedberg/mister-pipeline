@@ -725,7 +725,7 @@ altsyncram #(
     .address_b(cpua_addr[15:1]), .q_b(shram_a_dout),
     .wren_b(1'b0), .data_b(16'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
-    .byteena_b(2'b11), .clocken0(1'b1), .clocken1(1'b1),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
     .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
 );
 
@@ -748,7 +748,7 @@ altsyncram #(
     .address_b(cpub_addr[15:1]), .q_b(shram_b_dout),
     .wren_b(1'b0), .data_b(16'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
-    .byteena_b(2'b11), .clocken0(1'b1), .clocken1(1'b1),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
     .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
 );
 `else
@@ -794,7 +794,7 @@ altsyncram #(
     .address_b(cpua_addr[15:1]), .q_b(wrama_dout),
     .wren_b(1'b0), .data_b(16'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
-    .byteena_b(2'b11), .clocken0(1'b1), .clocken1(1'b1),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
     .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
 );
 `else
@@ -833,7 +833,7 @@ altsyncram #(
     .address_b(cpub_addr[14:1]), .q_b(wramb_dout),
     .wren_b(1'b0), .data_b(16'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
-    .byteena_b(2'b11), .clocken0(1'b1), .clocken1(1'b1),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
     .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
 );
 `else
@@ -872,7 +872,7 @@ altsyncram #(
     .address_b(cpub_addr[13:1]), .q_b(netram_dout),
     .wren_b(1'b0), .data_b(16'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
-    .byteena_b(2'b11), .clocken0(1'b1), .clocken1(1'b1),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
     .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
 );
 `else

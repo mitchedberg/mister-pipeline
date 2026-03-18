@@ -640,7 +640,7 @@ altsyncram #(
     .address_b(wram_idx), .q_b(wram_dout_r),
     .wren_b(1'b0), .data_b(32'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
-    .byteena_b(4'hF), .clocken0(1'b1), .clocken1(1'b1),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
     .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
 );
 `else

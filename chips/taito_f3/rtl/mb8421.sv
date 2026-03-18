@@ -101,7 +101,7 @@ altsyncram #(
     .address_b(left_addr),   .q_b(left_dout),
     .wren_b(1'b0), .data_b(32'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
-    .byteena_b(4'hF), .clocken0(1'b1), .clocken1(1'b1),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
     .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
 );
 
@@ -129,7 +129,7 @@ altsyncram #(
     .address_b(right_lw_idx), .q_b(right_rddata),
     .wren_b(1'b0), .data_b(32'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
-    .byteena_b(4'hF), .clocken0(1'b1), .clocken1(1'b1),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
     .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
 );
 `else
