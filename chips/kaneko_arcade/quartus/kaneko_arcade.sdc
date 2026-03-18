@@ -164,5 +164,58 @@ set_false_path -from {mcp23009|flg_*}
 set_false_path -to   {sysmem|fpga_interfaces|clocks_resets|f2h*}
 
 # =============================================================================
+# CLOCK DOMAIN ISOLATION
+# =============================================================================
+
+set_clock_groups -exclusive \
+   -group [get_clocks { *|pll|pll_inst|altera_pll_i|*[*].*|divclk}] \
+   -group [get_clocks { pll_hdmi|pll_hdmi_inst|altera_pll_i|*[0].*|divclk}] \
+   -group [get_clocks { pll_audio|pll_audio_inst|altera_pll_i|*[0].*|divclk}] \
+   -group [get_clocks { FPGA_CLK1_50 }] \
+   -group [get_clocks { FPGA_CLK2_50 }] \
+   -group [get_clocks { FPGA_CLK3_50 }]
+
+# =============================================================================
+# MULTI-CYCLE PATHS — Clock-Enable-Gated Subsystems
+#
+# Kaneko16 system clock: 32 MHz
+#   MC68000 CPU : 32 MHz / 2 = 16 MHz  → 2-cycle multicycle
+#   Z80 sound   : 32 MHz / 4 =  8 MHz  → 4-cycle multicycle
+#   OKI M6295   : 32 MHz / 40 ≈ 0.8 MHz → false path (very slow)
+#   Kaneko16    : 32 MHz full/CE2 → 2-cycle multicycle
+# =============================================================================
+
+# MC68000 CPU — 32 MHz / 2 = 16 MHz (2-cycle multicycle)
+set_multicycle_path -from [get_registers {*u_cpu*}]     -to [get_registers {*u_cpu*}]     -setup 2
+set_multicycle_path -from [get_registers {*u_cpu*}]     -to [get_registers {*u_cpu*}]     -hold  1
+set_multicycle_path -from [get_registers {*fx68k*}]     -to [get_registers {*fx68k*}]     -setup 2
+set_multicycle_path -from [get_registers {*fx68k*}]     -to [get_registers {*fx68k*}]     -hold  1
+
+# Z80 sound CPU — 32 MHz / 4 = 8 MHz (4-cycle multicycle)
+set_multicycle_path -from [get_registers {*u_z80*}] -to [get_registers {*u_z80*}] -setup 4
+set_multicycle_path -from [get_registers {*u_z80*}] -to [get_registers {*u_z80*}] -hold  3
+
+# OKI M6295 (jt6295) — very slow clock → false path
+set_false_path -from [get_registers {*u_oki*}] -to [get_registers {*u_oki*}]
+
+# Kaneko16 graphics chip — 32 MHz / 2 CE
+set_multicycle_path -from [get_registers {*u_kaneko16*}] -to [get_registers {*u_kaneko16*}] -setup 2
+set_multicycle_path -from [get_registers {*u_kaneko16*}] -to [get_registers {*u_kaneko16*}] -hold  1
+
+# =============================================================================
+# FALSE PATHS — ASYNCHRONOUS RESET RECOVERY
+# =============================================================================
+
+set_false_path -from [get_ports {reset}]
+set_false_path -from [get_ports {rst}]
+
+# =============================================================================
+# FALSE PATHS — I/O TIMING (not timing-critical for arcade cores)
+# =============================================================================
+
+set_false_path -from [get_ports *] -to [get_registers *]
+set_false_path -from [get_registers *] -to [get_ports *]
+
+# =============================================================================
 # END OF TIMING CONSTRAINTS
 # =============================================================================
