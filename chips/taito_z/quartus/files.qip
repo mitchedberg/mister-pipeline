@@ -42,7 +42,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sdram_z.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0480scp/rtl/tc0480scp.sv
 
 # TC0140SYT: 68000 <-> Z80 sound communication
-set_global_assignment -name SYSTEMVERILOG_FILE ../../taito_support/rtl/TC0140SYT.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../taito_support/tc0140syt.sv
 
 # TC0150ROD: Road generator (CPU B bus)
 set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0150rod/rtl/tc0150rod.sv

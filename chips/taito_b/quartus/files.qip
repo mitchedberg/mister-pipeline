@@ -39,13 +39,13 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sdram_b.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0180vcu/rtl/tc0180vcu.sv
 
 # TC0260DAR: Palette DAC (RGB444/RGB555 modes)
-set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0260dar/rtl/TC0260DAR.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../taito_support/tc0260dar.sv
 
 # TC0220IOC: I/O controller (joysticks, coins, DIP switches)
-set_global_assignment -name SYSTEMVERILOG_FILE ../../taito_support/rtl/TC0220IOC.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../taito_support/tc0220ioc.sv
 
 # TC0140SYT: 68000 <-> Z80 sound communication + ADPCM ROM arbiter
-set_global_assignment -name SYSTEMVERILOG_FILE ../../taito_support/rtl/TC0140SYT.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../taito_support/tc0140syt.sv
 
 # =========================================================================
 # MC68000 CPU CORE
