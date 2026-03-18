@@ -539,28 +539,86 @@ end
 // During active display, final_color from GP9001 Gate 5 (8-bit palette index)
 // indexes into this RAM to produce RGB output.
 
-logic [15:0] palette_ram [0:511];
 logic [15:0] palram_cpu_dout;
 
+`ifdef QUARTUS
+// Two DUAL_PORT altsyncram instances sharing write port A (byteena_a=2).
+// Port B of cpu instance = CPU read; port B of pix instance = pixel lookup.
+logic [15:0] palram_cpu_raw, palram_pix_raw;
+
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (9), .numwords_a (512),
+    .width_b                   (16), .widthad_b (9), .numwords_b (512),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) palram_cpu_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpu_addr[9:1]), .data_a(cpu_dout),
+    .wren_a(palram_cs && !cpu_rw), .byteena_a({~cpu_uds_n, ~cpu_lds_n}),
+    .address_b(cpu_addr[9:1]), .q_b(palram_cpu_raw),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (9), .numwords_a (512),
+    .width_b                   (16), .widthad_b (9), .numwords_b (512),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) palram_pix_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpu_addr[9:1]),         .data_a(cpu_dout),
+    .wren_a(palram_cs && !cpu_rw), .byteena_a({~cpu_uds_n, ~cpu_lds_n}),
+    .address_b({1'b0, final_color_w}), .q_b(palram_pix_raw),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+always_ff @(posedge clk_sys) begin
+    if (palram_cs) palram_cpu_dout <= palram_cpu_raw;
+end
+
+// Pixel lookup: altsyncram output is already registered (1-cycle latency).
+// Apply clk_pix enable after altsyncram to stay aligned with pixel stream.
+logic [15:0] pal_entry_r;
+always_ff @(posedge clk_sys) begin
+    if (clk_pix) pal_entry_r <= palram_pix_raw;
+end
+
+`else
+// Simulation path
+logic [15:0] palette_ram [0:511];
 always_ff @(posedge clk_sys) begin
     if (palram_cs && !cpu_rw) begin
         if (!cpu_uds_n) palette_ram[cpu_addr[9:1]][15:8] <= cpu_dout[15:8];
         if (!cpu_lds_n) palette_ram[cpu_addr[9:1]][ 7:0] <= cpu_dout[ 7:0];
     end
 end
-
 always_ff @(posedge clk_sys) begin
     if (palram_cs) palram_cpu_dout <= palette_ram[cpu_addr[9:1]];
 end
-
-// Pixel-domain palette lookup: final_color_w[7:0] → palette_ram entry
-// GP9001 final_color is 8-bit {palette[3:0], index[3:0]}, giving 256 entries.
-// Palette RAM has 512 entries; index sits in [8:0] with MSB = 0 for standard entries.
-// Pipelined 1 cycle with clk_pix to stay aligned with pixel stream.
+// Pixel-domain palette lookup
 logic [15:0] pal_entry_r;
 always_ff @(posedge clk_sys) begin
     if (clk_pix) pal_entry_r <= palette_ram[{1'b0, final_color_w}];
 end
+`endif
 
 // Expand R5G5B5 → R8G8B8 (replicate 3 MSBs into low 3 bits).
 // Bit [15] of palette entry is unused (transparent flag, not needed here).
