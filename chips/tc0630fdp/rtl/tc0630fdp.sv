@@ -422,7 +422,10 @@ assign text_q_w = text_ram[text_rd_addr_w];
 // Character RAM (256 tiles × 8 rows × 4 bytes = 8KB)
 // =============================================================================
 `ifdef QUARTUS
-(* ramstyle = "MLAB" *) logic [7:0] char_ram [0:8191];
+// BRAM-inferrable: widened to 32-bit so CPU writes to single word address
+// (the original 8-bit array had writes to {word,1'b0}/{word,1'b1} = two different
+// addresses, preventing MLAB inference) and engine reads one 32-bit word.
+(* ramstyle = "MLAB" *) logic [31:0] char_ram [0:2047];
 `else
 logic [7:0] char_ram [0:8191];
 `endif
@@ -431,10 +434,22 @@ logic [11:0] char_word_addr;
 assign char_word_addr = cpu_addr[12:1];
 
 always_ff @(posedge clk) begin
-    if (!rst_n) begin
-    end else if (cs_char && !cpu_rw) begin
+    if (cs_char && !cpu_rw) begin
+`ifdef QUARTUS
+        // 32-bit array: word_addr = char_word_addr[11:1] (11-bit → 2048 entries)
+        // half_sel = char_word_addr[0]: 0 = lower 16 bits [15:0], 1 = upper [31:16]
+        // 4-byte-enable pattern (single word address) — MLAB-inferrable
+        if (!char_word_addr[0]) begin
+            if (cpu_be[1]) char_ram[char_word_addr[11:1]][15:8] <= cpu_din[15:8];
+            if (cpu_be[0]) char_ram[char_word_addr[11:1]][ 7:0] <= cpu_din[ 7:0];
+        end else begin
+            if (cpu_be[1]) char_ram[char_word_addr[11:1]][31:24] <= cpu_din[15:8];
+            if (cpu_be[0]) char_ram[char_word_addr[11:1]][23:16] <= cpu_din[ 7:0];
+        end
+`else
         if (cpu_be[1]) char_ram[{char_word_addr, 1'b0}] <= cpu_din[15:8];
         if (cpu_be[0]) char_ram[{char_word_addr, 1'b1}] <= cpu_din[ 7:0];
+`endif
     end
 end
 
@@ -443,17 +458,28 @@ always_ff @(posedge clk) begin
     if (!rst_n)
         char_cpu_rdata <= 16'b0;
     else if (cs_char && cpu_rw) begin
+`ifdef QUARTUS
+        char_cpu_rdata <= char_word_addr[0]
+            ? char_ram[char_word_addr[11:1]][31:16]
+            : char_ram[char_word_addr[11:1]][15:0];
+`else
         char_cpu_rdata <= {char_ram[{char_word_addr, 1'b0}],
                            char_ram[{char_word_addr, 1'b1}]};
+`endif
     end
 end
 
 logic [10:0] char_rd_addr_w;
 logic [31:0] char_q_w;
+`ifdef QUARTUS
+// Single 32-bit async read — MLAB-inferrable (no multi-address access)
+assign char_q_w = char_ram[char_rd_addr_w];
+`else
 assign char_q_w = {char_ram[{char_rd_addr_w, 2'd3}],
                    char_ram[{char_rd_addr_w, 2'd2}],
                    char_ram[{char_rd_addr_w, 2'd1}],
                    char_ram[{char_rd_addr_w, 2'd0}]};
+`endif
 
 // =============================================================================
 // Playfield RAM ×4 (each 0x1800 × 16-bit words)
@@ -528,8 +554,13 @@ always_ff @(posedge clk) begin
         if (cpu_be[1]) spr_ram[spr_cpu_addr][15:8] <= cpu_din[15:8];
         if (cpu_be[0]) spr_ram[spr_cpu_addr][ 7:0] <= cpu_din[ 7:0];
     end
-    // Testbench direct write port
+`ifndef QUARTUS
+    // Testbench direct write port (simulation only).
+    // Excluded from FPGA build: in synthesis spr_wr_en is tied to 0 by the
+    // parent, but Quartus's BRAM inference engine sees the structural two-write-port
+    // pattern before constant propagation and refuses to infer MLAB.
     if (spr_wr_en) spr_ram[spr_wr_addr] <= spr_wr_data;
+`endif
 end
 
 logic [15:0] spr_cpu_rdata;
@@ -589,8 +620,10 @@ always_ff @(posedge clk) begin
             if (cpu_be[0]) pivot_ram[pvt_cpu_waddr][23:16] <= cpu_din[ 7:0];
         end
     end
-    // Testbench direct write port (32-bit word)
+`ifndef QUARTUS
+    // Testbench direct write port (simulation only — same reason as spr_ram above)
     if (pvt_wr_en) pivot_ram[pvt_wr_addr] <= pvt_wr_data;
+`endif
 end
 
 logic [15:0] pvt_cpu_rdata;

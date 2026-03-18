@@ -706,6 +706,110 @@ port naming conventions vary between `sdram_a`, `sdram_b`, `sdram_c` variants.
 
 ---
 
+## 24. Warning 10999 — MLAB/M10K Inference Failure Due to Multi-Port Writes
+
+`Warning (10999): can't infer memory for variable '<name>' with attribute '"MLAB"'.`
+
+This warning means Quartus's structural BRAM inference engine **refuses to infer** the array
+as MLAB (or M10K), regardless of the `ramstyle` attribute. The array falls back to flip-flops +
+combinational mux trees — causing OOM (Error 293007) for large arrays.
+
+**Root causes:**
+
+### (a) Multiple write ports in a single `always_ff` block
+
+```systemverilog
+always_ff @(posedge clk) begin
+    if (cs && !cpu_rw) spr_ram[cpu_addr] <= cpu_din;   // write port 1
+    if (tb_wr_en) spr_ram[tb_addr] <= tb_data;          // write port 2  ← BLOCKS INFERENCE
+end
+```
+
+Even if `tb_wr_en` is tied to `1'b0` at the instantiation level, the structural analyzer sees
+the two-write-port pattern **before** constant propagation and refuses inference.
+
+**Fix:** Exclude the testbench write port from synthesis using `` `ifndef QUARTUS ``:
+
+```systemverilog
+always_ff @(posedge clk) begin
+    if (cs && !cpu_rw) spr_ram[cpu_addr] <= cpu_din;
+`ifndef QUARTUS
+    if (tb_wr_en) spr_ram[tb_addr] <= tb_data;  // simulation only
+`endif
+end
+```
+
+### (b) Writes to different addresses from the same byte-enable condition
+
+```systemverilog
+always_ff @(posedge clk) begin
+    if (cs && !cpu_rw) begin
+        // These are TWO different word addresses — not a byte-enable pattern:
+        if (be[1]) char_ram[{word_addr, 1'b0}] <= din[15:8];  // addr = word_addr*2
+        if (be[0]) char_ram[{word_addr, 1'b1}] <= din[ 7:0];  // addr = word_addr*2+1
+    end
+end
+```
+
+This pattern arises with byte-addressed 8-bit arrays. The appended `1'b0`/`1'b1` selects
+different 8-bit words at adjacent addresses — not byte-enable lanes on the same word.
+
+**Fix under `ifdef QUARTUS`:** Widen the array to match the natural CPU access width
+(16-bit or 32-bit) and use the standard byte-enable pattern (all writes to same word address):
+
+```systemverilog
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [31:0] char_ram [0:2047];  // 2048×32-bit = 64Kbits
+// CPU write: single 32-bit word address, 4-byte-enable (MLAB-inferrable)
+always_ff @(posedge clk) begin
+    if (cs && !cpu_rw) begin
+        if (!word_addr[0]) begin  // lower 16-bit half
+            if (be[1]) char_ram[word_addr[11:1]][15:8] <= din[15:8];
+            if (be[0]) char_ram[word_addr[11:1]][ 7:0] <= din[ 7:0];
+        end else begin            // upper 16-bit half
+            if (be[1]) char_ram[word_addr[11:1]][31:24] <= din[15:8];
+            if (be[0]) char_ram[word_addr[11:1]][23:16] <= din[ 7:0];
+        end
+    end
+end
+// Single 32-bit async read (engine):
+assign char_q_w = char_ram[rd_addr_w];  // rd_addr_w is 11-bit → 2048 entries
+`else
+// Simulation: original byte-addressed array
+logic [7:0] char_ram [0:8191];
+...
+`endif
+```
+
+**Key insight:** The byte-enable fix requires widening the array from 8-bit to 32-bit entries
+under `ifdef QUARTUS`, so the CPU write goes to a **single word address** with **4 independent
+byte-enable lanes** (which Quartus 17.0 CAN infer as MLAB), and the engine read becomes a
+**single 32-bit async access** (instead of 4 separate 8-bit accesses to adjacent addresses).
+
+---
+
+## 25. Taito Z vram: Fundamental M10K Capacity Issue
+
+`tc0480scp_vram` has 1 write port + 10 simultaneous read ports (4 bg_tf, 4 bg_sc, CPU,
+text_map, text_gfx). With `ramstyle = "M10K"`, Quartus creates `ceil(11/2) = 6` TDP copies
+of the 32K×16 VRAM (512Kbits per copy) to satisfy all read ports:
+
+- 6 copies × 64 M10K blocks/copy = **384 M10K blocks** (of 397 available = 97%)
+- Plus shared_ram/work_ram_a/work_ram_b/net_ram: ~175 M10K blocks more
+- **Total: ~559 blocks >> 397** → Device M10K capacity overflow
+
+The OOM in quartus_map for Taito Z is caused by this, not by inference failure.
+
+**Fix needed:** Redesign tc0480scp_vram to time-multiplex the 4 bg_tf reads and 4 bg_sc reads
+through single shared ports (arbiter + round-robin), reducing to 1W + 3R (bg_mux + cpu + text):
+
+- 2 M10K copies × 64 blocks = 128 M10K blocks (32% of device) — feasible
+
+This requires adding a 4-way round-robin arbiter in tc0480scp_vram and adjusting BG FSM
+read timing to accept 4-cycle latency from the arbiter.
+
+---
+
 ## Systematic Error Peeling
 
 Each Quartus synthesis run reveals one layer of errors. Typical order for a new chip:
