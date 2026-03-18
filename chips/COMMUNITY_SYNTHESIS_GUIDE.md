@@ -477,6 +477,23 @@ grep -A5 "Critical Path" *.sta.rpt | head -50
 grep "Routing utilization" *.fit.rpt
 ```
 
+## Appendix C: Known Outstanding Architecture Issues
+
+### gp9001.sv VRAM (32K×16-bit)
+
+**Problem:** `(* ramstyle = "MLAB" *) logic [15:0] vram [0:32767]`
+- 32768 × 16 = 524,288 bits / 640 bits/MLAB = 819 MLABs required
+- Device only has 397 MLABs total → Quartus will over-subscribe and fall back to M10K
+- M10K has synchronous (1-cycle) read latency, not async
+
+**Current state:** If Quartus falls back to M10K gracefully, synthesis may succeed but the tile pipeline (Gate 3) expects combinational reads and will be off by 1 pixel cycle.
+
+**Fix required:** Pre-fetch restructure. The 4-layer round-robin tile pipeline needs to compute the VRAM address 1 cycle early. Since `mux_layer` advances every cycle and each layer's coords depend on `hpos`/`vpos`, the pre-fetch must also advance `hpos` by 1 (the next cycle's pixel position). This shifts the tile pipeline output by 1 pixel — acceptable since the pipeline already has many cycles of ROM-fetch latency.
+
+**Status:** DEFERRED — let standalone synthesis confirm behavior first. No gameplay impact likely (pipeline timing shift is within render buffer latency).
+
+---
+
 ## Appendix B: CI Failure Quick Reference
 
 | Error | Cause | Fix |
