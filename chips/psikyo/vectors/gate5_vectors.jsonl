@@ -1,0 +1,60 @@
+{"op": "comment", "text": "T1: all transparent \u2192 invalid"}
+{"op": "set_inputs", "spr_valid": 0, "spr_color": 0, "spr_prio": 0, "bg0_valid": 0, "bg0_color": 0, "bg1_valid": 0, "bg1_color": 0}
+{"op": "check_final", "exp_valid": 0, "exp_color": 0}
+{"op": "comment", "text": "T2: BG1 only \u2192 BG1 wins"}
+{"op": "set_inputs", "spr_valid": 0, "spr_color": 0, "spr_prio": 0, "bg0_valid": 0, "bg0_color": 0, "bg1_valid": 1, "bg1_color": 18}
+{"op": "check_final", "exp_valid": 1, "exp_color": 18}
+{"op": "comment", "text": "T3: BG0 only \u2192 BG0 wins"}
+{"op": "set_inputs", "spr_valid": 0, "spr_color": 0, "spr_prio": 0, "bg0_valid": 1, "bg0_color": 171, "bg1_valid": 0, "bg1_color": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 171}
+{"op": "comment", "text": "T4: BG0+BG1 \u2192 BG0 wins (foreground)"}
+{"op": "set_inputs", "spr_valid": 0, "spr_color": 0, "spr_prio": 0, "bg0_valid": 1, "bg0_color": 171, "bg1_valid": 1, "bg1_color": 18}
+{"op": "check_final", "exp_valid": 1, "exp_color": 171}
+{"op": "comment", "text": "T5: spr(prio=0) below BG0 \u2014 BG0 wins"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 85, "spr_prio": 0, "bg0_valid": 1, "bg0_color": 171, "bg1_valid": 1, "bg1_color": 18}
+{"op": "check_final", "exp_valid": 1, "exp_color": 171}
+{"op": "comment", "text": "T6: spr(prio=0) beats BG1 when BG0 transparent"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 85, "spr_prio": 0, "bg0_valid": 0, "bg0_color": 0, "bg1_valid": 1, "bg1_color": 34}
+{"op": "check_final", "exp_valid": 1, "exp_color": 85}
+{"op": "comment", "text": "T7: spr(prio=1) beats BG0"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 255, "spr_prio": 1, "bg0_valid": 1, "bg0_color": 171, "bg1_valid": 1, "bg1_color": 18}
+{"op": "check_final", "exp_valid": 1, "exp_color": 255}
+{"op": "comment", "text": "T8: spr(prio=2) beats BG0"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 204, "spr_prio": 2, "bg0_valid": 1, "bg0_color": 171, "bg1_valid": 1, "bg1_color": 18}
+{"op": "check_final", "exp_valid": 1, "exp_color": 204}
+{"op": "comment", "text": "T9: spr(prio=3) topmost"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 238, "spr_prio": 3, "bg0_valid": 1, "bg0_color": 171, "bg1_valid": 1, "bg1_color": 18}
+{"op": "check_final", "exp_valid": 1, "exp_color": 238}
+{"op": "comment", "text": "T10: spr(color=0) transparent \u2192 BG1 wins"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 0, "spr_prio": 3, "bg0_valid": 0, "bg0_color": 0, "bg1_valid": 1, "bg1_color": 34}
+{"op": "check_final", "exp_valid": 1, "exp_color": 34}
+{"op": "comment", "text": "T11: spr(valid=0) transparent \u2192 BG0 wins"}
+{"op": "set_inputs", "spr_valid": 0, "spr_color": 170, "spr_prio": 3, "bg0_valid": 1, "bg0_color": 187, "bg1_valid": 0, "bg1_color": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 187}
+{"op": "comment", "text": "T12: BG1(color=0) transparent \u2192 BG0 wins"}
+{"op": "set_inputs", "spr_valid": 0, "spr_color": 0, "spr_prio": 0, "bg0_valid": 1, "bg0_color": 171, "bg1_valid": 1, "bg1_color": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 171}
+{"op": "comment", "text": "T13: BG0(color=0) transparent \u2192 BG1 wins"}
+{"op": "set_inputs", "spr_valid": 0, "spr_color": 0, "spr_prio": 0, "bg0_valid": 1, "bg0_color": 0, "bg1_valid": 1, "bg1_color": 51}
+{"op": "check_final", "exp_valid": 1, "exp_color": 51}
+{"op": "comment", "text": "T14: all layers, spr(prio=1) wins"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 119, "spr_prio": 1, "bg0_valid": 1, "bg0_color": 51, "bg1_valid": 1, "bg1_color": 68}
+{"op": "check_final", "exp_valid": 1, "exp_color": 119}
+{"op": "comment", "text": "T15: all layers, spr(prio=2) wins"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 136, "spr_prio": 2, "bg0_valid": 1, "bg0_color": 51, "bg1_valid": 1, "bg1_color": 68}
+{"op": "check_final", "exp_valid": 1, "exp_color": 136}
+{"op": "comment", "text": "T16: all layers, spr(prio=3) wins"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 153, "spr_prio": 3, "bg0_valid": 1, "bg0_color": 51, "bg1_valid": 1, "bg1_color": 68}
+{"op": "check_final", "exp_valid": 1, "exp_color": 153}
+{"op": "comment", "text": "T17: all layers, spr(prio=0) \u2192 BG0 wins"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 85, "spr_prio": 0, "bg0_valid": 1, "bg0_color": 51, "bg1_valid": 1, "bg1_color": 68}
+{"op": "check_final", "exp_valid": 1, "exp_color": 51}
+{"op": "comment", "text": "T18: spr(prio=0) beats BG1, BG0 absent"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 85, "spr_prio": 0, "bg0_valid": 0, "bg0_color": 0, "bg1_valid": 1, "bg1_color": 34}
+{"op": "check_final", "exp_valid": 1, "exp_color": 85}
+{"op": "comment", "text": "T19: spr(prio=1) only \u2192 wins"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 102, "spr_prio": 1, "bg0_valid": 0, "bg0_color": 0, "bg1_valid": 0, "bg1_color": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 102}
+{"op": "comment", "text": "T20: spr(prio=2) only \u2192 wins"}
+{"op": "set_inputs", "spr_valid": 1, "spr_color": 119, "spr_prio": 2, "bg0_valid": 0, "bg0_color": 0, "bg1_valid": 0, "bg1_color": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 119}
