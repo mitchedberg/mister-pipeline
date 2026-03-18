@@ -103,10 +103,10 @@ set_global_assignment -name SEED 1
 #set_global_assignment -name VERILOG_MACRO "MISTER_SMALL_VBUF=1"
 
 # Disable YC/Composite output to save resources
-#set_global_assignment -name VERILOG_MACRO "MISTER_DISABLE_YC=1"
+set_global_assignment -name VERILOG_MACRO "MISTER_DISABLE_YC=1"
 
 # Disable ALSA audio output to save resources
-#set_global_assignment -name VERILOG_MACRO "MISTER_DISABLE_ALSA=1"
+set_global_assignment -name VERILOG_MACRO "MISTER_DISABLE_ALSA=1"
 
 # ==========================================================================
 # SOURCE FILES (Taito Z Core)
@@ -138,4 +138,4 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:sys/build_id.tcl"
 # ==========================================================================
 
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
-# [touch to re-trigger CI after taito_z/tc0480scp main array BRAM attribute OOM fixes]
+# [touch: tc0480scp_vram 4-copy M10K split (10-port OOM → 4 SDP arrays), MISTER_DISABLE_YC/ALSA]
