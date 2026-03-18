@@ -37,6 +37,51 @@ Subsystems run at divided rates via clock enables from a single master PLL. Not 
 
 Formal width is 1 bit. Multi-bit connections cause Warning 12020.
 
+### 7. Asynchronous reset everywhere
+
+`always @(posedge clk, posedge rst)` — not `always @(posedge clk)` with `if (rst)`.
+Synchronous reset creates a mux on every flip-flop output, costs a LUT layer, and degrades Fmax.
+Async reset maps to the dedicated CLR pin. From `pattern-ledger.md` Pattern 1.
+
+### 8. Pixel pipeline: use shift-register extraction, not case-on-column
+
+For 4bpp scroll tiles: load 3 bytes (3 bitplanes × 8 pixels) into a shift register.
+Left-shift all bytes each `pxl2_cen`; extract `pxl_data[23]`, `[15]`, `[7]` = current pixel.
+Avoids barrel shifter inference. Cheaper than `case (pixel_x)` selecting nibbles.
+From `pattern-ledger.md` Pattern 3.
+
+### 9. Scroll tile arithmetic: track overflow bits for 4-quadrant page wrapping
+
+System 16 (and similar) has 16 tilemap pages in a 2×2 grid. Horizontal position arithmetic
+must be 10-bit (`{hov, hpos}`) and vertical 9-bit (`{vov, vpos}`) to produce overflow bits.
+`case ({vov, hov})` selects the active page. Truncating to 9 bits loses page selection.
+From `pattern-ledger.md` Pattern 4.
+
+### 10. SDRAM fetch state machine: stall, don't assume fixed latency
+
+State machines that handshake with SDRAM must use conditional rollback:
+`if (!map_ok || busy != 0) map_st <= same_state;` — not bare `if (map_ok)` capture.
+SDRAM latency varies with refresh cycles and arbiter contention. Without stall logic,
+tile fetches get dropped under load causing rendering glitches. From `pattern-ledger.md` Pattern 5.
+
+### 11. Every scroll layer needs a line buffer (render one scanline ahead)
+
+Tile map + graphics fetch requires 8+ SDRAM cycles per tile. This exceeds per-pixel time.
+Use `jtframe_linebuf` or equivalent: write to scanline N+1 while displaying scanline N.
+Without a line buffer, you cannot sustain pixel clock throughput. From `pattern-ledger.md` Pattern 6.
+
+### 12. Packed pixel bus convention
+
+All scroll/char/obj pixel outputs feeding line buffers or priority mixers use:
+`output [10:0] pxl` = `{ prio[0], pal[6:0], col[2:0] }`. Match `jtframe_linebuf` DW=11.
+From `pattern-ledger.md` Pattern 8.
+
+### 13. No unique case / priority case (Quartus 17.0 warnings)
+
+Use plain `case`. `unique case` and `priority case` generate Warning 10280 in Quartus 17.0.
+`check_rtl.sh` Check 10 catches these. All RTL currently clean (2026-03-18).
+From `pattern-ledger.md` Pattern 9.
+
 ---
 
 ## Chip Status
@@ -76,9 +121,11 @@ Formal width is 1 bit. Multi-bit connections cause Warning 12020.
 
 ---
 
-## Calibration Diff (schedule after check_rtl.sh)
+## Calibration Diff — COMPLETE (2026-03-18)
 
-Implement jts16 scroll chip from scratch (MAME source only), then diff against jotego's implementation. Produce `chips/pattern-ledger.md`. Fold ledger items into `check_rtl.sh`. Purpose: calibrate against 10 years of synthesis-validated RTL patterns.
+`chips/jts16_scr_calibration/my_jts16_scr.sv` = from-scratch S16 scroll implementation.
+`chips/pattern-ledger.md` = 11 patterns derived from diff against `jotego/jts16_scr.v`.
+Key patterns folded into Iron Laws 7-13 above and `check_rtl.sh` Checks 9-10.
 
 ---
 
