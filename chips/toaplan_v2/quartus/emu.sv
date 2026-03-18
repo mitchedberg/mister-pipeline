@@ -32,12 +32,20 @@
 //   0x00 — CPU program ROM (sequential, SDRAM base 0x000000)
 //   0x01 — GFX ROM (GP9001 tile + sprite data, SDRAM 0x100000)
 //   0x02 — ADPCM ROM (OKI M6295 samples, SDRAM 0x500000)
+//   0x03 — Z80 sound CPU ROM (Z80 sound CPU code, SDRAM 0x600000)
 //   0xFE — DIP switch / NVRAM init data
 //
 // SDRAM layout (IS42S16320F, 32 MB, Batsugun):
 //   0x000000 – 0x0FFFFF   1MB    CPU program ROM (tp-026-1.bin + others)
 //   0x100000 – 0x4FFFFF   4MB    GFX ROM (tiles + sprites interleaved)
 //   0x500000 – 0x5FFFFF   1MB    ADPCM ROM (OKI M6295 sample data)
+//   0x600000 – 0x607FFF   32KB   Z80 sound CPU ROM
+//
+// NOTE: Batsugun hardware uses a NEC V25 (not a standard Z80) as the sound CPU.
+// The V25 shares the 68K ROM space via ShareRAM and does not have a separate ROM.
+// This Z80 instantiation is provided for Toaplan V2 games that DO use a Z80 sound
+// CPU (e.g., other Toaplan V2 variants). For Batsugun, connect z80_rom_addr to
+// the main CPU ROM space (0x000000–0x07FFFF) if needed.
 // -------------------------------------------------------------------------
 
 module emu
@@ -440,6 +448,23 @@ wire        adpcm_rom_ack_w;
 //   SDRAM word address = (0x500000 + adpcm_rom_addr) >> 1 = 0x280000 + (addr >> 1)
 wire [26:0] adpcm_sdram_word_addr = 27'h280000 + {3'b0, adpcm_rom_addr_w[23:1]};
 
+// Z80 sound CPU ROM channel — SDRAM CH4 (27-bit word address).
+// Z80 ROM sits at SDRAM byte base 0x600000 (word base 0x300000).
+// toaplan_v2 drives a 16-bit Z80 address; map to SDRAM word addr:
+//   SDRAM word address = (0x600000 + z80_rom_addr) >> 1 = 0x300000 + (addr >> 1)
+wire [15:0] z80_sdr_addr_w;      // from toaplan_v2 (Z80 16-bit address)
+wire        z80_sdr_req_w;
+wire  [7:0] z80_sdr_data_w;      // byte returned to toaplan_v2
+wire        z80_sdr_ack_w;
+wire [15:0] z80_sdr_data16_w;    // 16-bit word from SDRAM (byte-selected below)
+
+// Z80 ROM SDRAM word address: base 0x300000, add Z80 addr >> 1
+wire [26:0] z80_sdram_word_addr = 27'h300000 + {11'b0, z80_sdr_addr_w[15:1]};
+
+// Byte-lane select: Z80 addr[0]=0 → lower byte, addr[0]=1 → upper byte
+assign z80_sdr_data_w = z80_sdr_addr_w[0] ? z80_sdr_data16_w[15:8]
+                                           : z80_sdr_data16_w[7:0];
+
 // Audio output wires from toaplan_v2
 wire signed [15:0] snd_left_w, snd_right_w;
 
@@ -455,7 +480,7 @@ sdram_b u_sdram
 (
     .clk        (clk_sdram),
     .clk_sys    (clk_sys),
-    .reset_n    (reset_n),
+    .rst_n      (reset_n),   // sdram_b port is rst_n
 
     // CH0: HPS ROM download write path
     .ioctl_wr   (ioctl_wr & ioctl_download),
@@ -479,6 +504,12 @@ sdram_b u_sdram
     .adpcm_data (adpcm_rom_data_w),
     .adpcm_req  (adpcm_rom_req_w),
     .adpcm_ack  (adpcm_rom_ack_w),
+
+    // CH4: Z80 sound CPU ROM at SDRAM base 0x600000
+    .z80_addr   (z80_sdram_word_addr),
+    .z80_data   (z80_sdr_data16_w),
+    .z80_req    (z80_sdr_req_w),
+    .z80_ack    (z80_sdr_ack_w),
 
     // SDRAM chip pins
     .SDRAM_A    (SDRAM_A),
@@ -578,6 +609,12 @@ toaplan_v2 u_toaplan_v2
     .adpcm_rom_data  (adpcm_rom_data_w),
     .adpcm_rom_ack   (adpcm_rom_ack_w),
 
+    // ── Z80 sound CPU ROM (via SDRAM CH4 at 0x600000) ────────────────────────
+    .z80_rom_addr    (z80_sdr_addr_w),
+    .z80_rom_req     (z80_sdr_req_w),
+    .z80_rom_data    (z80_sdr_data_w),
+    .z80_rom_ack     (z80_sdr_ack_w),
+
     // ── Sound CPU clock enable (~3.5 MHz) ────────────────────────────────────
     .clk_sound       (clk_sound),
 
@@ -661,7 +698,8 @@ wire _unused = &{
     cpu_reset_n_out,
     gfx_sdram_word_addr,    // upper bits not used by sdram_b CH2 (would need wider port)
     prog_sdram_word_addr,   // forwarded to sdram_b; suppress unused warning on wire
-    adpcm_sdram_word_addr   // forwarded to sdram_b CH3; suppress unused warning on wire
+    adpcm_sdram_word_addr,  // forwarded to sdram_b CH3; suppress unused warning on wire
+    z80_sdram_word_addr     // forwarded to sdram_b CH4; suppress unused warning on wire
 };
 /* verilator lint_on UNUSED */
 

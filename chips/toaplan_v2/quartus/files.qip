@@ -99,6 +99,15 @@ set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt6295/hdl/
 set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jtframe/hdl/sound/jtframe_fir_mono.v
 
 # =========================================================================
+# Z80 SOUND CPU (T80s — single-file flattened netlist from jtframe)
+# =========================================================================
+# Source: jtcores/modules/jtframe/hdl/cpu/t80/T80s.v
+# Copied to: chips/toaplan_v2/rtl/t80/T80s.v
+# T80s.v contains all T80 modules in a single file (T80s, T80, T80_ALU, etc.)
+
+set_global_assignment -name VERILOG_FILE ../rtl/t80/T80s.v
+
+# =========================================================================
 # TIMING CONSTRAINTS
 # =========================================================================
 

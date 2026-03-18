@@ -108,6 +108,14 @@ module toaplan_v2 #(
     input  logic [15:0] adpcm_rom_data,
     input  logic        adpcm_rom_ack,
 
+    // ── Z80 Sound CPU ROM (from SDRAM — shared CH1 time-multiplexed) ──────────
+    // Z80 ROM sits at SDRAM byte offset 0x600000 (ioctl_index 0x03).
+    // Toggle-req/ack handshake; Z80 stalls via WAIT_n until ack returns.
+    output logic [15:0] z80_rom_addr,       // Z80 16-bit address
+    output logic        z80_rom_req,        // toggle on new request
+    input  logic  [7:0] z80_rom_data,       // byte returned from SDRAM
+    input  logic        z80_rom_ack,        // toggle when data is ready
+
     // ── Sound CPU clock enable (3.5 MHz) ───────────────────────────────────────
     input  logic        clk_sound,          // 3.5 MHz CE pulse in clk_sys domain
 
@@ -694,26 +702,159 @@ always_comb begin
 end
 
 // =============================================================================
-// Audio Subsystem — YM2151 (jt51) + OKI M6295 (jt6295)
+// Audio Subsystem — Z80 (T80s) + YM2151 (jt51) + OKI M6295 (jt6295)
 // =============================================================================
 //
-// Sound CPU: Z80 @ 3.5 MHz (TODO: instantiate T80 here).
+// Sound CPU: Z80 @ 3.5 MHz (T80s core from jtframe).
 //   - Receives sound commands from M68000 via sound_cmd latch (0x70000E).
-//   - Drives YM2151 at 0x4000-0x4001 (A0 = register select vs data write).
-//   - Drives OKI M6295 at 0x5000.
-//   - Z80 data bus and control stubs: all chips driven to inactive until
-//     the T80 is instantiated.
+//   - Z80 address map:
+//       0x0000–0x7FFF   32KB   Z80 ROM (from SDRAM, ioctl_index 0x03)
+//       0x8000–0x87FF   2KB    Z80 RAM (internal BRAM, mirrored to 0xFFFF)
+//       0x4000–0x4001          YM2151 (via MREQ: A15:1 == 0x2000)
+//       0x5000                 OKI M6295 (via MREQ: A15:12 == 0x5)
+//       0x6000                 Sound command read port (from M68K latch)
 //
 // YM2151 clock: 3.579545 MHz (clk_sound CE in clk_sys domain).
 // OKI M6295 clock: ~1 MHz (clk_sys / 32 ≈ 1 MHz; exact rate set by ss pin).
 
-// ── YM2151 control stubs (all inactive until T80 instantiated) ──────────────
-// TODO: wire to T80 once Z80 sound CPU is instantiated.
-wire        ym_cs_n  = 1'b1;   // chip select inactive
-wire        ym_wr_n  = 1'b1;   // write inactive
-wire        ym_a0    = 1'b0;   // address bit 0 (register vs data)
-wire [7:0]  ym_din   = 8'h00;  // data to YM2151
-wire [7:0]  ym_dout;           // data from YM2151 (used by Z80 read — TODO)
+// =============================================================================
+// Z80 Sound CPU — T80s
+// =============================================================================
+
+// Z80 control signals
+logic        z80_mreq_n, z80_iorq_n, z80_rd_n, z80_wr_n;
+logic        z80_m1_n, z80_rfsh_n, z80_halt_n, z80_busak_n;
+logic [15:0] z80_addr;
+logic  [7:0] z80_dout_cpu;   // data output from Z80 core
+
+// Z80 wait: asserted while waiting for ROM SDRAM fetch
+logic        z80_wait_n;
+
+// Z80 interrupt: YM2151 irq_n drives Z80 INT
+wire         z80_int_n;   // driven by YM2151 irq_n output
+
+// Z80 2KB internal RAM (0x8000–0x87FF, mirrored across upper half)
+logic [7:0]  z80_ram [0:2047];
+logic [7:0]  z80_ram_dout_r;
+
+// Z80 chip-select decode (combinational, on Z80 clock domain via CEN gating)
+// All decodes are MREQ-based (memory-mapped I/O, per Toaplan V2 hardware).
+logic z80_rom_cs;    // 0x0000–0x7FFF
+logic z80_ram_cs;    // 0x8000–0xFFFF (2KB BRAM mirrored)
+logic z80_ym_cs;     // 0x4000–0x4001 (YM2151)
+logic z80_oki_cs;    // 0x5000        (OKI M6295)
+logic z80_cmd_cs;    // 0x6000        (sound command latch)
+
+always_comb begin
+    // YM2151: 0x4000–0x4001 (A15:1 == 15'h2000)
+    z80_ym_cs  = (!z80_mreq_n) && (z80_addr[15:1] == 15'h2000);
+    // OKI M6295: 0x5000–0x5FFF (A15:12 == 4'h5)
+    z80_oki_cs = (!z80_mreq_n) && (z80_addr[15:12] == 4'h5);
+    // Sound command read: 0x6000–0x6FFF (A15:12 == 4'h6)
+    z80_cmd_cs = (!z80_mreq_n) && (z80_addr[15:12] == 4'h6);
+    // ROM: 0x0000–0x7FFF excluding peripheral windows
+    z80_rom_cs = (!z80_mreq_n) && (z80_addr[15] == 1'b0)
+                 && !z80_ym_cs && !z80_oki_cs && !z80_cmd_cs;
+    // RAM: 0x8000–0xFFFF
+    z80_ram_cs = (!z80_mreq_n) && (z80_addr[15] == 1'b1);
+end
+
+// ── Z80 ROM SDRAM bridge ─────────────────────────────────────────────────────
+// Toggle-req/ack handshake.  z80_wait_n is deasserted (0) while fetch is pending.
+// We detect a new read request when z80_rom_cs asserts and rd_n is low and
+// no fetch is already in flight.
+
+logic z80_rom_pending;
+logic z80_rom_req_r;
+logic [7:0] z80_rom_latch;   // last returned byte
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        z80_rom_req_r   <= 1'b0;
+        z80_rom_pending <= 1'b0;
+        z80_rom_latch   <= 8'hFF;
+        z80_wait_n      <= 1'b1;
+    end else begin
+        if (z80_rom_cs && !z80_rd_n && !z80_rom_pending) begin
+            // New ROM read — issue SDRAM request
+            z80_rom_req_r   <= ~z80_rom_req_r;
+            z80_rom_pending <= 1'b1;
+            z80_wait_n      <= 1'b0;   // stall Z80
+        end else if (z80_rom_pending && (z80_rom_req_r == z80_rom_ack)) begin
+            // SDRAM returned data
+            z80_rom_latch   <= z80_rom_data;
+            z80_rom_pending <= 1'b0;
+            z80_wait_n      <= 1'b1;   // release Z80
+        end
+    end
+end
+
+assign z80_rom_req  = z80_rom_req_r;
+assign z80_rom_addr = z80_addr;
+
+// ── Z80 RAM ──────────────────────────────────────────────────────────────────
+// 2KB at 0x8000–0x87FF, mirrored to fill 0x8000–0xFFFF (mask to 11 bits).
+
+always_ff @(posedge clk_sys) begin
+    if (z80_ram_cs && !z80_wr_n)
+        z80_ram[z80_addr[10:0]] <= z80_dout_cpu;
+end
+
+always_ff @(posedge clk_sys) begin
+    if (z80_ram_cs) z80_ram_dout_r <= z80_ram[z80_addr[10:0]];
+end
+
+// ── Z80 data bus read mux ────────────────────────────────────────────────────
+// Priority: I/O peripherals > RAM > ROM (peripherals at 0x4000-0x7FFF overlap ROM space)
+logic [7:0] z80_din_mux;
+
+always_comb begin
+    if (z80_ym_cs)
+        z80_din_mux = ym_dout;
+    else if (z80_oki_cs)
+        z80_din_mux = m6295_dout;
+    else if (z80_cmd_cs)
+        z80_din_mux = sound_cmd;
+    else if (z80_ram_cs)
+        z80_din_mux = z80_ram_dout_r;
+    else if (z80_rom_cs)
+        z80_din_mux = z80_rom_latch;
+    else
+        z80_din_mux = 8'hFF;   // open bus
+end
+
+T80s u_z80 (
+    .RESET_n  (reset_n),
+    .CLK      (clk_sys),
+    .CEN      (clk_sound),      // 3.5 MHz clock enable
+    .WAIT_n   (z80_wait_n),
+    .INT_n    (z80_int_n),
+    .NMI_n    (1'b1),
+    .BUSRQ_n  (1'b1),
+    .OUT0     (1'b0),           // not used (M1/IORQ output0 mode disabled)
+    .DI       (z80_din_mux),
+    .M1_n     (z80_m1_n),
+    .MREQ_n   (z80_mreq_n),
+    .IORQ_n   (z80_iorq_n),
+    .RD_n     (z80_rd_n),
+    .WR_n     (z80_wr_n),
+    .RFSH_n   (z80_rfsh_n),
+    .HALT_n   (z80_halt_n),
+    .BUSAK_n  (z80_busak_n),
+    .A        (z80_addr),
+    .DOUT     (z80_dout_cpu)
+);
+
+// ── YM2151 control signals (wired to Z80) ────────────────────────────────────
+// Z80 writes: MREQ low, WR low, z80_ym_cs asserted.
+// A0 (= z80_addr[0]) selects register (0) vs data (1).
+wire        ym_cs_n = ~z80_ym_cs;
+wire        ym_wr_n = z80_wr_n | ~z80_ym_cs;
+wire        ym_a0   = z80_addr[0];
+wire  [7:0] ym_din  = z80_dout_cpu;
+wire  [7:0] ym_dout;               // returned to Z80 on reads
+wire        ym_irq_n;              // drives Z80 INT
+assign      z80_int_n = ym_irq_n;
 
 // YM2151 clock enable halved (jt51 needs cen and cen_p1 at half-speed)
 // cen_p1 toggles on alternate cen edges; since clk_sound is already a CE
@@ -739,10 +880,10 @@ jt51 u_jt51 (
     .a0         (ym_a0),
     .din        (ym_din),
     .dout       (ym_dout),
-    // peripheral control (unused)
+    // peripheral control
     .ct1        (),
     .ct2        (),
-    .irq_n      (),
+    .irq_n      (ym_irq_n),     // drives Z80 INT
     // audio outputs — use standard-resolution left/right
     .sample     (ym_sample),
     .left       (ym_left_raw),
@@ -751,12 +892,12 @@ jt51 u_jt51 (
     .xright     ()
 );
 
-// ── OKI M6295 control stubs (all inactive until T80 instantiated) ────────────
-// TODO: wire to T80 once Z80 sound CPU is instantiated.
+// ── OKI M6295 control signals (wired to Z80) ─────────────────────────────────
+// Z80 writes to 0x5000: MREQ low, WR low, z80_oki_cs asserted.
 // ss=1 → 8000 Hz sample rate with 1 MHz cen; ss=0 → 6000 Hz.
-wire        m6295_wrn  = 1'b1;   // write inactive (active low)
-wire [7:0]  m6295_din  = 8'h00;
-wire [7:0]  m6295_dout;          // status (busy flags) — for Z80 read TODO
+wire        m6295_wrn = z80_wr_n | ~z80_oki_cs;
+wire [7:0]  m6295_din = z80_dout_cpu;
+wire [7:0]  m6295_dout;   // returned to Z80 on status reads
 
 // M6295 clock enable: ~1 MHz from clk_sys / 32
 // At clk_sys=32 MHz: 32/32 = 1 MHz exactly.
@@ -875,11 +1016,13 @@ assign _unused = &{
     spr_render_done_w, spr_rom_rd,
     final_valid_w,
     pal_entry_r[15],        // transparent/unused bit in R5G5B5 palette entry
-    // Audio stubs — used by jt51/jt6295 but not consumed by system yet
-    ym_dout, ym_sample,
-    m6295_dout, m6295_sample,
-    sound_cmd,              // captured sound command (used by Z80 — TODO)
-    adpcm_rom_data[15:8]   // jt6295 only needs lower 8 bits
+    // Audio — jt51/jt6295 sample strobes not consumed by system mixer
+    ym_sample,
+    m6295_sample,
+    // Z80 outputs not used at integration level
+    z80_m1_n, z80_rfsh_n, z80_halt_n, z80_busak_n, z80_iorq_n,
+    // ADPCM upper byte — jt6295 only needs lower 8 bits
+    adpcm_rom_data[15:8]
 };
 /* verilator lint_on UNUSED */
 

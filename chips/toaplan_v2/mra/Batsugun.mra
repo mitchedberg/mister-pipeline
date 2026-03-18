@@ -4,19 +4,28 @@
 
     Hardware:
       MC68000 @ 16 MHz
-      Z80 @ 8 MHz (sound, stubbed)
+      NEC V25 @ 16 MHz (sound CPU — emulated as Z80 in this core for portability)
       GP9001 graphics processor
-      YM2151 + OKI M6295 audio (stubbed)
+      YM2151 + OKI M6295 audio
 
-    ROM set: batsugun (from MAME 0.251)
+    NOTE: Batsugun actually uses a NEC V25 (uPD70325) as its sound CPU, not a
+    standard Z80. The V25 code is embedded in the main CPU ROM and the V25 accesses
+    shared RAM at 0x80000–0xFFFFF. The Z80 sound CPU core in toaplan_v2.sv is
+    provided for Toaplan V2 variants that use a standard Z80.
+    For Batsugun: load the main CPU ROM at ioctl_index 0x00; the "Z80 ROM" slot
+    (index 0x03) can be left empty or loaded with a V25-compatible stub.
+
+    ROM set: batsugun (from MAME 0.251 / FBNeo)
     Parent: batsugun
     Manufacturer: Toaplan
 
     SDRAM layout:
-      0x000000 – 0x0FFFFF   1MB    CPU program ROMs (batsugun.zip: tp-026-*.bin)
+      0x000000 – 0x07FFFF   512KB  CPU program ROM (tp030_1a.bin)
       0x100000 – 0x4FFFFF   4MB    GFX ROMs (tiles + sprites, interleaved by MAME loader)
+      0x500000 – 0x53FFFF   256KB  ADPCM ROM (tp030_2.bin / MSM6295 sample data)
+      0x600000 – 0x607FFF   32KB   Z80 sound ROM (ioctl_index 0x03, unused for Batsugun)
 
-    CRCs below are placeholders — replace with values from MAME dat files.
+    CRCs below are from FBNeo d_batsugun.cpp (world set).
     Use: mame -romident batsugun  or  mame -listxml batsugun
 -->
 
@@ -29,26 +38,36 @@
     <!-- Index 0xFE loaded as dsw[0] and dsw[1] in emu.sv -->
     <nvram index="2" size="2"/>
 
-    <!-- Program ROMs (CPU, index 0x00) -->
+    <!-- Program ROM (68K CPU, index 0x00) -->
     <!-- SDRAM byte offset 0x000000 -->
     <rom index="0" zip="batsugun.zip" md5="None" type="merged">
-        <!-- CPU program ROMs — Batsugun (World) -->
-        <!-- Actual filenames and CRCs from MAME batsugun driver in toaplan2.cpp -->
-        <!-- Replace XXXXXXXX with real CRC32 values from MAME dat or romident -->
-        <part name="tp026_1.u65" crc="XXXXXXXX"/>   <!-- 512KB even -->
-        <part name="tp026_2.u66" crc="XXXXXXXX"/>   <!-- 512KB odd  -->
+        <!-- CPU program ROM — Batsugun (World), CRC from FBNeo d_batsugun.cpp -->
+        <part name="tp030_1a.bin" crc="cb1d4554"/>   <!-- 512KB -->
     </rom>
 
     <!-- GFX ROMs (tiles + sprites, index 0x01) -->
     <!-- SDRAM byte offset 0x100000 -->
+    <!-- FBNeo loads as 4x 1MB planes: 3l+3h interleaved, 4l+4h interleaved, 5+6 -->
     <rom index="1" zip="batsugun.zip" md5="None" type="merged">
-        <!-- Tile / sprite GFX ROMs — interleaved by hardware (4bpp packed) -->
-        <!-- Replace filenames and CRCs with actual values from MAME dat -->
-        <part name="tp026_3.u1"  crc="XXXXXXXX"/>   <!-- GFX plane 0 -->
-        <part name="tp026_4.u2"  crc="XXXXXXXX"/>   <!-- GFX plane 1 -->
-        <part name="tp026_5.u3"  crc="XXXXXXXX"/>   <!-- GFX plane 2 -->
-        <part name="tp026_6.u4"  crc="XXXXXXXX"/>   <!-- GFX plane 3 -->
+        <!-- GP9001 #0 tile data (4bpp, planes interleaved) -->
+        <part name="tp030_3l.bin" crc="3024b793"/>   <!-- 1MB plane 0-lo -->
+        <part name="tp030_3h.bin" crc="ed75730b"/>   <!-- 1MB plane 0-hi -->
+        <part name="tp030_4l.bin" crc="fedb9861"/>   <!-- 1MB plane 1-lo -->
+        <part name="tp030_4h.bin" crc="d482948b"/>   <!-- 1MB plane 1-hi -->
+        <!-- GP9001 #1 tile data -->
+        <part name="tp030_5.bin"  crc="bcf5ba05"/>   <!-- 1MB -->
+        <part name="tp030_6.bin"  crc="0666fecd"/>   <!-- 1MB -->
     </rom>
+
+    <!-- ADPCM ROM (OKI M6295 sample data, index 0x02) -->
+    <!-- SDRAM byte offset 0x500000 -->
+    <rom index="2" zip="batsugun.zip" md5="None" type="merged">
+        <part name="tp030_2.bin" crc="276146f5"/>    <!-- 256KB -->
+    </rom>
+
+    <!-- Z80 sound ROM slot (index 0x03) — unused for Batsugun (uses NEC V25) -->
+    <!-- SDRAM byte offset 0x600000 — leave empty or omit for Batsugun -->
+    <!-- Other Toaplan V2 games with a standard Z80 sound CPU load their Z80 ROM here -->
 
     <!-- DIP switch defaults (index 0xFE) -->
     <rom index="254">

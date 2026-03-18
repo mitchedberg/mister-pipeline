@@ -19,8 +19,9 @@
 //   CH1  cpu read        — MC68000 program ROM (16-bit, toggle-handshake)
 //   CH2  gfx read        — GFX ROM (16-bit, toggle-handshake)
 //   CH3  adpcm read      — ADPCM ROM (16-bit, toggle-handshake)
+//   CH4  z80 read        — Z80 sound CPU ROM (16-bit, toggle-handshake)
 //
-// Priority: CH0 > CH1 > CH2 > CH3
+// Priority: CH0 > CH1 > CH2 > CH3 > CH4
 // Row-open optimisation: skip PRECHARGE+ACTIVATE when same bank/row is open.
 // =============================================================================
 
@@ -62,7 +63,13 @@ module sdram_b (
     input  logic [26:0] adpcm_addr,
     input  logic        adpcm_req,
     output logic [15:0] adpcm_data,
-    output logic        adpcm_ack
+    output logic        adpcm_ack,
+
+    // CH4: Z80 sound CPU ROM read (toggle handshake, clk_sys domain)
+    input  logic [26:0] z80_addr,
+    input  logic        z80_req,
+    output logic [15:0] z80_data,
+    output logic        z80_ack
 );
 
 // =============================================================================
@@ -131,7 +138,7 @@ logic  [8:0]         col_addr;   // column for read/write
 logic  [1:0]         dqm_r;      // DQM for current write
 logic [15:0]         wr_data;    // 16-bit word to write
 logic                doing_write; // 1=write, 0=read
-logic  [1:0]         ch_sel;     // active channel (0=ioctl,1=cpu,2=gfx,3=adpcm)
+logic  [2:0]         ch_sel;     // active channel (0=ioctl,1=cpu,2=gfx,3=adpcm,4=z80)
 
 // Row-open tracking (one entry per bank)
 logic [12:0]         open_row  [0:3];
@@ -154,17 +161,17 @@ logic  [1:0]         ioctl_wr_sync;
 logic                ioctl_wr_clk;    // single-cycle pulse in clk domain
 
 // CDC synchronisers for read channels (req → clk domain)
-logic  [1:0]         cpu_req_sync,   gfx_req_sync,   adpcm_req_sync;
-logic                cpu_req_clk,    gfx_req_clk,    adpcm_req_clk;
-logic                cpu_req_prev,   gfx_req_prev,   adpcm_req_prev;
-logic                cpu_req_pend,   gfx_req_pend,   adpcm_req_pend; // pending in clk domain
+logic  [1:0]         cpu_req_sync,   gfx_req_sync,   adpcm_req_sync,  z80_req_sync;
+logic                cpu_req_clk,    gfx_req_clk,    adpcm_req_clk,   z80_req_clk;
+logic                cpu_req_prev,   gfx_req_prev,   adpcm_req_prev,  z80_req_prev;
+logic                cpu_req_pend,   gfx_req_pend,   adpcm_req_pend,  z80_req_pend; // pending in clk domain
 
 // Latched addresses (captured when req edge detected)
-logic [26:0]         cpu_addr_lat,   gfx_addr_lat,   adpcm_addr_lat;
+logic [26:0]         cpu_addr_lat,   gfx_addr_lat,   adpcm_addr_lat,  z80_addr_lat;
 
 // Read data registers
-logic [15:0]         cpu_data_r,     gfx_data_r,     adpcm_data_r;
-logic                cpu_ack_r,      gfx_ack_r,       adpcm_ack_r;
+logic [15:0]         cpu_data_r,     gfx_data_r,     adpcm_data_r,    z80_data_r;
+logic                cpu_ack_r,      gfx_ack_r,       adpcm_ack_r,    z80_ack_r;
 
 // SDRAM DQ tri-state
 logic [15:0]         dq_out;
@@ -234,10 +241,12 @@ always_ff @(posedge clk or negedge rst_n) begin
         cpu_req_sync   <= 2'b00;
         gfx_req_sync   <= 2'b00;
         adpcm_req_sync <= 2'b00;
+        z80_req_sync   <= 2'b00;
     end else begin
         cpu_req_sync   <= {cpu_req_sync[0],   cpu_req};
         gfx_req_sync   <= {gfx_req_sync[0],   gfx_req};
         adpcm_req_sync <= {adpcm_req_sync[0],  adpcm_req};
+        z80_req_sync   <= {z80_req_sync[0],    z80_req};
     end
 end
 
@@ -247,35 +256,45 @@ always_ff @(posedge clk or negedge rst_n) begin
         cpu_req_prev  <= 1'b0;  cpu_req_pend  <= 1'b0;  cpu_addr_lat   <= '0;
         gfx_req_prev  <= 1'b0;  gfx_req_pend  <= 1'b0;  gfx_addr_lat   <= '0;
         adpcm_req_prev<= 1'b0;  adpcm_req_pend<= 1'b0;  adpcm_addr_lat <= '0;
+        z80_req_prev  <= 1'b0;  z80_req_pend  <= 1'b0;  z80_addr_lat   <= '0;
     end else begin
         cpu_req_clk   <= cpu_req_sync[1];
         gfx_req_clk   <= gfx_req_sync[1];
         adpcm_req_clk <= adpcm_req_sync[1];
+        z80_req_clk   <= z80_req_sync[1];
 
         cpu_req_prev  <= cpu_req_clk;
         gfx_req_prev  <= gfx_req_clk;
         adpcm_req_prev<= adpcm_req_clk;
+        z80_req_prev  <= z80_req_clk;
 
         // Set pending on toggle; clear when arbitrated
         if (cpu_req_clk != cpu_req_prev) begin
             cpu_req_pend  <= 1'b1;
             cpu_addr_lat  <= cpu_addr;
-        end else if (state == S_ACT && ch_sel == 2'd1) begin
+        end else if (state == S_ACT && ch_sel == 3'd1) begin
             cpu_req_pend  <= 1'b0;
         end
 
         if (gfx_req_clk != gfx_req_prev) begin
             gfx_req_pend  <= 1'b1;
             gfx_addr_lat  <= gfx_addr;
-        end else if (state == S_ACT && ch_sel == 2'd2) begin
+        end else if (state == S_ACT && ch_sel == 3'd2) begin
             gfx_req_pend  <= 1'b0;
         end
 
         if (adpcm_req_clk != adpcm_req_prev) begin
             adpcm_req_pend  <= 1'b1;
             adpcm_addr_lat  <= adpcm_addr;
-        end else if (state == S_ACT && ch_sel == 2'd3) begin
+        end else if (state == S_ACT && ch_sel == 3'd3) begin
             adpcm_req_pend  <= 1'b0;
+        end
+
+        if (z80_req_clk != z80_req_prev) begin
+            z80_req_pend  <= 1'b1;
+            z80_addr_lat  <= z80_addr;
+        end else if (state == S_ACT && ch_sel == 3'd4) begin
+            z80_req_pend  <= 1'b0;
         end
     end
 end
@@ -297,7 +316,7 @@ always_ff @(posedge clk or negedge rst_n) begin
         // Clear ref_req when we issue AUTO REFRESH command
         if (state == S_INIT_REF1 || state == S_INIT_REF2 ||
             (state == S_IDLE && ref_req && wr_fifo_empty &&
-             !cpu_req_pend && !gfx_req_pend && !adpcm_req_pend)) begin
+             !cpu_req_pend && !gfx_req_pend && !adpcm_req_pend && !z80_req_pend)) begin
             // cleared below in main FSM
         end
     end
@@ -333,6 +352,7 @@ always_ff @(posedge clk or negedge rst_n) begin
         cpu_data_r  <= '0;  cpu_ack_r  <= 1'b0;
         gfx_data_r  <= '0;  gfx_ack_r  <= 1'b0;
         adpcm_data_r<= '0;  adpcm_ack_r<= 1'b0;
+        z80_data_r  <= '0;  z80_ack_r  <= 1'b0;
     end else begin
 
         // Default: NOP every cycle unless overridden below
@@ -439,7 +459,7 @@ always_ff @(posedge clk or negedge rst_n) begin
                         row_addr <= waddr[25:13];                     // row = addr[25:13]
                         col_addr <= waddr[8:0];                       // col = addr[8:0]
                         bank_sel <= waddr[10:9];                      // bank = addr[10:9] (11:9?)
-                        ch_sel   <= 2'd0;
+                        ch_sel   <= 3'd0;
                         doing_write <= 1'b1;
                     end
                     state <= S_ACT;
@@ -448,7 +468,7 @@ always_ff @(posedge clk or negedge rst_n) begin
                     row_addr    <= cpu_addr_lat[25:13];
                     col_addr    <= cpu_addr_lat[8:0];
                     bank_sel    <= cpu_addr_lat[10:9];
-                    ch_sel      <= 2'd1;
+                    ch_sel      <= 3'd1;
                     doing_write <= 1'b0;
                     state       <= S_ACT;
                 end
@@ -456,7 +476,7 @@ always_ff @(posedge clk or negedge rst_n) begin
                     row_addr    <= gfx_addr_lat[25:13];
                     col_addr    <= gfx_addr_lat[8:0];
                     bank_sel    <= gfx_addr_lat[10:9];
-                    ch_sel      <= 2'd2;
+                    ch_sel      <= 3'd2;
                     doing_write <= 1'b0;
                     state       <= S_ACT;
                 end
@@ -464,7 +484,15 @@ always_ff @(posedge clk or negedge rst_n) begin
                     row_addr    <= adpcm_addr_lat[25:13];
                     col_addr    <= adpcm_addr_lat[8:0];
                     bank_sel    <= adpcm_addr_lat[10:9];
-                    ch_sel      <= 2'd3;
+                    ch_sel      <= 3'd3;
+                    doing_write <= 1'b0;
+                    state       <= S_ACT;
+                end
+                else if (z80_req_pend) begin
+                    row_addr    <= z80_addr_lat[25:13];
+                    col_addr    <= z80_addr_lat[8:0];
+                    bank_sel    <= z80_addr_lat[10:9];
+                    ch_sel      <= 3'd4;
                     doing_write <= 1'b0;
                     state       <= S_ACT;
                 end
@@ -524,10 +552,11 @@ always_ff @(posedge clk or negedge rst_n) begin
                 if (wait_cnt == tRC_CYCLES - 3) begin
                     // Capture SDRAM_DQ at CAS=2 latency (2 clocks after READ)
                     case (ch_sel)
-                        2'd1: begin cpu_data_r  <= SDRAM_DQ; cpu_ack_r  <= cpu_req_clk;  end
-                        2'd2: begin gfx_data_r  <= SDRAM_DQ; gfx_ack_r  <= gfx_req_clk;  end
-                        2'd3: begin adpcm_data_r<= SDRAM_DQ; adpcm_ack_r<= adpcm_req_clk; end
-                        default: ; // ch0 read shouldn't happen
+                        3'd1: begin cpu_data_r  <= SDRAM_DQ; cpu_ack_r  <= cpu_req_clk;  end
+                        3'd2: begin gfx_data_r  <= SDRAM_DQ; gfx_ack_r  <= gfx_req_clk;  end
+                        3'd3: begin adpcm_data_r<= SDRAM_DQ; adpcm_ack_r<= adpcm_req_clk; end
+                        3'd4: begin z80_data_r  <= SDRAM_DQ; z80_ack_r  <= z80_req_clk;  end
+                        default: ; // ch0 write shouldn't appear here
                     endcase
                 end
                 if (wait_cnt == 0) state <= S_IDLE;
@@ -575,5 +604,7 @@ assign gfx_data  = gfx_data_r;
 assign gfx_ack   = gfx_ack_r;
 assign adpcm_data = adpcm_data_r;
 assign adpcm_ack  = adpcm_ack_r;
+assign z80_data  = z80_data_r;
+assign z80_ack   = z80_ack_r;
 
 endmodule
