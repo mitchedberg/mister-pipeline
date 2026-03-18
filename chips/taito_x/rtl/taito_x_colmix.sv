@@ -107,6 +107,7 @@ module taito_x_colmix #(
 // xRGB_555: [15]=x, [14:10]=R, [9:5]=G, [4:0]=B
 // =============================================================================
 
+`ifndef QUARTUS
 logic [15:0] pal_ram [0:2047];
 
 // CPU write
@@ -124,6 +125,53 @@ always_ff @(posedge clk) begin
     else
         cpu_pal_dout <= 16'hFFFF;
 end
+`else
+// Quartus: infer M10K via altsyncram BIDIR_DUAL_PORT
+// Port A: CPU read/write (synchronous, byte-enabled)
+// Port B: display pixel read (synchronous, read-only)
+logic [15:0] pal_ram_cpu_q;
+logic [15:0] pal_ram_pix_q;
+
+altsyncram #(
+    .operation_mode         ("BIDIR_DUAL_PORT"),
+    .width_a                (16),
+    .widthad_a              (11),
+    .numwords_a             (2048),
+    .width_b                (16),
+    .widthad_b              (11),
+    .numwords_b             (2048),
+    .intended_device_family ("Cyclone V"),
+    .lpm_type               ("altsyncram"),
+    .ram_block_type         ("M10K"),
+    .width_byteena_a        (2),
+    .outdata_reg_a          ("CLOCK0"),
+    .outdata_reg_b          ("CLOCK0"),
+    .address_reg_b          ("CLOCK0"),
+    .rdcontrol_reg_b        ("CLOCK0")
+) pal_ram_inst (
+    // Port A — CPU
+    .clock0     (clk),
+    .address_a  (cpu_pal_addr[10:0]),
+    .data_a     (cpu_pal_din),
+    .wren_a     (cpu_pal_cs && cpu_pal_we),
+    .byteena_a  (cpu_pal_be),
+    .q_a        (pal_ram_cpu_q),
+    // Port B — pixel display read
+    .clock1     (clk),
+    .address_b  (win_index[10:0]),
+    .data_b     (16'b0),
+    .wren_b     (1'b0),
+    .byteena_b  (2'b11),
+    .q_b        (pal_ram_pix_q)
+);
+
+always_ff @(posedge clk) begin
+    if (cpu_pal_cs && !cpu_pal_we)
+        cpu_pal_dout <= pal_ram_cpu_q;
+    else
+        cpu_pal_dout <= 16'hFFFF;
+end
+`endif
 
 // =============================================================================
 // Priority resolution (combinational)
@@ -159,6 +207,7 @@ end
 // Palette lookup (registered, 1-cycle latency)
 // =============================================================================
 
+`ifndef QUARTUS
 always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         rgb_r <= 5'd0;
@@ -175,13 +224,32 @@ always_ff @(posedge clk or negedge rst_n) begin
         rgb_b <= color[ 4: 0];
     end
 end
+`else
+always_ff @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        rgb_r <= 5'd0;
+        rgb_g <= 5'd0;
+        rgb_b <= 5'd0;
+    end else begin
+        // Quartus: palette data arrives from altsyncram port B (pal_ram_pix_q)
+        // xRGB_555: [15]=x, [14:10]=R, [9:5]=G, [4:0]=B
+        rgb_r <= pal_ram_pix_q[14:10];
+        rgb_g <= pal_ram_pix_q[ 9: 5];
+        rgb_b <= pal_ram_pix_q[ 4: 0];
+    end
+end
+`endif
 
 // =============================================================================
 // Unused signal suppression
 // =============================================================================
 /* verilator lint_off UNUSED */
 logic _unused;
+`ifndef QUARTUS
 assign _unused = ^{pal_ram[0][15]};   // bit 15 of each entry is x (unused)
+`else
+assign _unused = ^{pal_ram_pix_q[15]}; // bit 15 is x (unused); suppress via pix port
+`endif
 /* verilator lint_on UNUSED */
 
 endmodule

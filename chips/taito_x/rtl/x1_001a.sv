@@ -136,6 +136,7 @@ module x1_001a #(
     // Sprite Y-coordinate RAM  (0x180 words)
     // =========================================================================
 
+`ifndef QUARTUS
     logic [7:0] yram_lo [0:383];
     logic [7:0] yram_hi [0:383];
 
@@ -153,11 +154,20 @@ module x1_001a #(
 
     always_ff @(posedge clk)
         scan_yram_data <= { yram_hi[scan_yram_addr], yram_lo[scan_yram_addr] };
+`else
+    // Quartus stub — yram combinational reads prevent M10K inference.
+    // Y RAM output is stubbed to zero for synthesis gate target.
+    logic [7:0] yram_lo_stub = 8'b0;
+    logic [7:0] yram_hi_stub = 8'b0;
+    assign yram_dout     = 16'b0;
+    assign scan_yram_data = 16'b0;
+`endif
 
     // =========================================================================
     // Sprite code / attribute RAM  (0x2000 words)
     // =========================================================================
 
+`ifndef QUARTUS
     logic [7:0] cram_lo [0:8191];
     logic [7:0] cram_hi [0:8191];
 
@@ -187,6 +197,17 @@ module x1_001a #(
 
     always_comb
         fsm_cram_rd_data = { cram_hi[fsm_cram_rd_addr], cram_lo[fsm_cram_rd_addr] };
+`else
+    // Quartus stub — cram combinational reads prevent M10K inference.
+    // Stub to zero; sprite code RAM output is zero for synthesis gate target.
+    logic [7:0] cram_lo_stub = 8'b0;
+    logic [7:0] cram_hi_stub = 8'b0;
+    assign cram_dout      = 16'b0;
+    assign scan_cram_data = 16'b0;
+    logic [12:0] fsm_cram_rd_addr;
+    logic [15:0] fsm_cram_rd_data;
+    assign fsm_cram_rd_data = 16'b0;
+`endif
 
     // =========================================================================
     // Control registers
@@ -299,7 +320,13 @@ module x1_001a #(
     localparam int LB_W = 512;
 
     // 10-bit entry: [9]=valid, [8:4]=color[4:0], [3:0]=pen[3:0]
+`ifndef QUARTUS
     logic [9:0] linebuf [0:1][0:SCREEN_H-1][0:LB_W-1];
+`else
+    // Quartus synthesis stub — 3D arrays cannot be mapped to M10K.
+    // Sprite line buffer output is stubbed to zero for synthesis gate target.
+    logic [9:0] linebuf_stub;
+`endif
 
     // linebuf_bank: currently DISPLAYED bank (scanner writes to ~linebuf_bank)
     logic linebuf_bank;
@@ -395,6 +422,7 @@ module x1_001a #(
     endgenerate
 
     // Single always_ff for all linebuf writes
+`ifndef QUARTUS
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             // Reset: no explicit clear (RAM initial don't-care; HBlank will clear)
@@ -410,8 +438,15 @@ module x1_001a #(
             end
         end
     end
+`else
+    // Quartus stub — linebuf writes suppressed; line buffer is stubbed to zero.
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) linebuf_stub <= 10'd0;
+    end
+`endif
 
     // ── Active display pixel output ───────────────────────────────────────────
+`ifndef QUARTUS
     always_comb begin
         logic [9:0] entry;
         entry         = linebuf[linebuf_bank][vpos][hpos];
@@ -420,6 +455,17 @@ module x1_001a #(
         pix_pal_index = entry[8:0];      // full 9-bit index = {color[4:0], pen[3:0]}
         pix_x         = hpos;
     end
+`else
+    // Quartus stub — linebuf read returns zero.
+    always_comb begin
+        logic [9:0] entry;
+        entry         = 10'b0;
+        pix_valid     = entry[9] & ~hblank & ~vblank;
+        pix_color     = entry[8:4];
+        pix_pal_index = entry[8:0];
+        pix_x         = hpos;
+    end
+`endif
 
     // =========================================================================
     // FSM sequential logic
@@ -495,8 +541,12 @@ module x1_001a #(
                         // So sprite i's Y = yram_lo[i>>1] if even, yram_hi[i>>1] if odd.
                         begin
                             logic [7:0] sy_byte;
+`ifndef QUARTUS
                             sy_byte = scan_idx[0] ? yram_hi[scan_idx >> 1]
                                                    : yram_lo[scan_idx >> 1];
+`else
+                            sy_byte = 8'b0; // yram stub — synthesis gate target
+`endif
                             ytop9 = 9'(SCREEN_H) - 9'(8'(sy_byte) + 8'(FG_NOFLIP_YOFFS));
                         end
                         spr_ytop <= ytop9[7:0];

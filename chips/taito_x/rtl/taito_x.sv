@@ -426,6 +426,7 @@ taito_x_colmix #(
 // Work RAM — 64KB BRAM (68000 general purpose, 0x100000–0x10FFFF)
 // =============================================================================
 
+`ifndef QUARTUS
 logic [15:0] work_ram [0:(1<<WRAM_ABITS)-1];
 logic [15:0] wram_dout_r;
 
@@ -439,6 +440,28 @@ end
 always_ff @(posedge clk_sys) begin
     if (wram_cs) wram_dout_r <= work_ram[cpu_addr[WRAM_ABITS:1]];
 end
+`else
+// Quartus: infer M10K via altsyncram
+logic [15:0] wram_dout_r;
+altsyncram #(
+    .operation_mode         ("SINGLE_PORT"),
+    .width_a                (16),
+    .widthad_a              (WRAM_ABITS),
+    .numwords_a             (1 << WRAM_ABITS),
+    .intended_device_family ("Cyclone V"),
+    .lpm_type               ("altsyncram"),
+    .ram_block_type         ("M10K"),
+    .width_byteena_a        (2),
+    .outdata_reg_a          ("UNREGISTERED")
+) work_ram_inst (
+    .clock0    (clk_sys),
+    .address_a (cpu_addr[WRAM_ABITS:1]),
+    .data_a    (cpu_din),
+    .wren_a    (wram_cs && !cpu_rw),
+    .byteena_a ({!cpu_uds_n, !cpu_lds_n}),
+    .q_a       (wram_dout_r)
+);
+`endif
 
 // =============================================================================
 // Sound Command Latch (68000 → Z80 communication)
