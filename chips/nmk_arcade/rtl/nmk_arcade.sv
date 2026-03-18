@@ -1,5 +1,5 @@
 // =============================================================================
-// nmk_arcade.sv — NMK16 System Board Top-Level Integration
+// nmk_arcade.sv — NMK16 System Board Top-Level Integration (v1.1)
 // =============================================================================
 //
 // Instantiates and wires:
