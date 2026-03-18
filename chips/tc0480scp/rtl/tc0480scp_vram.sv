@@ -69,61 +69,31 @@ module tc0480scp_vram (
 // VRAM array: 32768 × 16-bit words = 64KB
 // =============================================================================
 //
-// Quartus synthesis path: four separate M10K copies, each serving one read
-// client group.  A single 10-port array causes quartus_map to OOM during
-// elaboration (multi-port mux tree exceeds available memory); four SDP-style
-// arrays avoid the expansion entirely.
+// Quartus synthesis path: four explicit altsyncram DUAL_PORT M10K instances,
+// each serving one read client group.  Behavioral `(* ramstyle = "M10K" *)`
+// arrays caused quartus_map Error 293007 (OOM, 814MB) during elaboration because
+// Quartus 17.0 expands multi-reader array reads into massive mux-tree ASTs before
+// tech mapping.  Explicit altsyncram primitives are treated as black-boxes during
+// elaboration — no AST expansion, no OOM.  This is the tc0110pcr / tc0180vcu
+// proven pattern.
 //
-//   vram_cpu  — CPU R/W  (1 write + 1 read)               ~52 M10K blocks
-//   vram_tf   — BG tile-fetch (4 readers, shared mux)      ~52 M10K blocks
-//   vram_sc   — BG scroll (4 readers, staggered mux)       ~52 M10K blocks
-//   vram_tx   — Text layer (map + gfx, staggered mux)      ~52 M10K blocks
-//   Total: ~208 M10K blocks out of 308 available on Cyclone V 5CSEBA6
+//   vram_cpu_inst  — CPU R/W  (port A = CPU write, port B = CPU readback)
+//   vram_tf_inst   — BG tile-fetch (port A = CPU write, port B = priority mux)
+//   vram_sc_inst   — BG scroll (port A = CPU write, port B = priority mux)
+//   vram_tx_inst   — Text layer (port A = CPU write, port B = map/gfx mux)
 //
-// BG scroll reads (Port C) are confirmed staggered by the parent; a shared
-// mux is functionally correct.  Text map and gfx reads use different FSM
-// states so a shared mux is also correct.  BG tile-fetch reads (Port B) may
-// be simultaneously issued by all 4 layer engines; the priority mux means
-// only the highest-priority layer gets correct data when collisions occur.
-// Correct 4-way TF arbitration requires a round-robin arbiter (future work).
-`ifdef QUARTUS
-(* ramstyle = "M10K" *) logic [15:0] vram_cpu [0:32767];  // CPU R/W copy
-(* ramstyle = "M10K" *) logic [15:0] vram_tf  [0:32767];  // BG tile-fetch
-(* ramstyle = "M10K" *) logic [15:0] vram_sc  [0:32767];  // BG scroll
-(* ramstyle = "M10K" *) logic [15:0] vram_tx  [0:32767];  // text map + gfx
-`else
+// Estimated M10K usage: 4 × ~52 = ~208 M10K blocks out of 308 on Cyclone V 5CSEBA6.
+`ifndef QUARTUS
 logic [15:0] vram [0:32767];
 `endif
 
 // =============================================================================
-// Port A — CPU write (broadcast to all four copies, one always_ff per copy
-// so each block is a clean SDP RAM write that Quartus M10K inference sees)
+// Port A — CPU write
 // =============================================================================
 `ifdef QUARTUS
-always_ff @(posedge clk) begin  // vram_cpu write
-    if (cpu_cs && cpu_we) begin
-        if (cpu_be[1]) vram_cpu[cpu_addr][15:8] <= cpu_din[15:8];
-        if (cpu_be[0]) vram_cpu[cpu_addr][ 7:0] <= cpu_din[ 7:0];
-    end
-end
-always_ff @(posedge clk) begin  // vram_tf write (tile-fetch copy)
-    if (cpu_cs && cpu_we) begin
-        if (cpu_be[1]) vram_tf[cpu_addr][15:8] <= cpu_din[15:8];
-        if (cpu_be[0]) vram_tf[cpu_addr][ 7:0] <= cpu_din[ 7:0];
-    end
-end
-always_ff @(posedge clk) begin  // vram_sc write (scroll copy)
-    if (cpu_cs && cpu_we) begin
-        if (cpu_be[1]) vram_sc[cpu_addr][15:8] <= cpu_din[15:8];
-        if (cpu_be[0]) vram_sc[cpu_addr][ 7:0] <= cpu_din[ 7:0];
-    end
-end
-always_ff @(posedge clk) begin  // vram_tx write (text layer copy)
-    if (cpu_cs && cpu_we) begin
-        if (cpu_be[1]) vram_tx[cpu_addr][15:8] <= cpu_din[15:8];
-        if (cpu_be[0]) vram_tx[cpu_addr][ 7:0] <= cpu_din[ 7:0];
-    end
-end
+// Write enable (shared across all four altsyncram instances)
+logic cpu_we_gate;
+assign cpu_we_gate = cpu_cs & cpu_we;
 `else
 always_ff @(posedge clk) begin
     if (cpu_cs && cpu_we) begin
@@ -134,25 +104,63 @@ end
 `endif
 
 // =============================================================================
-// Port A — CPU read (registered, one-cycle latency)
+// Port A — CPU read  +  vram_cpu_inst  (QUARTUS: altsyncram CPU readback)
 // =============================================================================
+`ifdef QUARTUS
+logic [15:0] vram_cpu_q;
+
+altsyncram #(
+    .operation_mode                ("DUAL_PORT"),
+    .width_a                       (16), .widthad_a (15), .numwords_a (32768),
+    .width_b                       (16), .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b                 ("CLOCK1"),
+    .address_reg_b                 ("CLOCK1"),
+    .clock_enable_input_a          ("BYPASS"),
+    .clock_enable_input_b          ("BYPASS"),
+    .clock_enable_output_b         ("BYPASS"),
+    .intended_device_family        ("Cyclone V"),
+    .lpm_type                      ("altsyncram"),
+    .ram_block_type                ("M10K"),
+    .width_byteena_a               (2),
+    .power_up_uninitialized        ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) vram_cpu_inst (
+    .clock0         ( clk          ),
+    .clock1         ( clk          ),
+    .address_a      ( cpu_addr     ),
+    .data_a         ( cpu_din      ),
+    .wren_a         ( cpu_we_gate  ),
+    .byteena_a      ( cpu_be       ),
+    .address_b      ( cpu_addr     ),
+    .q_b            ( vram_cpu_q   ),
+    .wren_b         ( 1'b0         ),
+    .data_b         ( 16'd0        ),
+    .q_a            (              ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 2'b11        ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1         )
+);
+
+// altsyncram q_b is already registered (1-cycle latency) — drive cpu_dout directly
+assign cpu_dout = vram_cpu_q;
+
+`else
 always_ff @(posedge clk) begin
     if (!rst_n)
         cpu_dout <= 16'h0000;
-`ifdef QUARTUS
-    else if (cpu_cs && !cpu_we)
-        cpu_dout <= vram_cpu[cpu_addr];
-`else
     else if (cpu_cs && !cpu_we)
         cpu_dout <= vram[cpu_addr];
-`endif
 end
+`endif
 
 // =============================================================================
-// Port B — BG tile-fetch (4 readers sharing vram_tf via priority mux)
+// Port B — BG tile-fetch  +  vram_tf_inst  (4 readers sharing priority mux)
 // Priority: BG0 > BG1 > BG2 > BG3.  When reads are staggered (typical), each
-// layer sees correct data.  Simultaneous collisions return BG0's data to all
-// colliding layers — acceptable for CI; full arbiter is future work.
+// layer sees correct data.  Simultaneous collisions return BG0's data.
 // =============================================================================
 `ifdef QUARTUS
 logic [14:0] bg_tf_mux_addr;
@@ -166,13 +174,44 @@ always_comb begin
 end
 
 logic [15:0] bg_tf_raw;
-always_ff @(posedge clk) begin
-    if (!rst_n)
-        bg_tf_raw <= 16'h0000;
-    else if (|bg_tf_rd)
-        bg_tf_raw <= vram_tf[bg_tf_mux_addr];
-end
 
+altsyncram #(
+    .operation_mode                ("DUAL_PORT"),
+    .width_a                       (16), .widthad_a (15), .numwords_a (32768),
+    .width_b                       (16), .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b                 ("CLOCK1"),
+    .address_reg_b                 ("CLOCK1"),
+    .clock_enable_input_a          ("BYPASS"),
+    .clock_enable_input_b          ("BYPASS"),
+    .clock_enable_output_b         ("BYPASS"),
+    .intended_device_family        ("Cyclone V"),
+    .lpm_type                      ("altsyncram"),
+    .ram_block_type                ("M10K"),
+    .width_byteena_a               (2),
+    .power_up_uninitialized        ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) vram_tf_inst (
+    .clock0         ( clk             ),
+    .clock1         ( clk             ),
+    .address_a      ( cpu_addr        ),
+    .data_a         ( cpu_din         ),
+    .wren_a         ( cpu_we_gate     ),
+    .byteena_a      ( cpu_be          ),
+    .address_b      ( bg_tf_mux_addr  ),
+    .q_b            ( bg_tf_raw       ),
+    .wren_b         ( 1'b0            ),
+    .data_b         ( 16'd0           ),
+    .q_a            (                 ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 2'b11           ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1            )
+);
+
+// Delay rd one cycle to align with registered altsyncram output
 logic [3:0] bg_tf_rd_r;
 always_ff @(posedge clk) begin
     if (!rst_n) bg_tf_rd_r <= 4'b0;
@@ -187,6 +226,7 @@ always_ff @(posedge clk) begin
             if (bg_tf_rd_r[n]) bg_tf_data[n] <= bg_tf_raw;
     end
 end
+
 `else
 // =============================================================================
 // Port B — BG tile-fetch (4 independent registered reads — simulation)
@@ -205,9 +245,8 @@ end
 `endif
 
 // =============================================================================
-// Port C — BG scroll (4 readers sharing vram_sc via priority mux)
-// Parent guarantees staggered reads (only one BG issues sc_rd per cycle) so
-// the priority mux is functionally correct.
+// Port C — BG scroll  +  vram_sc_inst  (4 readers sharing priority mux)
+// Parent guarantees staggered reads so the priority mux is functionally correct.
 // =============================================================================
 `ifdef QUARTUS
 logic [14:0] bg_sc_mux_addr;
@@ -221,12 +260,42 @@ always_comb begin
 end
 
 logic [15:0] bg_sc_raw;
-always_ff @(posedge clk) begin
-    if (!rst_n)
-        bg_sc_raw <= 16'h0000;
-    else if (|bg_sc_rd)
-        bg_sc_raw <= vram_sc[bg_sc_mux_addr];
-end
+
+altsyncram #(
+    .operation_mode                ("DUAL_PORT"),
+    .width_a                       (16), .widthad_a (15), .numwords_a (32768),
+    .width_b                       (16), .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b                 ("CLOCK1"),
+    .address_reg_b                 ("CLOCK1"),
+    .clock_enable_input_a          ("BYPASS"),
+    .clock_enable_input_b          ("BYPASS"),
+    .clock_enable_output_b         ("BYPASS"),
+    .intended_device_family        ("Cyclone V"),
+    .lpm_type                      ("altsyncram"),
+    .ram_block_type                ("M10K"),
+    .width_byteena_a               (2),
+    .power_up_uninitialized        ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) vram_sc_inst (
+    .clock0         ( clk             ),
+    .clock1         ( clk             ),
+    .address_a      ( cpu_addr        ),
+    .data_a         ( cpu_din         ),
+    .wren_a         ( cpu_we_gate     ),
+    .byteena_a      ( cpu_be          ),
+    .address_b      ( bg_sc_mux_addr  ),
+    .q_b            ( bg_sc_raw       ),
+    .wren_b         ( 1'b0            ),
+    .data_b         ( 16'd0           ),
+    .q_a            (                 ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 2'b11           ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1            )
+);
 
 logic [3:0] bg_sc_rd_r;
 always_ff @(posedge clk) begin
@@ -242,6 +311,7 @@ always_ff @(posedge clk) begin
             if (bg_sc_rd_r[n]) bg_sc_data[n] <= bg_sc_raw;
     end
 end
+
 `else
 // =============================================================================
 // Port C — BG scroll (4 independent registered reads — simulation)
@@ -257,26 +327,60 @@ end
 `endif
 
 // =============================================================================
-// Ports D + E — Text layer map + gfx reads (sharing vram_tx via mux)
-// Map and gfx reads are in different FSM states so they never overlap; the
-// mux is functionally correct.  One M10K copy handles both, saving 52 blocks.
+// Ports D + E — Text layer  +  vram_tx_inst  (map + gfx reads, staggered mux)
+// Map and gfx reads are in different FSM states so they never overlap.
+// One M10K copy handles both, saving 52 blocks vs two separate copies.
 // =============================================================================
 `ifdef QUARTUS
 logic [14:0] tx_mux_addr;
 assign tx_mux_addr = text_map_rd ? text_map_addr : text_gfx_addr;
 
 logic [15:0] tx_raw;
+
+altsyncram #(
+    .operation_mode                ("DUAL_PORT"),
+    .width_a                       (16), .widthad_a (15), .numwords_a (32768),
+    .width_b                       (16), .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b                 ("CLOCK1"),
+    .address_reg_b                 ("CLOCK1"),
+    .clock_enable_input_a          ("BYPASS"),
+    .clock_enable_input_b          ("BYPASS"),
+    .clock_enable_output_b         ("BYPASS"),
+    .intended_device_family        ("Cyclone V"),
+    .lpm_type                      ("altsyncram"),
+    .ram_block_type                ("M10K"),
+    .width_byteena_a               (2),
+    .power_up_uninitialized        ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) vram_tx_inst (
+    .clock0         ( clk          ),
+    .clock1         ( clk          ),
+    .address_a      ( cpu_addr     ),
+    .data_a         ( cpu_din      ),
+    .wren_a         ( cpu_we_gate  ),
+    .byteena_a      ( cpu_be       ),
+    .address_b      ( tx_mux_addr  ),
+    .q_b            ( tx_raw       ),
+    .wren_b         ( 1'b0         ),
+    .data_b         ( 16'd0        ),
+    .q_a            (              ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 2'b11        ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1         )
+);
+
 logic text_map_rd_r, text_gfx_rd_r;
 always_ff @(posedge clk) begin
     if (!rst_n) begin
-        tx_raw          <= 16'h0000;
-        text_map_rd_r   <= 1'b0;
-        text_gfx_rd_r   <= 1'b0;
+        text_map_rd_r <= 1'b0;
+        text_gfx_rd_r <= 1'b0;
     end else begin
-        text_map_rd_r   <= text_map_rd;
-        text_gfx_rd_r   <= text_gfx_rd;
-        if (text_map_rd || text_gfx_rd)
-            tx_raw <= vram_tx[tx_mux_addr];
+        text_map_rd_r <= text_map_rd;
+        text_gfx_rd_r <= text_gfx_rd;
     end
 end
 
@@ -289,6 +393,7 @@ always_ff @(posedge clk) begin
         if (text_gfx_rd_r) text_gfx_data <= tx_raw;
     end
 end
+
 `else
 // =============================================================================
 // Port D — Text layer map read (simulation)
