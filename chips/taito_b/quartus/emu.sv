@@ -432,6 +432,10 @@ wire [26:0] adpcm_sdr_addr;
 wire [15:0] adpcm_sdr_data;
 wire        adpcm_sdr_req, adpcm_sdr_ack;
 
+wire [26:0] z80_sdr_addr;
+wire [15:0] z80_sdr_data;
+wire        z80_sdr_req, z80_sdr_ack;
+
 sdram_b u_sdram
 (
     .clk        (clk_sdram),
@@ -460,6 +464,12 @@ sdram_b u_sdram
     .adpcm_data (adpcm_sdr_data),
     .adpcm_req  (adpcm_sdr_req),
     .adpcm_ack  (adpcm_sdr_ack),
+
+    // CH4: Z80 ROM reads (SDRAM base word 0x040000 = byte 0x080000)
+    .z80_addr   (z80_sdr_addr),
+    .z80_data   (z80_sdr_data),
+    .z80_req    (z80_sdr_req),
+    .z80_ack    (z80_sdr_ack),
 
     // SDRAM chip pins
     .SDRAM_A    (SDRAM_A),
@@ -579,6 +589,12 @@ taito_b u_taito_b
     .sdr_data    (adpcm_sdr_data),
     .sdr_req     (adpcm_sdr_req),
     .sdr_ack     (adpcm_sdr_ack),
+
+    // ── Z80 ROM SDRAM (CH4) ───────────────────────────────────────────────────
+    .z80_rom_addr (z80_sdr_addr),
+    .z80_rom_data (z80_sdr_data),
+    .z80_rom_req  (z80_sdr_req),
+    .z80_rom_ack  (z80_sdr_ack),
 
     // ── Video output ──────────────────────────────────────────────────────────
     .rgb_r       (core_rgb_r),

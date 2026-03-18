@@ -117,6 +117,14 @@ module taito_b #(
     output logic        sdr_req,
     input  logic        sdr_ack,
 
+    // ── Z80 ROM SDRAM Interface ──────────────────────────────────────────────
+    // SDRAM base 0x080000 (word addr 0x040000); Z80 sees 64KB at 0x0000-0xFFFF.
+    // Word address = 27'h040000 + z80_addr[15:1]
+    output logic [26:0] z80_rom_addr,    // SDRAM word address
+    input  logic [15:0] z80_rom_data,    // SDRAM read data (16-bit word)
+    output logic        z80_rom_req,     // request toggle
+    input  logic        z80_rom_ack,     // acknowledge toggle
+
     // ── Video Output ────────────────────────────────────────────────────────
     // TC0260DAR produces 8-bit per channel (expanded from 4-bit palette entries).
     output logic  [7:0] rgb_r,
@@ -566,15 +574,17 @@ jt10 u_ym2610 (
 // Z80 Sound CPU (T80s)
 // =============================================================================
 // The Z80 runs at ~4 MHz (clk_sound clock enable) and accesses:
-//   0x0000–0x7FFF  Z80 ROM (from SDRAM 0x080000; TODO: add Z80 ROM SDRAM channel)
+//   0x0000–0x7FFF  Z80 ROM bank 0 (SDRAM 0x080000–0x087FFF; 32KB fixed)
 //   0x8000–0xBFFF  banked ROM (via TC0140SYT ROMCS1n / ROMA14-15)
 //   0xC000–0xDFFF  Z80 work RAM (2KB, internal BRAM — mirrors to fill 8KB)
 //   0xE000–0xE0FF  YM2610 registers (TC0140SYT decodes → z80_opx_n)
 //   0xE200         TC0140SYT comm register (decoded by TC0140SYT itself)
 //
-// TODO: Add a Z80 ROM SDRAM read channel. For now the Z80 ROM path is stubbed
-// (reads return 0xFF = NOP equivalent). The TC0140SYT sound comms will still
-// work once a real Z80 ROM is loaded, so this is a correct-if-silent skeleton.
+// Z80 ROM SDRAM reads: when z80_rom_cs0_n or z80_rom_cs1_n is active and the
+// Z80 asserts RD_n (memory read), we toggle z80_rom_req to the SDRAM CH4 and
+// hold WAIT_n low until z80_rom_ack toggles back to match.
+// Word address: 27'h040000 + {z80_rom_a15, z80_rom_a14, z80_addr[13:1]}
+// (SDRAM base 0x080000 = word 0x040000; ROM is 16-bit word-organised)
 //
 // Z80 internal 2KB work RAM (0xC000–0xC7FF, mirrored to 0xDFFF).
 logic [7:0] z80_ram [0:2047];
@@ -590,14 +600,61 @@ always_ff @(posedge clk_sys) begin
         z80_ram_dout <= z80_ram[z80_addr[10:0]];
 end
 
+// Z80 ROM chip-select: active when either ROM CS is asserted by TC0140SYT
+logic z80_rom_cs;
+assign z80_rom_cs = !z80_rom_cs0_n | !z80_rom_cs1_n;
+
+// Z80 ROM SDRAM request/stall logic
+// Toggle z80_rom_req on each new ROM read; hold WAIT_n=0 until ack matches req.
+logic z80_rom_req_r;       // current req toggle value
+logic z80_rom_pending;     // read in flight
+logic z80_rom_byte_sel;    // which byte of the returned word (z80_addr[0])
+logic z80_wait_n;          // WAIT_n driven into T80s
+
+// Registered prev-cycle ROM CS to detect new accesses
+logic z80_rom_cs_prev;
+logic z80_rd_n_prev;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        z80_rom_req_r   <= 1'b0;
+        z80_rom_pending <= 1'b0;
+        z80_rom_byte_sel<= 1'b0;
+        z80_wait_n      <= 1'b1;
+        z80_rom_cs_prev <= 1'b1;
+        z80_rd_n_prev   <= 1'b1;
+    end else begin
+        z80_rom_cs_prev <= !z80_rom_cs;   // track negated (cs_n sense)
+        z80_rd_n_prev   <= z80_rd_n;
+
+        if (z80_rom_cs && !z80_rd_n && !z80_mreq_n && !z80_rom_pending) begin
+            // New Z80 ROM read — issue SDRAM request
+            z80_rom_req_r    <= ~z80_rom_req_r;
+            z80_rom_pending  <= 1'b1;
+            z80_rom_byte_sel <= z80_addr[0];
+            z80_wait_n       <= 1'b0;   // stall Z80
+        end else if (z80_rom_pending && (z80_rom_req_r == z80_rom_ack)) begin
+            // SDRAM returned data
+            z80_rom_pending <= 1'b0;
+            z80_wait_n      <= 1'b1;   // release Z80
+        end
+    end
+end
+
+assign z80_rom_req  = z80_rom_req_r;
+assign z80_rom_addr = 27'h040000 + {z80_rom_a15, z80_rom_a14, z80_addr[13:1]};
+
 // Z80 data input mux:
-//   SYT lower nibble | YM2610 dout | RAM dout | open bus (0xFF)
+//   ROM data | YM2610 dout | RAM dout | SYT nibble | open bus (0xFF)
 logic [7:0] z80_cpu_din;
 always_comb begin
     if (!z80_opx_n)
         z80_cpu_din = ym_dout;
     else if (!z80_ram_cs_n)
         z80_cpu_din = z80_ram_dout;
+    else if (z80_rom_cs)
+        // Select byte lane: even address → word[15:8], odd → word[7:0]
+        z80_cpu_din = z80_rom_byte_sel ? z80_rom_data[7:0] : z80_rom_data[15:8];
     else
         z80_cpu_din = {4'hF, syt_z80_dout};  // SYT nibble in lower 4 bits
 end
@@ -609,7 +666,7 @@ T80s u_z80 (
     .RESET_n (z80_reset_n),
     .CLK     (clk_sys),
     .CEN     (clk_sound),
-    .WAIT_n  (1'b1),               // no wait states
+    .WAIT_n  (z80_wait_n),         // stall during SDRAM ROM fetches
     .INT_n   (z80_int_n),          // from jt10 irq_n
     .NMI_n   (1'b1),               // no NMI
     .BUSRQ_n (1'b1),               // no bus request
@@ -798,7 +855,8 @@ assign vsync_n  = vsync_n_in;
 /* verilator lint_off UNUSED */
 logic _unused;
 assign _unused = ^{vcu_pixel_valid, pal_ram_addr[13],
-                   z80_rfsh_n, z80_halt_n, z80_busak_n, z80_m1_n};
+                   z80_rfsh_n, z80_halt_n, z80_busak_n, z80_m1_n,
+                   z80_rom_cs_prev, z80_rd_n_prev};
 /* verilator lint_on UNUSED */
 
 endmodule
