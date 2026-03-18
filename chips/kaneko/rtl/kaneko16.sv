@@ -313,8 +313,14 @@ module kaneko16 #(
     // ========================================================================
 
     logic write_strobe;
+    logic watchdog_kick;
 
-    assign write_strobe = ~cpu_wr_n & ~cpu_cs_n;
+    assign write_strobe  = ~cpu_wr_n & ~cpu_cs_n;
+    // Watchdog kick: CPU write to 0x180008. Combinational decode used by
+    // watchdog always_ff to avoid driving shadow_watchdog_counter from two
+    // separate always_ff blocks (Quartus 17 Error 10028).
+    assign watchdog_kick = write_strobe && !is_sprite_ram && !is_gfx_window &&
+                           (cpu_addr[15:0] == 16'h8008);
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -431,10 +437,8 @@ module kaneko16 #(
                     if (~cpu_uds_n) shadow_dip_switches[15:8] <= cpu_din[15:8];
                 end
 
-                // I/O: Watchdog kick (0x180008)
-                16'h8008: begin
-                    shadow_watchdog_counter <= 8'h00;
-                end
+                // I/O: Watchdog kick (0x180008) — handled via watchdog_kick
+                // in the watchdog always_ff block to avoid multi-driver Error 10028.
 
                 // I/O: Video Interrupt Control (0x18000E)
                 16'h800E: if (~cpu_lds_n) shadow_video_int_ctrl <= cpu_din[7:0];
@@ -640,7 +644,10 @@ module kaneko16 #(
             shadow_watchdog_counter <= 8'h00;
             watchdog_active <= 1'b0;
         end else begin
-            if (shadow_watchdog_counter == 8'hFF) begin
+            if (watchdog_kick) begin
+                // CPU kicked watchdog — reset counter
+                shadow_watchdog_counter <= 8'h00;
+            end else if (shadow_watchdog_counter == 8'hFF) begin
                 // Watchdog timeout (60 ms at typical arcade frequencies)
                 watchdog_active <= 1'b1;
             end else begin

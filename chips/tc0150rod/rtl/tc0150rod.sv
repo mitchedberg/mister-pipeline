@@ -298,11 +298,12 @@ always_comb begin
 end
 
 // =============================================================================
-// ROM pre-fetch sub-FSM
+// Main FSM (Steps 2, 3) + ROM pre-fetch sub-FSM (Step 4) — merged single block
 // =============================================================================
 
 always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
+        // Pre-fetch sub-FSM reset
         rfst          <= RF_IDLE;
         rf_idx        <= 8'd0;
         rom_req_r     <= 1'b0;
@@ -310,7 +311,36 @@ always_ff @(posedge clk or negedge rst_n) begin
         cached_tile_a <= 10'h3ff;
         cached_tile_b <= 10'h3fe;
         cache_ready   <= 1'b0;
+        // Main FSM reset
+        fsm               <= ST_IDLE;
+        ram_rd_addr       <= 12'd0;
+        road_a_base       <= 12'd0;
+        road_b_base       <= 12'd0;
+        priority_switch_line <= 8'd0;
+        road_b_en         <= 1'b0;
+        roada_clipr_bg    <= 1'b0; roada_clipr_pm <= 1'b0; roada_clipr_po <= 1'b0;
+        roada_clipr_w     <= 10'd0;
+        roada_clipl_bg    <= 1'b0; roada_clipl_pm <= 1'b0; roada_clipl_po <= 1'b0;
+        roada_clipl_w     <= 10'd0;
+        roada_body_pm     <= 1'b0; roada_body_po <= 2'd0;
+        roada_xoff        <= 11'd0;
+        tile_a            <= 10'd0; colbank_a <= 6'd0;
+        roadb_clipr_bg    <= 1'b0; roadb_clipr_pm <= 1'b0; roadb_clipr_po <= 1'b0;
+        roadb_clipr_w     <= 10'd0;
+        roadb_clipl_bg    <= 1'b0; roadb_clipl_pm <= 1'b0; roadb_clipl_po <= 1'b0;
+        roadb_clipl_w     <= 10'd0;
+        roadb_body_pm     <= 1'b0; roadb_body_po <= 2'd0;
+        roadb_xoff        <= 11'd0;
+        tile_b            <= 10'd0; colbank_b <= 6'd0;
+        left_edge_a       <= 11'd0; right_edge_a <= 11'd0; xoffset_a <= 11'd0;
+        left_edge_b       <= 11'd0; right_edge_b <= 11'd0; xoffset_b <= 11'd0;
+        priorities[0] <= 3'd0; priorities[1] <= 3'd0; priorities[2] <= 3'd0;
+        priorities[3] <= 3'd0; priorities[4] <= 3'd0; priorities[5] <= 3'd0;
+        scanline_priority <= 8'd0;
+        render_x          <= 9'd0;
+        render_done       <= 1'b0;
     end else begin
+        // ── Pre-fetch sub-FSM ────────────────────────────────────────────────
         case (rfst)
             RF_IDLE: ;
 
@@ -365,42 +395,8 @@ always_ff @(posedge clk or negedge rst_n) begin
 
             default: rfst <= RF_IDLE;
         endcase
-    end
-end
 
-// =============================================================================
-// Main FSM (Steps 2, 3)
-// =============================================================================
-
-always_ff @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-        fsm               <= ST_IDLE;
-        ram_rd_addr       <= 12'd0;
-        road_a_base       <= 12'd0;
-        road_b_base       <= 12'd0;
-        priority_switch_line <= 8'd0;
-        road_b_en         <= 1'b0;
-        roada_clipr_bg    <= 1'b0; roada_clipr_pm <= 1'b0; roada_clipr_po <= 1'b0;
-        roada_clipr_w     <= 10'd0;
-        roada_clipl_bg    <= 1'b0; roada_clipl_pm <= 1'b0; roada_clipl_po <= 1'b0;
-        roada_clipl_w     <= 10'd0;
-        roada_body_pm     <= 1'b0; roada_body_po <= 2'd0;
-        roada_xoff        <= 11'd0;
-        tile_a            <= 10'd0; colbank_a <= 6'd0;
-        roadb_clipr_bg    <= 1'b0; roadb_clipr_pm <= 1'b0; roadb_clipr_po <= 1'b0;
-        roadb_clipr_w     <= 10'd0;
-        roadb_clipl_bg    <= 1'b0; roadb_clipl_pm <= 1'b0; roadb_clipl_po <= 1'b0;
-        roadb_clipl_w     <= 10'd0;
-        roadb_body_pm     <= 1'b0; roadb_body_po <= 2'd0;
-        roadb_xoff        <= 11'd0;
-        tile_b            <= 10'd0; colbank_b <= 6'd0;
-        left_edge_a       <= 11'd0; right_edge_a <= 11'd0; xoffset_a <= 11'd0;
-        left_edge_b       <= 11'd0; right_edge_b <= 11'd0; xoffset_b <= 11'd0;
-        for (int i = 0; i < 6; i++) priorities[i] <= 3'd0;
-        scanline_priority <= 8'd0;
-        render_x          <= 9'd0;
-        render_done       <= 1'b0;
-    end else begin
+        // ── Main FSM ─────────────────────────────────────────────────────────
         case (fsm)
             // ── Wait for HBlank ──────────────────────────────────────────
             ST_IDLE: begin
