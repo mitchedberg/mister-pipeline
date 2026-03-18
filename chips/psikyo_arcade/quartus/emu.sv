@@ -15,7 +15,7 @@
 //   Primary target:    Gunbird (gunbird), Strikers 1945 (s1945)
 //   Native resolution: 320 × 240 (visible), standard arcade timing
 //   CPU clock:         16 MHz (32 MHz sys_clk / 2 clock-enable)
-//   Pixel clock:       16 MHz (sys_clk / 2 CE)
+//   Pixel clock:       ~6.4 MHz (sys_clk / 5 CE, hardware is ~6.75 MHz)
 //   RGB output:        8 bits per channel (24-bit total) from R5G5B5 palette
 //   Aspect ratio:      3:4 (vertical shooter — rotated display)
 //
@@ -277,7 +277,8 @@ hps_io #(.CONF_STR(CONF_STR)) u_hps_io
 // Clocks
 //
 // Psikyo system clock: 32 MHz (CPU at 16 MHz via /2 CE).
-// Pixel clock: 16 MHz (sys_clk / 2 CE).
+// Pixel clock: ~6.4 MHz (sys_clk / 5 CE).
+//   Hardware pixel clock is ~6.75 MHz; /5 = 6.4 MHz (≈5% low, correct 15 kHz sync).
 // SDRAM clock: 143 MHz (PLL outclk_1), phase-shifted.
 //////////////////////////////////////////////////////////////////
 
@@ -302,7 +303,9 @@ assign SDRAM_CLK = clk_sdram;
 //
 // ce_cpu: /2 clock enable — 16 MHz effective CPU clock.
 //   MC68000 uses ce_cpu when it is 1 (even phases).
-//   Pixel clock (clk_pix) uses ce_pix = ce_cpu.
+//
+// ce_pix: independent /5 clock enable — ~6.4 MHz pixel clock.
+//   Hardware Psikyo pixel clock is ~6.75 MHz; /5 from 32 MHz = 6.4 MHz.
 //////////////////////////////////////////////////////////////////
 logic ce_cpu;       // high one out of every 2 sys_clk cycles (32 MHz / 2 = 16 MHz)
 
@@ -313,8 +316,23 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
         ce_cpu <= ~ce_cpu;
 end
 
-// Pixel clock enable: same rate as CPU clock (16 MHz).
-wire ce_pix = ce_cpu;
+// Pixel clock enable: independent /5 divider = ~6.4 MHz.
+logic [2:0] ce_pix_cnt;
+logic       ce_pix;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ce_pix_cnt <= 3'd0;
+        ce_pix     <= 1'b0;
+    end else begin
+        if (ce_pix_cnt == 3'd4) begin
+            ce_pix_cnt <= 3'd0;
+            ce_pix     <= 1'b1;
+        end else begin
+            ce_pix_cnt <= ce_pix_cnt + 3'd1;
+            ce_pix     <= 1'b0;
+        end
+    end
+end
 
 //////////////////////////////////////////////////////////////////
 // Sound clock enable — 8 MHz (clk_sys / 4)

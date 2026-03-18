@@ -23,8 +23,8 @@
 // Taito B display parameters:
 //   Primary target:    Nastar Warrior (rastsag2) / Rastan Saga II
 //   Native resolution: 320 × 240 (visible), arcade timing from TC0180VCU
-//   CPU clock:         8 MHz (16 MHz sys_clk / 2 clock-enable)
-//   Pixel clock:       8 MHz (sys_clk / 2 CE)
+//   CPU clock:         8 MHz (32 MHz sys_clk / 4 clock-enable)
+//   Pixel clock:       ~6.4 MHz (sys_clk / 5 CE, hardware is ~6.75 MHz)
 //   RGB output:        8 bits per channel (24-bit total) from RGB444 palette
 //   Aspect ratio:      4:3
 //
@@ -309,12 +309,13 @@ hps_io #(.CONF_STR(CONF_STR)) u_hps_io
 //////////////////////////////////////////////////////////////////
 // Clocks
 //
-// Taito B system clock: 16 MHz (single CPU at 8 MHz via /2 CE).
-// TC0180VCU pixel clock: 8 MHz (sys_clk / 2 CE).
+// Taito B system clock: 32 MHz (2× master, CPU at 8 MHz via /4 CE).
+// TC0180VCU pixel clock: ~6.4 MHz (sys_clk / 5 CE).
+//   Hardware pixel clock is ~6.75 MHz; /5 = 6.4 MHz (≈5% low, correct 15 kHz sync).
 // SDRAM clock: 143 MHz (PLL outclk_1), phase-shifted for setup margin.
 //////////////////////////////////////////////////////////////////
 
-wire clk_sys;       // 16 MHz — core system clock
+wire clk_sys;       // 32 MHz — core system clock
 wire clk_sdram;     // 143.0 MHz — SDRAM interface clock
 wire pll_locked;
 
@@ -322,7 +323,7 @@ pll u_pll
 (
     .refclk   (CLK_50M),
     .rst      (1'b0),
-    .outclk_0 (clk_sys),    // 16 MHz
+    .outclk_0 (clk_sys),    // 32 MHz
     .outclk_1 (clk_sdram),  // 143.0 MHz
     .locked   (pll_locked)
 );
@@ -333,34 +334,55 @@ assign SDRAM_CLK = clk_sdram;
 //////////////////////////////////////////////////////////////////
 // Clock enables
 //
-// ce_cpu: /2 clock enable — 8 MHz effective CPU clock.
-//   MC68000 uses ce_cpu when it is 1 (even phases).
-//   TC0180VCU pixel clock (clk_pix) uses ce_pix = ce_cpu.
+// ce_cpu: /4 clock enable — 8 MHz effective CPU clock.
+//   MC68000 uses ce_cpu when it is 1.
+//
+// ce_pix: independent /5 clock enable — ~6.4 MHz pixel clock.
+//   Hardware TC0180VCU pixel clock is ~6.75 MHz; /5 from 32 MHz = 6.4 MHz.
 //////////////////////////////////////////////////////////////////
-logic ce_cpu;       // high one out of every 2 sys_clk cycles (16 MHz / 2 = 8 MHz)
+logic [1:0] ce_cpu_cnt;
+logic       ce_cpu;       // high one out of every 4 sys_clk cycles (32 MHz / 4 = 8 MHz)
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n)
-        ce_cpu <= 1'b0;
-    else
-        ce_cpu <= ~ce_cpu;
+    if (!reset_n) begin
+        ce_cpu_cnt <= 2'd0;
+        ce_cpu     <= 1'b0;
+    end else begin
+        ce_cpu_cnt <= ce_cpu_cnt + 2'd1;
+        ce_cpu     <= (ce_cpu_cnt == 2'd3);
+    end
 end
 
-// Pixel clock enable: same rate as CPU clock (8 MHz).
-wire ce_pix = ce_cpu;
+// Pixel clock enable: independent /5 divider = ~6.4 MHz.
+logic [2:0] ce_pix_cnt;
+logic       ce_pix;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ce_pix_cnt <= 3'd0;
+        ce_pix     <= 1'b0;
+    end else begin
+        if (ce_pix_cnt == 3'd4) begin
+            ce_pix_cnt <= 3'd0;
+            ce_pix     <= 1'b1;
+        end else begin
+            ce_pix_cnt <= ce_pix_cnt + 3'd1;
+            ce_pix     <= 1'b0;
+        end
+    end
+end
 
-// Sound clock enable: 4 MHz (16 MHz / 4).
+// Sound clock enable: 4 MHz (32 MHz / 8).
 // The YM2610 and Z80 both run at 4 MHz on the Taito B hardware.
-// We generate a clock-enable pulse every 4th clk_sys cycle.
-logic [1:0] ce_snd_cnt;
+// We generate a clock-enable pulse every 8th clk_sys cycle.
+logic [2:0] ce_snd_cnt;
 logic ce_snd;
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
-        ce_snd_cnt <= 2'd0;
+        ce_snd_cnt <= 3'd0;
         ce_snd     <= 1'b0;
     end else begin
-        ce_snd_cnt <= ce_snd_cnt + 2'd1;
-        ce_snd     <= (ce_snd_cnt == 2'd3);
+        ce_snd_cnt <= ce_snd_cnt + 3'd1;
+        ce_snd     <= (ce_snd_cnt == 3'd7);
     end
 end
 

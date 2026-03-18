@@ -22,9 +22,9 @@
 // -------------------------------------------------------------------------
 // Kaneko16 display parameters:
 //   Primary target:    The Berlin Wall (berlwall)
-//   Native resolution: 320 × 240 (visible)
+//   Native resolution: 256 × 224 (visible)
 //   CPU clock:         16 MHz (32 MHz sys_clk / 2 clock-enable)
-//   Pixel clock:       8 MHz  (sys_clk / 4 CE)
+//   Pixel clock:       ~6.4 MHz (sys_clk / 5 CE, hardware is ~6 MHz)
 //   RGB output:        8 bits per channel (from RGB555 palette, expanded)
 //   Aspect ratio:      4:3
 //
@@ -301,7 +301,7 @@ hps_io #(.CONF_STR(CONF_STR)) u_hps_io
 // Clocks
 //
 // Kaneko16 system clock: 32 MHz (CPU at 16 MHz via /2 CE).
-// Pixel clock: 8 MHz (sys_clk / 4 CE).
+// Pixel clock: ~6.4 MHz (sys_clk / 5 CE, hardware is ~6 MHz).
 // SDRAM clock: 143 MHz (PLL outclk_1), phase-shifted for setup margin.
 //////////////////////////////////////////////////////////////////
 
@@ -327,20 +327,35 @@ assign SDRAM_CLK = clk_sdram;
 // ce_cpu: /2 clock enable — 16 MHz effective CPU clock.
 //   MC68000 uses ce_cpu when it is 1 (even phases).
 //
-// ce_pix: /4 clock enable — 8 MHz pixel clock.
-//   Advances hpos/vpos and drives palette pipeline.
+// ce_pix: independent /5 clock enable — ~6.4 MHz pixel clock.
+//   Kaneko16 hardware pixel clock is ~6 MHz; /5 from 32 MHz = 6.4 MHz (≈7% high).
 //////////////////////////////////////////////////////////////////
-logic [1:0] ce_div;   // 2-bit divide counter
+logic ce_cpu;   // toggle, high every 2nd cycle = 16 MHz
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n)
-        ce_div <= 2'b00;
+        ce_cpu <= 1'b0;
     else
-        ce_div <= ce_div + 2'd1;
+        ce_cpu <= ~ce_cpu;
 end
 
-wire ce_cpu = (ce_div == 2'b01);   // 16 MHz: every 2nd sys_clk cycle
-wire ce_pix = (ce_div == 2'b11);   // 8 MHz: every 4th sys_clk cycle
+// Pixel clock enable: independent /5 divider = ~6.4 MHz.
+logic [2:0] ce_pix_cnt;
+logic       ce_pix;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ce_pix_cnt <= 3'd0;
+        ce_pix     <= 1'b0;
+    end else begin
+        if (ce_pix_cnt == 3'd4) begin
+            ce_pix_cnt <= 3'd0;
+            ce_pix     <= 1'b1;
+        end else begin
+            ce_pix_cnt <= ce_pix_cnt + 3'd1;
+            ce_pix     <= 1'b0;
+        end
+    end
+end
 
 //////////////////////////////////////////////////////////////////
 // Sound clock enable — ~1 MHz (32 MHz / 32)
@@ -662,10 +677,10 @@ kaneko_arcade u_kaneko_arcade
 //
 // kaneko_arcade outputs hsync_n / vsync_n (active-low).
 // arcade_video expects active-high HSync/VSync convention.
-// Native resolution: 320×240, 24-bit RGB from RGB555 palette (expanded to R8G8B8).
+// Native resolution: 256×224, 24-bit RGB from RGB555 palette (expanded to R8G8B8).
 //////////////////////////////////////////////////////////////////
 
-arcade_video #(.WIDTH(320), .DW(24), .GAMMA(1)) u_arcade_video
+arcade_video #(.WIDTH(256), .HEIGHT(224), .DW(24), .GAMMA(1)) u_arcade_video
 (
     .clk_video  (clk_sys),
     .ce_pix     (ce_pix),

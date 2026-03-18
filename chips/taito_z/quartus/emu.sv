@@ -328,7 +328,8 @@ hps_io #(.CONF_STR(CONF_STR)) u_hps_io
 //
 // Taito Z system clock: 32 MHz (double 16 MHz CPU rate).
 // Each CPU uses a /2 clock enable for precise 16 MHz operation.
-// TC0480SCP pixel clock: same /2 clock enable = 16 MHz pixel clock.
+// TC0480SCP pixel clock: ~6.4 MHz (32 MHz / 5 CE).
+//   Hardware pixel clock is ~6.8 MHz; /5 = 6.4 MHz (≈6% low, correct 15 kHz sync).
 // SDRAM clock: 143 MHz (PLL outclk_1), phase-shifted for setup margin.
 //////////////////////////////////////////////////////////////////
 
@@ -354,7 +355,10 @@ assign SDRAM_CLK = clk_sdram;
 // ce_cpu: /2 clock enable — 16 MHz effective CPU clock.
 //   CPU A uses ce_cpu when it is 1 (even phases).
 //   CPU B uses ce_cpu_b (odd phases) for tight interleave.
-//   TC0480SCP pixel clock (clk_pix) uses ce_pix = ce_cpu.
+//
+// ce_pix: independent /5 clock enable — ~6.4 MHz pixel clock.
+//   Hardware TC0480SCP pixel clock is ~6.8 MHz; /5 from 32 MHz = 6.4 MHz
+//   (approx. 6% low; produces correct 15 kHz line rate with 320 active pixels).
 //////////////////////////////////////////////////////////////////
 logic ce_cpu;       // high one out of every 2 sys_clk cycles (even)
 logic ce_cpu_b;     // high one out of every 2 sys_clk cycles (odd)
@@ -369,8 +373,23 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     end
 end
 
-// Pixel clock enable: same rate as CPU clock (16 MHz).
-wire ce_pix = ce_cpu;
+// Pixel clock enable: independent /5 divider = ~6.4 MHz.
+logic [2:0] ce_pix_cnt;
+logic       ce_pix;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ce_pix_cnt <= 3'd0;
+        ce_pix     <= 1'b0;
+    end else begin
+        if (ce_pix_cnt == 3'd4) begin
+            ce_pix_cnt <= 3'd0;
+            ce_pix     <= 1'b1;
+        end else begin
+            ce_pix_cnt <= ce_pix_cnt + 3'd1;
+            ce_pix     <= 1'b0;
+        end
+    end
+end
 
 // Sound clock enable: 4 MHz (32 MHz / 8).
 // The YM2610 and Z80 both run at ~4 MHz on the Taito Z hardware.

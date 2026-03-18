@@ -13,8 +13,9 @@
 // -------------------------------------------------------------------------
 // NMK16 display parameters:
 //   Primary target:    Thunder Dragon
-//   Native resolution: 320 × 224 (visible), arcade standard timing
+//   Native resolution: 256 × 224 (visible), arcade standard timing
 //   CPU clock:         10 MHz (MC68000)
+//   Pixel clock:       ~5.7 MHz (40 MHz sys_clk / 7 CE, hardware is ~6 MHz)
 //   RGB output:        8 bits per channel (24-bit) from RGB555 palette
 //   Aspect ratio:      4:3
 //
@@ -275,6 +276,7 @@ hps_io #(.CONF_STR(CONF_STR)) u_hps_io
 //
 // NMK16 CPU: 10 MHz (MC68000).
 // Use 40 MHz sys_clk, /4 CE for 10 MHz CPU.
+// Pixel clock: ~5.7 MHz (40 MHz / 7 CE, hardware is ~6 MHz).
 // SDRAM clock: 143 MHz.
 //////////////////////////////////////////////////////////////////
 
@@ -297,7 +299,8 @@ assign SDRAM_CLK = clk_sdram;
 // Clock enables
 //
 // ce_cpu: /4 clock enable — 10 MHz effective CPU clock.
-// ce_pix: /4 clock enable — pixel clock (same rate).
+// ce_pix: independent /7 clock enable — ~5.7 MHz pixel clock.
+//   NMK16 hardware pixel clock is ~6 MHz; /7 from 40 MHz = 5.71 MHz (≈5% low).
 //////////////////////////////////////////////////////////////////
 logic [1:0] ce_div;
 logic       ce_cpu;
@@ -312,7 +315,23 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     end
 end
 
-wire ce_pix = ce_cpu;
+// Pixel clock enable: independent /7 divider = ~5.7 MHz.
+logic [2:0] ce_pix_cnt;
+logic       ce_pix;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ce_pix_cnt <= 3'd0;
+        ce_pix     <= 1'b0;
+    end else begin
+        if (ce_pix_cnt == 3'd6) begin
+            ce_pix_cnt <= 3'd0;
+            ce_pix     <= 1'b1;
+        end else begin
+            ce_pix_cnt <= ce_pix_cnt + 3'd1;
+            ce_pix     <= 1'b0;
+        end
+    end
+end
 
 //////////////////////////////////////////////////////////////////
 // Reset
@@ -591,7 +610,7 @@ nmk_arcade u_nmk_arcade
     .hblank      (core_hblank),
     .vblank      (core_vblank),
 
-    // Video timing (standard 320×224 arcade)
+    // Video timing (standard 256×224 arcade)
     .hblank_n_in (1'b1),
     .vblank_n_in (1'b1),
     .hpos        (9'h000),
@@ -632,7 +651,7 @@ assign AUDIO_R = snd_right_w;
 // Video pipeline
 //////////////////////////////////////////////////////////////////
 
-arcade_video #(.WIDTH(320), .DW(24), .GAMMA(1)) u_arcade_video
+arcade_video #(.WIDTH(256), .HEIGHT(224), .DW(24), .GAMMA(1)) u_arcade_video
 (
     .clk_video  (clk_sys),
     .ce_pix     (ce_pix),

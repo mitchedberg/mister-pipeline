@@ -539,7 +539,7 @@ taito_f3 u_taito_f3
 // as the core; the sync_fix inside arcade_video normalises them.
 //////////////////////////////////////////////////////////////////
 
-arcade_video #(.WIDTH(320), .DW(24), .GAMMA(1)) u_arcade_video
+arcade_video #(.WIDTH(320), .HEIGHT(232), .DW(24), .GAMMA(1)) u_arcade_video
 (
     .clk_video  (clk_sys),
     .ce_pix     (ce_pix),

@@ -23,13 +23,13 @@
 // Taito X display parameters:
 //   Primary targets:   Superman (superman), Twin Hawk (twinhawk/daisenpu),
 //                      Gigandes, Balloon Brothers, Last Striker, Liquid Kids
-//   Native resolution: 384 × 240 (visible), arcade timing from video_timing module
+//   Native resolution: 320 × 240 (visible), arcade timing from video_timing module
 //   Main CPU:         MC68000 @ 8 MHz (32 MHz sys_clk / 4 clock-enable)
 //   Sound CPU:        Z80 @ 4 MHz (32 MHz sys_clk / 8 clock-enable)
 //   Pixel clock:      8 MHz (sys_clk / 4 CE)
 //   Audio chip:       YM2610 OPNB (most games) or YM2151 OPM (Twin Hawk)
 //   RGB output:       5 bits per channel (15-bit total) from xRGB_555 palette
-//   Aspect ratio:     4:3 (384×240 at 1:1 pixels)
+//   Aspect ratio:     4:3
 //
 // Hardware clock relationships:
 //   16 MHz crystal → 68000 @ 8 MHz (÷2), Z80 @ 4 MHz (÷4)
@@ -770,7 +770,7 @@ taito_x #(
 //
 // Taito X outputs 5-bit per channel (15-bit RGB).
 // arcade_video expects 8-bit per channel; expand {r5, r5[4:2]} (top 3 bits).
-// Taito X native resolution: 384×240.
+// Taito X native resolution: 320×240.
 // hsync_n/vsync_n are active-low; arcade_video expects active-high.
 //////////////////////////////////////////////////////////////////
 
@@ -778,7 +778,7 @@ wire [7:0] vga_r_exp = {core_rgb_r, core_rgb_r[4:2]};
 wire [7:0] vga_g_exp = {core_rgb_g, core_rgb_g[4:2]};
 wire [7:0] vga_b_exp = {core_rgb_b, core_rgb_b[4:2]};
 
-arcade_video #(.WIDTH(384), .DW(24), .GAMMA(1)) u_arcade_video
+arcade_video #(.WIDTH(320), .DW(24), .GAMMA(1)) u_arcade_video
 (
     .clk_video  (clk_sys),
     .ce_pix     (ce_pix),
