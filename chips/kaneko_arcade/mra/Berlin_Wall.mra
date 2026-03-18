@@ -1,0 +1,54 @@
+<!--
+    The Berlin Wall (Kaneko, 1991)
+    MiSTer MRA file for Kaneko16 core
+
+    MAME driver: kaneko16.cpp, set: berlwall
+    Z80 + OKI M6295 audio: stubbed (silence)
+
+    SDRAM layout:
+      0x000000 – 0x0FFFFF   1MB   CPU program ROM  (ioctl_index 0x00)
+      0x100000 – 0x2FFFFF   2MB   GFX ROM          (ioctl_index 0x01)
+-->
+<misterromdescription>
+
+    <name>The Berlin Wall</name>
+    <setname>berlwall</setname>
+    <mameversion>0.250</mameversion>
+    <rbf>Kaneko16</rbf>
+
+    <rom index="0" zip="berlwall.zip" md5="Unknown">
+        <!-- CPU program ROM: 68000 code, 1MB -->
+        <!-- berlwall: gt-u.u5 + gt-l.u4 interleaved, or single 1MB prog ROM -->
+        <part name="gt-u.u5" crc="4a4f4bef"/>
+        <part name="gt-l.u4" crc="d9ee3f5b"/>
+    </rom>
+
+    <rom index="1" zip="berlwall.zip" md5="Unknown">
+        <!-- GFX ROM: sprites (VU-001/VU-002) + BG tiles (VIEW2-CHIP) -->
+        <!-- Loaded at SDRAM 0x100000 -->
+        <part name="gt-00.u64" crc="e2343cd0"/>
+        <part name="gt-01.u65" crc="36bd5559"/>
+        <part name="gt-02.u66" crc="2b36f763"/>
+        <part name="gt-03.u67" crc="ca61d5c1"/>
+        <part name="gt-10.u48" crc="a70d0ca6"/>
+        <part name="gt-11.u49" crc="d9c11fd7"/>
+        <part name="gt-12.u50" crc="7a1ab05f"/>
+        <part name="gt-13.u51" crc="a534be65"/>
+    </rom>
+
+    <rom index="0xFE">
+        <!-- DIP switch defaults: all ON (active-low) -->
+        <part repeat="8"> FF </part>
+    </rom>
+
+    <switches page_id="1" page_name="Switches" base="16" dip_defaults="FF FF">
+        <!-- DIP SW1 -->
+        <dip bits="0,2" name="Coin A" ids="4 Coins/1 Credit,3 Coins/1 Credit,2 Coins/1 Credit,1 Coin/1 Credit"/>
+        <dip bits="3,5" name="Coin B" ids="1 Coin/2 Credits,1 Coin/3 Credits,1 Coin/4 Credits,Free Play"/>
+        <dip bits="6"   name="Demo Sounds" ids="Off,On"/>
+        <dip bits="7"   name="Service Mode" ids="On,Off"/>
+    </switches>
+
+    <buttons names="Button 1,Button 2,Button 3,Start,Coin,Core credits" default="A,B,C,Start,Select,-"/>
+
+</misterromdescription>
