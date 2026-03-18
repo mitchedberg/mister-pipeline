@@ -180,7 +180,10 @@ altsyncram #(
     .read_during_write_mode_port_a ("NEW_DATA_WITH_NBE_READ"),
     .read_during_write_mode_port_b ("NEW_DATA_WITH_NBE_READ"),
     .outdata_reg_a          ("UNREGISTERED"),
-    .outdata_reg_b          ("UNREGISTERED")
+    .outdata_reg_b          ("UNREGISTERED"),
+    .address_reg_b          ("CLOCK0"),
+    .numwords_a             (32768),
+    .numwords_b             (32768)
 ) vram_inst (
     .clock0    (clk),
     .address_a (cpu_addr[14:0]),
@@ -238,7 +241,8 @@ altsyncram #(
     .intended_device_family ("Cyclone V"),
     .lpm_type               ("altsyncram"),
     .ram_block_type         ("M10K"),
-    .outdata_reg_a          ("UNREGISTERED")
+    .outdata_reg_a          ("UNREGISTERED"),
+    .numwords_a             (4096)
 ) sprite_ram_inst (
     .clock0    (clk),
     .address_a (cpu_addr[11:0]),
@@ -293,7 +297,8 @@ altsyncram #(
     .intended_device_family ("Cyclone V"),
     .lpm_type               ("altsyncram"),
     .ram_block_type         ("M10K"),
-    .outdata_reg_a          ("UNREGISTERED")
+    .outdata_reg_a          ("UNREGISTERED"),
+    .numwords_a             (1024)
 ) scroll_ram_inst (
     .clock0    (clk),
     .address_a (cpu_addr[9:0]),

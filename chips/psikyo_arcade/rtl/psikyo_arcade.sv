@@ -304,11 +304,14 @@ end
 logic [15:0] sprite_ram [0:(1<<SPRAM_ABITS)-1];
 logic [15:0] spram_dout_r;
 
-// CPU write port
+// Sprite RAM write: CPU takes priority over Gate 1/2 DMA write-back
 always_ff @(posedge clk_sys) begin
     if (spram_cs && !cpu_rw) begin
         if (!cpu_uds_n) sprite_ram[cpu_addr[SPRAM_ABITS:1]][15:8] <= cpu_dout[15:8];
         if (!cpu_lds_n) sprite_ram[cpu_addr[SPRAM_ABITS:1]][ 7:0] <= cpu_dout[ 7:0];
+    end else if (sprite_ram_wr_en_w) begin
+        if (sprite_ram_wsel_w[0])
+            sprite_ram[sprite_ram_addr_w[SPRAM_ABITS-1:0]][15:0] <= sprite_ram_din_w;
     end
 end
 
@@ -337,14 +340,6 @@ end
 /* verilator lint_on UNUSEDSIGNAL */
 
 assign sprite_ram_dout_w = {sp_ram_hi, sp_ram_lo};
-
-// Gate 1/2 write-back (DMA path — stub in psikyo.sv, tied inactive)
-always_ff @(posedge clk_sys) begin
-    if (sprite_ram_wr_en_w) begin
-        if (sprite_ram_wsel_w[0])
-            sprite_ram[sprite_ram_addr_w[SPRAM_ABITS-1:0]][15:0] <= sprite_ram_din_w;
-    end
-end
 
 // =============================================================================
 // Tilemap VRAM — 8192 × 16-bit (2 layers × 4096 cells)
