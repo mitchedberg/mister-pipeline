@@ -1,6 +1,6 @@
 // NMK16 Graphics Subsystem — Gate 1: CPU Interface & Register File
 // 68000-compatible CPU bus interface with control registers and sprite RAM
-// Date: 2026-03-17
+// Date: 2026-03-17 (v1.1)
 
 module nmk16 #(
     parameter ADDR_WIDTH = 21,     // 21-bit addresses ($000000–$1FFFFF)
