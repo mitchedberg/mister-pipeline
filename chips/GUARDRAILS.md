@@ -138,7 +138,11 @@ If device utilization becomes tight, revisit synchronous read pre-fetch pipeline
 No action required before kaneko_arcade.
 
 ### Taito F3 — ALM overflow
-128K logic nodes vs 83K device capacity. 53% over budget even with all M10K fixes. Root cause: TC0630FDP is extremely complex. Options: stub non-critical layers, defer.
+**Real measured numbers (run #23263701073, 2026-03-18):** 193,341 / 41,910 ALMs = **461% over capacity**.
+- Total registers: 265,988
+- Total RAM Blocks: 0 / 553 (Fitter couldn't even place M10K before ALM exhaustion)
+- 3 Fitter errors: device physically cannot fit this design
+Root cause: TC0630FDP alone is enormous. TC0630FDP is the Taito F3 background processor with 32 independent tilemap sections. This is fundamentally too large for DE-10 Nano without major stubbing.
 
 ---
 

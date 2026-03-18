@@ -17,3 +17,9 @@ chips/cps1_obj/tier2/cfg/
 *_synthesis.log
 *_synthesis_log/
 AUDIO_WIRING_AUDIT.md
+
+# Simulation outputs
+chips/*/sim/obj_dir/
+chips/*/sim/*.ppm
+chips/*/sim/*.vcd
+chips/*/sim/sim_*

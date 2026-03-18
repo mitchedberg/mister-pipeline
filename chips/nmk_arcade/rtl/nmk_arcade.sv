@@ -320,7 +320,7 @@ nmk16 #(
     .sprite_addr_wr (),
     .sprite_data_wr (),
     .sprite_rd      (),
-    .sprite_addr_rd (9'b0),
+    .sprite_addr_rd (),
     .sprite_data_rd (16'h0),
 
     // Status inputs (tied off — IRQ handled by irq_vblank_pulse below)
