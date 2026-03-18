@@ -1,0 +1,7408 @@
+{
+  "sega_xboard": [
+    {
+      "name": "abcop",
+      "title": "A.B. Cop (World) (FD1094 317-0169b)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "abcopd",
+      "title": "A.B. Cop (World) (bootleg of FD1094 317-0169b set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "abcop"
+    },
+    {
+      "name": "abcopj",
+      "title": "A.B. Cop (Japan) (FD1094 317-0169b)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "abcop"
+    },
+    {
+      "name": "abcopjd",
+      "title": "A.B. Cop (Japan) (bootleg of FD1094 317-0169b set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "abcop"
+    },
+    {
+      "name": "aburner",
+      "title": "After Burner",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "aburner2",
+      "title": "After Burner II",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "aburner2g",
+      "title": "After Burner II (German)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "aburner2"
+    },
+    {
+      "name": "gprider",
+      "title": "GP Rider (World, FD1094 317-0163) (Twin setup)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "gpriderj",
+      "title": "GP Rider (Japan, FD1094 317-0161) (Twin setup)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "gprider"
+    },
+    {
+      "name": "gpriderjs",
+      "title": "GP Rider (Japan, FD1094 317-0161)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "gprider"
+    },
+    {
+      "name": "gpriders",
+      "title": "GP Rider (World, FD1094 317-0163)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "gprider"
+    },
+    {
+      "name": "gprideru",
+      "title": "GP Rider (US, FD1094 317-0162) (Twin setup)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "gprider"
+    },
+    {
+      "name": "gpriderus",
+      "title": "GP Rider (US, FD1094 317-0162)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "gprider"
+    },
+    {
+      "name": "lastsurv",
+      "title": "Last Survivor (Japan) (FD1094 317-0083)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "lastsurvd",
+      "title": "Last Survivor (Japan) (bootleg of FD1094 317-0083 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "lastsurv"
+    },
+    {
+      "name": "loffire",
+      "title": "Line of Fire / Bakudan Yarou (World) (FD1094 317-0136)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "loffired",
+      "title": "Line of Fire / Bakudan Yarou (World) (bootleg of FD1094 317-0136 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "loffire"
+    },
+    {
+      "name": "loffirej",
+      "title": "Line of Fire / Bakudan Yarou (Japan) (FD1094 317-0134)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "loffire"
+    },
+    {
+      "name": "loffirejd",
+      "title": "Line of Fire / Bakudan Yarou (Japan) (bootleg of FD1094 317-0134 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "loffire"
+    },
+    {
+      "name": "loffireu",
+      "title": "Line of Fire / Bakudan Yarou (US) (FD1094 317-0135)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "loffire"
+    },
+    {
+      "name": "loffireud",
+      "title": "Line of Fire / Bakudan Yarou (US) (bootleg of FD1094 317-0135 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "loffire"
+    },
+    {
+      "name": "rachero",
+      "title": "Racing Hero (FD1094 317-0144)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "racherod",
+      "title": "Racing Hero (bootleg of FD1094 317-0144 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "rachero"
+    },
+    {
+      "name": "rascot",
+      "title": "Royal Ascot (Japan, terminal?)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "smgp",
+      "title": "Super Monaco GP (World, Rev B) (FD1094 317-0126a)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "smgp5",
+      "title": "Super Monaco GP (World) (FD1094 317-0126)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgp5d",
+      "title": "Super Monaco GP (World) (bootleg of FD1094 317-0126 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgp6",
+      "title": "Super Monaco GP (World, Rev A) (FD1094 317-0126a)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgp6d",
+      "title": "Super Monaco GP (World, Rev A) (bootleg of FD1094 317-0126a set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgpd",
+      "title": "Super Monaco GP (World, Rev B) (bootleg of FD1094 317-0126a set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgpj",
+      "title": "Super Monaco GP (Japan, Rev B) (FD1094 317-0124a)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgpja",
+      "title": "Super Monaco GP (Japan, Rev A) (FD1094 317-0124a)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgpjd",
+      "title": "Super Monaco GP (Japan, Rev B) (bootleg of FD1094 317-0124a set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgpu",
+      "title": "Super Monaco GP (US, Rev C) (FD1094 317-0125a)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgpu1",
+      "title": "Super Monaco GP (US, Rev B) (FD1094 317-0125a)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgpu1d",
+      "title": "Super Monaco GP (US, Rev B) (bootleg of FD1094 317-0125a set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgpu2",
+      "title": "Super Monaco GP (US, Rev A) (FD1094 317-0125a)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgpu2d",
+      "title": "Super Monaco GP (US, Rev A) (bootleg of FD1094 317-0125a set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "smgp"
+    },
+    {
+      "name": "smgpud",
+      "title": "Super Monaco GP (US, Rev C) (bootleg of FD1094 317-0125a set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "smgp"
+    },
+    {
+      "name": "thndrbld",
+      "title": "Thunder Blade (upright) (FD1094 317-0056)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "thndrbld1",
+      "title": "Thunder Blade (deluxe/standing) (unprotected)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "thndrbld"
+    },
+    {
+      "name": "thndrbldd",
+      "title": "Thunder Blade (upright) (bootleg of FD1094 317-0056 set)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "thndrbld"
+    },
+    {
+      "name": "segaxbd_pcb",
+      "title": "Sega X-Board PCB",
+      "year": "",
+      "manufacturer": "",
+      "parent": null
+    },
+    {
+      "name": "segaxbd_pcb_reg",
+      "title": "Sega X-Board PCB (regular)",
+      "year": "",
+      "manufacturer": "",
+      "parent": null
+    },
+    {
+      "name": "segaxbd_pcb_fd1094",
+      "title": "Sega X-Board PCB (FD1094)",
+      "year": "",
+      "manufacturer": "",
+      "parent": null
+    },
+    {
+      "name": "segaxbd_pcb_aburner2",
+      "title": "Sega X-Board PCB (After Burner)",
+      "year": "",
+      "manufacturer": "",
+      "parent": null
+    },
+    {
+      "name": "segaxbd_pcb_lastsurv_fd1094",
+      "title": "Sega X-Board PCB (Last Survivor, FD1094)",
+      "year": "",
+      "manufacturer": "",
+      "parent": null
+    },
+    {
+      "name": "segaxbd_pcb_lastsurv",
+      "title": "Sega X-Board PCB (Last Survivor)",
+      "year": "",
+      "manufacturer": "",
+      "parent": null
+    },
+    {
+      "name": "segaxbd_pcb_smgp_fd1094",
+      "title": "Sega X-Board PCB (SMGP, FD1094)",
+      "year": "",
+      "manufacturer": "",
+      "parent": null
+    },
+    {
+      "name": "segaxbd_pcb_smgp",
+      "title": "Sega X-Board PCB (SMGP)",
+      "year": "",
+      "manufacturer": "",
+      "parent": null
+    },
+    {
+      "name": "segaxbd_pcb_rascot",
+      "title": "Sega X-Board PCB (Royal Ascot)",
+      "year": "",
+      "manufacturer": "",
+      "parent": null
+    }
+  ],
+  "sega_sys16b": [
+    {
+      "name": "aceattac",
+      "title": "Ace Attacker (FD1094 317-0059)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "afightere",
+      "title": "Action Fighter (System 16B, unprotected, analog controls)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "afighter"
+    },
+    {
+      "name": "afighterf",
+      "title": "Action Fighter (System 16B, FD1089B 317-unknown, analog controls)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "afighter"
+    },
+    {
+      "name": "afighterg",
+      "title": "Action Fighter (System 16B, FD1089B 317-unknown)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "afighter"
+    },
+    {
+      "name": "afighterh",
+      "title": "Action Fighter (System 16B, FD1089A 317-0018)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "afighter"
+    },
+    {
+      "name": "aliensyn",
+      "title": "Alien Syndrome (set 4, System 16B, unprotected)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "aliensyn3",
+      "title": "Alien Syndrome (set 3, System 16B, FD1089A 317-0033)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "aliensyn"
+    },
+    {
+      "name": "aliensyn7",
+      "title": "Alien Syndrome (set 7, System 16B, MC-8123B 317-00xx)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "aliensyn"
+    },
+    {
+      "name": "aliensynj",
+      "title": "Alien Syndrome (set 6, Japan, new, System 16B, FD1089A 317-0033)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "aliensyn"
+    },
+    {
+      "name": "altbeast",
+      "title": "Altered Beast (set 8) (8751 317-0078)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "altbeast2",
+      "title": "Altered Beast (set 2) (MC-8123B 317-0066)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "altbeast"
+    },
+    {
+      "name": "altbeast4",
+      "title": "Altered Beast (set 4) (MC-8123B 317-0066)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "altbeast"
+    },
+    {
+      "name": "altbeast5",
+      "title": "Altered Beast (set 5) (FD1094 317-0069)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "altbeast"
+    },
+    {
+      "name": "altbeast5d",
+      "title": "Altered Beast (set 5) (bootleg of FD1094 317-0069 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "altbeast"
+    },
+    {
+      "name": "altbeast6",
+      "title": "Altered Beast (set 6) (8751 317-0076)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "altbeast"
+    },
+    {
+      "name": "altbeastj",
+      "title": "Juuouki (set 7, Japan) (8751 317-0077)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "altbeast"
+    },
+    {
+      "name": "altbeastj1",
+      "title": "Juuouki (set 1, Japan) (FD1094 317-0065)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "altbeast"
+    },
+    {
+      "name": "altbeastj3",
+      "title": "Juuouki (set 3, Japan) (FD1094 317-0068)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "altbeast"
+    },
+    {
+      "name": "altbeastj3d",
+      "title": "Juuouki (set 3, Japan) (bootleg of FD1094 317-0068 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "altbeast"
+    },
+    {
+      "name": "atomicp",
+      "title": "Atomic Point (Korea)",
+      "year": "1990",
+      "manufacturer": "Philko",
+      "parent": null
+    },
+    {
+      "name": "aurail",
+      "title": "Aurail (set 3, US) (unprotected)",
+      "year": "1990",
+      "manufacturer": "Sega / Westone",
+      "parent": null
+    },
+    {
+      "name": "aurail1",
+      "title": "Aurail (set 2, World) (FD1089B 317-0168)",
+      "year": "1990",
+      "manufacturer": "Sega / Westone",
+      "parent": "aurail"
+    },
+    {
+      "name": "aurail1d",
+      "title": "Aurail (set 2, World) (bootleg of FD1089B 317-0168 set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "aurail"
+    },
+    {
+      "name": "aurailj",
+      "title": "Aurail (set 1, Japan) (FD1089A 317-0167)",
+      "year": "1990",
+      "manufacturer": "Sega / Westone",
+      "parent": "aurail"
+    },
+    {
+      "name": "aurailjd",
+      "title": "Aurail (set 1, Japan) (bootleg of FD1089A 317-0167 set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "aurail"
+    },
+    {
+      "name": "bayroute",
+      "title": "Bay Route (set 3, World) (FD1094 317-0116)",
+      "year": "1989",
+      "manufacturer": "Sunsoft / Sega",
+      "parent": null
+    },
+    {
+      "name": "bayroute1",
+      "title": "Bay Route (set 1, US) (unprotected)",
+      "year": "1989",
+      "manufacturer": "Sunsoft / Sega",
+      "parent": "bayroute"
+    },
+    {
+      "name": "bayrouted",
+      "title": "Bay Route (set 3, World) (bootleg of FD1094 317-0116 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "bayroute"
+    },
+    {
+      "name": "bayroutej",
+      "title": "Bay Route (set 2, Japan) (FD1094 317-0115)",
+      "year": "1989",
+      "manufacturer": "Sunsoft / Sega",
+      "parent": "bayroute"
+    },
+    {
+      "name": "bayroutejd",
+      "title": "Bay Route (set 2, Japan) (bootleg of FD1094 317-0115 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "bayroute"
+    },
+    {
+      "name": "bullet",
+      "title": "Bullet (FD1094 317-0041)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "bulletd",
+      "title": "Bullet (bootleg of FD1094 317-0041 set)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "bullet"
+    },
+    {
+      "name": "cencourt",
+      "title": "Center Court (World, 4 Players, prototype) (MC-8123B)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "passsht"
+    },
+    {
+      "name": "cotton",
+      "title": "Cotton (set 4, World) (FD1094 317-0181a)",
+      "year": "1991",
+      "manufacturer": "Success / Sega",
+      "parent": null
+    },
+    {
+      "name": "cottond",
+      "title": "Cotton (set 4, World) (bootleg of FD1094 317-0181a set)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "cotton"
+    },
+    {
+      "name": "cottonj",
+      "title": "Cotton (set 2, Japan, Rev B) (FD1094 317-0179b)",
+      "year": "1991",
+      "manufacturer": "Success / Sega",
+      "parent": "cotton"
+    },
+    {
+      "name": "cottonja",
+      "title": "Cotton (set 1, Japan, Rev A) (FD1094 317-0179a)",
+      "year": "1991",
+      "manufacturer": "Success / Sega",
+      "parent": "cotton"
+    },
+    {
+      "name": "cottonjad",
+      "title": "Cotton (set 1, Japan, Rev A) (bootleg of FD1094 317-0179a set)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "cotton"
+    },
+    {
+      "name": "cottonjd",
+      "title": "Cotton (set 2, Japan, Rev B) (bootleg of FD1094 317-0179b set)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "cotton"
+    },
+    {
+      "name": "cottonu",
+      "title": "Cotton (set 3, US) (FD1094 317-0180)",
+      "year": "1991",
+      "manufacturer": "Success / Sega",
+      "parent": "cotton"
+    },
+    {
+      "name": "cottonud",
+      "title": "Cotton (set 3, US) (bootleg of FD1094 317-0180 set)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "cotton"
+    },
+    {
+      "name": "dddoor",
+      "title": "Doraemon no Dokodemo Door",
+      "year": "1993",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "ddux",
+      "title": "Dynamite Dux (set 3, World) (FD1094 317-0096)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "ddux1",
+      "title": "Dynamite Dux (set 1, World) (8751 317-0095)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "ddux"
+    },
+    {
+      "name": "dduxd",
+      "title": "Dynamite Dux (set 3, World) (bootleg of FD1094 317-0096 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "ddux"
+    },
+    {
+      "name": "dduxj",
+      "title": "Dynamite Dux (set 2, Japan) (FD1094 317-0094)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "ddux"
+    },
+    {
+      "name": "dduxjd",
+      "title": "Dynamite Dux (set 2, Japan) (bootleg of FD1094 317-0094 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "ddux"
+    },
+    {
+      "name": "defense",
+      "title": "Defense (System 16B, FD1089A 317-0028)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "sdi"
+    },
+    {
+      "name": "dfjail",
+      "title": "The Destroyer From Jail (Korea)",
+      "year": "1991",
+      "manufacturer": "Philko",
+      "parent": null
+    },
+    {
+      "name": "dunkshot",
+      "title": "Dunk Shot (Rev C, FD1089A 317-0022)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "dunkshota",
+      "title": "Dunk Shot (Rev A, FD1089A 317-0022)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "dunkshot"
+    },
+    {
+      "name": "dunkshoto",
+      "title": "Dunk Shot (FD1089A 317-0022)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "dunkshot"
+    },
+    {
+      "name": "eswat",
+      "title": "Cyber Police ESWAT (set 4, World) (FD1094 317-0130)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "eswatd",
+      "title": "Cyber Police ESWAT (set 4, World) (bootleg of FD1094 317-0130 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "eswat"
+    },
+    {
+      "name": "eswatj",
+      "title": "Cyber Police ESWAT (set 2, Japan) (FD1094 317-0128)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "eswat"
+    },
+    {
+      "name": "eswatj1",
+      "title": "Cyber Police ESWAT (set 1, Japan) (FD1094 317-0131)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "eswat"
+    },
+    {
+      "name": "eswatj1d",
+      "title": "Cyber Police ESWAT (set 1, Japan) (bootleg of FD1094 317-0131 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "eswat"
+    },
+    {
+      "name": "eswatjd",
+      "title": "Cyber Police ESWAT (set 2, Japan) (bootleg of FD1094 317-0128 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "eswat"
+    },
+    {
+      "name": "eswatu",
+      "title": "Cyber Police ESWAT (set 3, US) (FD1094 317-0129)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "eswat"
+    },
+    {
+      "name": "eswatud",
+      "title": "Cyber Police ESWAT (set 3, US) (bootleg of FD1094 317-0129 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "eswat"
+    },
+    {
+      "name": "exctleag",
+      "title": "Excite League (FD1094 317-0079)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "exctleagd",
+      "title": "Excite League (bootleg of FD1094 317-0079 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "exctleag"
+    },
+    {
+      "name": "fantzn2x",
+      "title": "Fantasy Zone II - The Tears of Opa-Opa (System 16C version)",
+      "year": "2008",
+      "manufacturer": "Sega / M2",
+      "parent": null
+    },
+    {
+      "name": "fantzn2xp",
+      "title": "Fantasy Zone II - The Tears of Opa-Opa (System 16C version, prototype)",
+      "year": "2008",
+      "manufacturer": "Sega / M2",
+      "parent": "fantzn2x"
+    },
+    {
+      "name": "fantzoneta",
+      "title": "Fantasy Zone (Time Attack, bootleg)",
+      "year": "2008",
+      "manufacturer": "bootleg",
+      "parent": "fantzone"
+    },
+    {
+      "name": "fpoint",
+      "title": "Flash Point (set 2, Japan) (FD1094 317-0127A)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "fpoint1",
+      "title": "Flash Point (set 1, Japan) (FD1094 317-0127A)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "fpoint"
+    },
+    {
+      "name": "fpoint1d",
+      "title": "Flash Point (set 1, Japan) (bootleg of FD1094 317-0127A set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "fpoint"
+    },
+    {
+      "name": "fpointbj",
+      "title": "Flash Point (Japan, bootleg set 1)",
+      "year": "1989",
+      "manufacturer": "bootleg (Datsu)",
+      "parent": "fpoint"
+    },
+    {
+      "name": "fpointbl",
+      "title": "Flash Point (World, bootleg)",
+      "year": "1989",
+      "manufacturer": "bootleg (Datsu)",
+      "parent": "fpoint"
+    },
+    {
+      "name": "fpointbla",
+      "title": "Flash Point (Japan, bootleg set 2)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "fpoint"
+    },
+    {
+      "name": "fpointd",
+      "title": "Flash Point (set 2, Japan) (bootleg of FD1094 317-0127A set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "fpoint"
+    },
+    {
+      "name": "goldnaxe",
+      "title": "Golden Axe (set 6, US) (8751 317-123A)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "goldnaxe1",
+      "title": "Golden Axe (set 1, World) (FD1094 317-0110)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "goldnaxe"
+    },
+    {
+      "name": "goldnaxe1d",
+      "title": "Golden Axe (set 1, World) (bootleg of FD1094 317-0110 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "goldnaxe"
+    },
+    {
+      "name": "goldnaxe2",
+      "title": "Golden Axe (set 2, US) (8751 317-0112)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "goldnaxe"
+    },
+    {
+      "name": "goldnaxe3",
+      "title": "Golden Axe (set 3, World) (FD1094 317-0120)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "goldnaxe"
+    },
+    {
+      "name": "goldnaxe3d",
+      "title": "Golden Axe (set 3, World) (bootleg of FD1094 317-0120 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "goldnaxe"
+    },
+    {
+      "name": "goldnaxej",
+      "title": "Golden Axe (set 4, Japan) (FD1094 317-0121)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "goldnaxe"
+    },
+    {
+      "name": "goldnaxejd",
+      "title": "Golden Axe (set 4, Japan) (bootleg of FD1094 317-0121 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "goldnaxe"
+    },
+    {
+      "name": "goldnaxeu",
+      "title": "Golden Axe (set 5, US) (FD1094 317-0122)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "goldnaxe"
+    },
+    {
+      "name": "goldnaxeud",
+      "title": "Golden Axe (set 5, US) (bootleg of FD1094 317-0122 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "goldnaxe"
+    },
+    {
+      "name": "hwchamp",
+      "title": "Heavyweight Champ (set 1)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "hwchampa",
+      "title": "Heavyweight Champ (set 2)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "hwchamp"
+    },
+    {
+      "name": "hwchampj",
+      "title": "Heavyweight Champ (Japan) (FD1094 317-0046)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "hwchamp"
+    },
+    {
+      "name": "hwchampjd",
+      "title": "Heavyweight Champ (Japan) (bootleg of FD1094 317-0046 set)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "hwchamp"
+    },
+    {
+      "name": "lockonph",
+      "title": "Lock On (Philko)",
+      "year": "1991",
+      "manufacturer": "Philko",
+      "parent": null
+    },
+    {
+      "name": "mvp",
+      "title": "MVP (set 2, US) (FD1094 317-0143)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "mvpd",
+      "title": "MVP (set 2, US) (bootleg of FD1094 317-0143 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "mvp"
+    },
+    {
+      "name": "mvpj",
+      "title": "MVP (set 1, Japan) (FD1094 317-0142)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "mvp"
+    },
+    {
+      "name": "mvpjd",
+      "title": "MVP (set 1, Japan) (bootleg of FD1094 317-0142 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "mvp"
+    },
+    {
+      "name": "passsht",
+      "title": "Passing Shot (World, 2 Players) (FD1094 317-0080)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "passshta",
+      "title": "Passing Shot (World, 4 Players) (FD1094 317-0074)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "passsht"
+    },
+    {
+      "name": "passshtad",
+      "title": "Passing Shot (World, 4 Players) (bootleg of FD1094 317-0074 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "passsht"
+    },
+    {
+      "name": "passshtd",
+      "title": "Passing Shot (World, 2 Players) (bootleg of FD1094 317-0080 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "passsht"
+    },
+    {
+      "name": "passshtj",
+      "title": "Passing Shot (Japan, 4 Players) (FD1094 317-0070)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "passsht"
+    },
+    {
+      "name": "passshtjd",
+      "title": "Passing Shot (Japan, 4 Players) (bootleg of FD1094 317-0070 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "passsht"
+    },
+    {
+      "name": "riotcity",
+      "title": "Riot City (Japan)",
+      "year": "1991",
+      "manufacturer": "Sega / Westone",
+      "parent": null
+    },
+    {
+      "name": "ryukyu",
+      "title": "RyuKyu (Rev A, Japan) (FD1094 317-5023A)",
+      "year": "1990",
+      "manufacturer": "Success / Sega",
+      "parent": null
+    },
+    {
+      "name": "ryukyua",
+      "title": "RyuKyu (Japan) (FD1094 317-5023)",
+      "year": "1990",
+      "manufacturer": "Success / Sega",
+      "parent": "ryukyu"
+    },
+    {
+      "name": "ryukyud",
+      "title": "RyuKyu (Japan) (bootleg of FD1094 317-5023 set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "ryukyu"
+    },
+    {
+      "name": "sdib",
+      "title": "SDI - Strategic Defense Initiative (System 16B, FD1089A 317-0028)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "sdi"
+    },
+    {
+      "name": "sdibl",
+      "title": "SDI - Strategic Defense Initiative (bootleg, original hardware)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "sdi"
+    },
+    {
+      "name": "sdibl2",
+      "title": "SDI - Strategic Defense Initiative (bootleg, set 1)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "sdi"
+    },
+    {
+      "name": "sdibl3",
+      "title": "SDI - Strategic Defense Initiative (bootleg, set 2)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "sdi"
+    },
+    {
+      "name": "sdibl4",
+      "title": "SDI - Strategic Defense Initiative (bootleg, set 3)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "sdi"
+    },
+    {
+      "name": "sdibl5",
+      "title": "SDI - Strategic Defense Initiative (bootleg, set 4)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "sdi"
+    },
+    {
+      "name": "sdibl6",
+      "title": "SDI - Strategic Defense Initiative (bootleg, set 5)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "sdi"
+    },
+    {
+      "name": "shinobi2",
+      "title": "Shinobi (set 2, System 16B) (FD1094 317-0049)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "shinobi"
+    },
+    {
+      "name": "shinobi2d",
+      "title": "Shinobi (set 2, System 16B) (bootleg of FD1094 317-0049 set)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "shinobi"
+    },
+    {
+      "name": "shinobi3",
+      "title": "Shinobi (set 3, System 16B) (MC-8123B 317-0054)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "shinobi"
+    },
+    {
+      "name": "shinobi4",
+      "title": "Shinobi (set 4, System 16B) (MC-8123B 317-0054)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "shinobi"
+    },
+    {
+      "name": "shinobi5",
+      "title": "Shinobi (set 5, System 16B) (unprotected)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "shinobi"
+    },
+    {
+      "name": "shinobi6",
+      "title": "Shinobi (set 6, System 16B) (unprotected)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "shinobi"
+    },
+    {
+      "name": "sjryuko",
+      "title": "Sukeban Jansi Ryuko (set 2, System 16B, FD1089B 317-5021)",
+      "year": "1988",
+      "manufacturer": "White Board",
+      "parent": null
+    },
+    {
+      "name": "snapper",
+      "title": "Snapper (Korea)",
+      "year": "1990",
+      "manufacturer": "Philko",
+      "parent": null
+    },
+    {
+      "name": "sonicbom",
+      "title": "Sonic Boom (FD1094 317-0053)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "sonicbomd",
+      "title": "Sonic Boom (bootleg of FD1094 317-0053 set)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "sonicbom"
+    },
+    {
+      "name": "suprleag",
+      "title": "Super League (FD1094 317-0045)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "tetris1",
+      "title": "Tetris (set 1, Japan, System 16B) (FD1094 317-0091)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "tetris"
+    },
+    {
+      "name": "tetris1d",
+      "title": "Tetris (set 1, Japan, System 16B) (bootleg of FD1094 317-0091 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "tetris"
+    },
+    {
+      "name": "tetris2",
+      "title": "Tetris (set 2, Japan, System 16B) (FD1094 317-0092)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "tetris"
+    },
+    {
+      "name": "tetris2d",
+      "title": "Tetris (set 2, Japan, System 16B) (bootleg of FD1094 317-0092 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "tetris"
+    },
+    {
+      "name": "timescan",
+      "title": "Time Scanner (set 2, System 16B)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "timescan3",
+      "title": "Time Scanner (set 3, Japan, System 16B) (FD1089B 317-0024)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "timescan"
+    },
+    {
+      "name": "toryumon",
+      "title": "Toryumon",
+      "year": "1994",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "tturf",
+      "title": "Tough Turf (set 2, Japan) (8751 317-0104)",
+      "year": "1989",
+      "manufacturer": "Sega / Sunsoft",
+      "parent": null
+    },
+    {
+      "name": "tturfu",
+      "title": "Tough Turf (set 1, US) (8751 317-0099)",
+      "year": "1989",
+      "manufacturer": "Sega / Sunsoft",
+      "parent": "tturf"
+    },
+    {
+      "name": "ultracin",
+      "title": "Waku Waku Ultraman Racing",
+      "year": "1996",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "wb3",
+      "title": "Wonder Boy III - Monster Lair (set 6, World, System 16B) (8751 317-0098)",
+      "year": "1988",
+      "manufacturer": "Sega / Westone",
+      "parent": null
+    },
+    {
+      "name": "wb32",
+      "title": "Wonder Boy III - Monster Lair (set 2, Japan, System 16B) (FD1094 317-0085)",
+      "year": "1988",
+      "manufacturer": "Sega / Westone",
+      "parent": "wb3"
+    },
+    {
+      "name": "wb32d",
+      "title": "Wonder Boy III - Monster Lair (set 2, Japan, System 16B) (bootleg of FD1094 317-0085 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "wb3"
+    },
+    {
+      "name": "wb33",
+      "title": "Wonder Boy III - Monster Lair (set 3, World, System 16B) (FD1094 317-0089)",
+      "year": "1988",
+      "manufacturer": "Sega / Westone",
+      "parent": "wb3"
+    },
+    {
+      "name": "wb33d",
+      "title": "Wonder Boy III - Monster Lair (set 3, World, System 16B) (bootleg of FD1094 317-0089 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "wb3"
+    },
+    {
+      "name": "wb34",
+      "title": "Wonder Boy III - Monster Lair (set 4, Japan, System 16B) (FD1094 317-0087)",
+      "year": "1988",
+      "manufacturer": "Sega / Westone",
+      "parent": "wb3"
+    },
+    {
+      "name": "wb34d",
+      "title": "Wonder Boy III - Monster Lair (set 4, Japan, System 16B) (bootleg of FD1094 317-0087 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "wb3"
+    },
+    {
+      "name": "wfishing",
+      "title": "Wanpaku Fishing",
+      "year": "1996",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "wrestwar",
+      "title": "Wrestle War (set 3, World) (8751 317-0103)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "wrestwar1",
+      "title": "Wrestle War (set 1, Japan) (FD1094 317-0090)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "wrestwar"
+    },
+    {
+      "name": "wrestwar1d",
+      "title": "Wrestle War (set 1, Japan) (bootleg of FD1094 317-0090 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "wrestwar"
+    },
+    {
+      "name": "wrestwar2",
+      "title": "Wrestle War (set 2, World) (FD1094 317-0102)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "wrestwar"
+    },
+    {
+      "name": "wrestwar2d",
+      "title": "Wrestle War (set 2, World) (bootleg of FD1094 317-0102 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "wrestwar"
+    },
+    {
+      "name": "wwthomas",
+      "title": "Waku Waku Thomas (Japan)",
+      "year": "1993",
+      "manufacturer": "Banpresto",
+      "parent": null
+    }
+  ],
+  "sega_sys16a": [
+    {
+      "name": "aceattaca",
+      "title": "Ace Attacker (Japan, System 16A, FD1094 317-0060)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "aceattac"
+    },
+    {
+      "name": "afighter",
+      "title": "Action Fighter (FD1089A 317-0018)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "afightera",
+      "title": "Action Fighter (unprotected)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "afighter"
+    },
+    {
+      "name": "afighterb",
+      "title": "Action Fighter (unprotected, analog controls)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "afighter"
+    },
+    {
+      "name": "afighterc",
+      "title": "Action Fighter (FD1089B 317-unknown)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "afighter"
+    },
+    {
+      "name": "afighterd",
+      "title": "Action Fighter (FD1089B 317-unknown, analog controls)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "afighter"
+    },
+    {
+      "name": "alexkidd",
+      "title": "Alex Kidd: The Lost Stars (set 2, unprotected)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "alexkidd1",
+      "title": "Alex Kidd: The Lost Stars (set 1, FD1089A 317-0021)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "alexkidd"
+    },
+    {
+      "name": "aliensyn2",
+      "title": "Alien Syndrome (set 2, System 16A, FD1089A 317-0033)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "aliensyn"
+    },
+    {
+      "name": "aliensyn5",
+      "title": "Alien Syndrome (set 5, System 16A, FD1089B 317-0037)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "aliensyn"
+    },
+    {
+      "name": "aliensynjo",
+      "title": "Alien Syndrome (set 1, Japan, old, System 16A, FD1089A 317-0033)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "aliensyn"
+    },
+    {
+      "name": "bodyslam",
+      "title": "Body Slam (8751 317-0015)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "dumpmtmt",
+      "title": "Dump Matsumoto (Japan, 8751 317-0011a)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "bodyslam"
+    },
+    {
+      "name": "fantzone",
+      "title": "Fantasy Zone (Rev A, unprotected)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "fantzone1",
+      "title": "Fantasy Zone (unprotected)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "fantzone"
+    },
+    {
+      "name": "fantzonee",
+      "title": "Fantasy Zone (FD1089B 317-0016)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "fantzone"
+    },
+    {
+      "name": "fantzonep",
+      "title": "Fantasy Zone (317-5000)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "fantzone"
+    },
+    {
+      "name": "fantzonepr",
+      "title": "Fantasy Zone (prototype)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "fantzone"
+    },
+    {
+      "name": "mjleague",
+      "title": "Major League",
+      "year": "1985",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "passsht16a",
+      "title": "Passing Shot (Japan, 4 Players, System 16A) (FD1094 317-0071)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "passsht"
+    },
+    {
+      "name": "quartet",
+      "title": "Quartet (Rev A, 8751 315-5194)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "quartet2",
+      "title": "Quartet 2 (8751 317-0010)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "quartet"
+    },
+    {
+      "name": "quartet2a",
+      "title": "Quartet 2 (unprotected)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "quartet"
+    },
+    {
+      "name": "quarteta",
+      "title": "Quartet (8751 315-5194)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "quartet"
+    },
+    {
+      "name": "sdi",
+      "title": "SDI - Strategic Defense Initiative (Japan, newer, System 16A, FD1089B 317-0027)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "sdia",
+      "title": "SDI - Strategic Defense Initiative (Japan, old, System 16A, FD1089B 317-0027)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "sdi"
+    },
+    {
+      "name": "shinobi",
+      "title": "Shinobi (set 6, System 16A) (unprotected)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "shinobi1",
+      "title": "Shinobi (set 1, System 16A) (FD1094 317-0050)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "shinobi"
+    },
+    {
+      "name": "shinobi1d",
+      "title": "Shinobi (set 1, System 16A) (bootleg of FD1094 317-0050 set)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "shinobi"
+    },
+    {
+      "name": "shinoblb",
+      "title": "Shinobi (Beta bootleg)",
+      "year": "1987",
+      "manufacturer": "bootleg (Beta)",
+      "parent": "shinobi"
+    },
+    {
+      "name": "shinobls",
+      "title": "Shinobi (Star bootleg, System 16A)",
+      "year": "1987",
+      "manufacturer": "bootleg (Star)",
+      "parent": "shinobi"
+    },
+    {
+      "name": "sjryuko1",
+      "title": "Sukeban Jansi Ryuko (set 1, System 16A, FD1089B 317-5021)",
+      "year": "1987",
+      "manufacturer": "White Board",
+      "parent": "sjryuko"
+    },
+    {
+      "name": "tetris",
+      "title": "Tetris (set 4, Japan, System 16A) (FD1094 317-0093)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "tetris3",
+      "title": "Tetris (set 3, Japan, System 16A) (FD1094 317-0093a)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "tetris"
+    },
+    {
+      "name": "tetris3d",
+      "title": "Tetris (set 3, Japan, System 16A) (bootleg of FD1094 317-0093a set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "tetris"
+    },
+    {
+      "name": "tetrisd",
+      "title": "Tetris (set 4, Japan, System 16A) (bootleg of FD1094 317-0093 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "tetris"
+    },
+    {
+      "name": "timescan1",
+      "title": "Time Scanner (set 1, System 16A, FD1089B 317-0024)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "timescan"
+    },
+    {
+      "name": "wb31",
+      "title": "Wonder Boy III - Monster Lair (set 1, Japan, System 16A) (FD1094 317-0084)",
+      "year": "1988",
+      "manufacturer": "Sega / Westone",
+      "parent": "wb3"
+    },
+    {
+      "name": "wb31d",
+      "title": "Wonder Boy III - Monster Lair (set 1, Japan, System 16A) (bootleg of FD1094 317-0084 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "wb3"
+    },
+    {
+      "name": "wb35",
+      "title": "Wonder Boy III - Monster Lair (set 5, Japan, System 16A) (FD1089A 317-0086)",
+      "year": "1988",
+      "manufacturer": "Sega / Westone",
+      "parent": "wb3"
+    },
+    {
+      "name": "wb35d",
+      "title": "Wonder Boy III - Monster Lair (set 5, Japan, System 16A) (bootleg of FD1089A 317-0086 set)",
+      "year": "1988",
+      "manufacturer": "bootleg",
+      "parent": "wb3"
+    }
+  ],
+  "nmk16": [
+    {
+      "name": "acrobatm",
+      "title": "Acrobat Mission",
+      "year": "1991",
+      "manufacturer": "UPL (Taito license)",
+      "parent": null
+    },
+    {
+      "name": "acrobatmbl",
+      "title": "Acrobat Mission (bootleg with Raiden sounds)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "acrobatm"
+    },
+    {
+      "name": "airattck",
+      "title": "Air Attack (set 1)",
+      "year": "1996",
+      "manufacturer": "Comad",
+      "parent": null
+    },
+    {
+      "name": "airattcka",
+      "title": "Air Attack (set 2)",
+      "year": "1996",
+      "manufacturer": "Comad",
+      "parent": "airattck"
+    },
+    {
+      "name": "arcadian",
+      "title": "Arcadia (NMK)",
+      "year": "1994",
+      "manufacturer": "NMK",
+      "parent": null
+    },
+    {
+      "name": "bigbang",
+      "title": "Big Bang (9th Nov. 1993, set 1)",
+      "year": "1993",
+      "manufacturer": "NMK",
+      "parent": "tdragon2"
+    },
+    {
+      "name": "bigbanga",
+      "title": "Big Bang (9th Nov. 1993, set 2)",
+      "year": "1993",
+      "manufacturer": "NMK",
+      "parent": "tdragon2"
+    },
+    {
+      "name": "bioship",
+      "title": "Bio-ship Paladin",
+      "year": "1990",
+      "manufacturer": "UPL (American Sammy license)",
+      "parent": null
+    },
+    {
+      "name": "bjtwin",
+      "title": "Bombjack Twin (set 1)",
+      "year": "1993",
+      "manufacturer": "NMK",
+      "parent": null
+    },
+    {
+      "name": "bjtwina",
+      "title": "Bombjack Twin (set 2)",
+      "year": "1993",
+      "manufacturer": "NMK",
+      "parent": "bjtwin"
+    },
+    {
+      "name": "bjtwinp",
+      "title": "Bombjack Twin (prototype? with adult pictures, set 1)",
+      "year": "1993",
+      "manufacturer": "NMK",
+      "parent": "bjtwin"
+    },
+    {
+      "name": "bjtwinpa",
+      "title": "Bombjack Twin (prototype? with adult pictures, set 2)",
+      "year": "1993",
+      "manufacturer": "NMK",
+      "parent": "bjtwin"
+    },
+    {
+      "name": "blkheart",
+      "title": "Black Heart",
+      "year": "1991",
+      "manufacturer": "UPL",
+      "parent": null
+    },
+    {
+      "name": "blkheartj",
+      "title": "Black Heart (Japan)",
+      "year": "1991",
+      "manufacturer": "UPL",
+      "parent": "blkheart"
+    },
+    {
+      "name": "bubl2000",
+      "title": "Bubble 2000",
+      "year": "1998",
+      "manufacturer": "Afega (Tuning license)",
+      "parent": null
+    },
+    {
+      "name": "bubl2000a",
+      "title": "Bubble 2000 V1.2",
+      "year": "1998",
+      "manufacturer": "Afega (Tuning license)",
+      "parent": "bubl2000"
+    },
+    {
+      "name": "cactus",
+      "title": "Cactus (bootleg of Saboten Bombers)",
+      "year": "1992",
+      "manufacturer": "bootleg",
+      "parent": "sabotenb"
+    },
+    {
+      "name": "dolmen",
+      "title": "Dolmen",
+      "year": "1995",
+      "manufacturer": "Afega",
+      "parent": null
+    },
+    {
+      "name": "dolmenk",
+      "title": "Goindol (Afega)",
+      "year": "1995",
+      "manufacturer": "Afega",
+      "parent": "dolmen"
+    },
+    {
+      "name": "firehawk",
+      "title": "Fire Hawk (World) / Huohu Chuanshuo (China) (horizontal)",
+      "year": "2001",
+      "manufacturer": "ESD",
+      "parent": "spec2k"
+    },
+    {
+      "name": "firehawkv",
+      "title": "Fire Hawk (World) / Huohu Chuanshuo (China) (switchable orientation)",
+      "year": "2001",
+      "manufacturer": "ESD",
+      "parent": "spec2k"
+    },
+    {
+      "name": "grdnstrm",
+      "title": "Guardian Storm (horizontal, not encrypted)",
+      "year": "1998",
+      "manufacturer": "Afega (Apples Industries license)",
+      "parent": null
+    },
+    {
+      "name": "grdnstrmau",
+      "title": "Guardian Storm (horizontal, Australia)",
+      "year": "1998",
+      "manufacturer": "Afega",
+      "parent": "grdnstrm"
+    },
+    {
+      "name": "grdnstrmg",
+      "title": "Guardian Storm (Germany)",
+      "year": "1998",
+      "manufacturer": "Afega",
+      "parent": "grdnstrm"
+    },
+    {
+      "name": "grdnstrmj",
+      "title": "Sen Jing - Guardian Storm (Japan)",
+      "year": "1998",
+      "manufacturer": "Afega",
+      "parent": "grdnstrm"
+    },
+    {
+      "name": "grdnstrmk",
+      "title": "Jeon Sin - Guardian Storm (Korea)",
+      "year": "1998",
+      "manufacturer": "Afega",
+      "parent": "grdnstrm"
+    },
+    {
+      "name": "grdnstrmv",
+      "title": "Guardian Storm (vertical)",
+      "year": "1998",
+      "manufacturer": "Afega (Apples Industries license)",
+      "parent": "grdnstrm"
+    },
+    {
+      "name": "gunnail",
+      "title": "GunNail (28th May. 1992)",
+      "year": "1993",
+      "manufacturer": "NMK / Tecmo",
+      "parent": null
+    },
+    {
+      "name": "gunnailb",
+      "title": "GunNail (bootleg)",
+      "year": "1992",
+      "manufacturer": "bootleg",
+      "parent": "gunnail"
+    },
+    {
+      "name": "gunnailp",
+      "title": "GunNail (location test)",
+      "year": "1992",
+      "manufacturer": "NMK",
+      "parent": "gunnail"
+    },
+    {
+      "name": "hachamf",
+      "title": "Hacha Mecha Fighter (19th Sep. 1991, protected, set 1)",
+      "year": "1991",
+      "manufacturer": "NMK",
+      "parent": null
+    },
+    {
+      "name": "hachamfa",
+      "title": "Hacha Mecha Fighter (19th Sep. 1991, protected, set 2)",
+      "year": "1991",
+      "manufacturer": "NMK",
+      "parent": "hachamf"
+    },
+    {
+      "name": "hachamfb",
+      "title": "Hacha Mecha Fighter (19th Sep. 1991, unprotected, bootleg Thunder Dragon conversion)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "hachamf"
+    },
+    {
+      "name": "hachamfb2",
+      "title": "Hacha Mecha Fighter (bootleg with Raiden sounds)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "hachamf"
+    },
+    {
+      "name": "hachamfp",
+      "title": "Hacha Mecha Fighter (Location Test Prototype, 19th Sep. 1991)",
+      "year": "1991",
+      "manufacturer": "NMK",
+      "parent": "hachamf"
+    },
+    {
+      "name": "hotbubl",
+      "title": "Hot Bubble (Korea, with adult pictures)",
+      "year": "1998",
+      "manufacturer": "Afega (Pandora license)",
+      "parent": "bubl2000"
+    },
+    {
+      "name": "hotbubla",
+      "title": "Hot Bubble (Korea)",
+      "year": "1998",
+      "manufacturer": "Afega (Pandora license)",
+      "parent": "bubl2000"
+    },
+    {
+      "name": "macross",
+      "title": "Super Spacefortress Macross / Chou-Jikuu Yousai Macross",
+      "year": "1992",
+      "manufacturer": "Banpresto",
+      "parent": null
+    },
+    {
+      "name": "macross2",
+      "title": "Super Spacefortress Macross II / Chou-Jikuu Yousai Macross II",
+      "year": "1993",
+      "manufacturer": "Banpresto",
+      "parent": null
+    },
+    {
+      "name": "macross2g",
+      "title": "Super Spacefortress Macross II / Chou-Jikuu Yousai Macross II (Gamest review build)",
+      "year": "1993",
+      "manufacturer": "Banpresto",
+      "parent": "macross2"
+    },
+    {
+      "name": "macross2k",
+      "title": "Macross II (Korea)",
+      "year": "1993",
+      "manufacturer": "Banpresto",
+      "parent": "macross2"
+    },
+    {
+      "name": "macrossbl",
+      "title": "Super Spacefortress Macross / Chou-Jikuu Yousai Macross (bootleg with Raiden sounds)",
+      "year": "199?",
+      "manufacturer": "bootleg",
+      "parent": "macross"
+    },
+    {
+      "name": "mangchi",
+      "title": "Mang-Chi",
+      "year": "2000",
+      "manufacturer": "Afega",
+      "parent": null
+    },
+    {
+      "name": "manybloc",
+      "title": "Many Block",
+      "year": "1991",
+      "manufacturer": "Bee-Oh",
+      "parent": null
+    },
+    {
+      "name": "mustang",
+      "title": "US AAF Mustang (25th May. 1990)",
+      "year": "1990",
+      "manufacturer": "UPL",
+      "parent": null
+    },
+    {
+      "name": "mustangb",
+      "title": "US AAF Mustang (bootleg, set 1)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "mustang"
+    },
+    {
+      "name": "mustangb2",
+      "title": "US AAF Mustang (TAB Austria bootleg)",
+      "year": "1990",
+      "manufacturer": "bootleg (TAB Austria)",
+      "parent": "mustang"
+    },
+    {
+      "name": "mustangb3",
+      "title": "US AAF Mustang (Lettering bootleg)",
+      "year": "1990",
+      "manufacturer": "bootleg (Lettering)",
+      "parent": "mustang"
+    },
+    {
+      "name": "mustangs",
+      "title": "US AAF Mustang (25th May. 1990 / Seoul Trading)",
+      "year": "1990",
+      "manufacturer": "UPL (Seoul Trading license)",
+      "parent": "mustang"
+    },
+    {
+      "name": "nouryoku",
+      "title": "Nouryoku Koujou Iinkai",
+      "year": "1995",
+      "manufacturer": "Tecmo",
+      "parent": null
+    },
+    {
+      "name": "nouryokup",
+      "title": "Nouryoku Koujou Iinkai (prototype)",
+      "year": "1995",
+      "manufacturer": "Tecmo",
+      "parent": "nouryoku"
+    },
+    {
+      "name": "popspops",
+      "title": "Pop's Pop's",
+      "year": "1999",
+      "manufacturer": "Afega",
+      "parent": null
+    },
+    {
+      "name": "powerins",
+      "title": "Power Instinct (USA)",
+      "year": "1993",
+      "manufacturer": "Atlus",
+      "parent": null
+    },
+    {
+      "name": "powerinsa",
+      "title": "Power Instinct (USA, bootleg set 1)",
+      "year": "1993",
+      "manufacturer": "bootleg",
+      "parent": "powerins"
+    },
+    {
+      "name": "powerinsb",
+      "title": "Power Instinct (USA, bootleg set 2)",
+      "year": "1993",
+      "manufacturer": "bootleg",
+      "parent": "powerins"
+    },
+    {
+      "name": "powerinsc",
+      "title": "Power Instinct (USA, bootleg set 3)",
+      "year": "1993",
+      "manufacturer": "bootleg (Electronic Devices)",
+      "parent": "powerins"
+    },
+    {
+      "name": "powerinsj",
+      "title": "Gouketsuji Ichizoku (Japan)",
+      "year": "1993",
+      "manufacturer": "Atlus",
+      "parent": "powerins"
+    },
+    {
+      "name": "powerinspj",
+      "title": "Gouketsuji Ichizoku (Japan, prototype)",
+      "year": "1993",
+      "manufacturer": "Atlus",
+      "parent": "powerins"
+    },
+    {
+      "name": "powerinspu",
+      "title": "Power Instinct (USA, prototype)",
+      "year": "1993",
+      "manufacturer": "Atlus",
+      "parent": "powerins"
+    },
+    {
+      "name": "raphero",
+      "title": "Rapid Hero (NMK)",
+      "year": "1994",
+      "manufacturer": "NMK",
+      "parent": "arcadian"
+    },
+    {
+      "name": "rapheroa",
+      "title": "Rapid Hero (Media Trading)",
+      "year": "1994",
+      "manufacturer": "NMK (Media Trading license)",
+      "parent": "arcadian"
+    },
+    {
+      "name": "redfoxwp2",
+      "title": "Hong Hu Zhanji II (China, set 1)",
+      "year": "1998",
+      "manufacturer": "Afega",
+      "parent": "grdnstrm"
+    },
+    {
+      "name": "redfoxwp2a",
+      "title": "Hong Hu Zhanji II (China, set 2)",
+      "year": "1998",
+      "manufacturer": "Afega",
+      "parent": "grdnstrm"
+    },
+    {
+      "name": "redhawk",
+      "title": "Red Hawk (USA, Canada & South America)",
+      "year": "1997",
+      "manufacturer": "Afega (New Vision Ent. license)",
+      "parent": "stagger1"
+    },
+    {
+      "name": "redhawkb",
+      "title": "Red Hawk (horizontal, bootleg)",
+      "year": "1997",
+      "manufacturer": "bootleg (Vince)",
+      "parent": "stagger1"
+    },
+    {
+      "name": "redhawke",
+      "title": "Red Hawk (Excellent Co., Ltd)",
+      "year": "1997",
+      "manufacturer": "Afega (Excellent Co. license)",
+      "parent": "stagger1"
+    },
+    {
+      "name": "redhawkg",
+      "title": "Red Hawk (horizontal, Greece)",
+      "year": "1997",
+      "manufacturer": "Afega",
+      "parent": "stagger1"
+    },
+    {
+      "name": "redhawki",
+      "title": "Red Hawk (horizontal, Italy)",
+      "year": "1997",
+      "manufacturer": "Afega (Hae Dong Corp license)",
+      "parent": "stagger1"
+    },
+    {
+      "name": "redhawkk",
+      "title": "Red Hawk (Korea)",
+      "year": "1997",
+      "manufacturer": "Afega",
+      "parent": "stagger1"
+    },
+    {
+      "name": "redhawks",
+      "title": "Red Hawk (horizontal, Spain, set 1)",
+      "year": "1997",
+      "manufacturer": "Afega (Hae Dong Corp license)",
+      "parent": "stagger1"
+    },
+    {
+      "name": "redhawksa",
+      "title": "Red Hawk (horizontal, Spain, set 2)",
+      "year": "1997",
+      "manufacturer": "Afega (Hae Dong Corp license)",
+      "parent": "stagger1"
+    },
+    {
+      "name": "sabotenb",
+      "title": "Saboten Bombers (set 1)",
+      "year": "1992",
+      "manufacturer": "NMK / Tecmo",
+      "parent": null
+    },
+    {
+      "name": "sabotenba",
+      "title": "Saboten Bombers (set 2)",
+      "year": "1992",
+      "manufacturer": "NMK / Tecmo",
+      "parent": "sabotenb"
+    },
+    {
+      "name": "sbsgomo",
+      "title": "Space Battle Ship Gomorrah (Japan)",
+      "year": "1990",
+      "manufacturer": "UPL",
+      "parent": "bioship"
+    },
+    {
+      "name": "spec2k",
+      "title": "Spectrum 2000 (vertical, Korea)",
+      "year": "2000",
+      "manufacturer": "Yona Tech",
+      "parent": null
+    },
+    {
+      "name": "spec2kh",
+      "title": "Spectrum 2000 (horizontal, buggy) (Europe)",
+      "year": "2000",
+      "manufacturer": "Yona Tech",
+      "parent": "spec2k"
+    },
+    {
+      "name": "ssmissin",
+      "title": "S.S. Mission",
+      "year": "1992",
+      "manufacturer": "Comad",
+      "parent": null
+    },
+    {
+      "name": "stagger1",
+      "title": "Stagger I (Japan)",
+      "year": "1998",
+      "manufacturer": "Afega",
+      "parent": null
+    },
+    {
+      "name": "strahl",
+      "title": "Koutetsu Yousai Strahl (World)",
+      "year": "1992",
+      "manufacturer": "UPL",
+      "parent": null
+    },
+    {
+      "name": "strahlj",
+      "title": "Koutetsu Yousai Strahl (Japan set 1)",
+      "year": "1992",
+      "manufacturer": "UPL",
+      "parent": "strahl"
+    },
+    {
+      "name": "strahlja",
+      "title": "Koutetsu Yousai Strahl (Japan set 2)",
+      "year": "1992",
+      "manufacturer": "UPL",
+      "parent": "strahl"
+    },
+    {
+      "name": "strahljbl",
+      "title": "Koutetsu Yousai Strahl (Japan, bootleg)",
+      "year": "1992",
+      "manufacturer": "bootleg",
+      "parent": "strahl"
+    },
+    {
+      "name": "tdragon",
+      "title": "Thunder Dragon (8th Jan. 1992, unprotected)",
+      "year": "1991",
+      "manufacturer": "NMK (Tecmo license)",
+      "parent": null
+    },
+    {
+      "name": "tdragon1",
+      "title": "Thunder Dragon (4th Jun. 1991, protected)",
+      "year": "1991",
+      "manufacturer": "NMK (Tecmo license)",
+      "parent": "tdragon"
+    },
+    {
+      "name": "tdragon2",
+      "title": "Thunder Dragon 2 (9th Nov. 1993)",
+      "year": "1993",
+      "manufacturer": "NMK",
+      "parent": null
+    },
+    {
+      "name": "tdragon2a",
+      "title": "Thunder Dragon 2 (1st Oct. 1993)",
+      "year": "1993",
+      "manufacturer": "NMK",
+      "parent": "tdragon2"
+    },
+    {
+      "name": "tdragon3h",
+      "title": "Thunder Dragon 3 (bootleg of Thunder Dragon 2)",
+      "year": "1996",
+      "manufacturer": "bootleg (Conny Co Ltd.)",
+      "parent": "tdragon2"
+    },
+    {
+      "name": "tdragonb",
+      "title": "Thunder Dragon (bootleg with Raiden sounds, encrypted)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "tdragon"
+    },
+    {
+      "name": "tdragonb2",
+      "title": "Thunder Dragon (bootleg with reduced sound system)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "tdragon"
+    },
+    {
+      "name": "tdragonb3",
+      "title": "Thunder Dragon (bootleg with Raiden sounds, unencrypted)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "tdragon"
+    },
+    {
+      "name": "tharrier",
+      "title": "Task Force Harrier",
+      "year": "1989",
+      "manufacturer": "UPL",
+      "parent": null
+    },
+    {
+      "name": "tharrierb",
+      "title": "Task Force Harrier (Lettering bootleg)",
+      "year": "1989",
+      "manufacturer": "bootleg (Lettering)",
+      "parent": "tharrier"
+    },
+    {
+      "name": "tharrieru",
+      "title": "Task Force Harrier (US)",
+      "year": "1989",
+      "manufacturer": "UPL (American Sammy license)",
+      "parent": "tharrier"
+    },
+    {
+      "name": "tomagic",
+      "title": "Tom Tom Magic",
+      "year": "1997",
+      "manufacturer": "Hobbitron T.K.Trading Co. Ltd.",
+      "parent": null
+    },
+    {
+      "name": "twinactn",
+      "title": "Twin Action",
+      "year": "1995",
+      "manufacturer": "Afega",
+      "parent": null
+    },
+    {
+      "name": "vandyke",
+      "title": "Vandyke (Japan)",
+      "year": "1990",
+      "manufacturer": "UPL",
+      "parent": null
+    },
+    {
+      "name": "vandykeb",
+      "title": "Vandyke (bootleg with PIC16c57)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "vandyke"
+    },
+    {
+      "name": "vandykejal",
+      "title": "Vandyke (Jaleco, set 1)",
+      "year": "1990",
+      "manufacturer": "UPL (Jaleco license)",
+      "parent": "vandyke"
+    },
+    {
+      "name": "vandykejal2",
+      "title": "Vandyke (Jaleco, set 2)",
+      "year": "1990",
+      "manufacturer": "UPL (Jaleco license)",
+      "parent": "vandyke"
+    }
+  ],
+  "video_system": [
+    {
+      "name": "aerofgt",
+      "title": "Aero Fighters (World / USA + Canada / Korea / Hong Kong / Taiwan) (newer hardware)",
+      "year": "1992",
+      "manufacturer": "Video System Co.",
+      "parent": null
+    }
+  ],
+  "cave_68k": [
+    {
+      "name": "agallet",
+      "title": "Air Gallet (Europe)",
+      "year": "1996",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": null
+    },
+    {
+      "name": "agalleta",
+      "title": "Air Gallet (older, Europe)",
+      "year": "1996",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "agallet"
+    },
+    {
+      "name": "agalletah",
+      "title": "Air Gallet (older, Hong Kong)",
+      "year": "1996",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "agallet"
+    },
+    {
+      "name": "agalletaj",
+      "title": "Akuu Gallet (older, Japan)",
+      "year": "1996",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "agallet"
+    },
+    {
+      "name": "agalletak",
+      "title": "Air Gallet (older, Korea)",
+      "year": "1996",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "agallet"
+    },
+    {
+      "name": "agalletat",
+      "title": "Air Gallet (older, Taiwan)",
+      "year": "1996",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "agallet"
+    },
+    {
+      "name": "agalletau",
+      "title": "Air Gallet (older, USA)",
+      "year": "1996",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "agallet"
+    },
+    {
+      "name": "agalleth",
+      "title": "Air Gallet (Hong Kong)",
+      "year": "1996",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "agallet"
+    },
+    {
+      "name": "agalletj",
+      "title": "Akuu Gallet (Japan)",
+      "year": "1996",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "agallet"
+    },
+    {
+      "name": "agalletk",
+      "title": "Air Gallet (Korea)",
+      "year": "1996",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "agallet"
+    },
+    {
+      "name": "agallett",
+      "title": "Air Gallet (Taiwan)",
+      "year": "1996",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "agallet"
+    },
+    {
+      "name": "agalletu",
+      "title": "Air Gallet (USA)",
+      "year": "1996",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "agallet"
+    },
+    {
+      "name": "cellage",
+      "title": "Cellage",
+      "year": "1996",
+      "manufacturer": "Yujin / Namco",
+      "parent": null
+    },
+    {
+      "name": "crusherm",
+      "title": "Crusher Makochan (Japan)",
+      "year": "1999",
+      "manufacturer": "Takumi",
+      "parent": null
+    },
+    {
+      "name": "ddonpach",
+      "title": "DoDonPachi (World, 1997 2/ 5 Master Ver.)",
+      "year": "1997",
+      "manufacturer": "Cave (Atlus license)",
+      "parent": null
+    },
+    {
+      "name": "ddonpacha",
+      "title": "DoDonPachi (2012/02/12 Arrange Ver. 1.1) (hack)",
+      "year": "2012",
+      "manufacturer": "hack (trap15)",
+      "parent": "ddonpach"
+    },
+    {
+      "name": "ddonpachj",
+      "title": "DoDonPachi (Japan, 1997 2/ 5 Master Ver.)",
+      "year": "1997",
+      "manufacturer": "Cave (Atlus license)",
+      "parent": "ddonpach"
+    },
+    {
+      "name": "dfeveron",
+      "title": "Dangun Feveron (Japan, 98/09/17 VER.)",
+      "year": "1998",
+      "manufacturer": "Cave (Nihon System license)",
+      "parent": "feversos"
+    },
+    {
+      "name": "donpachi",
+      "title": "DonPachi (US)",
+      "year": "1995",
+      "manufacturer": "Cave (Atlus license)",
+      "parent": null
+    },
+    {
+      "name": "donpachihk",
+      "title": "DonPachi (Hong Kong)",
+      "year": "1995",
+      "manufacturer": "Cave (Atlus license)",
+      "parent": "donpachi"
+    },
+    {
+      "name": "donpachij",
+      "title": "DonPachi (Japan)",
+      "year": "1995",
+      "manufacturer": "Cave (Atlus license)",
+      "parent": "donpachi"
+    },
+    {
+      "name": "donpachijs",
+      "title": "DonPachi (Japan, Satsuei version)",
+      "year": "1995",
+      "manufacturer": "Cave (Atlus license)",
+      "parent": "donpachi"
+    },
+    {
+      "name": "donpachikr",
+      "title": "DonPachi (Korea)",
+      "year": "1995",
+      "manufacturer": "Cave (Atlus license)",
+      "parent": "donpachi"
+    },
+    {
+      "name": "esprade",
+      "title": "ESP Ra.De. (World, 1998 4/22 International Ver.)",
+      "year": "1998",
+      "manufacturer": "Cave (Atlus license)",
+      "parent": null
+    },
+    {
+      "name": "espradej",
+      "title": "ESP Ra.De. (Japan, 1998 4/21 Master Ver.)",
+      "year": "1998",
+      "manufacturer": "Cave (Atlus license)",
+      "parent": "esprade"
+    },
+    {
+      "name": "espradejo",
+      "title": "ESP Ra.De. (Japan, 1998 4/14 Master Ver.)",
+      "year": "1998",
+      "manufacturer": "Cave (Atlus license)",
+      "parent": "esprade"
+    },
+    {
+      "name": "feversos",
+      "title": "Fever SOS (World, 98/09/25 VER)",
+      "year": "1998",
+      "manufacturer": "Cave (Nihon System license)",
+      "parent": null
+    },
+    {
+      "name": "gaia",
+      "title": "Gaia Crusaders",
+      "year": "1999",
+      "manufacturer": "Noise Factory",
+      "parent": null
+    },
+    {
+      "name": "guwange",
+      "title": "Guwange (Japan, 1999 6/24 Master Ver 16:55)",
+      "year": "1999",
+      "manufacturer": "Cave (Atlus license)",
+      "parent": null
+    },
+    {
+      "name": "guwanges",
+      "title": "Guwange (Japan, 2000 7/ 7 Special Ver 13:22)",
+      "year": "1999",
+      "manufacturer": "Cave (Atlus license)",
+      "parent": "guwange"
+    },
+    {
+      "name": "hotdogst",
+      "title": "Hotdog Storm (Korea)",
+      "year": "1996",
+      "manufacturer": "Marble (Ace International license)",
+      "parent": null
+    },
+    {
+      "name": "jumbogod",
+      "title": "Jumbo Godzilla",
+      "year": "1995",
+      "manufacturer": "Namco",
+      "parent": null
+    },
+    {
+      "name": "korokoro",
+      "title": "Koro Koro Quest (Japan)",
+      "year": "1999",
+      "manufacturer": "Takumi",
+      "parent": null
+    },
+    {
+      "name": "mazinger",
+      "title": "Mazinger Z (World)",
+      "year": "1994",
+      "manufacturer": "Banpresto / Dynamic Pl. Toei Animation",
+      "parent": null
+    },
+    {
+      "name": "mazingerj",
+      "title": "Mazinger Z (Japan)",
+      "year": "1994",
+      "manufacturer": "Banpresto / Dynamic Pl. Toei Animation",
+      "parent": "mazinger"
+    },
+    {
+      "name": "metmqstr",
+      "title": "Metamoqester (World)",
+      "year": "1995",
+      "manufacturer": "Banpresto / Pandorabox",
+      "parent": null
+    },
+    {
+      "name": "nmaster",
+      "title": "Oni - The Ninja Master (Japan)",
+      "year": "1995",
+      "manufacturer": "Banpresto / Pandorabox",
+      "parent": "metmqstr"
+    },
+    {
+      "name": "paccarn",
+      "title": "Pac-Carnival",
+      "year": "1996",
+      "manufacturer": "Namco",
+      "parent": null
+    },
+    {
+      "name": "paceight",
+      "title": "Pac-Eight",
+      "year": "1996",
+      "manufacturer": "Namco",
+      "parent": null
+    },
+    {
+      "name": "pacslot",
+      "title": "Pac-Slot",
+      "year": "1996",
+      "manufacturer": "Namco",
+      "parent": null
+    },
+    {
+      "name": "plegends",
+      "title": "Gogetsuji Legends (US, Ver. 95.06.20)",
+      "year": "1995",
+      "manufacturer": "Atlus",
+      "parent": null
+    },
+    {
+      "name": "plegendsj",
+      "title": "Gouketsuji Gaiden - Saikyou Densetsu (Japan, Ver. 95.06.20)",
+      "year": "1995",
+      "manufacturer": "Atlus",
+      "parent": "plegends"
+    },
+    {
+      "name": "ppsatan",
+      "title": "Poka Poka Satan (Japan)",
+      "year": "1996",
+      "manufacturer": "Kato Seisakujo Co., Ltd.",
+      "parent": null
+    },
+    {
+      "name": "pwrinst2",
+      "title": "Power Instinct 2 (US, Ver. 94.04.08, set 1)",
+      "year": "1994",
+      "manufacturer": "Atlus",
+      "parent": null
+    },
+    {
+      "name": "pwrinst2a",
+      "title": "Power Instinct 2 (US, Ver. 94.04.08, set 2)",
+      "year": "1994",
+      "manufacturer": "Atlus",
+      "parent": "pwrinst2"
+    },
+    {
+      "name": "pwrinst2j",
+      "title": "Gouketsuji Ichizoku 2 (Japan, Ver. 94.04.08)",
+      "year": "1994",
+      "manufacturer": "Atlus",
+      "parent": "pwrinst2"
+    },
+    {
+      "name": "sailormn",
+      "title": "Pretty Soldier Sailor Moon (Version 95/03/22B, Europe)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": null
+    },
+    {
+      "name": "sailormnh",
+      "title": "Bishoujo Senshi Sailor Moon (Version 95/03/22B, Hong Kong)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnj",
+      "title": "Bishoujo Senshi Sailor Moon (Version 95/03/22B, Japan)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnk",
+      "title": "Pretty Soldier Sailor Moon (Version 95/03/22B, Korea)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnn",
+      "title": "Pretty Soldier Sailor Moon (Version 95/03/22, Europe)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnnh",
+      "title": "Bishoujo Senshi Sailor Moon (Version 95/03/22, Hong Kong)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnnj",
+      "title": "Bishoujo Senshi Sailor Moon (Version 95/03/22, Japan)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnnk",
+      "title": "Pretty Soldier Sailor Moon (Version 95/03/22, Korea)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnnt",
+      "title": "Bishoujo Senshi Sailor Moon (Version 95/03/22, Taiwan)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnnu",
+      "title": "Pretty Soldier Sailor Moon (Version 95/03/22, USA)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormno",
+      "title": "Pretty Soldier Sailor Moon (Version 95/03/21, Europe)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnoh",
+      "title": "Bishoujo Senshi Sailor Moon (Version 95/03/21, Hong Kong)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnoj",
+      "title": "Bishoujo Senshi Sailor Moon (Version 95/03/21, Japan)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnok",
+      "title": "Pretty Soldier Sailor Moon (Version 95/03/21, Korea)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnot",
+      "title": "Bishoujo Senshi Sailor Moon (Version 95/03/21, Taiwan)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnou",
+      "title": "Pretty Soldier Sailor Moon (Version 95/03/21, USA)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnt",
+      "title": "Bishoujo Senshi Sailor Moon (Version 95/03/22B, Taiwan)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "sailormnu",
+      "title": "Pretty Soldier Sailor Moon (Version 95/03/22B, USA)",
+      "year": "1995",
+      "manufacturer": "Gazelle (Banpresto license)",
+      "parent": "sailormn"
+    },
+    {
+      "name": "tekkenbs",
+      "title": "Tekken Battle Scratch",
+      "year": "1998",
+      "manufacturer": "Namco",
+      "parent": null
+    },
+    {
+      "name": "tekkencw",
+      "title": "Tekken Card World",
+      "year": "1997",
+      "manufacturer": "Namco",
+      "parent": null
+    },
+    {
+      "name": "theroes",
+      "title": "Thunder Heroes (set 1)",
+      "year": "2001",
+      "manufacturer": "Primetek Investments",
+      "parent": null
+    },
+    {
+      "name": "theroesa",
+      "title": "Thunder Heroes (set 2)",
+      "year": "2001",
+      "manufacturer": "Primetek Investments",
+      "parent": "theroes"
+    },
+    {
+      "name": "tjumpman",
+      "title": "Tobikose! Jumpman",
+      "year": "1999",
+      "manufacturer": "Namco",
+      "parent": null
+    },
+    {
+      "name": "uopoko",
+      "title": "Puzzle Uo Poko (World)",
+      "year": "1998",
+      "manufacturer": "Cave (Jaleco license)",
+      "parent": null
+    },
+    {
+      "name": "uopokoj",
+      "title": "Puzzle Uo Poko (Japan)",
+      "year": "1998",
+      "manufacturer": "Cave (Jaleco license)",
+      "parent": "uopoko"
+    }
+  ],
+  "irem_m72": [
+    {
+      "name": "airduel",
+      "title": "Air Duel (World, M82 hardware)",
+      "year": "1990",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "airdueljm72",
+      "title": "Air Duel (Japan, M72 hardware)",
+      "year": "1990",
+      "manufacturer": "Irem",
+      "parent": "airduel"
+    },
+    {
+      "name": "airduelm72",
+      "title": "Air Duel (World, M72 hardware)",
+      "year": "1990",
+      "manufacturer": "Irem",
+      "parent": "airduel"
+    },
+    {
+      "name": "airduelu",
+      "title": "Air Duel (US location test, M82 hardware)",
+      "year": "1990",
+      "manufacturer": "Irem America",
+      "parent": "airduel"
+    },
+    {
+      "name": "bchopper",
+      "title": "Battle Chopper (World)",
+      "year": "1987",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "cosmccop",
+      "title": "Cosmic Cop (World)",
+      "year": "1991",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "dbreed",
+      "title": "Dragon Breed (World, M81 hardware)",
+      "year": "1989",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "dbreedjm72",
+      "title": "Dragon Breed (Japan, M72 hardware)",
+      "year": "1989",
+      "manufacturer": "Irem",
+      "parent": "dbreed"
+    },
+    {
+      "name": "dbreedm72",
+      "title": "Dragon Breed (World, M72 hardware)",
+      "year": "1989",
+      "manufacturer": "Irem",
+      "parent": "dbreed"
+    },
+    {
+      "name": "dkgensan",
+      "title": "Daiku no Gensan (Japan, M84 hardware, set 1)",
+      "year": "1990",
+      "manufacturer": "Irem",
+      "parent": "hharry"
+    },
+    {
+      "name": "dkgensana",
+      "title": "Daiku no Gensan (Japan, M84 hardware, set 2)",
+      "year": "1990",
+      "manufacturer": "Irem",
+      "parent": "hharry"
+    },
+    {
+      "name": "dkgensanm72",
+      "title": "Daiku no Gensan (Japan, M72 hardware)",
+      "year": "1990",
+      "manufacturer": "Irem",
+      "parent": "hharry"
+    },
+    {
+      "name": "dkgensanm82",
+      "title": "Daiku no Gensan (Japan, M82 hardware)",
+      "year": "1990",
+      "manufacturer": "Irem",
+      "parent": "hharry"
+    },
+    {
+      "name": "gallop",
+      "title": "Armed Police Unit Gallop (Japan, M84 hardware)",
+      "year": "1991",
+      "manufacturer": "Irem",
+      "parent": "cosmccop"
+    },
+    {
+      "name": "gallopm72",
+      "title": "Armed Police Unit Gallop (Japan, M72 hardware)",
+      "year": "1991",
+      "manufacturer": "Irem",
+      "parent": "cosmccop"
+    },
+    {
+      "name": "hharry",
+      "title": "Hammerin' Harry (World, M81 hardware)",
+      "year": "1990",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "hharryb",
+      "title": "Hammerin' Harry (World, M84 hardware bootleg)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "hharry"
+    },
+    {
+      "name": "hharryb2",
+      "title": "Hammerin' Harry (Playmark bootleg)",
+      "year": "1990",
+      "manufacturer": "bootleg (Playmark)",
+      "parent": "hharry"
+    },
+    {
+      "name": "hharryu",
+      "title": "Hammerin' Harry (US, M84 hardware)",
+      "year": "1990",
+      "manufacturer": "Irem America",
+      "parent": "hharry"
+    },
+    {
+      "name": "imgfight",
+      "title": "Image Fight (World)",
+      "year": "1988",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "imgfightj",
+      "title": "Image Fight (Japan)",
+      "year": "1988",
+      "manufacturer": "Irem",
+      "parent": "imgfight"
+    },
+    {
+      "name": "imgfightjb",
+      "title": "Image Fight (Japan, bootleg)",
+      "year": "1988",
+      "manufacturer": "Irem",
+      "parent": "imgfight"
+    },
+    {
+      "name": "kengo",
+      "title": "Ken-Go (World)",
+      "year": "1991",
+      "manufacturer": "Irem",
+      "parent": "ltswords"
+    },
+    {
+      "name": "kengoj",
+      "title": "Ken-Go (Japan)",
+      "year": "1991",
+      "manufacturer": "Irem",
+      "parent": "ltswords"
+    },
+    {
+      "name": "loht",
+      "title": "Legend of Hero Tonma (World)",
+      "year": "1989",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "loht_ms",
+      "title": "Legend of Hero Tonma (Gaelco bootleg, Modular System)",
+      "year": "1989",
+      "manufacturer": "bootleg (Gaelco / Ervisa)",
+      "parent": "loht"
+    },
+    {
+      "name": "lohtb",
+      "title": "Legend of Hero Tonma (Playmark unprotected bootleg)",
+      "year": "1989",
+      "manufacturer": "bootleg (Playmark)",
+      "parent": "loht"
+    },
+    {
+      "name": "lohtb2",
+      "title": "Legend of Hero Tonma (Japan, bootleg with i8751)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "loht"
+    },
+    {
+      "name": "lohtb3",
+      "title": "Legend of Hero Tonma (World, bootleg with i8751)",
+      "year": "1997",
+      "manufacturer": "bootleg",
+      "parent": "loht"
+    },
+    {
+      "name": "lohtj",
+      "title": "Legend of Hero Tonma (Japan)",
+      "year": "1989",
+      "manufacturer": "Irem",
+      "parent": "loht"
+    },
+    {
+      "name": "ltswords",
+      "title": "Lightning Swords (World)",
+      "year": "1991",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "majtitle",
+      "title": "Major Title (World)",
+      "year": "1990",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "majtitlej",
+      "title": "Major Title (Japan)",
+      "year": "1990",
+      "manufacturer": "Irem",
+      "parent": "majtitle"
+    },
+    {
+      "name": "mrheli",
+      "title": "Mr. HELI no Daibouken (Japan)",
+      "year": "1987",
+      "manufacturer": "Irem",
+      "parent": "bchopper"
+    },
+    {
+      "name": "nspirit",
+      "title": "Ninja Spirit (World)",
+      "year": "1988",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "nspiritj",
+      "title": "Saigo no Nindou (Japan)",
+      "year": "1988",
+      "manufacturer": "Irem",
+      "parent": "nspirit"
+    },
+    {
+      "name": "poundfor",
+      "title": "Pound for Pound (World)",
+      "year": "1990",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "poundforj",
+      "title": "Pound for Pound (Japan)",
+      "year": "1990",
+      "manufacturer": "Irem",
+      "parent": "poundfor"
+    },
+    {
+      "name": "poundforu",
+      "title": "Pound for Pound (US)",
+      "year": "1990",
+      "manufacturer": "Irem America",
+      "parent": "poundfor"
+    },
+    {
+      "name": "rtype",
+      "title": "R-Type (World)",
+      "year": "1987",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "rtype2",
+      "title": "R-Type II (World)",
+      "year": "1989",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "rtype2j",
+      "title": "R-Type II (Japan)",
+      "year": "1989",
+      "manufacturer": "Irem",
+      "parent": "rtype2"
+    },
+    {
+      "name": "rtype2jc",
+      "title": "R-Type II (Japan, revision C)",
+      "year": "1989",
+      "manufacturer": "Irem",
+      "parent": "rtype2"
+    },
+    {
+      "name": "rtype2m82b",
+      "title": "R-Type II (Japan, bootleg M82 conversion)",
+      "year": "1997",
+      "manufacturer": "bootleg",
+      "parent": "rtype2"
+    },
+    {
+      "name": "rtypeb",
+      "title": "R-Type (World bootleg)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "rtype"
+    },
+    {
+      "name": "rtypej",
+      "title": "R-Type (Japan)",
+      "year": "1987",
+      "manufacturer": "Irem",
+      "parent": "rtype"
+    },
+    {
+      "name": "rtypejp",
+      "title": "R-Type (Japan prototype)",
+      "year": "1987",
+      "manufacturer": "Irem",
+      "parent": "rtype"
+    },
+    {
+      "name": "rtypem82b",
+      "title": "R-Type (Japan, bootleg M82 conversion)",
+      "year": "2009",
+      "manufacturer": "bootleg",
+      "parent": "rtype"
+    },
+    {
+      "name": "rtypeu",
+      "title": "R-Type (US)",
+      "year": "1987",
+      "manufacturer": "Irem (Nintendo of America license)",
+      "parent": "rtype"
+    },
+    {
+      "name": "xmultipl",
+      "title": "X Multiply (World, M81 hardware)",
+      "year": "1989",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "xmultiplm72",
+      "title": "X Multiply (Japan, M72 hardware)",
+      "year": "1989",
+      "manufacturer": "Irem",
+      "parent": "xmultipl"
+    }
+  ],
+  "taito_f3": [
+    {
+      "name": "akkanvdr",
+      "title": "Akkanbeder (Ver 2.5J 1995/06/14)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation",
+      "parent": "spcinv95"
+    },
+    {
+      "name": "arabianm",
+      "title": "Arabian Magic (Ver 1.0O 1992/07/06)",
+      "year": "1992",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "arabianmj",
+      "title": "Arabian Magic (Ver 1.0J 1992/07/06)",
+      "year": "1992",
+      "manufacturer": "Taito Corporation",
+      "parent": "arabianm"
+    },
+    {
+      "name": "arabianmu",
+      "title": "Arabian Magic (Ver 1.0A 1992/07/06)",
+      "year": "1992",
+      "manufacturer": "Taito America Corporation",
+      "parent": "arabianm"
+    },
+    {
+      "name": "arkretrn",
+      "title": "Arkanoid Returns (Ver 2.02O 1997/02/10)",
+      "year": "1997",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "arkretrnj",
+      "title": "Arkanoid Returns (Ver 2.02J 1997/02/10)",
+      "year": "1997",
+      "manufacturer": "Taito Corporation",
+      "parent": "arkretrn"
+    },
+    {
+      "name": "arkretrnu",
+      "title": "Arkanoid Returns (Ver 2.02A 1997/02/10)",
+      "year": "1997",
+      "manufacturer": "Taito Corporation",
+      "parent": "arkretrn"
+    },
+    {
+      "name": "bubblem",
+      "title": "Bubble Memories: The Story Of Bubble Bobble III (Ver 2.4O 1996/02/15)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "bubblemj",
+      "title": "Bubble Memories: The Story Of Bubble Bobble III (Ver 2.3J 1996/02/07)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation",
+      "parent": "bubblem"
+    },
+    {
+      "name": "bubblemu",
+      "title": "Bubble Memories: The Story Of Bubble Bobble III (Ver 2.5A 1996/02/21)",
+      "year": "1995",
+      "manufacturer": "Taito America Corporation",
+      "parent": "bubblem"
+    },
+    {
+      "name": "bublbob2",
+      "title": "Bubble Bobble II (Ver 2.6O 1994/12/16)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "bublbob2o",
+      "title": "Bubble Bobble II (Ver 2.5O 1994/10/05)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "bublbob2"
+    },
+    {
+      "name": "bublbob2p",
+      "title": "Bubble Bobble II (Ver 0.0J 1993/12/13, prototype)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "bublbob2"
+    },
+    {
+      "name": "bubsymphb",
+      "title": "Bubble Symphony (bootleg with OKI6295)",
+      "year": "1994",
+      "manufacturer": "bootleg",
+      "parent": "bublbob2"
+    },
+    {
+      "name": "bubsymphba",
+      "title": "Seoul Symphony (Bubble Symphony bootleg with OKI6295)",
+      "year": "1994",
+      "manufacturer": "bootleg (SOFTV)",
+      "parent": "bublbob2"
+    },
+    {
+      "name": "bubsymphe",
+      "title": "Bubble Symphony (Ver 2.5O 1994/10/05)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "bublbob2"
+    },
+    {
+      "name": "bubsymphj",
+      "title": "Bubble Symphony (Ver 2.5J 1994/10/05)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": "bublbob2"
+    },
+    {
+      "name": "bubsymphu",
+      "title": "Bubble Symphony (Ver 2.5A 1994/10/05)",
+      "year": "1994",
+      "manufacturer": "Taito America Corporation",
+      "parent": "bublbob2"
+    },
+    {
+      "name": "cleopatr",
+      "title": "Cleopatra Fortune (Ver 2.1J 1996/09/05)",
+      "year": "1996",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "cleopatro",
+      "title": "Cleopatra Fortune (Ver 2.1O 1996/09/05, bootleg)",
+      "year": "1996",
+      "manufacturer": "bootleg",
+      "parent": "cleopatr"
+    },
+    {
+      "name": "commandw",
+      "title": "Command War - Super Special Battle & War Game (Ver 0.0J, prototype)",
+      "year": "1992",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "cupfinal",
+      "title": "Taito Cup Finals (Ver 1.0O 1993/02/28)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "dankuga",
+      "title": "Dan-Ku-Ga (Ver 0.0J 1994/12/13, prototype)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "dariusg",
+      "title": "Darius Gaiden - Silver Hawk (Ver 2.5O 1994/09/19)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "dariusgj",
+      "title": "Darius Gaiden - Silver Hawk (Ver 2.5J 1994/09/19)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": "dariusg"
+    },
+    {
+      "name": "dariusgu",
+      "title": "Darius Gaiden - Silver Hawk (Ver 2.5A 1994/09/19)",
+      "year": "1994",
+      "manufacturer": "Taito America Corporation",
+      "parent": "dariusg"
+    },
+    {
+      "name": "dariusgx",
+      "title": "Darius Gaiden - Silver Hawk Extra Version (Ver 2.7J 1995/03/06) (Official Hack)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "dungeonm",
+      "title": "Dungeon Magic (Ver 2.1O 1994/02/18)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "lightbr"
+    },
+    {
+      "name": "dungeonmu",
+      "title": "Dungeon Magic (Ver 2.1A 1994/02/18)",
+      "year": "1993",
+      "manufacturer": "Taito America Corporation",
+      "parent": "lightbr"
+    },
+    {
+      "name": "elvact2u",
+      "title": "Elevator Action II (Ver 2.2A 1995/02/20)",
+      "year": "1994",
+      "manufacturer": "Taito America Corporation",
+      "parent": "elvactr"
+    },
+    {
+      "name": "elvactr",
+      "title": "Elevator Action Returns (Ver 2.2O 1995/02/20)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "elvactrj",
+      "title": "Elevator Action Returns (Ver 2.2J 1995/02/20)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": "elvactr"
+    },
+    {
+      "name": "gblchmp",
+      "title": "Global Champion (Ver 2.1A 1994/07/29)",
+      "year": "1994",
+      "manufacturer": "Taito America Corporation",
+      "parent": "kaiserkn"
+    },
+    {
+      "name": "gekiridn",
+      "title": "Gekirindan (Ver 2.3O 1995/09/21)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "gekiridnj",
+      "title": "Gekirindan (Ver 2.3J 1995/09/21)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation",
+      "parent": "gekiridn"
+    },
+    {
+      "name": "gseeker",
+      "title": "Grid Seeker: Project Storm Hammer (Ver 1.3O)",
+      "year": "1992",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "gseekerj",
+      "title": "Grid Seeker: Project Storm Hammer (Ver 1.3J)",
+      "year": "1992",
+      "manufacturer": "Taito Corporation",
+      "parent": "gseeker"
+    },
+    {
+      "name": "gseekeru",
+      "title": "Grid Seeker: Project Storm Hammer (Ver 1.3A)",
+      "year": "1992",
+      "manufacturer": "Taito America Corporation",
+      "parent": "gseeker"
+    },
+    {
+      "name": "gunlock",
+      "title": "Gunlock (Ver 2.3O 1994/01/20)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "gunlocko",
+      "title": "Gunlock (Ver 2.0O 1993/12/15)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "gunlock"
+    },
+    {
+      "name": "hthero93",
+      "title": "Hat Trick Hero '93 (Ver 1.0J 1993/02/28)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation",
+      "parent": "cupfinal"
+    },
+    {
+      "name": "hthero93u",
+      "title": "Hat Trick Hero '93 (Ver 1.0A 1993/02/28)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation",
+      "parent": "cupfinal"
+    },
+    {
+      "name": "hthero94",
+      "title": "Hat Trick Hero '94 (Ver 2.2A 1994/05/26)",
+      "year": "1994",
+      "manufacturer": "Taito America Corporation",
+      "parent": "intcup94"
+    },
+    {
+      "name": "hthero95",
+      "title": "Hat Trick Hero '95 (Ver 2.5J 1994/11/03)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": "pwrgoal"
+    },
+    {
+      "name": "hthero95a",
+      "title": "Hat Trick Hero '95 (Ver 2.6Asia 1994/11/17)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "pwrgoal"
+    },
+    {
+      "name": "hthero95u",
+      "title": "Hat Trick Hero '95 (Ver 2.5A 1994/11/03)",
+      "year": "1994",
+      "manufacturer": "Taito America Corporation",
+      "parent": "pwrgoal"
+    },
+    {
+      "name": "intcup94",
+      "title": "International Cup '94 (Ver 2.2O 1994/05/26)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "kaiserkn",
+      "title": "Kaiser Knuckle (Ver 2.1O 1994/07/29)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "kaiserknj",
+      "title": "Kaiser Knuckle (Ver 2.1J 1994/07/29)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": "kaiserkn"
+    },
+    {
+      "name": "kirameki",
+      "title": "Kirameki Star Road (Ver 2.10J 1997/08/29)",
+      "year": "1997",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "ktiger2",
+      "title": "Kyukyoku Tiger II (Ver 2.1J 1995/11/30)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation",
+      "parent": "tcobra2"
+    },
+    {
+      "name": "landmakr",
+      "title": "Land Maker (Ver 2.02O 1998/06/02)",
+      "year": "1998",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "landmakrj",
+      "title": "Land Maker (Ver 2.01J 1998/06/01)",
+      "year": "1998",
+      "manufacturer": "Taito Corporation",
+      "parent": "landmakr"
+    },
+    {
+      "name": "landmakrp",
+      "title": "Land Maker (Ver 2.02O 1998/06/02, prototype)",
+      "year": "1998",
+      "manufacturer": "Taito Corporation",
+      "parent": "landmakr"
+    },
+    {
+      "name": "lightbr",
+      "title": "Light Bringer (Ver 2.2O 1994/04/08)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "lightbrj",
+      "title": "Light Bringer (Ver 2.1J 1994/02/18)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation",
+      "parent": "lightbr"
+    },
+    {
+      "name": "pbobble2",
+      "title": "Puzzle Bobble 2 (Ver 2.3O 1995/07/31)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "pbobble2j",
+      "title": "Puzzle Bobble 2 (Ver 2.2J 1995/07/20)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation",
+      "parent": "pbobble2"
+    },
+    {
+      "name": "pbobble2o",
+      "title": "Puzzle Bobble 2 (Ver 2.2O 1995/07/20)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "pbobble2"
+    },
+    {
+      "name": "pbobble2u",
+      "title": "Bust-A-Move Again (Ver 2.3A 1995/07/31)",
+      "year": "1995",
+      "manufacturer": "Taito America Corporation",
+      "parent": "pbobble2"
+    },
+    {
+      "name": "pbobble2x",
+      "title": "Puzzle Bobble 2X (Ver 2.2J 1995/11/11)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation",
+      "parent": "pbobble2"
+    },
+    {
+      "name": "pbobble3",
+      "title": "Puzzle Bobble 3 (Ver 2.1O 1996/09/27)",
+      "year": "1996",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "pbobble3j",
+      "title": "Puzzle Bobble 3 (Ver 2.1J 1996/09/27)",
+      "year": "1996",
+      "manufacturer": "Taito Corporation",
+      "parent": "pbobble3"
+    },
+    {
+      "name": "pbobble3u",
+      "title": "Puzzle Bobble 3 (Ver 2.1A 1996/09/27)",
+      "year": "1996",
+      "manufacturer": "Taito Corporation",
+      "parent": "pbobble3"
+    },
+    {
+      "name": "pbobble4",
+      "title": "Puzzle Bobble 4 (Ver 2.04O 1997/12/19)",
+      "year": "1997",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "pbobble4j",
+      "title": "Puzzle Bobble 4 (Ver 2.04J 1997/12/19)",
+      "year": "1997",
+      "manufacturer": "Taito Corporation",
+      "parent": "pbobble4"
+    },
+    {
+      "name": "pbobble4u",
+      "title": "Puzzle Bobble 4 (Ver 2.04A 1997/12/19)",
+      "year": "1997",
+      "manufacturer": "Taito Corporation",
+      "parent": "pbobble4"
+    },
+    {
+      "name": "popnpop",
+      "title": "Pop'n Pop (Ver 2.07O 1998/02/09)",
+      "year": "1997",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "popnpopj",
+      "title": "Pop'n Pop (Ver 2.07J 1998/02/09)",
+      "year": "1997",
+      "manufacturer": "Taito Corporation",
+      "parent": "popnpop"
+    },
+    {
+      "name": "popnpopu",
+      "title": "Pop'n Pop (Ver 2.07A 1998/02/09)",
+      "year": "1997",
+      "manufacturer": "Taito Corporation",
+      "parent": "popnpop"
+    },
+    {
+      "name": "prmtmfgt",
+      "title": "Prime Time Fighter (Ver 2.1A 1993/05/21) (New Version)",
+      "year": "1993",
+      "manufacturer": "Taito America Corporation",
+      "parent": "trstar"
+    },
+    {
+      "name": "prmtmfgto",
+      "title": "Prime Time Fighter (Ver 2.1A 1993/05/21) (Old Version)",
+      "year": "1993",
+      "manufacturer": "Taito America Corporation",
+      "parent": "trstar"
+    },
+    {
+      "name": "puchicar",
+      "title": "Puchi Carat (Ver 2.02O 1997/10/29)",
+      "year": "1997",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "puchicarj",
+      "title": "Puchi Carat (Ver 2.02J 1997/10/29)",
+      "year": "1997",
+      "manufacturer": "Taito Corporation",
+      "parent": "puchicar"
+    },
+    {
+      "name": "puchicaru",
+      "title": "Puchi Carat (Ver 2.04A 1997/11/08)",
+      "year": "1997",
+      "manufacturer": "Taito America Corporation",
+      "parent": "puchicar"
+    },
+    {
+      "name": "pwrgoal",
+      "title": "Taito Power Goal (Ver 2.5O 1994/11/03)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "qtheater",
+      "title": "Quiz Theater - 3tsu no Monogatari (Ver 2.3J 1994/11/10)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "quizhuhu",
+      "title": "Moriguchi Hiroko no Quiz de Hyuu!Hyuu! (Ver 2.2J 1995/05/25)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "rayforce",
+      "title": "Ray Force (Ver 2.3A 1994/01/20)",
+      "year": "1993",
+      "manufacturer": "Taito America Corporation",
+      "parent": "gunlock"
+    },
+    {
+      "name": "rayforcej",
+      "title": "Ray Force (Ver 2.3J 1994/01/20)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation",
+      "parent": "gunlock"
+    },
+    {
+      "name": "recalh",
+      "title": "Recalhorn (Ver 1.42J 1994/5/11, prototype)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "ridingf",
+      "title": "Riding Fight (Ver 1.0O)",
+      "year": "1992",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "ridingfj",
+      "title": "Riding Fight (Ver 1.0J)",
+      "year": "1992",
+      "manufacturer": "Taito Corporation",
+      "parent": "ridingf"
+    },
+    {
+      "name": "ridingfu",
+      "title": "Riding Fight (Ver 1.0A)",
+      "year": "1992",
+      "manufacturer": "Taito America Corporation",
+      "parent": "ridingf"
+    },
+    {
+      "name": "ringrage",
+      "title": "Ring Rage (Ver 2.3O 1992/08/09)",
+      "year": "1992",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "ringragej",
+      "title": "Ring Rage (Ver 2.3J 1992/08/09)",
+      "year": "1992",
+      "manufacturer": "Taito Corporation",
+      "parent": "ringrage"
+    },
+    {
+      "name": "ringrageu",
+      "title": "Ring Rage (Ver 2.3A 1992/08/09)",
+      "year": "1992",
+      "manufacturer": "Taito America Corporation",
+      "parent": "ringrage"
+    },
+    {
+      "name": "scfinals",
+      "title": "Super Cup Finals (Ver 2.2O 1994/01/13, single PCB)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "scfinalso",
+      "title": "Super Cup Finals (Ver 2.1O 1993/11/19, single PCB)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "scfinals"
+    },
+    {
+      "name": "scfinalsoc",
+      "title": "Super Cup Finals (Ver 2.1O 1993/11/19, F3 Cartridge)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "scfinals"
+    },
+    {
+      "name": "spcinv95",
+      "title": "Space Invaders '95: The Attack Of Lunar Loonies (Ver 2.5O 1995/06/14)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "spcinv95u",
+      "title": "Space Invaders '95: The Attack Of Lunar Loonies (Ver 2.5A 1995/06/14)",
+      "year": "1995",
+      "manufacturer": "Taito America Corporation",
+      "parent": "spcinv95"
+    },
+    {
+      "name": "spcinvdj",
+      "title": "Space Invaders DX (Ver 2.6J 1994/09/14) (F3 Version)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": "spacedx"
+    },
+    {
+      "name": "tcobra2",
+      "title": "Twin Cobra II (Ver 2.1O 1995/11/30)",
+      "year": "1995",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "tcobra2u",
+      "title": "Twin Cobra II (Ver 2.1A 1995/11/30)",
+      "year": "1995",
+      "manufacturer": "Taito America Corporation",
+      "parent": "tcobra2"
+    },
+    {
+      "name": "trstar",
+      "title": "Top Ranking Stars (Ver 2.1O 1993/05/21) (New Version)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "trstarj",
+      "title": "Top Ranking Stars (Ver 2.1J 1993/05/21) (New Version)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation",
+      "parent": "trstar"
+    },
+    {
+      "name": "trstaro",
+      "title": "Top Ranking Stars (Ver 2.1O 1993/05/21) (Old Version)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "trstar"
+    },
+    {
+      "name": "trstaroj",
+      "title": "Top Ranking Stars (Ver 2.1J 1993/05/21) (Old Version)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation",
+      "parent": "trstar"
+    },
+    {
+      "name": "twinqix",
+      "title": "Twin Qix (Ver 1.0A 1995/01/17, prototype)",
+      "year": "1995",
+      "manufacturer": "Taito America Corporation",
+      "parent": null
+    }
+  ],
+  "taito_z": [
+    {
+      "name": "aquajack",
+      "title": "Aqua Jack (World)",
+      "year": "1990",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "aquajackj",
+      "title": "Aqua Jack (Japan)",
+      "year": "1990",
+      "manufacturer": "Taito Corporation",
+      "parent": "aquajack"
+    },
+    {
+      "name": "aquajacku",
+      "title": "Aqua Jack (US)",
+      "year": "1990",
+      "manufacturer": "Taito America Corporation",
+      "parent": "aquajack"
+    },
+    {
+      "name": "bshark",
+      "title": "Battle Shark (World)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "bsharkj",
+      "title": "Battle Shark (Japan)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation",
+      "parent": "bshark"
+    },
+    {
+      "name": "bsharkjjs",
+      "title": "Battle Shark (Japan, Joystick)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation",
+      "parent": "bshark"
+    },
+    {
+      "name": "bsharku",
+      "title": "Battle Shark (US)",
+      "year": "1989",
+      "manufacturer": "Taito America Corporation",
+      "parent": "bshark"
+    },
+    {
+      "name": "bsharkuo",
+      "title": "Battle Shark (US, older)",
+      "year": "1989",
+      "manufacturer": "Taito America Corporation",
+      "parent": "bshark"
+    },
+    {
+      "name": "chasehq",
+      "title": "Chase H.Q. (World)",
+      "year": "1988",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "chasehqj",
+      "title": "Chase H.Q. (Japan)",
+      "year": "1988",
+      "manufacturer": "Taito Corporation",
+      "parent": "chasehq"
+    },
+    {
+      "name": "chasehqju",
+      "title": "Chase H.Q. (Japan, upright?)",
+      "year": "1988",
+      "manufacturer": "Taito Corporation",
+      "parent": "chasehq"
+    },
+    {
+      "name": "chasehqu",
+      "title": "Chase H.Q. (US)",
+      "year": "1988",
+      "manufacturer": "Taito America Corporation",
+      "parent": "chasehq"
+    },
+    {
+      "name": "contcirc",
+      "title": "Continental Circus (World)",
+      "year": "1987",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "contcircj",
+      "title": "Continental Circus (Japan)",
+      "year": "1987",
+      "manufacturer": "Taito Corporation",
+      "parent": "contcirc"
+    },
+    {
+      "name": "contcircu",
+      "title": "Continental Circus (US set 1)",
+      "year": "1987",
+      "manufacturer": "Taito America Corporation",
+      "parent": "contcirc"
+    },
+    {
+      "name": "contcircua",
+      "title": "Continental Circus (US set 2)",
+      "year": "1987",
+      "manufacturer": "Taito America Corporation",
+      "parent": "contcirc"
+    },
+    {
+      "name": "dblaxle",
+      "title": "Double Axle (US, Rev 1, set 1)",
+      "year": "1991",
+      "manufacturer": "Taito America Corporation",
+      "parent": null
+    },
+    {
+      "name": "dblaxleu",
+      "title": "Double Axle (US)",
+      "year": "1991",
+      "manufacturer": "Taito America Corporation",
+      "parent": "dblaxle"
+    },
+    {
+      "name": "dblaxleua",
+      "title": "Double Axle (US, Rev 1, set 2)",
+      "year": "1991",
+      "manufacturer": "Taito America Corporation",
+      "parent": "dblaxle"
+    },
+    {
+      "name": "dblaxleul",
+      "title": "Double Axle (US, Rev 1, Linkable)",
+      "year": "1991",
+      "manufacturer": "Taito America Corporation",
+      "parent": "dblaxle"
+    },
+    {
+      "name": "enforce",
+      "title": "Enforce (World)",
+      "year": "1988",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "enforcej",
+      "title": "Enforce (Japan)",
+      "year": "1988",
+      "manufacturer": "Taito Corporation",
+      "parent": "enforce"
+    },
+    {
+      "name": "enforceja",
+      "title": "Enforce (Japan, Analog Controls)",
+      "year": "1988",
+      "manufacturer": "Taito Corporation",
+      "parent": "enforce"
+    },
+    {
+      "name": "nightstr",
+      "title": "Night Striker (World)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "nightstrj",
+      "title": "Night Striker (Japan)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation",
+      "parent": "nightstr"
+    },
+    {
+      "name": "nightstru",
+      "title": "Night Striker (US)",
+      "year": "1989",
+      "manufacturer": "Taito America Corporation",
+      "parent": "nightstr"
+    },
+    {
+      "name": "pwheelsj",
+      "title": "Power Wheels (Japan, Rev 2, Linkable)",
+      "year": "1991",
+      "manufacturer": "Taito Corporation",
+      "parent": "dblaxle"
+    },
+    {
+      "name": "racingb",
+      "title": "Racing Beat (World)",
+      "year": "1991",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "racingbj",
+      "title": "Racing Beat (Japan)",
+      "year": "1991",
+      "manufacturer": "Taito Corporation",
+      "parent": "racingb"
+    },
+    {
+      "name": "sci",
+      "title": "Special Criminal Investigation (World set 1)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "scia",
+      "title": "Special Criminal Investigation (World set 2)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "sci"
+    },
+    {
+      "name": "scij",
+      "title": "Special Criminal Investigation (Japan)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation",
+      "parent": "sci"
+    },
+    {
+      "name": "scin",
+      "title": "Super Special Criminal Investigation (Negro Torino hack)",
+      "year": "1991",
+      "manufacturer": "hack (Negro Torino)",
+      "parent": "sci"
+    },
+    {
+      "name": "sciu",
+      "title": "Special Criminal Investigation (US)",
+      "year": "1989",
+      "manufacturer": "Taito America Corporation",
+      "parent": "sci"
+    },
+    {
+      "name": "spacegun",
+      "title": "Space Gun (World)",
+      "year": "1990",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "spacegunj",
+      "title": "Space Gun (Japan)",
+      "year": "1990",
+      "manufacturer": "Taito Corporation",
+      "parent": "spacegun"
+    },
+    {
+      "name": "spacegunu",
+      "title": "Space Gun (US)",
+      "year": "1990",
+      "manufacturer": "Taito America Corporation",
+      "parent": "spacegun"
+    }
+  ],
+  "taito_b": [
+    {
+      "name": "ashura",
+      "title": "Ashura Blaster (World)",
+      "year": "1990",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "ashuraj",
+      "title": "Ashura Blaster (Japan)",
+      "year": "1990",
+      "manufacturer": "Taito Corporation",
+      "parent": "ashura"
+    },
+    {
+      "name": "ashurau",
+      "title": "Ashura Blaster (US)",
+      "year": "1990",
+      "manufacturer": "Taito America Corporation",
+      "parent": "ashura"
+    },
+    {
+      "name": "bublbust",
+      "title": "Bubble Buster (USA, B-System)",
+      "year": "1994",
+      "manufacturer": "Taito America Corporation",
+      "parent": "pbobble"
+    },
+    {
+      "name": "crimec",
+      "title": "Crime City (World)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "crimecj",
+      "title": "Crime City (Japan)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation",
+      "parent": "crimec"
+    },
+    {
+      "name": "crimecu",
+      "title": "Crime City (US)",
+      "year": "1989",
+      "manufacturer": "Taito America Corporation",
+      "parent": "crimec"
+    },
+    {
+      "name": "hitice",
+      "title": "Hit the Ice (US)",
+      "year": "1990",
+      "manufacturer": "Taito Corporation (Williams license)",
+      "parent": null
+    },
+    {
+      "name": "hiticej",
+      "title": "Hit the Ice (Japan)",
+      "year": "1990",
+      "manufacturer": "Taito Corporation (licensed from Midway)",
+      "parent": "hitice"
+    },
+    {
+      "name": "hiticerb",
+      "title": "Hit the Ice (US, with riser board)",
+      "year": "1990",
+      "manufacturer": "Taito Corporation (Williams license)",
+      "parent": "hitice"
+    },
+    {
+      "name": "masterw",
+      "title": "Master of Weapon (World)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "masterwj",
+      "title": "Master of Weapon (Japan)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation",
+      "parent": "masterw"
+    },
+    {
+      "name": "masterwu",
+      "title": "Master of Weapon (US)",
+      "year": "1989",
+      "manufacturer": "Taito America Corporation",
+      "parent": "masterw"
+    },
+    {
+      "name": "nastar",
+      "title": "Nastar (World)",
+      "year": "1988",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "nastarw",
+      "title": "Nastar Warrior (US)",
+      "year": "1988",
+      "manufacturer": "Taito America Corporation",
+      "parent": "nastar"
+    },
+    {
+      "name": "pbobble",
+      "title": "Puzzle Bobble (Japan, B-System)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "qzshowby",
+      "title": "Quiz Sekai wa SHOW by shobai (Japan)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "rambo3",
+      "title": "Rambo III (Europe)",
+      "year": "1989",
+      "manufacturer": "Taito Europe Corporation",
+      "parent": null
+    },
+    {
+      "name": "rambo3p",
+      "title": "Rambo III (Europe, Proto?)",
+      "year": "1989",
+      "manufacturer": "Taito Europe Corporation",
+      "parent": "rambo3"
+    },
+    {
+      "name": "rambo3u",
+      "title": "Rambo III (US)",
+      "year": "1989",
+      "manufacturer": "Taito America Corporation",
+      "parent": "rambo3"
+    },
+    {
+      "name": "rastsag2",
+      "title": "Rastan Saga 2 (Japan)",
+      "year": "1988",
+      "manufacturer": "Taito Corporation",
+      "parent": "nastar"
+    },
+    {
+      "name": "realpunc",
+      "title": "Real Puncher (World, v2.12O)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "realpuncj",
+      "title": "Real Puncher (Japan, v2.12J)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "realpunc"
+    },
+    {
+      "name": "ryujin",
+      "title": "Ryu Jin (Japan, ET910000B PCB)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "ryujina",
+      "title": "Ryu Jin (Japan, ET910000A PCB)",
+      "year": "1993",
+      "manufacturer": "Taito Corporation",
+      "parent": "ryujin"
+    },
+    {
+      "name": "sbm",
+      "title": "Sonic Blast Man (US)",
+      "year": "1990",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "sbmj",
+      "title": "Sonic Blast Man (Japan)",
+      "year": "1990",
+      "manufacturer": "Taito Corporation",
+      "parent": "sbm"
+    },
+    {
+      "name": "selfeena",
+      "title": "Sel Feena",
+      "year": "1991",
+      "manufacturer": "East Technology",
+      "parent": null
+    },
+    {
+      "name": "silentd",
+      "title": "Silent Dragon (World)",
+      "year": "1992",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "silentdj",
+      "title": "Silent Dragon (Japan)",
+      "year": "1992",
+      "manufacturer": "Taito Corporation",
+      "parent": "silentd"
+    },
+    {
+      "name": "silentdu",
+      "title": "Silent Dragon (US)",
+      "year": "1992",
+      "manufacturer": "Taito America Corporation",
+      "parent": "silentd"
+    },
+    {
+      "name": "spacedx",
+      "title": "Space Invaders DX (US, v2.1)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "spacedxj",
+      "title": "Space Invaders DX (Japan, v2.1)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": "spacedx"
+    },
+    {
+      "name": "spacedxo",
+      "title": "Space Invaders DX (Japan, v2.0)",
+      "year": "1994",
+      "manufacturer": "Taito Corporation",
+      "parent": "spacedx"
+    },
+    {
+      "name": "tetrist",
+      "title": "Tetris (Japan, Taito B-System, Nastar Conversion Kit)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "tetris"
+    },
+    {
+      "name": "tetrista",
+      "title": "Tetris (Japan, Taito B-System, Master of Weapon Conversion Kit)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "tetris"
+    },
+    {
+      "name": "viofight",
+      "title": "Violence Fight (World)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "viofightj",
+      "title": "Violence Fight (Japan)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation",
+      "parent": "viofight"
+    },
+    {
+      "name": "viofightu",
+      "title": "Violence Fight (US)",
+      "year": "1989",
+      "manufacturer": "Taito America Corporation",
+      "parent": "viofight"
+    },
+    {
+      "name": "yukiwo",
+      "title": "Yukiwo (World, prototype)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": "masterw"
+    }
+  ],
+  "sega_sys18": [
+    {
+      "name": "astorm",
+      "title": "Alien Storm (World, 2 Players) (FD1094 317-0154)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "astorm3",
+      "title": "Alien Storm (World, 3 Players) (FD1094 317-0148)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "astorm"
+    },
+    {
+      "name": "astorm3d",
+      "title": "Alien Storm (World, 3 Players) (bootleg of FD1094 317-0148 set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "astorm"
+    },
+    {
+      "name": "astormj",
+      "title": "Alien Storm (Japan, 2 Players) (FD1094 317-0146)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "astorm"
+    },
+    {
+      "name": "astormjd",
+      "title": "Alien Storm (Japan, 2 Players) (bootleg of FD1094 317-0146 set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "astorm"
+    },
+    {
+      "name": "astormu",
+      "title": "Alien Storm (US, 3 Players) (FD1094 317-0147)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "astorm"
+    },
+    {
+      "name": "astormud",
+      "title": "Alien Storm (US, 3 Players) (bootleg of FD1094 317-0147 set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "astorm"
+    },
+    {
+      "name": "bloxeed",
+      "title": "Bloxeed (Japan) (FD1094 317-0139)",
+      "year": "1989",
+      "manufacturer": "Sega / Elorg",
+      "parent": null
+    },
+    {
+      "name": "bloxeeda",
+      "title": "Bloxeed (Japan, earlier) (FD1094 317-0139)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "bloxeed"
+    },
+    {
+      "name": "bloxeedd",
+      "title": "Bloxeed (Japan) (bootleg of FD1094 317-0139 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "bloxeed"
+    },
+    {
+      "name": "cltchitr",
+      "title": "Clutch Hitter (US) (FD1094 317-0176)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "cltchitrd",
+      "title": "Clutch Hitter (US) (bootleg of FD1094 317-0176 set)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "cltchitr"
+    },
+    {
+      "name": "cltchitrj",
+      "title": "Clutch Hitter (Japan) (FD1094 317-0175)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": "cltchitr"
+    },
+    {
+      "name": "cltchitrjd",
+      "title": "Clutch Hitter (Japan) (bootleg of FD1094 317-0175 set)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "cltchitr"
+    },
+    {
+      "name": "ddcrew",
+      "title": "D. D. Crew (World, 3 Players) (FD1094 317-0190)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "ddcrew1",
+      "title": "D. D. Crew (World, 4 Players) (FD1094 317-0187)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": "ddcrew"
+    },
+    {
+      "name": "ddcrew1d",
+      "title": "D. D. Crew (World, 4 Players) (bootleg of FD1094 317-0187 set)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "ddcrew"
+    },
+    {
+      "name": "ddcrew2",
+      "title": "D. D. Crew (World, 2 Players) (FD1094 317-0184)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": "ddcrew"
+    },
+    {
+      "name": "ddcrew2d",
+      "title": "D. D. Crew (World, 2 Players) (bootleg of FD1094 317-0184 set)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "ddcrew"
+    },
+    {
+      "name": "ddcrewd",
+      "title": "D. D. Crew (World, 3 Players) (bootleg of FD1094 317-0190 set)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "ddcrew"
+    },
+    {
+      "name": "ddcrewj",
+      "title": "D. D. Crew (Japan, 4 Players) (FD1094 317-0185)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": "ddcrew"
+    },
+    {
+      "name": "ddcrewj2",
+      "title": "D. D. Crew (Japan, 2 Players) (FD1094 317-0182)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": "ddcrew"
+    },
+    {
+      "name": "ddcrewj2d",
+      "title": "D. D. Crew (Japan, 2 Players) (bootleg of FD1094 317-0182 set)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "ddcrew"
+    },
+    {
+      "name": "ddcrewjd",
+      "title": "D. D. Crew (Japan, 4 Players) (bootleg of FD1094 317-0185 set)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "ddcrew"
+    },
+    {
+      "name": "ddcrewu",
+      "title": "D. D. Crew (US, 4 Players) (FD1094 317-0186)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": "ddcrew"
+    },
+    {
+      "name": "ddcrewud",
+      "title": "D. D. Crew (US, 4 Players) (bootleg of FD1094 317-0186 set)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "ddcrew"
+    },
+    {
+      "name": "desertbr",
+      "title": "Desert Breaker (World) (FD1094 317-0196)",
+      "year": "1992",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "desertbrd",
+      "title": "Desert Breaker (World) (bootleg of FD1094 317-0196 set)",
+      "year": "1992",
+      "manufacturer": "bootleg",
+      "parent": "desertbr"
+    },
+    {
+      "name": "desertbrj",
+      "title": "Desert Breaker (Japan) (FD1094 317-0194)",
+      "year": "1992",
+      "manufacturer": "Sega",
+      "parent": "desertbr"
+    },
+    {
+      "name": "desertbrjd",
+      "title": "Desert Breaker (Japan) (bootleg of FD1094 317-0194 set)",
+      "year": "1992",
+      "manufacturer": "bootleg",
+      "parent": "desertbr"
+    },
+    {
+      "name": "hamaway",
+      "title": "Hammer Away (Japan, prototype)",
+      "year": "1991",
+      "manufacturer": "Sega / Santos",
+      "parent": null
+    },
+    {
+      "name": "lghost",
+      "title": "Laser Ghost (World) (FD1094 317-0166)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "lghostd",
+      "title": "Laser Ghost (World) (bootleg of FD1094 317-0166 set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "lghost"
+    },
+    {
+      "name": "lghostj",
+      "title": "Laser Ghost (Japan) (FD1094 317-0164)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "lghost"
+    },
+    {
+      "name": "lghostu",
+      "title": "Laser Ghost (US) (FD1094 317-0165)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "lghost"
+    },
+    {
+      "name": "lghostud",
+      "title": "Laser Ghost (US) (bootleg of FD1094 317-0165 set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "lghost"
+    },
+    {
+      "name": "mwalk",
+      "title": "Michael Jackson's Moonwalker (World) (FD1094/8751 317-0159)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "mwalkd",
+      "title": "Michael Jackson's Moonwalker (World) (bootleg of FD1094/8751 317-0159 set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "mwalk"
+    },
+    {
+      "name": "mwalkj",
+      "title": "Michael Jackson's Moonwalker (Japan) (FD1094/8751 317-0157)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "mwalk"
+    },
+    {
+      "name": "mwalkjd",
+      "title": "Michael Jackson's Moonwalker (Japan) (bootleg of FD1094/8751 317-0157 set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "mwalk"
+    },
+    {
+      "name": "mwalku",
+      "title": "Michael Jackson's Moonwalker (US) (FD1094/8751 317-0158)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "mwalk"
+    },
+    {
+      "name": "mwalkud",
+      "title": "Michael Jackson's Moonwalker (US) (bootleg of FD1094/8751 317-0158 set)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "mwalk"
+    },
+    {
+      "name": "pontoon",
+      "title": "Pontoon (FD1094 317-0153)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "pontoona",
+      "title": "Pontoon (FD1094 317-?)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "pontoon"
+    },
+    {
+      "name": "shdancer",
+      "title": "Shadow Dancer (World)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "shdancer1",
+      "title": "Shadow Dancer (US)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "shdancer"
+    },
+    {
+      "name": "shdancerj",
+      "title": "Shadow Dancer (Japan)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "shdancer"
+    },
+    {
+      "name": "wwallyj",
+      "title": "Wally wo Sagase! (rev B, Japan, 2 players) (FD1094 317-0197B)",
+      "year": "1992",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "wwallyja",
+      "title": "Wally wo Sagase! (rev A, Japan, 2 players) (FD1094 317-0197A)",
+      "year": "1992",
+      "manufacturer": "Sega",
+      "parent": "wwallyj"
+    },
+    {
+      "name": "wwallyja3p",
+      "title": "Wally wo Sagase! (rev A, Japan, 3 players) (FD1094 317-0198A)",
+      "year": "1992",
+      "manufacturer": "Sega",
+      "parent": "wwallyj"
+    },
+    {
+      "name": "wwallyjad",
+      "title": "Wally wo Sagase! (rev A, Japan) (bootleg of FD1094 317-0197A set)",
+      "year": "1992",
+      "manufacturer": "bootleg",
+      "parent": "wwallyj"
+    },
+    {
+      "name": "wwallyjd",
+      "title": "Wally wo Sagase! (rev B, Japan) (bootleg of FD1094 317-0197B set)",
+      "year": "1992",
+      "manufacturer": "bootleg",
+      "parent": "wwallyj"
+    }
+  ],
+  "seta1": [
+    {
+      "name": "atehate",
+      "title": "Athena no Hatena?",
+      "year": "1993",
+      "manufacturer": "Athena",
+      "parent": null
+    },
+    {
+      "name": "blandia",
+      "title": "Blandia",
+      "year": "1992",
+      "manufacturer": "Allumer",
+      "parent": null
+    },
+    {
+      "name": "blandiap",
+      "title": "Blandia (prototype)",
+      "year": "1992",
+      "manufacturer": "Allumer",
+      "parent": "blandia"
+    },
+    {
+      "name": "blockcar",
+      "title": "Block Carnival / Thunder & Lightning 2",
+      "year": "1992",
+      "manufacturer": "Visco",
+      "parent": null
+    },
+    {
+      "name": "blockcarb",
+      "title": "Block Carnival / Thunder & Lightning 2 (bootleg)",
+      "year": "1992",
+      "manufacturer": "bootleg",
+      "parent": "blockcar"
+    },
+    {
+      "name": "crazyfgt",
+      "title": "Crazy Fight",
+      "year": "1996",
+      "manufacturer": "Subsino",
+      "parent": null
+    },
+    {
+      "name": "daioh",
+      "title": "Daioh",
+      "year": "1993",
+      "manufacturer": "Athena",
+      "parent": null
+    },
+    {
+      "name": "daioha",
+      "title": "Daioh (earlier)",
+      "year": "1993",
+      "manufacturer": "Athena",
+      "parent": "daioh"
+    },
+    {
+      "name": "daiohc",
+      "title": "Daioh (93111A PCB conversion)",
+      "year": "1993",
+      "manufacturer": "Athena",
+      "parent": "daioh"
+    },
+    {
+      "name": "daiohp",
+      "title": "Daioh (prototype)",
+      "year": "1993",
+      "manufacturer": "Athena",
+      "parent": "daioh"
+    },
+    {
+      "name": "daiohp2",
+      "title": "Daioh (prototype, earlier)",
+      "year": "1993",
+      "manufacturer": "Athena",
+      "parent": "daioh"
+    },
+    {
+      "name": "daiohp3",
+      "title": "Daioh (prototype, earliest)",
+      "year": "1993",
+      "manufacturer": "Athena",
+      "parent": "daioh"
+    },
+    {
+      "name": "drgnunit",
+      "title": "Dragon Unit / Castle of Dragon",
+      "year": "1989",
+      "manufacturer": "Athena / Seta",
+      "parent": null
+    },
+    {
+      "name": "eightfrc",
+      "title": "Eight Forces",
+      "year": "1994",
+      "manufacturer": "Tecmo",
+      "parent": null
+    },
+    {
+      "name": "extdwnhl",
+      "title": "Extreme Downhill (v1.5)",
+      "year": "1995",
+      "manufacturer": "Sammy Industries Japan",
+      "parent": null
+    },
+    {
+      "name": "gderby",
+      "title": "Gran Derby (Spanish hack of Jockey Club)",
+      "year": "1990",
+      "manufacturer": "hack (CODERE)",
+      "parent": "jockeyc"
+    },
+    {
+      "name": "gundhara",
+      "title": "Gundhara",
+      "year": "1995",
+      "manufacturer": "Banpresto",
+      "parent": null
+    },
+    {
+      "name": "gundharac",
+      "title": "Gundhara (Chinese, bootleg?)",
+      "year": "1995",
+      "manufacturer": "Banpresto",
+      "parent": "gundhara"
+    },
+    {
+      "name": "inttoote",
+      "title": "International Toote (Germany, P523.V01)",
+      "year": "1998",
+      "manufacturer": "bootleg (Coinmaster)",
+      "parent": "jockeyc"
+    },
+    {
+      "name": "inttoote2",
+      "title": "International Toote II (v1.24, P387.V01)",
+      "year": "1993",
+      "manufacturer": "bootleg (Coinmaster)",
+      "parent": "jockeyc"
+    },
+    {
+      "name": "jjsquawk",
+      "title": "J. J. Squawkers",
+      "year": "1993",
+      "manufacturer": "Athena / Able",
+      "parent": null
+    },
+    {
+      "name": "jjsquawkb",
+      "title": "J. J. Squawkers (bootleg)",
+      "year": "1999",
+      "manufacturer": "bootleg",
+      "parent": "jjsquawk"
+    },
+    {
+      "name": "jjsquawkb2",
+      "title": "J. J. Squawkers (bootleg, Blandia Conversion)",
+      "year": "1999",
+      "manufacturer": "bootleg",
+      "parent": "jjsquawk"
+    },
+    {
+      "name": "jjsquawko",
+      "title": "J. J. Squawkers (older)",
+      "year": "1993",
+      "manufacturer": "Athena / Able",
+      "parent": "jjsquawk"
+    },
+    {
+      "name": "jockeyc",
+      "title": "Jockey Club (v1.18)",
+      "year": "1990",
+      "manufacturer": "Seta (Visco license)",
+      "parent": null
+    },
+    {
+      "name": "kamenrid",
+      "title": "Masked Riders Club Battle Race / Kamen Rider Club Battle Racer",
+      "year": "1993",
+      "manufacturer": "Banpresto",
+      "parent": null
+    },
+    {
+      "name": "keroppi",
+      "title": "Kero Kero Keroppi's Let's Play Together (USA, Version 2.0)",
+      "year": "1995",
+      "manufacturer": "American Sammy",
+      "parent": null
+    },
+    {
+      "name": "keroppij",
+      "title": "Kero Kero Keroppi no Isshoni Asobou (Japan)",
+      "year": "1993",
+      "manufacturer": "Sammy Industries",
+      "parent": "keroppi"
+    },
+    {
+      "name": "krzybowl",
+      "title": "Krazy Bowl",
+      "year": "1994",
+      "manufacturer": "American Sammy",
+      "parent": null
+    },
+    {
+      "name": "madshark",
+      "title": "Mad Shark",
+      "year": "1993",
+      "manufacturer": "Allumer",
+      "parent": null
+    },
+    {
+      "name": "madsharkbl",
+      "title": "Mad Shark (bootleg)",
+      "year": "1993",
+      "manufacturer": "bootleg",
+      "parent": "madshark"
+    },
+    {
+      "name": "magspeed",
+      "title": "Magical Speed",
+      "year": "1994",
+      "manufacturer": "Allumer",
+      "parent": null
+    },
+    {
+      "name": "msgundam",
+      "title": "Mobile Suit Gundam",
+      "year": "1993",
+      "manufacturer": "Banpresto / Allumer",
+      "parent": null
+    },
+    {
+      "name": "msgundam1",
+      "title": "Mobile Suit Gundam (Japan)",
+      "year": "1993",
+      "manufacturer": "Banpresto / Allumer",
+      "parent": "msgundam"
+    },
+    {
+      "name": "msgundamb",
+      "title": "Mobile Suit Gundam (bootleg)",
+      "year": "1993",
+      "manufacturer": "bootleg",
+      "parent": "msgundam"
+    },
+    {
+      "name": "neobattl",
+      "title": "SD Gundam Neo Battling (Japan)",
+      "year": "1992",
+      "manufacturer": "Banpresto",
+      "parent": null
+    },
+    {
+      "name": "oisipuzl",
+      "title": "Oishii Puzzle Ha Irimasenka",
+      "year": "1993",
+      "manufacturer": "Sunsoft / Atlus",
+      "parent": null
+    },
+    {
+      "name": "orbs",
+      "title": "Orbs (10/7/94 prototype?)",
+      "year": "1994",
+      "manufacturer": "American Sammy",
+      "parent": null
+    },
+    {
+      "name": "pairlove",
+      "title": "Pairs Love",
+      "year": "1991",
+      "manufacturer": "Athena / Nihon System",
+      "parent": null
+    },
+    {
+      "name": "qzkklgy2",
+      "title": "Quiz Kokology 2",
+      "year": "1993",
+      "manufacturer": "Tecmo",
+      "parent": null
+    },
+    {
+      "name": "qzkklogy",
+      "title": "Quiz Kokology",
+      "year": "1992",
+      "manufacturer": "Tecmo",
+      "parent": null
+    },
+    {
+      "name": "rezon",
+      "title": "Rezon",
+      "year": "1992",
+      "manufacturer": "Allumer",
+      "parent": null
+    },
+    {
+      "name": "rezono",
+      "title": "Rezon (earlier)",
+      "year": "1991",
+      "manufacturer": "Allumer",
+      "parent": "rezon"
+    },
+    {
+      "name": "setaroul",
+      "title": "The Roulette (Visco)",
+      "year": "1989?",
+      "manufacturer": "Visco",
+      "parent": null
+    },
+    {
+      "name": "setaroula",
+      "title": "Super Ruleta 36 (Spanish hack of The Roulette)",
+      "year": "1989?",
+      "manufacturer": "hack (CODERE)",
+      "parent": "setaroul"
+    },
+    {
+      "name": "setaroulm",
+      "title": "The Roulette (Visco, medal)",
+      "year": "1989?",
+      "manufacturer": "Visco",
+      "parent": "setaroul"
+    },
+    {
+      "name": "simpsonjr",
+      "title": "Simpson Junior (bootleg of J. J. Squawkers)",
+      "year": "2003",
+      "manufacturer": "bootleg (Daigom Games)",
+      "parent": "jjsquawk"
+    },
+    {
+      "name": "sokonuke",
+      "title": "Sokonuke Taisen Game (Japan)",
+      "year": "1995",
+      "manufacturer": "Sammy Industries",
+      "parent": null
+    },
+    {
+      "name": "stg",
+      "title": "Strike Gunner S.T.G",
+      "year": "1991",
+      "manufacturer": "Athena / Tecmo",
+      "parent": null
+    },
+    {
+      "name": "superbar",
+      "title": "Super Bar",
+      "year": "1994",
+      "manufacturer": "Promat",
+      "parent": "wiggie"
+    },
+    {
+      "name": "thunderl",
+      "title": "Thunder & Lightning (set 1)",
+      "year": "1990",
+      "manufacturer": "Seta",
+      "parent": null
+    },
+    {
+      "name": "thunderla",
+      "title": "Thunder & Lightning (set 2)",
+      "year": "1990",
+      "manufacturer": "Seta",
+      "parent": "thunderl"
+    },
+    {
+      "name": "thunderlbl",
+      "title": "Thunder & Lightning (bootleg with Tetris sound, set 1)",
+      "year": "1991",
+      "manufacturer": "bootleg (Hyogo)",
+      "parent": "thunderl"
+    },
+    {
+      "name": "thunderlbl2",
+      "title": "Thunder & Lightning (bootleg with Tetris sound, set 2)",
+      "year": "1990",
+      "manufacturer": "bootleg",
+      "parent": "thunderl"
+    },
+    {
+      "name": "triplfun",
+      "title": "Triple Fun",
+      "year": "1993",
+      "manufacturer": "bootleg",
+      "parent": "oisipuzl"
+    },
+    {
+      "name": "triplfunk",
+      "title": "Sum-eoitneun Deongdalireul Chat-ara!",
+      "year": "1993",
+      "manufacturer": "bootleg (Jin Young)",
+      "parent": "oisipuzl"
+    },
+    {
+      "name": "umanclub",
+      "title": "Ultraman Club - Tatakae! Ultraman Kyoudai!!",
+      "year": "1992",
+      "manufacturer": "Banpresto",
+      "parent": null
+    },
+    {
+      "name": "utoukond",
+      "title": "Ultra Toukon Densetsu (Japan)",
+      "year": "1993",
+      "manufacturer": "Banpresto",
+      "parent": null
+    },
+    {
+      "name": "wiggie",
+      "title": "Wiggie Waggie",
+      "year": "1994",
+      "manufacturer": "Promat",
+      "parent": null
+    },
+    {
+      "name": "wits",
+      "title": "Wit's (Japan)",
+      "year": "1989",
+      "manufacturer": "Athena (Visco license)",
+      "parent": null
+    },
+    {
+      "name": "wrofaero",
+      "title": "War of Aero - Project MEIOU",
+      "year": "1993",
+      "manufacturer": "Yang Cheng",
+      "parent": null
+    },
+    {
+      "name": "zingzip",
+      "title": "Zing Zing Zip (World) / Zhen Zhen Ji Pao (China?)",
+      "year": "1992",
+      "manufacturer": "Allumer / Tecmo",
+      "parent": null
+    },
+    {
+      "name": "zingzipbl",
+      "title": "Zing Zing Zip (bootleg)",
+      "year": "1992",
+      "manufacturer": "bootleg",
+      "parent": "zingzip"
+    },
+    {
+      "name": "zombraid",
+      "title": "Zombie Raid (9/28/95, US)",
+      "year": "1995",
+      "manufacturer": "American Sammy",
+      "parent": null
+    },
+    {
+      "name": "zombraidp",
+      "title": "Zombie Raid (9/28/95, US, prototype PCB)",
+      "year": "1995",
+      "manufacturer": "American Sammy",
+      "parent": "zombraid"
+    },
+    {
+      "name": "zombraidpj",
+      "title": "Zombie Raid (9/28/95, Japan, prototype PCB)",
+      "year": "1995",
+      "manufacturer": "Sammy Industries",
+      "parent": "zombraid"
+    }
+  ],
+  "kaneko16": [
+    {
+      "name": "bakubrkr",
+      "title": "Bakuretsu Breaker (Japan)",
+      "year": "1992",
+      "manufacturer": "Kaneko",
+      "parent": "explbrkr"
+    },
+    {
+      "name": "berlwall",
+      "title": "The Berlin Wall",
+      "year": "1991",
+      "manufacturer": "Kaneko",
+      "parent": null
+    },
+    {
+      "name": "berlwallk",
+      "title": "The Berlin Wall (Korea)",
+      "year": "1991",
+      "manufacturer": "Kaneko (Inter license)",
+      "parent": "berlwall"
+    },
+    {
+      "name": "berlwallt",
+      "title": "The Berlin Wall (bootleg?)",
+      "year": "1991",
+      "manufacturer": "Kaneko",
+      "parent": "berlwall"
+    },
+    {
+      "name": "blazeon",
+      "title": "Blaze On (World)",
+      "year": "1992",
+      "manufacturer": "A.I (Atlus license)",
+      "parent": null
+    },
+    {
+      "name": "blazeonj",
+      "title": "Blaze On (Japan)",
+      "year": "1992",
+      "manufacturer": "A.I (Atlus license)",
+      "parent": "blazeon"
+    },
+    {
+      "name": "bloodwar",
+      "title": "Blood Warrior",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": null
+    },
+    {
+      "name": "bonkadv",
+      "title": "B.C. Kid / Bonk's Adventure / Kyukyoku!! PC Genjin",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": null
+    },
+    {
+      "name": "bonkadva",
+      "title": "Bonk's Adventure (prototype)",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": "bonkadv"
+    },
+    {
+      "name": "brapboys",
+      "title": "B.Rap Boys (World)",
+      "year": "1992",
+      "manufacturer": "Kaneko",
+      "parent": null
+    },
+    {
+      "name": "brapboysp",
+      "title": "B.Rap Boys Special (World, newer)",
+      "year": "1992",
+      "manufacturer": "Kaneko",
+      "parent": "brapboys"
+    },
+    {
+      "name": "brapboysp2",
+      "title": "B.Rap Boys Special (World, older)",
+      "year": "1992",
+      "manufacturer": "Kaneko",
+      "parent": "brapboys"
+    },
+    {
+      "name": "brapboyspj",
+      "title": "B.Rap Boys Special (Japan)",
+      "year": "1992",
+      "manufacturer": "Kaneko",
+      "parent": "brapboys"
+    },
+    {
+      "name": "brapboyspu",
+      "title": "B.Rap Boys Special (US)",
+      "year": "1992",
+      "manufacturer": "Kaneko",
+      "parent": "brapboys"
+    },
+    {
+      "name": "explbrkr",
+      "title": "Explosive Breaker (World)",
+      "year": "1992",
+      "manufacturer": "Kaneko",
+      "parent": null
+    },
+    {
+      "name": "explbrkrk",
+      "title": "Explosive Breaker (Korea)",
+      "year": "1992",
+      "manufacturer": "Kaneko",
+      "parent": "explbrkr"
+    },
+    {
+      "name": "fjbuster",
+      "title": "Fujiyama Buster (Japan)",
+      "year": "1992",
+      "manufacturer": "Kaneko",
+      "parent": "shogwarr"
+    },
+    {
+      "name": "gtmr",
+      "title": "1000 Miglia: Great 1000 Miles Rally (Taiwan 94/07/18)",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": null
+    },
+    {
+      "name": "gtmr2",
+      "title": "Mille Miglia 2: Great 1000 Miles Rally (95/05/24)",
+      "year": "1995",
+      "manufacturer": "Kaneko",
+      "parent": null
+    },
+    {
+      "name": "gtmr2a",
+      "title": "Mille Miglia 2: Great 1000 Miles Rally (95/04/04)",
+      "year": "1995",
+      "manufacturer": "Kaneko",
+      "parent": "gtmr2"
+    },
+    {
+      "name": "gtmr2u",
+      "title": "Great 1000 Miles Rally 2 USA (95/07/11)",
+      "year": "1995",
+      "manufacturer": "Kaneko",
+      "parent": "gtmr2"
+    },
+    {
+      "name": "gtmr2ua",
+      "title": "Great 1000 Miles Rally 2 USA (95/05/18)",
+      "year": "1995",
+      "manufacturer": "Kaneko",
+      "parent": "gtmr2"
+    },
+    {
+      "name": "gtmra",
+      "title": "1000 Miglia: Great 1000 Miles Rally (94/06/13)",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": "gtmr"
+    },
+    {
+      "name": "gtmrb",
+      "title": "1000 Miglia: Great 1000 Miles Rally (94/05/26)",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": "gtmr"
+    },
+    {
+      "name": "gtmre",
+      "title": "Great 1000 Miles Rally: Evolution Model!!! (94/09/06)",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": "gtmr"
+    },
+    {
+      "name": "gtmro",
+      "title": "1000 Miglia: Great 1000 Miles Rally (94/05/10)",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": "gtmr"
+    },
+    {
+      "name": "gtmrusa",
+      "title": "Great 1000 Miles Rally: U.S.A Version! (94/09/06)",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": "gtmr"
+    },
+    {
+      "name": "mgcrystl",
+      "title": "Magical Crystals (World, 92/01/10)",
+      "year": "1991",
+      "manufacturer": "Kaneko",
+      "parent": null
+    },
+    {
+      "name": "mgcrystlj",
+      "title": "Magical Crystals (Japan, 92/01/13)",
+      "year": "1991",
+      "manufacturer": "Kaneko (Atlus license)",
+      "parent": "mgcrystl"
+    },
+    {
+      "name": "mgcrystlo",
+      "title": "Magical Crystals (World, 91/12/10)",
+      "year": "1991",
+      "manufacturer": "Kaneko",
+      "parent": "mgcrystl"
+    },
+    {
+      "name": "oedfight",
+      "title": "Oedo Fight (Japan, Bloodshed version)",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": "bloodwar"
+    },
+    {
+      "name": "oedfighta",
+      "title": "Oedo Fight (Japan, Bloodless version)",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": "bloodwar"
+    },
+    {
+      "name": "packbang",
+      "title": "Pack'n Bang Bang",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": null
+    },
+    {
+      "name": "packbangp",
+      "title": "Pack'n Bang Bang (prototype)",
+      "year": "1994",
+      "manufacturer": "Kaneko",
+      "parent": "packbang"
+    },
+    {
+      "name": "shogwarr",
+      "title": "Shogun Warriors (World)",
+      "year": "1992",
+      "manufacturer": "Kaneko",
+      "parent": null
+    },
+    {
+      "name": "shogwarrk",
+      "title": "Shogun Warriors (Korea?)",
+      "year": "1992",
+      "manufacturer": "Kaneko",
+      "parent": "shogwarr"
+    },
+    {
+      "name": "shogwarru",
+      "title": "Shogun Warriors (US)",
+      "year": "1992",
+      "manufacturer": "Kaneko",
+      "parent": "shogwarr"
+    },
+    {
+      "name": "wingforc",
+      "title": "Wing Force (Japan, prototype)",
+      "year": "1993",
+      "manufacturer": "A.I (Atlus license)",
+      "parent": null
+    }
+  ],
+  "taito_x": [
+    {
+      "name": "ballbros",
+      "title": "Balloon Brothers",
+      "year": "1992",
+      "manufacturer": "East Technology",
+      "parent": null
+    },
+    {
+      "name": "daisenpu",
+      "title": "Daisenpu (Japan)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation",
+      "parent": "twinhawk"
+    },
+    {
+      "name": "gigandes",
+      "title": "Gigandes",
+      "year": "1989",
+      "manufacturer": "East Technology",
+      "parent": null
+    },
+    {
+      "name": "gigandesa",
+      "title": "Gigandes (earlier)",
+      "year": "1989",
+      "manufacturer": "East Technology",
+      "parent": "gigandes"
+    },
+    {
+      "name": "kyustrkr",
+      "title": "Last Striker / Kyuukyoku no Striker",
+      "year": "1989",
+      "manufacturer": "East Technology",
+      "parent": null
+    },
+    {
+      "name": "superman",
+      "title": "Superman (World)",
+      "year": "1988",
+      "manufacturer": "Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "supermanj",
+      "title": "Superman (Japan)",
+      "year": "1988",
+      "manufacturer": "Taito Corporation",
+      "parent": "superman"
+    },
+    {
+      "name": "supermanu",
+      "title": "Superman (US)",
+      "year": "1988",
+      "manufacturer": "Taito Corporation",
+      "parent": "superman"
+    },
+    {
+      "name": "twinhawk",
+      "title": "Twin Hawk (World)",
+      "year": "1989",
+      "manufacturer": "Taito Corporation Japan",
+      "parent": null
+    },
+    {
+      "name": "twinhawku",
+      "title": "Twin Hawk (US)",
+      "year": "1989",
+      "manufacturer": "Taito America Corporation",
+      "parent": "twinhawk"
+    }
+  ],
+  "toaplan_v2": [
+    {
+      "name": "batsugun",
+      "title": "Batsugun",
+      "year": "1993",
+      "manufacturer": "Toaplan",
+      "parent": null
+    },
+    {
+      "name": "batsuguna",
+      "title": "Batsugun (older, set 1)",
+      "year": "1993",
+      "manufacturer": "Toaplan",
+      "parent": "batsugun"
+    },
+    {
+      "name": "batsugunb",
+      "title": "Batsugun (Korean PCB)",
+      "year": "1993",
+      "manufacturer": "Toaplan",
+      "parent": "batsugun"
+    },
+    {
+      "name": "batsugunbl",
+      "title": "Batsugun (bootleg)",
+      "year": "1993",
+      "manufacturer": "Toaplan",
+      "parent": "batsugun"
+    },
+    {
+      "name": "batsugunc",
+      "title": "Batsugun (older, set 2)",
+      "year": "1993",
+      "manufacturer": "Toaplan",
+      "parent": "batsugun"
+    },
+    {
+      "name": "batsugunsp",
+      "title": "Batsugun - Special Version",
+      "year": "1993",
+      "manufacturer": "Toaplan",
+      "parent": "batsugun"
+    },
+    {
+      "name": "burgkids",
+      "title": "Burger Kids (Japan)",
+      "year": "1995",
+      "manufacturer": "Sunwise",
+      "parent": null
+    },
+    {
+      "name": "demonwld",
+      "title": "Demon's World (World) / Horror Story (Japan) (set 1)",
+      "year": "1990",
+      "manufacturer": "Toaplan",
+      "parent": null
+    },
+    {
+      "name": "demonwld1",
+      "title": "Demon's World (World) / Horror Story (Japan) (set 2)",
+      "year": "1989",
+      "manufacturer": "Toaplan",
+      "parent": "demonwld"
+    },
+    {
+      "name": "demonwld2",
+      "title": "Demon's World (World) / Horror Story (Japan) (set 3)",
+      "year": "1989",
+      "manufacturer": "Toaplan",
+      "parent": "demonwld"
+    },
+    {
+      "name": "demonwld3",
+      "title": "Demon's World (World) / Horror Story (Japan) (set 4)",
+      "year": "1989",
+      "manufacturer": "Toaplan",
+      "parent": "demonwld"
+    },
+    {
+      "name": "demonwld4",
+      "title": "Demon's World (World) / Horror Story (Japan) (set 5)",
+      "year": "1989",
+      "manufacturer": "Toaplan",
+      "parent": "demonwld"
+    },
+    {
+      "name": "demonwld5",
+      "title": "Demon's World (World) / Horror Story (Japan) (set 6)",
+      "year": "1989",
+      "manufacturer": "Toaplan (APM Electronics license)",
+      "parent": "demonwld"
+    },
+    {
+      "name": "dogyuun",
+      "title": "Dogyuun",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": null
+    },
+    {
+      "name": "dogyuuna",
+      "title": "Dogyuun (older set)",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": "dogyuun"
+    },
+    {
+      "name": "dogyuunb",
+      "title": "Dogyuun (oldest set)",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": "dogyuun"
+    },
+    {
+      "name": "dogyuunbl",
+      "title": "Dogyuun (bootleg)",
+      "year": "1993",
+      "manufacturer": "Toaplan",
+      "parent": "dogyuun"
+    },
+    {
+      "name": "dogyuunt",
+      "title": "Dogyuun (10/9/1992 location test)",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": "dogyuun"
+    },
+    {
+      "name": "dogyuunto",
+      "title": "Dogyuun (8/25/1992 location test)",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": "dogyuun"
+    },
+    {
+      "name": "enmadaio",
+      "title": "Enma Daio (Japan)",
+      "year": "1993",
+      "manufacturer": "Toaplan / Taito",
+      "parent": null
+    },
+    {
+      "name": "fireshrk",
+      "title": "Fire Shark",
+      "year": "1990",
+      "manufacturer": "Toaplan",
+      "parent": null
+    },
+    {
+      "name": "fireshrka",
+      "title": "Fire Shark (earlier)",
+      "year": "1989",
+      "manufacturer": "Toaplan",
+      "parent": "fireshrk"
+    },
+    {
+      "name": "fireshrkd",
+      "title": "Fire Shark (Korea, set 1, easier)",
+      "year": "1990",
+      "manufacturer": "Toaplan (Dooyong license)",
+      "parent": "fireshrk"
+    },
+    {
+      "name": "fireshrkdh",
+      "title": "Fire Shark (Korea, set 2, harder)",
+      "year": "1990",
+      "manufacturer": "Toaplan (Dooyong license)",
+      "parent": "fireshrk"
+    },
+    {
+      "name": "fixeight",
+      "title": "FixEight (Europe)",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": null
+    },
+    {
+      "name": "fixeighta",
+      "title": "FixEight (Southeast Asia)",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeightat",
+      "title": "FixEight (Southeast Asia, Taito license)",
+      "year": "1992",
+      "manufacturer": "Toaplan (Taito license)",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeightbl",
+      "title": "FixEight (Korea, bootleg)",
+      "year": "1992",
+      "manufacturer": "bootleg (Shine)",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeighth",
+      "title": "FixEight (Hong Kong)",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeightht",
+      "title": "FixEight (Hong Kong, Taito license)",
+      "year": "1992",
+      "manufacturer": "Toaplan (Taito license)",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeightj",
+      "title": "FixEight - Jigoku no Eiyuu Densetsu (Japan)",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeightjt",
+      "title": "FixEight - Jigoku no Eiyuu Densetsu (Japan, Taito license)",
+      "year": "1992",
+      "manufacturer": "Toaplan (Taito license)",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeightk",
+      "title": "FixEight (Korea)",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeightkt",
+      "title": "FixEight (Korea, Taito license)",
+      "year": "1992",
+      "manufacturer": "Toaplan (Taito license)",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeightt",
+      "title": "FixEight (Europe, Taito license)",
+      "year": "1992",
+      "manufacturer": "Toaplan (Taito license)",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeighttw",
+      "title": "FixEight (Taiwan)",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeighttwt",
+      "title": "FixEight (Taiwan, Taito license)",
+      "year": "1992",
+      "manufacturer": "Toaplan (Taito license)",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeightu",
+      "title": "FixEight (USA)",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": "fixeight"
+    },
+    {
+      "name": "fixeightut",
+      "title": "FixEight (USA, Taito license)",
+      "year": "1992",
+      "manufacturer": "Toaplan (Taito license)",
+      "parent": "fixeight"
+    },
+    {
+      "name": "ghox",
+      "title": "Ghox (spinner)",
+      "year": "1991",
+      "manufacturer": "Toaplan",
+      "parent": null
+    },
+    {
+      "name": "ghoxj",
+      "title": "Ghox (joystick)",
+      "year": "1991",
+      "manufacturer": "Toaplan",
+      "parent": "ghox"
+    },
+    {
+      "name": "ghoxjo",
+      "title": "Ghox (joystick, older)",
+      "year": "1991",
+      "manufacturer": "Toaplan",
+      "parent": "ghox"
+    },
+    {
+      "name": "hellfire",
+      "title": "Hellfire (2P set)",
+      "year": "1989",
+      "manufacturer": "Toaplan (Taito license)",
+      "parent": null
+    },
+    {
+      "name": "hellfire1",
+      "title": "Hellfire (1P set)",
+      "year": "1989",
+      "manufacturer": "Toaplan (Taito license)",
+      "parent": "hellfire"
+    },
+    {
+      "name": "hellfire1a",
+      "title": "Hellfire (1P set, older)",
+      "year": "1989",
+      "manufacturer": "Toaplan (Taito license)",
+      "parent": "hellfire"
+    },
+    {
+      "name": "hellfire2a",
+      "title": "Hellfire (2P set, older)",
+      "year": "1989",
+      "manufacturer": "Toaplan (Taito license)",
+      "parent": "hellfire"
+    },
+    {
+      "name": "kbash",
+      "title": "Knuckle Bash",
+      "year": "1993",
+      "manufacturer": "Toaplan / Atari",
+      "parent": null
+    },
+    {
+      "name": "kbash2",
+      "title": "Knuckle Bash 2 (bootleg of Knuckle Bash)",
+      "year": "1999",
+      "manufacturer": "bootleg",
+      "parent": null
+    },
+    {
+      "name": "kbashk",
+      "title": "Knuckle Bash (Korean PCB)",
+      "year": "1993",
+      "manufacturer": "Toaplan / Taito",
+      "parent": "kbash"
+    },
+    {
+      "name": "kbashp",
+      "title": "Knuckle Bash (location test)",
+      "year": "1993",
+      "manufacturer": "Toaplan / Taito",
+      "parent": "kbash"
+    },
+    {
+      "name": "monkichi",
+      "title": "Monkichicchi no Fuwafuwa Puzzle (Japan, prototype?)",
+      "year": "1995",
+      "manufacturer": "Sunwise",
+      "parent": null
+    },
+    {
+      "name": "othldrby",
+      "title": "Othello Derby (Japan)",
+      "year": "1995",
+      "manufacturer": "Sunwise",
+      "parent": null
+    },
+    {
+      "name": "outzone",
+      "title": "Out Zone",
+      "year": "1990",
+      "manufacturer": "Toaplan",
+      "parent": null
+    },
+    {
+      "name": "outzonea",
+      "title": "Out Zone (old set)",
+      "year": "1990",
+      "manufacturer": "Toaplan",
+      "parent": "outzone"
+    },
+    {
+      "name": "outzoneb",
+      "title": "Out Zone (older set)",
+      "year": "1990",
+      "manufacturer": "Toaplan",
+      "parent": "outzone"
+    },
+    {
+      "name": "outzonec",
+      "title": "Out Zone (oldest set)",
+      "year": "1990",
+      "manufacturer": "Toaplan",
+      "parent": "outzone"
+    },
+    {
+      "name": "outzonecv",
+      "title": "Out Zone (Zero Wing TP-015 PCB conversion)",
+      "year": "1990",
+      "manufacturer": "Toaplan",
+      "parent": "outzone"
+    },
+    {
+      "name": "outzoneh",
+      "title": "Out Zone (harder)",
+      "year": "1990",
+      "manufacturer": "Toaplan",
+      "parent": "outzone"
+    },
+    {
+      "name": "pipibibs",
+      "title": "Pipi & Bibis / Whoopee!! (Z80 sound cpu, set 1)",
+      "year": "1991",
+      "manufacturer": "Toaplan",
+      "parent": null
+    },
+    {
+      "name": "pipibibsa",
+      "title": "Pipi & Bibis / Whoopee!! (Z80 sound cpu, set 2)",
+      "year": "1991",
+      "manufacturer": "Toaplan",
+      "parent": "pipibibs"
+    },
+    {
+      "name": "pipibibsbl",
+      "title": "Pipi & Bibis / Whoopee!! (bootleg, encrypted)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "pipibibs"
+    },
+    {
+      "name": "pipibibsbl2",
+      "title": "Pipi & Bibis / Whoopee!! (bootleg, decrypted set 1)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "pipibibs"
+    },
+    {
+      "name": "pipibibsbl3",
+      "title": "Pipi & Bibis / Whoopee!! (bootleg, decrypted set 2)",
+      "year": "1991",
+      "manufacturer": "bootleg",
+      "parent": "pipibibs"
+    },
+    {
+      "name": "pipibibsp",
+      "title": "Pipi & Bibis / Whoopee!! (prototype)",
+      "year": "1991",
+      "manufacturer": "Toaplan",
+      "parent": "pipibibs"
+    },
+    {
+      "name": "pwrkick",
+      "title": "Power Kick (Japan)",
+      "year": "1994",
+      "manufacturer": "Sunwise",
+      "parent": null
+    },
+    {
+      "name": "pyutakun",
+      "title": "Pyuuta-kun (Japan)",
+      "year": "1995",
+      "manufacturer": "Sunwise",
+      "parent": null
+    },
+    {
+      "name": "samesame",
+      "title": "Same! Same! Same! (Japan, 1P set)",
+      "year": "1989",
+      "manufacturer": "Toaplan",
+      "parent": "fireshrk"
+    },
+    {
+      "name": "samesame2",
+      "title": "Same! Same! Same! (Japan, 2P set)",
+      "year": "1989",
+      "manufacturer": "Toaplan",
+      "parent": "fireshrk"
+    },
+    {
+      "name": "samesamecn",
+      "title": "Jiao! Jiao! Jiao! (China)",
+      "year": "1990",
+      "manufacturer": "Toaplan (Hong Kong Honest Trading license)",
+      "parent": "fireshrk"
+    },
+    {
+      "name": "samesamenh",
+      "title": "Same! Same! Same! (Japan, 1P set, NEW VER! hack)",
+      "year": "2015",
+      "manufacturer": "hack (trap15)",
+      "parent": "fireshrk"
+    },
+    {
+      "name": "snowbro2",
+      "title": "Snow Bros. 2 - With New Elves / Otenki Paradise (Hanafram)",
+      "year": "1994",
+      "manufacturer": "Hanafram",
+      "parent": null
+    },
+    {
+      "name": "snowbro2b",
+      "title": "Snow Bros. 2 - With New Elves / Otenki Paradise (bootleg, set 1)",
+      "year": "1998",
+      "manufacturer": "bootleg",
+      "parent": "snowbro2"
+    },
+    {
+      "name": "snowbro2b2",
+      "title": "Snow Bros. 2 - With New Elves / Otenki Paradise (bootleg, set 2)",
+      "year": "1994",
+      "manufacturer": "bootleg (Q Elec)",
+      "parent": "snowbro2"
+    },
+    {
+      "name": "snowbro2b3",
+      "title": "Snow Bros. 2 - With New Elves / Otenki Paradise (bootleg, set 3)",
+      "year": "1994",
+      "manufacturer": "bootleg",
+      "parent": "snowbro2"
+    },
+    {
+      "name": "snowbro2ny",
+      "title": "Snow Bros. 2 - With New Elves / Otenki Paradise (Nyanko)",
+      "year": "1994",
+      "manufacturer": "Nyanko",
+      "parent": "snowbro2"
+    },
+    {
+      "name": "tekipaki",
+      "title": "Teki Paki",
+      "year": "1991",
+      "manufacturer": "Toaplan",
+      "parent": null
+    },
+    {
+      "name": "tekipakit",
+      "title": "Teki Paki (location test)",
+      "year": "1991",
+      "manufacturer": "Toaplan",
+      "parent": "tekipaki"
+    },
+    {
+      "name": "truxton",
+      "title": "Truxton (Europe, US) / Tatsujin (Japan)",
+      "year": "1988",
+      "manufacturer": "Toaplan / Taito Corporation",
+      "parent": null
+    },
+    {
+      "name": "truxton2",
+      "title": "Truxton II / Tatsujin Oh",
+      "year": "1992",
+      "manufacturer": "Toaplan",
+      "parent": null
+    },
+    {
+      "name": "vimana",
+      "title": "Vimana (World, rev A)",
+      "year": "1991",
+      "manufacturer": "Toaplan",
+      "parent": null
+    },
+    {
+      "name": "vimanaj",
+      "title": "Vimana (Japan)",
+      "year": "1991",
+      "manufacturer": "Toaplan",
+      "parent": "vimana"
+    },
+    {
+      "name": "vimanan",
+      "title": "Vimana (World)",
+      "year": "1991",
+      "manufacturer": "Toaplan",
+      "parent": "vimana"
+    },
+    {
+      "name": "whoopee",
+      "title": "Pipi & Bibis / Whoopee!! (Teki Paki hardware)",
+      "year": "1991",
+      "manufacturer": "Toaplan",
+      "parent": "pipibibs"
+    },
+    {
+      "name": "zerowing",
+      "title": "Zero Wing (2P set)",
+      "year": "1989",
+      "manufacturer": "Toaplan",
+      "parent": null
+    },
+    {
+      "name": "zerowing1",
+      "title": "Zero Wing (1P set)",
+      "year": "1989",
+      "manufacturer": "Toaplan",
+      "parent": "zerowing"
+    },
+    {
+      "name": "zerowingw",
+      "title": "Zero Wing (2P set, Williams license)",
+      "year": "1989",
+      "manufacturer": "Toaplan (Williams license)",
+      "parent": "zerowing"
+    }
+  ],
+  "irem_m92": [
+    {
+      "name": "bmaster",
+      "title": "Blade Master (World)",
+      "year": "1991",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "crossbld",
+      "title": "Cross Blades! (Japan)",
+      "year": "1991",
+      "manufacturer": "Irem",
+      "parent": "bmaster"
+    },
+    {
+      "name": "dsoccr94j",
+      "title": "Dream Soccer '94 (Japan, M92 hardware)",
+      "year": "1994",
+      "manufacturer": "Irem",
+      "parent": "dsoccr94"
+    },
+    {
+      "name": "geostorm",
+      "title": "Geo Storm (Japan, 014 sound CPU)",
+      "year": "1994",
+      "manufacturer": "Irem",
+      "parent": "gunforc2"
+    },
+    {
+      "name": "geostorma",
+      "title": "Geo Storm (Japan, 026 sound CPU)",
+      "year": "1994",
+      "manufacturer": "Irem",
+      "parent": "gunforc2"
+    },
+    {
+      "name": "gunforc2",
+      "title": "Gun Force II (US)",
+      "year": "1994",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "gunforce",
+      "title": "Gunforce: Battle Fire Engulfed Terror Island (World)",
+      "year": "1991",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "gunforcej",
+      "title": "Gunforce: Battle Fire Engulfed Terror Island (Japan)",
+      "year": "1991",
+      "manufacturer": "Irem",
+      "parent": "gunforce"
+    },
+    {
+      "name": "gunforceu",
+      "title": "Gunforce: Battle Fire Engulfed Terror Island (US)",
+      "year": "1991",
+      "manufacturer": "Irem America",
+      "parent": "gunforce"
+    },
+    {
+      "name": "gunhohki",
+      "title": "Mahou Keibitai Gun Hohki (Japan)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": "mysticri"
+    },
+    {
+      "name": "hook",
+      "title": "Hook (World)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "hookj",
+      "title": "Hook (Japan)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": "hook"
+    },
+    {
+      "name": "hooku",
+      "title": "Hook (US)",
+      "year": "1992",
+      "manufacturer": "Irem America",
+      "parent": "hook"
+    },
+    {
+      "name": "inthunt",
+      "title": "In The Hunt (World)",
+      "year": "1993",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "inthuntk",
+      "title": "In The Hunt (Korea?)",
+      "year": "1993",
+      "manufacturer": "Irem",
+      "parent": "inthunt"
+    },
+    {
+      "name": "inthuntu",
+      "title": "In The Hunt (US)",
+      "year": "1993",
+      "manufacturer": "Irem America",
+      "parent": "inthunt"
+    },
+    {
+      "name": "kaiteids",
+      "title": "Kaitei Daisensou (Japan)",
+      "year": "1993",
+      "manufacturer": "Irem",
+      "parent": "inthunt"
+    },
+    {
+      "name": "leaguemn",
+      "title": "Yakyuu Kakutou League-Man (Japan, set 1)",
+      "year": "1993",
+      "manufacturer": "Irem",
+      "parent": "nbbatman"
+    },
+    {
+      "name": "leaguemna",
+      "title": "Yakyuu Kakutou League-Man (Japan, set 2)",
+      "year": "1993",
+      "manufacturer": "Irem",
+      "parent": "nbbatman"
+    },
+    {
+      "name": "lethalth",
+      "title": "Lethal Thunder (World)",
+      "year": "1991",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "majtitl2",
+      "title": "Major Title 2 (World, set 1, 017 sound CPU)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "majtitl2a",
+      "title": "Major Title 2 (World, set 2, 016 sound CPU)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": "majtitl2"
+    },
+    {
+      "name": "majtitl2b",
+      "title": "Major Title 2 (World, set 3)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": "majtitl2"
+    },
+    {
+      "name": "majtitl2j",
+      "title": "Major Title 2 (Japan)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": "majtitl2"
+    },
+    {
+      "name": "mysticri",
+      "title": "Mystic Riders (World)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "mysticrib",
+      "title": "Mystic Riders (bootleg?)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": "mysticri"
+    },
+    {
+      "name": "nbbatman",
+      "title": "Ninja Baseball Bat Man (World)",
+      "year": "1993",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "nbbatman2bl",
+      "title": "Ninja Baseball Bat Man II (bootleg)",
+      "year": "1993",
+      "manufacturer": "bootleg",
+      "parent": "nbbatman"
+    },
+    {
+      "name": "nbbatmanu",
+      "title": "Ninja Baseball Bat Man (US)",
+      "year": "1993",
+      "manufacturer": "Irem America",
+      "parent": "nbbatman"
+    },
+    {
+      "name": "ppan",
+      "title": "Peter Pan (bootleg of Hook)",
+      "year": "1992",
+      "manufacturer": "bootleg",
+      "parent": "hook"
+    },
+    {
+      "name": "psoldier",
+      "title": "Perfect Soldiers (Japan)",
+      "year": "1993",
+      "manufacturer": "Irem",
+      "parent": "ssoldier"
+    },
+    {
+      "name": "rtypeleo",
+      "title": "R-Type Leo (World)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "rtypeleoj",
+      "title": "R-Type Leo (Japan)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": "rtypeleo"
+    },
+    {
+      "name": "skingame",
+      "title": "The Irem Skins Game (US set 1)",
+      "year": "1992",
+      "manufacturer": "Irem America",
+      "parent": "majtitl2"
+    },
+    {
+      "name": "skingame2",
+      "title": "The Irem Skins Game (US set 2)",
+      "year": "1992",
+      "manufacturer": "Irem America",
+      "parent": "majtitl2"
+    },
+    {
+      "name": "ssoldier",
+      "title": "Superior Soldiers (US)",
+      "year": "1993",
+      "manufacturer": "Irem America",
+      "parent": null
+    },
+    {
+      "name": "thndblst",
+      "title": "Thunder Blaster (Japan)",
+      "year": "1991",
+      "manufacturer": "Irem",
+      "parent": "lethalth"
+    },
+    {
+      "name": "uccops",
+      "title": "Undercover Cops (World)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": null
+    },
+    {
+      "name": "uccopsar",
+      "title": "Undercover Cops Alpha: Renewal Version (World)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": "uccops"
+    },
+    {
+      "name": "uccopsaru",
+      "title": "Undercover Cops Alpha: Renewal Version (US)",
+      "year": "1992",
+      "manufacturer": "Irem America",
+      "parent": "uccops"
+    },
+    {
+      "name": "uccopsj",
+      "title": "Undercover Cops (Japan)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": "uccops"
+    },
+    {
+      "name": "uccopsu",
+      "title": "Undercover Cops (US)",
+      "year": "1992",
+      "manufacturer": "Irem",
+      "parent": "uccops"
+    }
+  ],
+  "psikyo": [
+    {
+      "name": "btlkroad",
+      "title": "Battle K-Road",
+      "year": "1994",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "btlkroadk",
+      "title": "Battle K-Road (Korea)",
+      "year": "1994",
+      "manufacturer": "Psikyo",
+      "parent": "btlkroad"
+    },
+    {
+      "name": "gunbird",
+      "title": "Gunbird (World)",
+      "year": "1994",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "gunbirdj",
+      "title": "Gunbird (Japan)",
+      "year": "1994",
+      "manufacturer": "Psikyo",
+      "parent": "gunbird"
+    },
+    {
+      "name": "gunbirdk",
+      "title": "Gunbird (Korea)",
+      "year": "1994",
+      "manufacturer": "Psikyo",
+      "parent": "gunbird"
+    },
+    {
+      "name": "s1945",
+      "title": "Strikers 1945 (World)",
+      "year": "1995",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "s1945a",
+      "title": "Strikers 1945 (Japan / World)",
+      "year": "1995",
+      "manufacturer": "Psikyo",
+      "parent": "s1945"
+    },
+    {
+      "name": "s1945bl",
+      "title": "Strikers 1945 (Hong Kong, bootleg)",
+      "year": "1995",
+      "manufacturer": "bootleg",
+      "parent": "s1945"
+    },
+    {
+      "name": "s1945j",
+      "title": "Strikers 1945 (Japan)",
+      "year": "1995",
+      "manufacturer": "Psikyo",
+      "parent": "s1945"
+    },
+    {
+      "name": "s1945k",
+      "title": "Strikers 1945 (Korea)",
+      "year": "1995",
+      "manufacturer": "Psikyo",
+      "parent": "s1945"
+    },
+    {
+      "name": "s1945n",
+      "title": "Strikers 1945 (World, unprotected)",
+      "year": "1995",
+      "manufacturer": "Psikyo",
+      "parent": "s1945"
+    },
+    {
+      "name": "s1945nj",
+      "title": "Strikers 1945 (Japan, unprotected)",
+      "year": "1995",
+      "manufacturer": "Psikyo",
+      "parent": "s1945"
+    },
+    {
+      "name": "samuraia",
+      "title": "Samurai Aces (World)",
+      "year": "1993",
+      "manufacturer": "Psikyo (Banpresto license)",
+      "parent": null
+    },
+    {
+      "name": "samuraiak",
+      "title": "Samurai Aces (Korea?)",
+      "year": "1993",
+      "manufacturer": "Psikyo (Banpresto license)",
+      "parent": "samuraia"
+    },
+    {
+      "name": "sngkace",
+      "title": "Sengoku Ace (Japan, set 1)",
+      "year": "1993",
+      "manufacturer": "Psikyo (Banpresto license)",
+      "parent": "samuraia"
+    },
+    {
+      "name": "sngkacea",
+      "title": "Sengoku Ace (Japan, set 2)",
+      "year": "1993",
+      "manufacturer": "Psikyo (Banpresto license)",
+      "parent": "samuraia"
+    },
+    {
+      "name": "tengai",
+      "title": "Tengai (World)",
+      "year": "1996",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "tengaibl",
+      "title": "Tengai (bootleg)",
+      "year": "1996",
+      "manufacturer": "Psikyo",
+      "parent": "tengai"
+    },
+    {
+      "name": "tengaij",
+      "title": "Sengoku Blade: Sengoku Ace Episode II (Japan) / Tengai (World)",
+      "year": "1996",
+      "manufacturer": "Psikyo",
+      "parent": "tengai"
+    }
+  ],
+  "konami_gx": [
+    {
+      "name": "crzcross",
+      "title": "Crazy Cross (ver EAA)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "daiskiss",
+      "title": "Daisu-Kiss (ver JAA)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "dragoona",
+      "title": "Dragoon Might (ver AAB)",
+      "year": "1995",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "dragoonj",
+      "title": "Dragoon Might (ver JAA)",
+      "year": "1995",
+      "manufacturer": "Konami",
+      "parent": "dragoona"
+    },
+    {
+      "name": "fantjour",
+      "title": "Fantastic Journey (ver EAA)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "fantjoura",
+      "title": "Fantastic Journey (ver AAA)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": "fantjour"
+    },
+    {
+      "name": "ggreats2",
+      "title": "Golfing Greats 2 (ver JAC)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": "opengolf"
+    },
+    {
+      "name": "gokuparo",
+      "title": "Gokujou Parodius: Kako no Eikou o Motomete (ver JAD)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": "fantjour"
+    },
+    {
+      "name": "konamigx",
+      "title": "System GX",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "le2",
+      "title": "Lethal Enforcers II: Gun Fighters (ver EAA)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "le2j",
+      "title": "Lethal Enforcers II: The Western (ver JAA)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": "le2"
+    },
+    {
+      "name": "le2u",
+      "title": "Lethal Enforcers II: Gun Fighters (ver UAA)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": "le2"
+    },
+    {
+      "name": "mtwinbee",
+      "title": "Magical Twin Bee (ver EAA)",
+      "year": "1995",
+      "manufacturer": "Konami",
+      "parent": "tbyahhoo"
+    },
+    {
+      "name": "opengolf",
+      "title": "Konami's Open Golf Championship (ver EAE)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "opengolf2",
+      "title": "Konami's Open Golf Championship (ver EAD)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": "opengolf"
+    },
+    {
+      "name": "puzldama",
+      "title": "Taisen Puzzle-dama (ver JAA)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": "crzcross"
+    },
+    {
+      "name": "racinfrc",
+      "title": "Racin' Force (ver EAC)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "racinfrcu",
+      "title": "Racin' Force (ver UAB)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": "racinfrc"
+    },
+    {
+      "name": "rungun2",
+      "title": "Run and Gun 2 (ver UAA)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "rushhero",
+      "title": "Rushing Heroes (ver UAB)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "salmndr2",
+      "title": "Salamander 2 (ver JAA)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "salmndr2a",
+      "title": "Salamander 2 (ver AAB)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": "salmndr2"
+    },
+    {
+      "name": "sexyparo",
+      "title": "Sexy Parodius (ver JAA)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "sexyparoa",
+      "title": "Sexy Parodius (ver AAA)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": "sexyparo"
+    },
+    {
+      "name": "sexyparoebl",
+      "title": "Sexy Parodius (ver EAA, bootleg)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": "sexyparo"
+    },
+    {
+      "name": "slamdnk2",
+      "title": "Slam Dunk 2 (ver JAA)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": "rungun2"
+    },
+    {
+      "name": "soccerss",
+      "title": "Soccer Superstars (ver EAC)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "soccerssa",
+      "title": "Soccer Superstars (ver AAA)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": "soccerss"
+    },
+    {
+      "name": "soccerssj",
+      "title": "Soccer Superstars (ver JAC)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": "soccerss"
+    },
+    {
+      "name": "soccerssja",
+      "title": "Soccer Superstars (ver JAA)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": "soccerss"
+    },
+    {
+      "name": "soccerssu",
+      "title": "Soccer Superstars (ver UAC)",
+      "year": "1994",
+      "manufacturer": "Konami",
+      "parent": "soccerss"
+    },
+    {
+      "name": "tbyahhoo",
+      "title": "Twin Bee Yahhoo! (ver JAA)",
+      "year": "1995",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "tkmmpzdm",
+      "title": "Tokimeki Memorial Taisen Puzzle-dama (ver JAB)",
+      "year": "1995",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "tokkae",
+      "title": "Taisen Tokkae-dama (ver JAA)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "vsnetscr",
+      "title": "Versus Net Soccer (ver EAD)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "vsnetscra",
+      "title": "Versus Net Soccer (ver AAA)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": "vsnetscr"
+    },
+    {
+      "name": "vsnetscreb",
+      "title": "Versus Net Soccer (ver EAB)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": "vsnetscr"
+    },
+    {
+      "name": "vsnetscrj",
+      "title": "Versus Net Soccer (ver JAB)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": "vsnetscr"
+    },
+    {
+      "name": "vsnetscru",
+      "title": "Versus Net Soccer (ver UAB)",
+      "year": "1996",
+      "manufacturer": "Konami",
+      "parent": "vsnetscr"
+    },
+    {
+      "name": "winspike",
+      "title": "Winning Spike (ver EAA)",
+      "year": "1997",
+      "manufacturer": "Konami",
+      "parent": null
+    },
+    {
+      "name": "winspikea",
+      "title": "Winning Spike (ver AAA)",
+      "year": "1997",
+      "manufacturer": "Konami",
+      "parent": "winspike"
+    },
+    {
+      "name": "winspikej",
+      "title": "Winning Spike (ver JAA)",
+      "year": "1997",
+      "manufacturer": "Konami",
+      "parent": "winspike"
+    }
+  ],
+  "psikyo_sh": [
+    {
+      "name": "daraku",
+      "title": "The Fallen Angels (World) / Daraku Tenshi: The Fallen Angels (Japan)",
+      "year": "1998",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "dragnblz",
+      "title": "Dragon Blaze",
+      "year": "2000",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "gnbarich",
+      "title": "Gunbarich",
+      "year": "2001",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "gunbird2",
+      "title": "Gunbird 2 (set 1)",
+      "year": "1998",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "gunbird2a",
+      "title": "Gunbird 2 (set 2)",
+      "year": "1998",
+      "manufacturer": "Psikyo",
+      "parent": "gunbird2"
+    },
+    {
+      "name": "mjgtaste",
+      "title": "Mahjong G-Taste",
+      "year": "2002",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "s1945ii",
+      "title": "Strikers 1945 II",
+      "year": "1997",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "s1945iii",
+      "title": "Strikers 1945 III (World) / Strikers 1999 (Japan)",
+      "year": "1999",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "s1945iiibl",
+      "title": "Strikers 1945 III (World) / Strikers 1999 (Japan) (bootleg, set 1)",
+      "year": "1999",
+      "manufacturer": "bootleg",
+      "parent": "s1945iii"
+    },
+    {
+      "name": "s1945iiibla",
+      "title": "Strikers 1945 III (World) / Strikers 1999 (Japan) (bootleg, set 2)",
+      "year": "1999",
+      "manufacturer": "bootleg",
+      "parent": "s1945iii"
+    },
+    {
+      "name": "sbomber",
+      "title": "Space Bomber (ver. B)",
+      "year": "1998",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "sbombera",
+      "title": "Space Bomber",
+      "year": "1998",
+      "manufacturer": "Psikyo",
+      "parent": "sbomber"
+    },
+    {
+      "name": "soldivid",
+      "title": "Sol Divide: Sword Of Darkness",
+      "year": "1997",
+      "manufacturer": "Psikyo",
+      "parent": null
+    },
+    {
+      "name": "soldividk",
+      "title": "Sol Divide: Sword Of Darkness (Korea)",
+      "year": "1997",
+      "manufacturer": "Psikyo",
+      "parent": "soldivid"
+    },
+    {
+      "name": "tgm2",
+      "title": "Tetris: The Absolute - The Grand Master 2",
+      "year": "2000",
+      "manufacturer": "Arika",
+      "parent": null
+    },
+    {
+      "name": "tgm2p",
+      "title": "Tetris: The Absolute - The Grand Master 2 Plus",
+      "year": "2000",
+      "manufacturer": "Arika",
+      "parent": "tgm2"
+    }
+  ],
+  "sega_yboard": [
+    {
+      "name": "gforce2",
+      "title": "Galaxy Force 2",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "gforce2j",
+      "title": "Galaxy Force 2 (Japan)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "gforce2"
+    },
+    {
+      "name": "gforce2ja",
+      "title": "Galaxy Force 2 (Japan, Rev A)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "gforce2"
+    },
+    {
+      "name": "gforce2sd",
+      "title": "Galaxy Force 2 (Super Deluxe unit)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "gforce2"
+    },
+    {
+      "name": "gloc",
+      "title": "G-LOC Air Battle (World)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "glocj",
+      "title": "G-LOC Air Battle (Japan)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "gloc"
+    },
+    {
+      "name": "glocr360",
+      "title": "G-LOC R360 (World)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "gloc"
+    },
+    {
+      "name": "glocr360j",
+      "title": "G-LOC R360 (Japan)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "gloc"
+    },
+    {
+      "name": "glocu",
+      "title": "G-LOC Air Battle (US)",
+      "year": "1990",
+      "manufacturer": "Sega",
+      "parent": "gloc"
+    },
+    {
+      "name": "pdrift",
+      "title": "Power Drift (World, Rev A)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "pdrifta",
+      "title": "Power Drift (World)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "pdrift"
+    },
+    {
+      "name": "pdrifte",
+      "title": "Power Drift (World, Earlier)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "pdrift"
+    },
+    {
+      "name": "pdriftj",
+      "title": "Power Drift (Japan, Rev C)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "pdrift"
+    },
+    {
+      "name": "pdriftjb",
+      "title": "Power Drift (Japan, Rev B)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": "pdrift"
+    },
+    {
+      "name": "pdriftl",
+      "title": "Power Drift - Link Version (Japan, Rev A)",
+      "year": "1988",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "rchase",
+      "title": "Rail Chase (World)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "rchasej",
+      "title": "Rail Chase (Japan)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": "rchase"
+    },
+    {
+      "name": "rchasejb",
+      "title": "Rail Chase (Japan, Rev B)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": "rchase"
+    },
+    {
+      "name": "strkfgtr",
+      "title": "Strike Fighter (World)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "strkfgtrj",
+      "title": "Strike Fighter (Japan)",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": "strkfgtr"
+    }
+  ],
+  "sega_outrun": [
+    {
+      "name": "outrun",
+      "title": "Out Run (sitdown/upright, Rev B)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "outrunb",
+      "title": "Out Run (bootleg)",
+      "year": "1986",
+      "manufacturer": "bootleg",
+      "parent": "outrun"
+    },
+    {
+      "name": "outrundx",
+      "title": "Out Run (deluxe sitdown)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "outrun"
+    },
+    {
+      "name": "outrundxa",
+      "title": "Out Run (deluxe sitdown earlier version)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "outrun"
+    },
+    {
+      "name": "outrundxeh",
+      "title": "Out Run (deluxe sitdown) (Enhanced Edition v2.0.3)",
+      "year": "2020",
+      "manufacturer": "hack (Chris White)",
+      "parent": "outrun"
+    },
+    {
+      "name": "outrundxeha",
+      "title": "Out Run (deluxe sitdown) (Enhanced Edition v1.0.3)",
+      "year": "2013",
+      "manufacturer": "hack (Chris White)",
+      "parent": "outrun"
+    },
+    {
+      "name": "outrundxj",
+      "title": "Out Run (Japan, deluxe sitdown) (FD1089A 317-0019)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "outrun"
+    },
+    {
+      "name": "outruneh",
+      "title": "Out Run (sitdown/upright, Rev B) (Enhanced Edition v2.0.3)",
+      "year": "2020",
+      "manufacturer": "hack (Chris White)",
+      "parent": "outrun"
+    },
+    {
+      "name": "outruneha",
+      "title": "Out Run (sitdown/upright, Rev B) (Enhanced Edition v1.1.0)",
+      "year": "2014",
+      "manufacturer": "hack (Chris White)",
+      "parent": "outrun"
+    },
+    {
+      "name": "outrunra",
+      "title": "Out Run (sitdown/upright, Rev A)",
+      "year": "1986",
+      "manufacturer": "Sega",
+      "parent": "outrun"
+    },
+    {
+      "name": "shangon",
+      "title": "Super Hang-On (sitdown/upright) (unprotected)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "shangon1",
+      "title": "Super Hang-On (mini ride-on) (FD1089B 317-0034)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "shangon"
+    },
+    {
+      "name": "shangon2",
+      "title": "Super Hang-On (mini ride-on, Rev A) (FD1089B 317-0034)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "shangon"
+    },
+    {
+      "name": "shangon3",
+      "title": "Super Hang-On (sitdown/upright) (FD1089B 317-0034)",
+      "year": "1987",
+      "manufacturer": "Sega",
+      "parent": "shangon"
+    },
+    {
+      "name": "shangon3d",
+      "title": "Super Hang-On (sitdown/upright) (bootleg of FD1089B 317-0034 set)",
+      "year": "1987",
+      "manufacturer": "bootleg",
+      "parent": "shangon"
+    },
+    {
+      "name": "shangonle",
+      "title": "Limited Edition Hang-On",
+      "year": "1991",
+      "manufacturer": "Sega",
+      "parent": "shangon"
+    },
+    {
+      "name": "toutrun",
+      "title": "Turbo Out Run (Out Run upgrade) (FD1094 317-0118)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": null
+    },
+    {
+      "name": "toutrun1",
+      "title": "Turbo Out Run (deluxe cockpit) (FD1094 317-0109)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "toutrun"
+    },
+    {
+      "name": "toutrun2",
+      "title": "Turbo Out Run (cockpit) (FD1094 317-0106)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "toutrun"
+    },
+    {
+      "name": "toutrun2d",
+      "title": "Turbo Out Run (cockpit) (bootleg of FD1094 317-0106 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "toutrun"
+    },
+    {
+      "name": "toutrun3",
+      "title": "Turbo Out Run (cockpit) (FD1094 317-0107)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "toutrun"
+    },
+    {
+      "name": "toutrun3d",
+      "title": "Turbo Out Run (cockpit) (bootleg of FD1094 317-0107 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "toutrun"
+    },
+    {
+      "name": "toutrund",
+      "title": "Turbo Out Run (Out Run upgrade) (bootleg of FD1094 317-0118 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "toutrun"
+    },
+    {
+      "name": "toutrunj",
+      "title": "Turbo Out Run (Japan, Out Run upgrade) (FD1094 317-0117)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "toutrun"
+    },
+    {
+      "name": "toutrunj1",
+      "title": "Turbo Out Run (Japan, cockpit) (FD1094 317-0101)",
+      "year": "1989",
+      "manufacturer": "Sega",
+      "parent": "toutrun"
+    },
+    {
+      "name": "toutrunj1d",
+      "title": "Turbo Out Run (Japan, cockpit) (bootleg of FD1094 317-0101 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "toutrun"
+    },
+    {
+      "name": "toutrunjd",
+      "title": "Turbo Out Run (Japan, Out Run upgrade) (bootleg of FD1094 317-0117 set)",
+      "year": "1989",
+      "manufacturer": "bootleg",
+      "parent": "toutrun"
+    }
+  ]
+}

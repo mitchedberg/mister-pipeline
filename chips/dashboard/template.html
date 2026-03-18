@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiSTer Pipeline Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0d1117;color:#e2e8f0;min-height:100vh;padding:2rem}
+.container{max-width:1500px;margin:0 auto}
+a{color:#60a5fa;text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Header */
+header{text-align:center;margin-bottom:2.5rem;border-bottom:2px solid #1d4ed8;padding-bottom:2rem}
+h1{font-size:2.5rem;color:#fbbf24;margin-bottom:.4rem;text-shadow:0 4px 6px rgba(0,0,0,.5)}
+.subtitle{font-size:1.05rem;color:#cbd5e1;margin-bottom:.5rem}
+.meta{font-size:.85rem;color:#64748b}
+.nav-links{display:flex;gap:1.25rem;justify-content:center;margin-top:1rem;flex-wrap:wrap}
+.nav-links a{color:#a5f3fc;font-size:.9rem;font-weight:500;padding:.3rem .75rem;border:1px solid #0e7490;border-radius:.4rem;transition:background .15s}
+.nav-links a:hover{background:rgba(6,182,212,.12);text-decoration:none}
+
+/* Stats bar */
+.stats{display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:2.5rem;
+  padding:1.25rem 2rem;background:rgba(99,102,241,.1);border:1px solid #3730a3;border-radius:.75rem}
+.stat-item{text-align:center;min-width:90px}
+.stat-value{font-size:1.8rem;font-weight:700;color:#fbbf24;display:block}
+.stat-label{font-size:.8rem;color:#94a3b8;margin-top:.2rem}
+
+/* Tier headings */
+.tier{margin-bottom:3.5rem}
+.tier-header{display:flex;align-items:baseline;gap:1rem;margin-bottom:1.5rem;padding:.75rem 1.25rem;border-radius:.6rem;border-left:5px solid}
+.tier-1 .tier-header{border-color:#3b82f6;background:rgba(59,130,246,.07)}
+.tier-2 .tier-header{border-color:#22c55e;background:rgba(34,197,94,.07)}
+.tier-3 .tier-header{border-color:#f97316;background:rgba(249,115,22,.07)}
+.tier-num{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.7}
+.tier-1 .tier-num{color:#60a5fa}
+.tier-2 .tier-num{color:#86efac}
+.tier-3 .tier-num{color:#fb923c}
+.tier-title{font-size:1.35rem;font-weight:700;color:#f1f5f9}
+.tier-desc{font-size:.88rem;color:#64748b;margin-left:auto}
+
+/* ==================== TIER 1: Our Work ==================== */
+.systems-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:1.25rem}
+.sys-card{background:#161b22;border:1px solid #21262d;border-radius:.75rem;padding:1.35rem;transition:border-color .2s}
+.sys-card:hover{border-color:#3730a3}
+.sys-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem}
+.sys-name{font-size:1.15rem;color:#fbbf24;font-weight:700;font-family:monospace}
+.priority-badge{font-size:.7rem;color:#4b5563;font-family:monospace;padding:.1rem .35rem;border:1px solid #21262d;border-radius:.25rem}
+.sys-desc{font-size:.88rem;color:#94a3b8;margin-bottom:.8rem;line-height:1.45}
+.key-chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.85rem}
+.chip-tag{font-size:.72rem;font-family:monospace;color:#c084fc;background:rgba(168,85,247,.1);border:1px solid #581c87;border-radius:.3rem;padding:.15rem .45rem}
+.game-count-badge{display:inline-block;background:rgba(251,191,36,.1);color:#fcd34d;
+  border:1px solid #78350f;border-radius:.375rem;padding:.15rem .55rem;font-size:.78rem;font-weight:600;margin-bottom:.85rem}
+
+/* RTL gate indicators (5 dots max) */
+.gate-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+.gate-label{font-size:.75rem;color:#64748b;min-width:40px}
+.gate-dots{display:flex;gap:.3rem}
+.gate-dot{width:14px;height:14px;border-radius:50%;border:1px solid #374151}
+.gate-dot.filled{background:#3b82f6;border-color:#1d4ed8}
+.gate-dot.empty{background:#1e293b;border-color:#334155}
+.gate-dot-label{font-size:.7rem;color:#475569}
+
+/* Status badges */
+.status-row{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.75rem}
+.sbadge{display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .6rem;border-radius:.35rem;font-size:.78rem;font-weight:600;border:1px solid transparent}
+.sbadge.ready{background:rgba(34,197,94,.15);color:#86efac;border-color:#22c55e}
+.sbadge.in_progress{background:rgba(250,204,21,.15);color:#fcd34d;border-color:#eab308}
+.sbadge.not_started{background:rgba(107,114,128,.1);color:#6b7280;border-color:#374151}
+
+/* Feature indicators (audio, pll, sdram, input) */
+.feature-row{display:flex;flex-wrap:wrap;gap:.35rem;padding-top:.75rem;border-top:1px solid #1e293b}
+.fbadge{display:inline-flex;align-items:center;gap:.25rem;padding:.22rem .5rem;border-radius:.25rem;font-size:.75rem;font-weight:600;border:1px solid transparent}
+.fbadge.on{background:rgba(34,197,94,.15);color:#86efac;border-color:#166534}
+.fbadge.off{background:rgba(107,114,128,.1);color:#374151;border-color:#1e293b}
+
+/* Game top-10 collapsible */
+details.game-list{margin-top:.75rem}
+details.game-list summary{cursor:pointer;font-size:.78rem;color:#60a5fa;user-select:none;padding:.2rem 0}
+details.game-list summary:hover{color:#93c5fd}
+.game-list-inner{margin-top:.5rem;display:grid;grid-template-columns:1fr 1fr;gap:.15rem}
+.game-list-inner span{font-size:.73rem;color:#64748b;padding:.1rem 0}
+
+/* ==================== TIER 2: Ecosystem ==================== */
+.eco-table-wrap{overflow-x:auto}
+table.eco{width:100%;border-collapse:collapse;font-size:.85rem}
+table.eco th{background:#0d1117;color:#64748b;font-weight:600;padding:.6rem .9rem;text-align:left;
+  border-bottom:2px solid #1e293b;white-space:nowrap;position:sticky;top:0;z-index:2}
+table.eco td{padding:.55rem .9rem;border-bottom:1px solid #161b22;vertical-align:middle}
+table.eco tr:hover td{background:rgba(255,255,255,.025)}
+.eco-name{font-weight:700;color:#f1f5f9;white-space:nowrap}
+.eco-author{font-size:.78rem;color:#64748b;font-family:monospace}
+.status-pill{display:inline-block;padding:.15rem .55rem;border-radius:.3rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.status-pill.mature{background:rgba(34,197,94,.15);color:#86efac;border:1px solid #166534}
+.status-pill.active{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid #1e3a5f}
+.status-pill.archived{background:rgba(234,179,8,.1);color:#fcd34d;border:1px solid #713f12}
+.opportunity-cell{font-size:.78rem;color:#a5f3fc;max-width:320px;line-height:1.4}
+.notes-cell{font-size:.78rem;color:#64748b;max-width:300px;line-height:1.4}
+
+/* ==================== TIER 3: Future Targets ==================== */
+.future-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1rem}
+.future-card{background:#161b22;border:1px solid #21262d;border-radius:.75rem;padding:1.25rem;
+  border-left:3px solid}
+.future-card.green{border-left-color:#22c55e}
+.future-card.yellow{border-left-color:#eab308}
+.future-card.red{border-left-color:#ef4444}
+.future-name{font-size:1rem;font-weight:700;color:#f1f5f9;margin-bottom:.3rem}
+.future-cpu{font-size:.75rem;font-family:monospace;color:#64748b;margin-bottom:.5rem}
+.future-games{font-size:.8rem;color:#94a3b8;margin-bottom:.6rem;line-height:1.4}
+.future-notes{font-size:.78rem;color:#64748b;line-height:1.45;margin-bottom:.6rem}
+.lut-row{display:flex;gap:.5rem;align-items:center}
+.lut-val{font-family:monospace;font-size:.78rem;color:#60a5fa}
+.feas-badge{display:inline-block;padding:.15rem .5rem;border-radius:.3rem;font-size:.72rem;font-weight:600}
+.feas-badge.green{background:rgba(34,197,94,.15);color:#86efac;border:1px solid #22c55e}
+.feas-badge.yellow{background:rgba(234,179,8,.15);color:#fcd34d;border:1px solid #ca8a04}
+.feas-badge.red{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid #dc2626}
+.future-game-count{font-size:.72rem;color:#475569}
+
+/* ==================== Game Library (collapsible) ==================== */
+.filter-row{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+.filter-row input,.filter-row select{background:#161b22;border:1px solid #21262d;color:#e2e8f0;
+  padding:.45rem .75rem;border-radius:.45rem;font-size:.85rem;outline:none}
+.filter-row input:focus,.filter-row select:focus{border-color:#3b82f6}
+.filter-row label{font-size:.85rem;color:#94a3b8;display:flex;align-items:center;gap:.4rem;cursor:pointer}
+.lib-wrap{overflow-x:auto;max-height:560px;overflow-y:auto;border:1px solid #21262d;border-radius:.5rem}
+table.lib{width:100%;border-collapse:collapse;font-size:.82rem}
+table.lib thead th{background:#0d1117;color:#64748b;font-weight:600;padding:.55rem .75rem;
+  position:sticky;top:0;z-index:3;text-align:left;border-bottom:2px solid #21262d;white-space:nowrap}
+table.lib tbody td{padding:.45rem .75rem;border-bottom:1px solid #161b22;color:#cbd5e1}
+table.lib tbody tr:hover td{background:rgba(255,255,255,.04)}
+table.lib .rom-name{font-family:monospace;font-size:.78rem;color:#4b5563}
+.sys-chip-label{display:inline-block;padding:.1rem .4rem;border-radius:.25rem;font-size:.72rem;font-weight:600;
+  background:rgba(59,130,246,.12);color:#93c5fd;border:1px solid #1e3a5f}
+.clone-row td{opacity:.55}
+
+/* Footer */
+footer{text-align:center;margin-top:3rem;padding-top:1.5rem;border-top:1px solid #1e293b;color:#334155;font-size:.82rem}
+footer a{color:#475569}
+footer a:hover{color:#64748b}
+
+/* Expand/collapse toggle */
+details summary{cursor:pointer;list-style:none;user-select:none}
+details summary::-webkit-details-marker{display:none}
+.expand-summary{padding:.65rem 1.25rem;background:#161b22;border:1px solid #21262d;border-radius:.5rem;
+  color:#a5f3fc;font-weight:700;font-size:1rem;display:flex;align-items:center;gap:.5rem}
+.expand-summary:hover{border-color:#0e7490;background:#0f172a}
+.expand-chevron{margin-left:auto;font-size:.8rem;color:#475569;transition:transform .2s}
+details[open] .expand-chevron{transform:rotate(180deg)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>MiSTer FPGA Arcade Pipeline</h1>
+  <p class="subtitle">Core Development Status — MAME Catalog + Community Ecosystem</p>
+  <p class="meta">Updated: {{ updated_at }} &nbsp;|&nbsp; Auto-refresh 60s</p>
+  <nav class="nav-links">
+    <a href="/">Dashboard</a>
+    <a href="/games">Full Game Library</a>
+    <a href="/ecosystem">Ecosystem Detail</a>
+    <a href="/api/systems">API: Systems</a>
+    <a href="/api/games">API: Games</a>
+  </nav>
+</header>
+
+<!-- Stats bar -->
+<div class="stats">
+  <div class="stat-item">
+    <span class="stat-value">{{ our_systems|length }}</span>
+    <span class="stat-label">Our Systems</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value">{{ ecosystem|length }}</span>
+    <span class="stat-label">Community Cores</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value">{{ future_targets|length }}</span>
+    <span class="stat-label">Future Targets</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value">{{ total_parents }}</span>
+    <span class="stat-label">Parent Games</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value">{{ total_games }}</span>
+    <span class="stat-label">Total ROM Sets</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value">{{ systems_list|length }}</span>
+    <span class="stat-label">Systems Mapped</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TIER 1: Our Work                                             -->
+<!-- ============================================================ -->
+<div class="tier tier-1">
+  <div class="tier-header">
+    <span class="tier-num">Tier 1</span>
+    <span class="tier-title">Our Work</span>
+    <span class="tier-desc">8 systems in active development — RTL gates, synthesis, audio, SDRAM</span>
+  </div>
+
+  <div class="systems-grid">
+    {% for sys in our_systems %}
+    <div class="sys-card">
+      <div class="sys-card-header">
+        <div class="sys-name">{{ sys.name }}</div>
+        <span class="priority-badge">P{{ sys.priority }}</span>
+      </div>
+      <div class="sys-desc">{{ sys.description }}</div>
+
+      <!-- Key chips -->
+      <div class="key-chips">
+        {% for chip in sys.key_chips %}
+        <span class="chip-tag">{{ chip }}</span>
+        {% endfor %}
+      </div>
+
+      <!-- Game count -->
+      {% if sys.game_total %}
+      <div class="game-count-badge">{{ sys.game_total }} ROM sets &nbsp;({{ sys.game_parents }} parents)</div>
+      {% endif %}
+
+      <!-- RTL gate dots: up to 5 filled = files present -->
+      <div class="gate-row">
+        <span class="gate-label">RTL</span>
+        <div class="gate-dots">
+          {% for i in range(5) %}
+            {% if i < sys.rtl_gates|length %}
+              <div class="gate-dot filled" title="{{ sys.rtl_gates[i] }}"></div>
+            {% else %}
+              <div class="gate-dot empty"></div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        <span class="gate-dot-label">{{ sys.rtl_gates|length }} .sv file{{ 's' if sys.rtl_gates|length != 1 else '' }}</span>
+      </div>
+
+      <!-- Status badges: synthesis, vectors -->
+      <div class="status-row">
+        <span class="sbadge {{ sys.synthesis_status }}">
+          {% if sys.synthesis_status == 'ready' %}Synthesis CI
+          {% elif sys.synthesis_status == 'in_progress' %}Synthesis WIP
+          {% else %}No Synthesis{% endif %}
+        </span>
+        <span class="sbadge {{ sys.vectors_status }}">
+          {% if sys.vectors_status == 'ready' %}Vectors OK
+          {% elif sys.vectors_status == 'in_progress' %}Vectors WIP
+          {% else %}No Vectors{% endif %}
+        </span>
+      </div>
+
+      <!-- Feature indicators: audio, PLL, SDRAM, input -->
+      <div class="feature-row">
+        <span class="fbadge {{ 'on' if sys.has_audio else 'off' }}">{{ 'Audio' }}</span>
+        <span class="fbadge {{ 'on' if sys.has_pll else 'off' }}">{{ 'PLL' }}</span>
+        <span class="fbadge {{ 'on' if sys.has_sdram else 'off' }}">{{ 'SDRAM' }}</span>
+        <span class="fbadge {{ 'on' if sys.has_joystick else 'off' }}">{{ 'Input' }}</span>
+      </div>
+
+      <!-- Top 10 games collapsible -->
+      {% if sys.top10 %}
+      <details class="game-list">
+        <summary>{{ sys.top10|length }} notable games ▾</summary>
+        <div class="game-list-inner">
+          {% for g in sys.top10 %}
+          <span>{{ g.year }} &middot; {{ g.title[:38] }}{% if g.title|length > 38 %}&hellip;{% endif %}</span>
+          {% endfor %}
+        </div>
+      </details>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TIER 2: Ecosystem                                            -->
+<!-- ============================================================ -->
+<div class="tier tier-2">
+  <div class="tier-header">
+    <span class="tier-num">Tier 2</span>
+    <span class="tier-title">Ecosystem</span>
+    <span class="tier-desc">Community cores that already exist — context + opportunities</span>
+  </div>
+
+  <div class="eco-table-wrap">
+    <table class="eco">
+      <thead>
+        <tr>
+          <th>System</th>
+          <th>Author</th>
+          <th>Status</th>
+          <th>Games</th>
+          <th>Notes</th>
+          <th>Our Opportunity</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ec in ecosystem %}
+        <tr>
+          <td>
+            <div class="eco-name">{{ ec.name }}</div>
+            {% if ec.repo %}
+            <div style="margin-top:.2rem"><a href="{{ ec.repo }}" style="font-size:.72rem;color:#475569">repo ↗</a></div>
+            {% endif %}
+          </td>
+          <td class="eco-author">{{ ec.author }}</td>
+          <td><span class="status-pill {{ ec.status }}">{{ ec.status_label }}</span></td>
+          <td>
+            {% if ec.game_total %}
+            <span style="font-size:.82rem;color:#94a3b8">{{ ec.game_total }} sets</span><br>
+            <span style="font-size:.72rem;color:#475569">{{ ec.game_parents }} parents</span>
+            {% elif ec.games_supported %}
+            <span style="font-size:.82rem;color:#94a3b8">{{ ec.games_supported }} titles</span>
+            {% else %}
+            <span style="color:#374151">—</span>
+            {% endif %}
+          </td>
+          <td class="notes-cell">{{ ec.notes }}</td>
+          <td class="opportunity-cell">{{ ec.opportunity or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TIER 3: Future Targets                                       -->
+<!-- ============================================================ -->
+<div class="tier tier-3">
+  <div class="tier-header">
+    <span class="tier-num">Tier 3</span>
+    <span class="tier-title">Future Targets</span>
+    <span class="tier-desc">Genuine gaps — no public MiSTer core, DE-10 Nano feasible</span>
+  </div>
+
+  <div class="future-grid">
+    {% for ft in future_targets %}
+    <div class="future-card {{ ft.feasibility }}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem">
+        <div class="future-name">{{ ft.name }}</div>
+        <span class="priority-badge">P{{ ft.priority }}</span>
+      </div>
+      <div class="future-cpu">{{ ft.cpu }}</div>
+      <div class="future-games">{{ ft.key_games | join(', ') }}</div>
+      <div class="future-notes">{{ ft.notes }}</div>
+      <div class="lut-row">
+        <span class="lut-val">~{{ '{:,}'.format(ft.lut_estimate) }} LUTs</span>
+        <span class="feas-badge {{ ft.feasibility }}">
+          {% if ft.feasibility == 'green' %}Fits{% elif ft.feasibility == 'yellow' %}Tight{% else %}Too Large{% endif %}
+        </span>
+        {% if ft.game_parents %}
+        <span class="future-game-count">{{ ft.game_parents }} parents</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Full Game Library (collapsible)                              -->
+<!-- ============================================================ -->
+<div style="margin-bottom:3rem">
+  <details>
+    <summary class="expand-summary">
+      Full Game Library &mdash; {{ total_games }} ROM sets across {{ systems_list|length }} systems
+      <span style="color:#475569;font-size:.82rem;font-weight:400;margin-left:.5rem">MAME parent+clone catalog</span>
+      <span class="expand-chevron">&#9660;</span>
+    </summary>
+    <div style="margin-top:1rem">
+      <div class="filter-row">
+        <input type="text" id="searchInput" placeholder="Search title or ROM name&hellip;" oninput="filterLib()" style="flex:1;min-width:200px;max-width:360px">
+        <select id="sysFilter" onchange="filterLib()">
+          <option value="">All systems</option>
+          {% for sk in systems_list %}
+          <option value="{{ sk }}">{{ system_display.get(sk, sk) }}</option>
+          {% endfor %}
+        </select>
+        <label><input type="checkbox" id="parentsOnly" onchange="filterLib()"> Parents only</label>
+        <span id="gameCount" style="color:#475569;font-size:.82rem"></span>
+      </div>
+      <div class="lib-wrap">
+        <table class="lib" id="gameLib">
+          <thead>
+            <tr>
+              <th>System</th>
+              <th>Title</th>
+              <th>Year</th>
+              <th>ROM Name</th>
+              <th>Manufacturer</th>
+            </tr>
+          </thead>
+          <tbody id="gameLibBody">
+            {% for g in [] %}{% endfor %}{# populated by JS below #}
+          </tbody>
+        </table>
+      </div>
+      <div id="noResults" style="display:none;text-align:center;padding:2rem;color:#374151">No games match your filter.</div>
+      <p style="font-size:.75rem;color:#374151;margin-top:.5rem">
+        Full searchable listing: <a href="/games">games page</a>
+      </p>
+    </div>
+  </details>
+</div>
+
+<footer>
+  <p>
+    MiSTer FPGA Arcade Core Pipeline &nbsp;|&nbsp; Flask &nbsp;|&nbsp; MAME catalog via <code>-listxml</code>
+    &nbsp;|&nbsp; <a href="/api/systems">API</a>
+  </p>
+</footer>
+</div>
+
+<script>
+// Game data embedded for client-side filtering (parent games only to keep size reasonable)
+const GAMES = {{ all_games_js | safe }};
+
+const SYSTEM_DISPLAY = {{ system_display_js | safe }};
+
+function renderLib(filtered) {
+  const tbody = document.getElementById('gameLibBody');
+  const rows = filtered.map(g => {
+    const sys = SYSTEM_DISPLAY[g.system] || g.system;
+    const clone = g.parent ? ' class="clone-row"' : '';
+    return `<tr${clone} data-system="${g.system}" data-parent="${g.parent ? 'false' : 'true'}" data-search="${(g.title+' '+g.name).toLowerCase()}">
+      <td><span class="sys-chip-label">${sys}</span></td>
+      <td>${g.title}</td>
+      <td>${g.year}</td>
+      <td class="rom-name">${g.name}</td>
+      <td style="font-size:.78rem;color:#475569">${g.manufacturer}</td>
+    </tr>`;
+  });
+  tbody.innerHTML = rows.join('');
+  document.getElementById('gameCount').textContent = filtered.length + ' shown';
+  document.getElementById('noResults').style.display = filtered.length === 0 ? '' : 'none';
+}
+
+function filterLib() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const sys = document.getElementById('sysFilter').value;
+  const parentsOnly = document.getElementById('parentsOnly').checked;
+  let filtered = GAMES;
+  if (sys) filtered = filtered.filter(g => g.system === sys);
+  if (search) filtered = filtered.filter(g => (g.title + ' ' + g.name).toLowerCase().includes(search));
+  if (parentsOnly) filtered = filtered.filter(g => !g.parent);
+  renderLib(filtered);
+}
+
+// Lazy-render when the details element opens
+document.querySelector('details:last-of-type').addEventListener('toggle', function(e) {
+  if (e.target.open && document.getElementById('gameLibBody').children.length === 0) {
+    filterLib();
+  }
+});
+
+// Auto-refresh
+setTimeout(() => location.reload(), 60000);
+</script>
+</body>
+</html>
