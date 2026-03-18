@@ -35,9 +35,9 @@ module psikyo_gate5 (
 
     // ── BG layer pixels (from Gate 4 tilemap renderer) ───────────────────────
     // Index 0 = BG0 (foreground), index 1 = BG1 (background)
-    input  logic [7:0] bg_pix_color   [0:1],   // {palette[3:0], nybble[3:0]}
-    input  logic [1:0] bg_pix_valid,            // [0]=BG0 valid, [1]=BG1 valid
-    input  logic [1:0] bg_pix_priority [0:1],   // per-layer priority attribute
+    input  logic [1:0][7:0] bg_pix_color,         // {palette[3:0], nybble[3:0]}
+    input  logic [1:0] bg_pix_valid,              // [0]=BG0 valid, [1]=BG1 valid
+    input  logic [1:0][1:0] bg_pix_priority,      // per-layer priority attribute
 
     // ── Compositor output ────────────────────────────────────────────────────
     output logic [7:0] final_color,    // 8-bit palette index of winning pixel

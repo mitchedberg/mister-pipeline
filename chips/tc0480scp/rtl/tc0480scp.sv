@@ -69,9 +69,9 @@ module tc0480scp (
     // ── Decoded Register Outputs ───────────────────────────────────────────
     output logic [3:0][15:0] bgscrollx,
     output logic [3:0][15:0] bgscrolly,
-    output logic [15:0] bgzoom    [0:3],
-    output logic [ 7:0] bg_dx     [0:3],
-    output logic [ 7:0] bg_dy     [0:3],
+    output logic [3:0][15:0] bgzoom,
+    output logic [3:0][ 7:0] bg_dx,
+    output logic [3:0][ 7:0] bg_dy,
     output logic [15:0] text_scrollx,
     output logic [15:0] text_scrolly,
     output logic        dblwidth,

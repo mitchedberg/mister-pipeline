@@ -424,8 +424,8 @@ logic [255:0]        dl_valid;
 logic [7:0]  dl_count;
 logic        dl_ready;
 
-logic [15:0] bg_scroll_x_w [0:3];
-logic [15:0] bg_scroll_y_w [0:3];
+logic [3:0][15:0] bg_scroll_x_w;
+logic [3:0][15:0] bg_scroll_y_w;
 
 logic [15:0] psikyo_dout;
 
@@ -579,7 +579,7 @@ logic [7:0]  g4_bg_rom_data;
 logic [1:0]  g4_bg_layer_sel;
 
 logic [1:0]  bg_pix_valid_w;
-logic [7:0]  bg_pix_color_w   [0:1];
+logic [1:0][7:0]  bg_pix_color_w;
 logic [1:0]  bg_pix_priority_w;
 
 psikyo_gate4 u_gate4 (
@@ -593,10 +593,10 @@ psikyo_gate4 u_gate4 (
     .vblank         (vblank_r),
 
     // Scroll registers (layer 0 and 1; layers 2/3 not used on Gunbird/S1945)
-    // Gate 4 expects scroll_x/y[0:1]; psikyo.sv outputs bg_scroll_x/y[0:3].
-    // Pass layers 0 and 1 explicitly (cannot slice [0:3] array as [1:0]).
-    .scroll_x       ('{bg_scroll_x_w[0], bg_scroll_x_w[1]}),
-    .scroll_y       ('{bg_scroll_y_w[0], bg_scroll_y_w[1]}),
+    // Gate 4 expects scroll_x/y packed [1:0][15:0]; psikyo.sv outputs bg_scroll_x/y packed [3:0][15:0].
+    // Pass layers 0 and 1 explicitly via packed concatenation.
+    .scroll_x       ({bg_scroll_x_w[1], bg_scroll_x_w[0]}),
+    .scroll_y       ({bg_scroll_y_w[1], bg_scroll_y_w[0]}),
 
     // VRAM write port
     .vram_wr_addr   (vram_wr_addr_w),
@@ -630,7 +630,7 @@ psikyo_gate5 u_gate5 (
     // Expand each 1-bit field to 2-bit by zero-extending (priority[0] = the bit).
     .bg_pix_color    (bg_pix_color_w),
     .bg_pix_valid    (bg_pix_valid_w),
-    .bg_pix_priority ('{2'(bg_pix_priority_w[0]), 2'(bg_pix_priority_w[1])}),
+    .bg_pix_priority ({2'(bg_pix_priority_w[1]), 2'(bg_pix_priority_w[0])}),
 
     // Output → palette lookup
     .final_color     (final_color_w),

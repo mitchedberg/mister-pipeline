@@ -136,7 +136,7 @@ module gp9001 #(
     // ── Active register outputs (post-vsync staging) ──────────────────────────
 
     // Scroll registers (array: [0]=layer0_X, [1]=layer0_Y, ..., [7]=layer3_Y)
-    output logic [15:0] scroll      [0:7],
+    output logic [7:0][15:0] scroll,
     output logic [15:0] scroll0_x,
     output logic [15:0] scroll0_y,
     output logic [15:0] scroll1_x,
@@ -187,7 +187,7 @@ module gp9001 #(
 
     // ── Gate 3: Tilemap pixel pipeline outputs ────────────────────────────────
     output logic [3:0]  bg_pix_valid,          // one bit per layer (4 max)
-    output logic [7:0]  bg_pix_color  [0:3],   // 8-bit color {palette[3:0], index[3:0]}
+    output logic [3:0][7:0]  bg_pix_color,       // 8-bit color {palette[3:0], index[3:0]}
     output logic [3:0]  bg_pix_priority,        // priority bit per layer
 
     // ── Gate 3: Tile ROM interface (time-multiplexed, 4bpp packed) ────────────
@@ -270,7 +270,7 @@ module gp9001 #(
     // Control register file — shadow (CPU-facing) and active (renderer-facing)
     // =========================================================================
 
-    logic [15:0] shadow_scroll [0:7];
+    logic [7:0][15:0] shadow_scroll;
     logic [15:0] shadow_rowscroll;
     logic [15:0] shadow_layer_ctrl;
     logic [15:0] shadow_sprite_ctrl;
@@ -278,7 +278,7 @@ module gp9001 #(
     logic [15:0] shadow_color_key;
     logic [15:0] shadow_blend_ctrl;
 
-    logic [15:0] active_scroll_r [0:7];
+    logic [7:0][15:0] active_scroll_r;
     logic [15:0] active_rowscroll_r;
     logic [15:0] active_layer_ctrl_r;
     logic [15:0] active_sprite_ctrl_r;

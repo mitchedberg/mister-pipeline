@@ -269,7 +269,7 @@ logic [7:0]  spr_rom_data_r;     // fed back to GP9001
 
 // Gate 3/4 BG and sprite outputs (unused in stub — silence)
 logic [3:0]  bg_pix_valid_w;
-logic [7:0]  bg_pix_color_w [0:3];
+logic [3:0][7:0]  bg_pix_color_w;
 logic [3:0]  bg_pix_priority_w;
 logic [15:0] vram_dout_w;
 
@@ -304,7 +304,7 @@ logic          display_list_ready_w;
 /* verilator lint_on UNUSED */
 
 // GP9001 register outputs (not needed at integration level)
-logic [15:0] scroll_w [0:7];
+logic [7:0][15:0] scroll_w;
 logic [15:0] scroll0_x_w, scroll0_y_w, scroll1_x_w, scroll1_y_w;
 logic [15:0] scroll2_x_w, scroll2_y_w, scroll3_x_w, scroll3_y_w;
 logic [15:0] rowscroll_ctrl_w, layer_ctrl_w, sprite_ctrl_w;

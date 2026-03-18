@@ -69,7 +69,7 @@ module tc0630fdp_colmix (
     input  logic [ 8:0] text_pixel,
 
     // BG PF1–PF4: {palette[8:0], pen[3:0]}.  pen==0 → transparent.
-    input  logic [12:0] bg_pixel  [0:3],
+    input  logic [3:0][12:0] bg_pixel,
 
     // Sprite: {prio_group[1:0], palette[5:0], pen[3:0]}.  pen==0 → transparent.
     input  logic [11:0] spr_pixel,
@@ -80,15 +80,15 @@ module tc0630fdp_colmix (
     input  logic        ls_pivot_blend,   // 0=opaque, 1=blend A
 
     // ── Per-scanline priority values ──────────────────────────────────────────
-    input  logic [ 3:0] ls_pf_prio  [0:3],
-    input  logic [ 3:0] ls_spr_prio [0:3],
+    input  logic [3:0][ 3:0] ls_pf_prio,
+    input  logic [3:0][ 3:0] ls_spr_prio,
 
     // ── Step 12: Clip plane inputs ─────────────────────────────────────────────
-    input  logic [ 7:0] ls_clip_left   [0:3],
-    input  logic [ 7:0] ls_clip_right  [0:3],
-    input  logic [ 3:0] ls_pf_clip_en   [0:3],
-    input  logic [ 3:0] ls_pf_clip_inv  [0:3],
-    input  logic        ls_pf_clip_sense[0:3],
+    input  logic [3:0][ 7:0] ls_clip_left,
+    input  logic [3:0][ 7:0] ls_clip_right,
+    input  logic [3:0][ 3:0] ls_pf_clip_en,
+    input  logic [3:0][ 3:0] ls_pf_clip_inv,
+    input  logic [3:0]        ls_pf_clip_sense,
     input  logic [ 3:0] ls_spr_clip_en,
     input  logic [ 3:0] ls_spr_clip_inv,
     input  logic        ls_spr_clip_sense,
@@ -96,8 +96,8 @@ module tc0630fdp_colmix (
     // ── Step 13: Alpha blend inputs ───────────────────────────────────────────
     input  logic [ 3:0] ls_a_src,          // A_src coefficient (0–8)
     input  logic [ 3:0] ls_a_dst,          // A_dst coefficient (0–8)
-    input  logic [ 1:0] ls_pf_blend  [0:3],// PF blend modes (bits[15:14] of pp_word)
-    input  logic [ 1:0] ls_spr_blend [0:3],// Sprite blend modes (2 bits per group)
+    input  logic [3:0][ 1:0] ls_pf_blend,   // PF blend modes (bits[15:14] of pp_word)
+    input  logic [3:0][ 1:0] ls_spr_blend,  // Sprite blend modes (2 bits per group)
 
     // ── Step 14: Reverse blend B coefficients ─────────────────────────────────
     input  logic [ 3:0] ls_b_src,          // B_src coefficient for reverse blend (0–8)
@@ -198,10 +198,10 @@ always_comb begin
 end
 
 // ── Per-layer clipped pen values ─────────────────────────────────────────────
-logic [3:0] pf_pen_clipped  [0:3];
+logic [3:0][3:0] pf_pen_clipped;
 logic [3:0] spr_pen_clipped;
 
-logic pf_vis [0:3];
+logic [3:0] pf_vis;
 genvar gi;
 generate
     for (gi = 0; gi < 4; gi++) begin : gen_pf_clip
@@ -229,10 +229,10 @@ always_comb begin
 end
 
 // ── Layer field extraction ────────────────────────────────────────────────────
-logic [3:0]  pf_pen  [0:3];
-logic [8:0]  pf_pal  [0:3];
-logic [4:0]  pf_prio [0:3];
-logic [1:0]  pf_bmode[0:3];
+logic [3:0][3:0]  pf_pen;
+logic [3:0][8:0]  pf_pal;
+logic [3:0][4:0]  pf_prio;
+logic [3:0][1:0]  pf_bmode;
 
 generate
     for (gi = 0; gi < 4; gi++) begin : gen_pf_fields

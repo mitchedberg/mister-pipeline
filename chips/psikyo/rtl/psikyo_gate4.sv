@@ -56,8 +56,8 @@ module psikyo_gate4 (
     // ── Scroll registers (from Gate 1 active register file) ──────────────────
     // bg_scroll_x[L][15:8] = integer X scroll for layer L (0..255)
     // bg_scroll_y[L][15:8] = integer Y scroll for layer L (0..255)
-    input  logic [15:0] scroll_x [0:1],
-    input  logic [15:0] scroll_y [0:1],
+    input  logic [1:0][15:0] scroll_x,
+    input  logic [1:0][15:0] scroll_y,
 
     // ── Tilemap VRAM write port (CPU access) ──────────────────────────────────
     // 13-bit address: {layer[0], cell[11:0]}
@@ -77,7 +77,7 @@ module psikyo_gate4 (
 
     // ── Per-layer pixel outputs ───────────────────────────────────────────────
     output logic [1:0]  bg_pix_valid,          // one bit per layer (2 layers)
-    output logic [7:0]  bg_pix_color  [0:1],   // {palette[3:0], nybble[3:0]}
+    output logic [1:0][7:0]  bg_pix_color,       // {palette[3:0], nybble[3:0]}
     output logic [1:0]  bg_pix_priority        // priority bit per layer
 );
 

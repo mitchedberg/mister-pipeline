@@ -143,7 +143,7 @@ module kaneko16 #(
 
     // Gate 4 BG pixel outputs (registered, valid 2 cycles after set_pixel)
     output logic [3:0]   bg_pix_valid,     // one valid bit per layer (4 layers)
-    output logic [7:0]   bg_pix_color  [0:3], // {palette[3:0], nybble[3:0]}
+    output logic [3:0][7:0]   bg_pix_color,    // {palette[3:0], nybble[3:0]}
     output logic [3:0]   bg_pix_priority,  // per-layer priority bit (reserved, always 0)
 
     // ======== GATE 3: Per-scanline sprite rasterizer ========

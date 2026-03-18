@@ -50,10 +50,10 @@ module psikyo (
   output logic [3:0]   bg_enable,
   output logic [3:0]   bg_tile_size,       // [0]=16x16, [1]=8x8
   output logic [7:0]   bg_priority,        // [7:6]=layer 3, [5:4]=layer 2, [3:2]=layer 1, [1:0]=layer 0
-  output logic [15:0]  bg_chr_bank [3:0],
-  output logic [15:0]  bg_scroll_x [3:0],
-  output logic [15:0]  bg_scroll_y [3:0],
-  output logic [31:0]  bg_tilemap_base [3:0],
+  output logic [3:0][15:0]  bg_chr_bank,
+  output logic [3:0][15:0]  bg_scroll_x,
+  output logic [3:0][15:0]  bg_scroll_y,
+  output logic [3:0][31:0]  bg_tilemap_base,
 
   // PS3305 (Colmix/Priority) outputs
   output logic [63:0]  priority_table,     // 8 × 8-bit entries
@@ -151,15 +151,15 @@ module psikyo (
 
   // ====== PS3103 Tilemap Control Shadow Registers (4 layers × 4 registers each) ======
 
-  logic [7:0]   ps3103_ctrl_shadow [3:0];
-  logic [15:0]  ps3103_scroll_x_shadow [3:0];
-  logic [15:0]  ps3103_scroll_y_shadow [3:0];
-  logic [31:0]  ps3103_tilemap_base_shadow [3:0];
+  logic [3:0][7:0]   ps3103_ctrl_shadow;
+  logic [3:0][15:0]  ps3103_scroll_x_shadow;
+  logic [3:0][15:0]  ps3103_scroll_y_shadow;
+  logic [3:0][31:0]  ps3103_tilemap_base_shadow;
 
-  logic [7:0]   ps3103_ctrl_active [3:0];
-  logic [15:0]  ps3103_scroll_x_active [3:0];
-  logic [15:0]  ps3103_scroll_y_active [3:0];
-  logic [31:0]  ps3103_tilemap_base_active [3:0];
+  logic [3:0][7:0]   ps3103_ctrl_active;
+  logic [3:0][15:0]  ps3103_scroll_x_active;
+  logic [3:0][15:0]  ps3103_scroll_y_active;
+  logic [3:0][31:0]  ps3103_tilemap_base_active;
 
   // ====== PS3305 Colmix/Priority Shadow Registers ======
 

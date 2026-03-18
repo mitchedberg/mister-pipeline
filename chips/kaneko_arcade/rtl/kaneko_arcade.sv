@@ -328,7 +328,7 @@ logic [7:0]  k16_bg_tile_rom_data_r;
 
 // Gate 4 pixel outputs
 logic [3:0]  k16_bg_pix_valid;
-logic [7:0]  k16_bg_pix_color [0:3];
+logic [3:0][7:0]  k16_bg_pix_color;
 logic [3:0]  k16_bg_pix_priority;
 
 // Gate 5 compositor output
