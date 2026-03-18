@@ -714,27 +714,27 @@ assign hblank_fall = hblank & ~hblank_r2;
 // tc0630fdp_lineram — Line RAM + Parser (Step 5)
 // =============================================================================
 // Per-scanline outputs from Line RAM parser
-logic [15:0] ls_rowscroll   [0:3];
+logic [3:0][15:0] ls_rowscroll;
 logic [3:0]       ls_alt_tilemap;
-logic [ 7:0] ls_zoom_x      [0:3];   // Step 6: X zoom per PF
-logic [ 7:0] ls_zoom_y      [0:3];   // Step 6: Y zoom per PF
-logic [ 8:0] ls_colscroll   [0:3];   // Step 7: column scroll offset per PF
-logic [15:0] ls_pal_add     [0:3];   // Step 7: palette addition raw value per PF
-logic [ 3:0] ls_pf_prio     [0:3];   // Step 11: PF priority values 0–15
-logic [ 3:0] ls_spr_prio    [0:3];   // Step 11: sprite group priorities
+logic [3:0][ 7:0] ls_zoom_x;        // Step 6: X zoom per PF
+logic [3:0][ 7:0] ls_zoom_y;        // Step 6: Y zoom per PF
+logic [3:0][ 8:0] ls_colscroll;     // Step 7: column scroll offset per PF
+logic [3:0][15:0] ls_pal_add;       // Step 7: palette addition raw value per PF
+logic [3:0][ 3:0] ls_pf_prio;       // Step 11: PF priority values 0–15
+logic [3:0][ 3:0] ls_spr_prio;      // Step 11: sprite group priorities
 // Step 12: clip plane outputs
-logic [ 7:0] ls_clip_left   [0:3];
-logic [ 7:0] ls_clip_right  [0:3];
-logic [ 3:0] ls_pf_clip_en   [0:3];
-logic [ 3:0] ls_pf_clip_inv  [0:3];
-logic        ls_pf_clip_sense[0:3];
+logic [3:0][ 7:0] ls_clip_left;
+logic [3:0][ 7:0] ls_clip_right;
+logic [3:0][ 3:0] ls_pf_clip_en;
+logic [3:0][ 3:0] ls_pf_clip_inv;
+logic [3:0]       ls_pf_clip_sense;
 logic [ 3:0] ls_spr_clip_en;
 logic [ 3:0] ls_spr_clip_inv;
 logic        ls_spr_clip_sense;
 // Step 13: alpha blend outputs
 logic [ 3:0] ls_a_src;
 logic [ 3:0] ls_a_dst;
-logic [ 1:0] ls_pf_blend  [0:3];
+logic [3:0][ 1:0] ls_pf_blend;
 logic [3:0][1:0]  ls_spr_blend;
 // Step 14: reverse blend B coefficients
 logic [ 3:0] ls_b_src;

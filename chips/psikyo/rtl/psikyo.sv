@@ -137,11 +137,17 @@ module psikyo (
   logic [15:0]  ps2001b_count_active;
   logic [7:0]   ps2001b_y_offset_active;
 
-  // Unused signals
-  logic _unused_ctrl_active = &ps2001b_ctrl_active[3:0];
-  logic _unused_ps3204 = cs_ps3204;
-  logic _unused_cs_int = cs_int;
-  logic _unused_sprite_ram_dout = |sprite_ram_dout;
+  // Unused signals (plain declarations + assign; Quartus 17.0 forbids non-constant initializers)
+  /* verilator lint_off UNUSED */
+  logic _unused_ctrl_active;
+  logic _unused_ps3204;
+  logic _unused_cs_int;
+  logic _unused_sprite_ram_dout;
+  /* verilator lint_on UNUSED */
+  assign _unused_ctrl_active    = &ps2001b_ctrl_active[3:0];
+  assign _unused_ps3204         = cs_ps3204;
+  assign _unused_cs_int         = cs_int;
+  assign _unused_sprite_ram_dout = |sprite_ram_dout;
 
   // ====== PS3103 Tilemap Control Shadow Registers (4 layers × 4 registers each) ======
 

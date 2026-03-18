@@ -143,41 +143,41 @@ module tc0630fdp_lineram (
     // ── Per-scanline outputs (registered at hblank_fall, valid for vpos+1) ─────
     // rowscroll[n]: X-scroll addition for PF(n+1) on the next scanline.
     // Zero when rowscroll is disabled for that PF.
-    output logic [15:0] ls_rowscroll   [0:3],
+    output logic [3:0][15:0] ls_rowscroll,
     // alt_tilemap[n]: 1 → PF(n+1) reads tile data from +0x1800 offset in PF RAM.
     output logic [3:0]       ls_alt_tilemap,
     // zoom_x[n]: X zoom factor for PF(n+1).  0x00 = no zoom (1:1).
     // Zero (no zoom) when zoom is disabled for that PF.
-    output logic [ 7:0] ls_zoom_x      [0:3],
+    output logic [3:0][ 7:0] ls_zoom_x,
     // zoom_y[n]: Y zoom factor for PF(n+1).  0x80 = no zoom (1:1).
     // 0x80 (no zoom) when zoom is disabled for that PF.
-    output logic [ 7:0] ls_zoom_y      [0:3],
+    output logic [3:0][ 7:0] ls_zoom_y,
     // colscroll[n]: 9-bit column scroll offset for PF(n+1) (§9.2 bits[8:0]).
     // Zero when colscroll is disabled for that PF.
-    output logic [ 8:0] ls_colscroll   [0:3],
+    output logic [3:0][ 8:0] ls_colscroll,
     // pal_add[n]: raw 16-bit palette addition word for PF(n+1) (§9.10).
     // Zero when pal_add is disabled.  BG engine divides by 16 to get palette-line offset.
-    output logic [15:0] ls_pal_add     [0:3],
+    output logic [3:0][15:0] ls_pal_add,
     // pf_prio[n]: priority value 0–15 for PF(n+1) from §9.12 bits[3:0].
     // Zero (lowest) when priority enable is not asserted for this PF/scanline.
-    output logic [ 3:0] ls_pf_prio     [0:3],
+    output logic [3:0][ 3:0] ls_pf_prio,
     // spr_prio[n]: priority for sprite group n (0=0x00, 1=0x40, 2=0x80, 3=0xC0)
     // from §9.8.  Always latched (no separate enable bit).
-    output logic [ 3:0] ls_spr_prio    [0:3],
+    output logic [3:0][ 3:0] ls_spr_prio,
 
     // ── Step 12: Clip plane outputs ──────────────────────────────────────────
     // clip_left[p] / clip_right[p]: 8-bit left/right boundary for clip plane p (0–3).
     // Latched at hblank_fall from §9.3 data words.
-    output logic [ 7:0] ls_clip_left   [0:3],
-    output logic [ 7:0] ls_clip_right  [0:3],
+    output logic [3:0][ 7:0] ls_clip_left,
+    output logic [3:0][ 7:0] ls_clip_right,
 
     // PF clip configuration from §9.12 pp_word:
     //   ls_pf_clip_en[n]     = bits[11:8] — 4-bit enable mask (one bit per clip plane)
     //   ls_pf_clip_inv[n]    = bits[7:4]  — 4-bit invert mask (per clip plane)
     //   ls_pf_clip_sense[n]  = bit[12]    — inversion sense: 1=invert the invert
-    output logic [ 3:0] ls_pf_clip_en   [0:3],
-    output logic [ 3:0] ls_pf_clip_inv  [0:3],
-    output logic        ls_pf_clip_sense[0:3],
+    output logic [3:0][ 3:0] ls_pf_clip_en,
+    output logic [3:0][ 3:0] ls_pf_clip_inv,
+    output logic [3:0]       ls_pf_clip_sense,
 
     // Sprite clip configuration from §9.7:
     //   ls_spr_clip_en    = bits[11:8] — 4-bit enable mask
@@ -195,7 +195,7 @@ module tc0630fdp_lineram (
     output logic [ 3:0] ls_a_dst,
     // PF blend modes from §9.12 pp_word bits[15:14]:
     //   00=opaque  01=normal blend A  10=reverse blend B  11=opaque-layer
-    output logic [ 1:0] ls_pf_blend  [0:3],
+    output logic [3:0][ 1:0] ls_pf_blend,
     // Sprite blend modes from §9.4 bits[7:0] (2 bits per group):
     //   bits[7:6]=group0xC0, bits[5:4]=group0x80, bits[3:2]=group0x40, bits[1:0]=group0x00
     output logic [3:0][1:0]  ls_spr_blend,
