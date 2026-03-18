@@ -85,5 +85,5 @@ jobs:
           echo "Job Status: ${{ job.status }}"
           RPT=chips/psikyo_arcade/quartus/output_files/psikyo_arcade.fit.rpt
           if [ -f "$RPT" ]; then
-            grep -E "^Total logic elements|Total memory bits|Total pins|I/O pins used" "$RPT" || true
+            grep -E "Logic utilization|Total registers|Total pins|Total block memory|Total RAM Blocks" "$RPT" || true
           fi

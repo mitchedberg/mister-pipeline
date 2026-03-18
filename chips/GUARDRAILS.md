@@ -92,27 +92,23 @@ From `pattern-ledger.md` Pattern 9.
 4. **check_rtl.sh PASS before commit.** Not before push — before commit. If check_rtl.sh warns, either fix the warn or document why it's a false positive before committing.
 5. **Quartus exit code 2 = fits device (timing violations).** This is a WARNING state — CI is configured to pass on exit 2. A chip in exit-2 state needs SDC work but is otherwise valid hardware.
 
-## PAT Scope Blocker
-
-All `.github/workflows/` changes require a GitHub PAT with `workflow` scope.
-Current PAT lacks this scope. All CI workflow improvements are committed locally but **not pushed**.
-**User action required:** Regenerate PAT at github.com/settings/tokens with `workflow` scope selected.
-Blocked commits (local only): `f18d609` (exit code 2 fix for 6 workflows).
-
 ## CI Queue (2026-03-18)
 
 | Position | Chip | CI Status | Next Action |
 |----------|------|-----------|-------------|
-| **ACTIVE** | nmk_arcade | ⏳ timing -18ns (-4ns recovery fixed in SDC, awaiting CI) | Monitor result |
-| **ACTIVE** | psikyo_arcade | ⏳ timing -42ns (same SDC fix applied) | Monitor result |
-| **IN CI** | kaneko_arcade | 🔄 running | Wait for result |
-| **PREP** | taito_x | 🔧 cram/linebuf fixes needed | Fix x1_001a.sv then queue |
-| **DEFERRED** | toaplan_v2 | ⏸ GP9001 VRAM (32K MLAB → M10K) | Architecture work |
-| **DEFERRED** | taito_b | ⏸ ~165% ALM estimate | Profile then trim |
+| **DONE** | nmk_arcade | ✅ GREEN (run #23260684835, exit 0) | — |
+| **DONE** | psikyo_arcade | ✅ GREEN (run #23260684856, exit 0) | — |
+| **DONE** | taito_b | ✅ GREEN (run #23260684817, exit 0, RBF 3.0M) | SDC timing work (setup -59.685ns) |
+| **DONE** | toaplan_v2 | ✅ GREEN (run #23260684816, exit 0, RBF 3.1M) | SDC timing work (setup -56.398ns); gp9001 MLAB warning (see below) |
+| **DONE** | taito_x | ✅ GREEN (run #23260684796, exit 0, RBF 2.9M) | SDC timing work (setup -47.934ns) |
+| **DONE** | kaneko_arcade | ✅ GREEN (run #23260684782, exit 0, RBF 3.4M) | SDC timing work (setup -42.461ns) |
 | **FROZEN** | taito_f3 | ❌ 53% over budget (TC0630FDP) | Architecture decision |
 | **FROZEN** | taito_z | ❌ 386% over budget (2× fx68k) | Architecture decision |
 
-**Do not touch FROZEN chips.** Do not touch DEFERRED chips until taito_x is green.
+**Do not touch FROZEN chips.**
+
+**6/8 chips GREEN with RBF bitstreams as of 2026-03-18. All non-frozen systems produce flashable cores.**
+**Next priority: SDC timing closure for all 6 GREEN chips, then Taito Z standalone profiling.**
 
 ## Chip Status (component chips — run standalone after system chips pass)
 
@@ -135,8 +131,11 @@ Blocked commits (local only): `f18d609` (exit code 2 fix for 6 workflows).
 2. Accept Taito Z needs HDMI + audio disabled (jotego pattern for tight designs)
 3. Defer — Taito Z is architecturally the most complex system in the pipeline
 
-### GP9001 VRAM — MLAB capacity
-32K×16 MLAB needs 819 MLABs vs 397 available. Requires pre-fetch pipeline restructure to M10K synchronous reads. Documented in `COMMUNITY_SYNTHESIS_GUIDE.md` Appendix C. Deferred until other chips are clean.
+### GP9001 VRAM — MLAB inference (resolved for now)
+Warning 10999: `gp9001.sv:680` vram (32K×16) could not be inferred as MLAB — Quartus used M10K instead.
+Chip STILL FITTED (exit 0, RBF produced). M10K synthesis is acceptable for now.
+If device utilization becomes tight, revisit synchronous read pre-fetch pipeline to free M10K blocks.
+No action required before kaneko_arcade.
 
 ### Taito F3 — ALM overflow
 128K logic nodes vs 83K device capacity. 53% over budget even with all M10K fixes. Root cause: TC0630FDP is extremely complex. Options: stub non-critical layers, defer.
