@@ -16,8 +16,10 @@
 //   sprite_ram    — 32-bit wide, byte 0x020000–0x027FFF (sprite list)
 //   palette_ram   — 256 × 16-bit R5G5B5, byte 0x600000–0x6007FF
 //
-// Stubs (silence output, no logic):
-//   YMF278B audio — stubbed to silence (AUDIO_L/R = 0)
+// Audio:
+//   YM2610B (jt10): FM + ADPCM-A + ADPCM-B
+//   Z80 bus stubbed (cs_n=1, wr_n=1) until Z80 CPU is added.
+//   ADPCM-A/B ROM path exposed as adpcm_rom_* ports → SDRAM CH3.
 //
 // Hardware reference: MAME src/mame/psikyo/psikyo.cpp (Gunbird, Strikers 1945)
 //
@@ -77,9 +79,10 @@ module psikyo_arcade #(
     parameter int          PROM_ABITS   = 20,   // 2^20 = 1M words = 2 MB
 
     // SDRAM base addresses for ROM regions
-    parameter logic [26:0] PROM_SDR_BASE = 27'h000000,  // prog ROM at SDRAM 0x000000
-    parameter logic [26:0] SPR_SDR_BASE  = 27'h200000,  // sprite ROM at SDRAM 0x200000
-    parameter logic [26:0] BG_SDR_BASE   = 27'h600000,  // BG tile ROM at SDRAM 0x600000
+    parameter logic [26:0] PROM_SDR_BASE  = 27'h000000,  // prog ROM at SDRAM 0x000000
+    parameter logic [26:0] SPR_SDR_BASE   = 27'h200000,  // sprite ROM at SDRAM 0x200000
+    parameter logic [26:0] BG_SDR_BASE    = 27'h600000,  // BG tile ROM at SDRAM 0x600000
+    parameter logic [26:0] ADPCM_SDR_BASE = 27'hA00000   // ADPCM ROM at SDRAM 0xA00000
 
     // VBLANK interrupt level (level 4 on Psikyo)
     parameter logic [2:0] VBLANK_LEVEL  = 3'd4
@@ -117,6 +120,22 @@ module psikyo_arcade #(
     input  logic [15:0] bg_rom_data16,   // 16-bit SDRAM word
     output logic        bg_rom_req,
     input  logic        bg_rom_ack,
+
+    // ── Audio Output ─────────────────────────────────────────────────────────
+    output logic signed [15:0] snd_left,   // YM2610B left  channel (signed 16-bit)
+    output logic signed [15:0] snd_right,  // YM2610B right channel (signed 16-bit)
+
+    // ── ADPCM ROM SDRAM interface ─────────────────────────────────────────
+    // ADPCM-A uses adpcma_addr[19:0] + adpcma_bank[3:0] → 24-bit ROM address.
+    // ADPCM-B uses adpcmb_addr[23:0] directly.
+    // We arbitrate both onto a single 16-bit SDRAM channel.
+    output logic [26:0] adpcm_rom_addr,   // byte address into SDRAM (CH3)
+    output logic        adpcm_rom_req,    // toggle-handshake request
+    input  logic [15:0] adpcm_rom_data,   // 16-bit word from SDRAM
+    input  logic        adpcm_rom_ack,    // toggle-handshake acknowledge
+
+    // ── Sound clock ───────────────────────────────────────────────────────
+    input  logic        clk_sound,        // 8 MHz clock enable (one pulse per 8 MHz cycle)
 
     // ── Video Output ────────────────────────────────────────────────────────
     output logic [7:0]  rgb_r,
@@ -617,6 +636,186 @@ psikyo_gate5 u_gate5 (
 );
 
 // =============================================================================
+// YM2610B Audio — jt10 instantiation
+// =============================================================================
+//
+// Z80 CPU bus is stubbed (cs_n=1, wr_n=1) until Z80 is added.
+// Sound command written by M68K to psikyo cs_z80 region is latched in
+// z80_cmd_latch for future use when the Z80 soft-core is wired.
+//
+// ADPCM-A: jt10 drives adpcma_addr[19:0] + adpcma_bank[3:0].
+//   Effective byte address = {adpcma_bank, adpcma_addr} → 24-bit → SDRAM[ADPCM_SDR_BASE].
+// ADPCM-B: jt10 drives adpcmb_addr[23:0] directly.
+//   We arbitrate A and B onto the single adpcm_rom_* SDRAM channel.
+//   Priority: ADPCM-B over ADPCM-A (both are infrequent vs BG scanline fetches).
+//
+// =============================================================================
+
+// Sound command latch: M68K writes to psikyo cs_z80 address; psikyo.sv
+// stores the byte in z80_cmd_reply (output port). We hold a local copy
+// here for future Z80 wiring.
+logic [7:0] z80_cmd_latch;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) z80_cmd_latch <= 8'h00;
+    else          z80_cmd_latch <= psikyo_dout[7:0];  // shadow psikyo Z80 cmd reg
+end
+
+// jt10 ROM output enable signals (active low)
+wire        adpcma_roe_n_w;
+wire        adpcmb_roe_n_w;
+
+// jt10 ADPCM address outputs
+wire [19:0] adpcma_addr_w;
+wire  [3:0] adpcma_bank_w;
+wire [23:0] adpcmb_addr_w;
+
+// Byte returned from SDRAM to jt10 (8-bit, lane-selected)
+logic [7:0] adpcma_data_r;
+logic [7:0] adpcmb_data_r;
+
+// jt10 instance — YM2610B (FM + ADPCM-A + ADPCM-B)
+jt10 u_ym2610b (
+    .rst            (~reset_n),         // active-high reset
+    .clk            (clk_sys),
+    .cen            (clk_sound),        // 8 MHz clock enable
+
+    // Z80 register bus — stubbed until Z80 is added
+    .din            (8'h00),
+    .addr           (2'b00),
+    .cs_n           (1'b1),             // chip not selected
+    .wr_n           (1'b1),             // no write
+
+    // Data output / IRQ (not connected to M68K yet)
+    /* verilator lint_off PINCONNECTEMPTY */
+    .dout           (),
+    .irq_n          (),
+    /* verilator lint_on PINCONNECTEMPTY */
+
+    // ADPCM-A ROM interface
+    .adpcma_addr    (adpcma_addr_w),
+    .adpcma_bank    (adpcma_bank_w),
+    .adpcma_roe_n   (adpcma_roe_n_w),
+    .adpcma_data    (adpcma_data_r),
+
+    // ADPCM-B ROM interface
+    .adpcmb_addr    (adpcmb_addr_w),
+    .adpcmb_roe_n   (adpcmb_roe_n_w),
+    .adpcmb_data    (adpcmb_data_r),
+
+    // Separated outputs (PSG not used)
+    /* verilator lint_off PINCONNECTEMPTY */
+    .psg_A          (),
+    .psg_B          (),
+    .psg_C          (),
+    .psg_snd        (),
+    .fm_snd         (),
+    .snd_sample     (),
+    /* verilator lint_on PINCONNECTEMPTY */
+
+    // Stereo audio output
+    .snd_left       (snd_left),
+    .snd_right      (snd_right),
+
+    // Enable all 6 ADPCM-A channels
+    .ch_enable      (6'b111111)
+);
+
+// =============================================================================
+// ADPCM ROM SDRAM Bridge
+// =============================================================================
+// Arbitrates ADPCM-A and ADPCM-B onto the single adpcm_rom_* SDRAM channel.
+// ADPCM-B takes priority over ADPCM-A (both are low-rate compared to BG/SPR).
+// The bridge sits between jt10 and the SDRAM channel exposed via the port.
+// ADPCM-A effective address: {adpcma_bank[3:0], adpcma_addr[19:0]} = 24-bit.
+// ADPCM-B effective address: adpcmb_addr[23:0].
+// SDRAM word address        = ADPCM_SDR_BASE + {3'b0, byte_addr[23:1]}.
+// =============================================================================
+
+typedef enum logic [1:0] {
+    ADPCM_IDLE  = 2'd0,
+    ADPCM_FETCH_B = 2'd1,
+    ADPCM_FETCH_A = 2'd2
+} adpcm_state_t;
+
+adpcm_state_t adpcm_state;
+
+logic        adpcm_req_pending;
+logic        adpcm_byte_sel;
+logic [26:0] adpcm_req_addr_r;
+
+// Edge-detect for ROE_N (active-low fetch request)
+logic adpcma_roe_prev, adpcmb_roe_prev;
+logic adpcma_req_edge, adpcmb_req_edge;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        adpcma_roe_prev <= 1'b1;
+        adpcmb_roe_prev <= 1'b1;
+    end else begin
+        adpcma_roe_prev <= adpcma_roe_n_w;
+        adpcmb_roe_prev <= adpcmb_roe_n_w;
+    end
+end
+
+assign adpcma_req_edge = adpcma_roe_prev & ~adpcma_roe_n_w;  // falling edge
+assign adpcmb_req_edge = adpcmb_roe_prev & ~adpcmb_roe_n_w;  // falling edge
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        adpcm_state       <= ADPCM_IDLE;
+        adpcm_rom_req     <= 1'b0;
+        adpcm_req_pending <= 1'b0;
+        adpcm_byte_sel    <= 1'b0;
+        adpcm_req_addr_r  <= 27'b0;
+        adpcma_data_r     <= 8'h00;
+        adpcmb_data_r     <= 8'h00;
+    end else begin
+        case (adpcm_state)
+            ADPCM_IDLE: begin
+                // ADPCM-B priority (higher-quality sample stream)
+                if (adpcmb_req_edge) begin
+                    adpcm_req_addr_r  <= ADPCM_SDR_BASE + {3'b0, adpcmb_addr_w[23:1]};
+                    adpcm_byte_sel    <= adpcmb_addr_w[0];
+                    adpcm_rom_req     <= ~adpcm_rom_req;
+                    adpcm_req_pending <= 1'b1;
+                    adpcm_state       <= ADPCM_FETCH_B;
+                end else if (adpcma_req_edge) begin
+                    // ADPCM-A: {bank, addr} forms 24-bit address
+                    adpcm_req_addr_r  <= ADPCM_SDR_BASE +
+                                         {3'b0, adpcma_bank_w[3:0], adpcma_addr_w[19:1]};
+                    adpcm_byte_sel    <= adpcma_addr_w[0];
+                    adpcm_rom_req     <= ~adpcm_rom_req;
+                    adpcm_req_pending <= 1'b1;
+                    adpcm_state       <= ADPCM_FETCH_A;
+                end
+            end
+
+            ADPCM_FETCH_B: begin
+                if (adpcm_req_pending && (adpcm_rom_req == adpcm_rom_ack)) begin
+                    adpcmb_data_r     <= adpcm_byte_sel ? adpcm_rom_data[15:8]
+                                                        : adpcm_rom_data[7:0];
+                    adpcm_req_pending <= 1'b0;
+                    adpcm_state       <= ADPCM_IDLE;
+                end
+            end
+
+            ADPCM_FETCH_A: begin
+                if (adpcm_req_pending && (adpcm_rom_req == adpcm_rom_ack)) begin
+                    adpcma_data_r     <= adpcm_byte_sel ? adpcm_rom_data[15:8]
+                                                        : adpcm_rom_data[7:0];
+                    adpcm_req_pending <= 1'b0;
+                    adpcm_state       <= ADPCM_IDLE;
+                end
+            end
+
+            default: adpcm_state <= ADPCM_IDLE;
+        endcase
+    end
+end
+
+assign adpcm_rom_addr = adpcm_req_addr_r;
+
+// =============================================================================
 // Sprite ROM SDRAM Bridge
 // gate3 requests a byte at g3_spr_rom_addr_raw on each g3_spr_rom_rd pulse.
 // SDRAM is 16-bit word; byte lane selected by addr[0].
@@ -831,7 +1030,8 @@ assign _unused = &{
     final_valid_w,
     pal_entry_r[15],          // R5G5B5 unused bit (transparent flag)
     sprite_ram_din_w,
-    sprite_ram_wsel_w
+    sprite_ram_wsel_w,
+    z80_cmd_latch             // reserved for Z80 wiring
 };
 /* verilator lint_on UNUSED */
 

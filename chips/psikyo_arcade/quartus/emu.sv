@@ -194,9 +194,7 @@ assign LED_DISK  = 2'd0;
 assign LED_POWER = 2'd0;
 assign BUTTONS   = 2'd0;
 
-// Audio: YMF278B stubbed — silence
-assign AUDIO_L = 16'h0;
-assign AUDIO_R = 16'h0;
+// Audio: wired to YM2610B (jt10) in psikyo_arcade — see below
 
 // LED: blink during ROM download
 assign LED_USER = ioctl_download;
@@ -313,6 +311,30 @@ end
 wire ce_pix = ce_cpu;
 
 //////////////////////////////////////////////////////////////////
+// Sound clock enable — 8 MHz (clk_sys / 4)
+//
+// clk_sys = 32 MHz, target = 8 MHz → fire every 4th cycle.
+// YM2610B hardware clock is 8 MHz (32 MHz / 4 ≈ 8 MHz).
+//////////////////////////////////////////////////////////////////
+logic [1:0] snd_clk_div;
+logic       clk_sound;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        snd_clk_div <= 2'd0;
+        clk_sound   <= 1'b0;
+    end else begin
+        if (snd_clk_div == 2'd3) begin
+            snd_clk_div <= 2'd0;
+            clk_sound   <= 1'b1;
+        end else begin
+            snd_clk_div <= snd_clk_div + 2'd1;
+            clk_sound   <= 1'b0;
+        end
+    end
+end
+
+//////////////////////////////////////////////////////////////////
 // Reset
 //////////////////////////////////////////////////////////////////
 wire rom_download = ioctl_download;
@@ -364,7 +386,12 @@ wire       service = ~joystick_0[10];
 //   prog_*  — CPU program ROM reads (16-bit)
 //   spr_*   — Sprite ROM reads (16-bit, byte-selected)
 //   bg_*    — BG tile ROM reads (16-bit, byte-selected)
+//   adpcm_* — ADPCM ROM reads for YM2610B (16-bit, byte-selected)
 // Plus ioctl write path for ROM download.
+//
+// SDRAM CH3 is shared between BG tile ROM and ADPCM ROM via a simple
+// priority arbiter.  BG takes priority over ADPCM (scanline-critical).
+// ADPCM ROM data goes to psikyo_arcade which routes it to jt10.
 //////////////////////////////////////////////////////////////////
 
 wire [26:0] prog_sdr_addr;
@@ -375,12 +402,79 @@ wire [26:0] spr_sdr_addr;
 wire [15:0] spr_sdr_data;
 wire        spr_sdr_req, spr_sdr_ack;
 
+// BG tile ROM — connected to CH3 via arbiter
 wire [26:0] bg_sdr_addr;
 wire [15:0] bg_sdr_data;
 wire        bg_sdr_req, bg_sdr_ack;
 
-// sdram_b is the 3-channel SDRAM controller from taito_b; re-use here.
-// CH3 (adpcm) tied inactive.
+// ADPCM ROM — connected to CH3 via arbiter (from psikyo_arcade)
+wire [26:0] adpcm_sdr_addr;
+wire [15:0] adpcm_sdr_data;
+wire        adpcm_sdr_req, adpcm_sdr_ack;
+
+//----------------------------------------------------------------
+// CH3 arbiter: BG and ADPCM share the single adpcm port on sdram_b.
+// BG is priority 0 (scanline-critical); ADPCM is priority 1.
+// We use a round-robin / BG-priority scheme:
+//   - If BG req differs from BG ack, forward BG to CH3.
+//   - Else if ADPCM req differs from ADPCM ack, forward ADPCM to CH3.
+//   - Shared data and ack are returned to the winner.
+//----------------------------------------------------------------
+wire [26:0] ch3_addr;
+wire        ch3_req;
+wire [15:0] ch3_data_out;
+wire        ch3_ack;
+
+// Which client currently owns CH3 (0 = BG, 1 = ADPCM)
+logic ch3_owner;   // registered at time of arbitration
+logic ch3_busy;    // CH3 has an in-flight request
+
+// Pend flags: a new request arrived for each client
+wire bg_pend    = (bg_sdr_req    != bg_sdr_ack);
+wire adpcm_pend = (adpcm_sdr_req != adpcm_sdr_ack);
+
+logic ch3_req_r;
+logic [26:0] ch3_addr_r;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ch3_req_r  <= 1'b0;
+        ch3_addr_r <= 27'b0;
+        ch3_owner  <= 1'b0;
+        ch3_busy   <= 1'b0;
+    end else begin
+        if (!ch3_busy) begin
+            if (bg_pend) begin
+                ch3_addr_r <= bg_sdr_addr;
+                ch3_req_r  <= ~ch3_req_r;
+                ch3_owner  <= 1'b0;
+                ch3_busy   <= 1'b1;
+            end else if (adpcm_pend) begin
+                ch3_addr_r <= adpcm_sdr_addr;
+                ch3_req_r  <= ~ch3_req_r;
+                ch3_owner  <= 1'b1;
+                ch3_busy   <= 1'b1;
+            end
+        end else begin
+            // Wait for sdram_b to ack
+            if (ch3_req_r == ch3_ack)
+                ch3_busy <= 1'b0;
+        end
+    end
+end
+
+assign ch3_addr   = ch3_addr_r;
+assign ch3_req    = ch3_req_r;
+
+// Route ack back to the winning client
+assign bg_sdr_ack    = (ch3_owner == 1'b0) ? ch3_ack    : bg_sdr_req;
+assign adpcm_sdr_ack = (ch3_owner == 1'b1) ? ch3_ack    : adpcm_sdr_req;
+
+// Route read data back to the winning client (both see the same word;
+// byte-lane selection is done inside psikyo_arcade / gate4 respectively)
+assign bg_sdr_data   = ch3_data_out;
+assign adpcm_sdr_data = ch3_data_out;
+
 sdram_b u_sdram
 (
     .clk        (clk_sdram),
@@ -404,11 +498,11 @@ sdram_b u_sdram
     .gfx_req    (spr_sdr_req),
     .gfx_ack    (spr_sdr_ack),
 
-    // CH3: BG tile ROM reads (ADPCM channel repurposed)
-    .adpcm_addr (bg_sdr_addr),
-    .adpcm_data (bg_sdr_data),
-    .adpcm_req  (bg_sdr_req),
-    .adpcm_ack  (bg_sdr_ack),
+    // CH3: BG / ADPCM ROM reads (arbitrated above)
+    .adpcm_addr (ch3_addr),
+    .adpcm_data (ch3_data_out),
+    .adpcm_req  (ch3_req),
+    .adpcm_ack  (ch3_ack),
 
     // SDRAM chip pins
     .SDRAM_A    (SDRAM_A),
@@ -463,10 +557,13 @@ fx68k_adapter u_cpu (
     .cpu_reset_n_out (cpu_reset_n_out)
 );
 
+wire signed [15:0] core_snd_left, core_snd_right;
+
 psikyo_arcade u_psikyo_arcade
 (
     .clk_sys         (clk_sys),
     .clk_pix         (ce_pix),
+    .clk_sound       (clk_sound),
     .reset_n         (reset_n),
 
     // CPU bus
@@ -498,6 +595,16 @@ psikyo_arcade u_psikyo_arcade
     .bg_rom_req      (bg_sdr_req),
     .bg_rom_ack      (bg_sdr_ack),
 
+    // ADPCM ROM (YM2610B, shared CH3 via arbiter above)
+    .adpcm_rom_addr  (adpcm_sdr_addr),
+    .adpcm_rom_data  (adpcm_sdr_data),
+    .adpcm_rom_req   (adpcm_sdr_req),
+    .adpcm_rom_ack   (adpcm_sdr_ack),
+
+    // Audio output
+    .snd_left        (core_snd_left),
+    .snd_right       (core_snd_right),
+
     // Video output
     .rgb_r           (core_rgb_r),
     .rgb_g           (core_rgb_g),
@@ -515,6 +622,10 @@ psikyo_arcade u_psikyo_arcade
     .dipsw1          (dsw[0]),
     .dipsw2          (dsw[1])
 );
+
+// Route YM2610B audio to MiSTer AUDIO_L/R
+assign AUDIO_L = core_snd_left;
+assign AUDIO_R = core_snd_right;
 
 //////////////////////////////////////////////////////////////////
 // Video pipeline
