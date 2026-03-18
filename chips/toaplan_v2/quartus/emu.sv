@@ -31,11 +31,13 @@
 // ROM loading (ioctl_index values, set in .mra file):
 //   0x00 — CPU program ROM (sequential, SDRAM base 0x000000)
 //   0x01 — GFX ROM (GP9001 tile + sprite data, SDRAM 0x100000)
+//   0x02 — ADPCM ROM (OKI M6295 samples, SDRAM 0x500000)
 //   0xFE — DIP switch / NVRAM init data
 //
 // SDRAM layout (IS42S16320F, 32 MB, Batsugun):
 //   0x000000 – 0x0FFFFF   1MB    CPU program ROM (tp-026-1.bin + others)
 //   0x100000 – 0x4FFFFF   4MB    GFX ROM (tiles + sprites interleaved)
+//   0x500000 – 0x5FFFFF   1MB    ADPCM ROM (OKI M6295 sample data)
 // -------------------------------------------------------------------------
 
 module emu
@@ -219,9 +221,7 @@ assign LED_DISK  = 2'd0;
 assign LED_POWER = 2'd0;
 assign BUTTONS   = 2'd0;
 
-// Audio: silence until YM2151 + OKI M6295 sound is implemented
-assign AUDIO_L = 16'h0;
-assign AUDIO_R = 16'h0;
+// Audio: driven by YM2151 + OKI M6295 (wired below at toaplan_v2 instantiation)
 
 // LED: blink during ROM download
 assign LED_USER = ioctl_download;
@@ -337,6 +337,25 @@ end
 wire ce_cpu = (ce_div[0] == 1'b0);   // every 2 cycles = 16 MHz
 wire ce_pix = (ce_div == 2'b00);     // every 4 cycles = 8 MHz
 
+// ── Sound clock enable: ~3.5 MHz (32 MHz / 9 = 3.556 MHz) ────────────────────
+// YM2151 nominal clock is 3.579545 MHz; /9 gives 3.556 MHz (0.66% low, inaudible).
+logic [3:0] snd_ce_cnt;
+logic       clk_sound;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        snd_ce_cnt <= 4'd0;
+        clk_sound  <= 1'b0;
+    end else begin
+        if (snd_ce_cnt == 4'd8) begin
+            snd_ce_cnt <= 4'd0;
+            clk_sound  <= 1'b1;
+        end else begin
+            snd_ce_cnt <= snd_ce_cnt + 4'd1;
+            clk_sound  <= 1'b0;
+        end
+    end
+end
+
 //////////////////////////////////////////////////////////////////
 // Reset
 //
@@ -366,6 +385,11 @@ always_ff @(posedge clk_sys)
     if (ioctl_wr && (ioctl_index == 8'hFE) && !ioctl_addr[24:2])
         dsw[ioctl_addr[1:0]] <= ioctl_dout;
 
+// ioctl_index == 0x02: ADPCM ROM load.
+// sdram_b receives all ioctl_wr writes; the .mra file sets ioctl_addr base
+// to 0x500000 for index 0x02, placing sample data in the ADPCM SDRAM region.
+// No extra logic needed here — sdram_b CH0 write path handles all indexes.
+
 //////////////////////////////////////////////////////////////////
 // Input mapping for Toaplan V2 shmup (Batsugun)
 //
@@ -392,6 +416,7 @@ wire       service = ~joystick_0[10];                      // active-low
 // Three read channels:
 //   prog_*  — CPU program ROM reads (16-bit)
 //   gfx_*   — GP9001 tile + sprite GFX ROM (32-bit)
+//   adpcm_* — OKI M6295 ADPCM sample ROM reads (8-bit, via 16-bit SDRAM)
 // Plus ioctl write path for ROM download.
 //////////////////////////////////////////////////////////////////
 
@@ -402,6 +427,21 @@ wire        prog_sdr_req_w, prog_sdr_ack_w;
 wire [21:0] gfx_sdr_addr_w;
 wire [31:0] gfx_sdr_data_w;
 wire        gfx_sdr_req_w, gfx_sdr_ack_w;
+
+// ADPCM ROM channel — jt6295 uses 18-bit byte address; SDRAM CH3 is 27-bit word address.
+// ADPCM ROM sits at SDRAM byte base 0x500000 (word base 0x280000).
+wire [23:0] adpcm_rom_addr_w;    // from toaplan_v2 (byte address, base 0 within ADPCM ROM)
+wire        adpcm_rom_req_w;
+wire [15:0] adpcm_rom_data_w;
+wire        adpcm_rom_ack_w;
+
+// Map ADPCM byte address to SDRAM 27-bit word address:
+//   ADPCM ROM byte base in SDRAM = 0x500000
+//   SDRAM word address = (0x500000 + adpcm_rom_addr) >> 1 = 0x280000 + (addr >> 1)
+wire [26:0] adpcm_sdram_word_addr = 27'h280000 + {3'b0, adpcm_rom_addr_w[23:1]};
+
+// Audio output wires from toaplan_v2
+wire signed [15:0] snd_left_w, snd_right_w;
 
 // Adapt prog ROM address to 27-bit SDRAM word address
 // Prog ROM sits at SDRAM base 0x000000; word address = prog_sdr_addr directly
@@ -434,11 +474,11 @@ sdram_b u_sdram
     .gfx_req    (gfx_sdr_req_w),
     .gfx_ack    (gfx_sdr_ack_w),
 
-    // CH3: ADPCM ROM — unused (audio stubbed)
-    .adpcm_addr (27'b0),
-    .adpcm_data (/* open */),
-    .adpcm_req  (1'b0),
-    .adpcm_ack  (/* open */),
+    // CH3: ADPCM ROM — OKI M6295 sample data at SDRAM base 0x500000
+    .adpcm_addr (adpcm_sdram_word_addr),
+    .adpcm_data (adpcm_rom_data_w),
+    .adpcm_req  (adpcm_rom_req_w),
+    .adpcm_ack  (adpcm_rom_ack_w),
 
     // SDRAM chip pins
     .SDRAM_A    (SDRAM_A),
@@ -528,6 +568,19 @@ toaplan_v2 u_toaplan_v2
     .gfx_rom_req  (gfx_sdr_req_w),
     .gfx_rom_ack  (gfx_sdr_ack_w),
 
+    // ── Audio output ──────────────────────────────────────────────────────────
+    .snd_left        (snd_left_w),
+    .snd_right       (snd_right_w),
+
+    // ── ADPCM ROM (OKI M6295 samples via SDRAM CH3) ────────────────────────────
+    .adpcm_rom_addr  (adpcm_rom_addr_w),
+    .adpcm_rom_req   (adpcm_rom_req_w),
+    .adpcm_rom_data  (adpcm_rom_data_w),
+    .adpcm_rom_ack   (adpcm_rom_ack_w),
+
+    // ── Sound CPU clock enable (~3.5 MHz) ────────────────────────────────────
+    .clk_sound       (clk_sound),
+
     // ── Video output ───────────────────────────────────────────────────────────
     .rgb_r       (core_rgb_r),
     .rgb_g       (core_rgb_g),
@@ -545,6 +598,14 @@ toaplan_v2 u_toaplan_v2
     .dipsw1      (dsw[0]),
     .dipsw2      (dsw[1])
 );
+
+//////////////////////////////////////////////////////////////////
+// Audio output
+// snd_left/snd_right are signed 16-bit from the YM2151 + OKI M6295 mixer.
+// MiSTer AUDIO_L/R are unsigned 16-bit; add 0x8000 to flip sign bit.
+//////////////////////////////////////////////////////////////////
+assign AUDIO_L = snd_left_w  + 16'h8000;
+assign AUDIO_R = snd_right_w + 16'h8000;
 
 //////////////////////////////////////////////////////////////////
 // Video pipeline
@@ -587,7 +648,7 @@ arcade_video #(.WIDTH(320), .DW(24), .GAMMA(1)) u_arcade_video
 /* verilator lint_off UNUSED */
 wire _unused = &{
     1'b0,
-    CLK_AUDIO,
+    CLK_AUDIO,              // 24.576 MHz audio clock not needed; using clk_sys divider
     HDMI_WIDTH, HDMI_HEIGHT,
     SD_MISO, SD_CD,
     DDRAM_BUSY, DDRAM_DOUT, DDRAM_DOUT_READY,
@@ -599,7 +660,8 @@ wire _unused = &{
     dsw[2], dsw[3],
     cpu_reset_n_out,
     gfx_sdram_word_addr,    // upper bits not used by sdram_b CH2 (would need wider port)
-    prog_sdram_word_addr    // forwarded to sdram_b; suppress unused warning on wire
+    prog_sdram_word_addr,   // forwarded to sdram_b; suppress unused warning on wire
+    adpcm_sdram_word_addr   // forwarded to sdram_b CH3; suppress unused warning on wire
 };
 /* verilator lint_on UNUSED */
 

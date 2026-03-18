@@ -98,6 +98,19 @@ module toaplan_v2 #(
     output logic        gfx_rom_req,
     input  logic        gfx_rom_ack,
 
+    // ── Audio output ───────────────────────────────────────────────────────────
+    output logic signed [15:0] snd_left,    // mixed FM + ADPCM (signed)
+    output logic signed [15:0] snd_right,
+
+    // ── ADPCM ROM (OKI M6295 samples, from SDRAM CH3) ─────────────────────────
+    output logic [23:0] adpcm_rom_addr,
+    output logic        adpcm_rom_req,
+    input  logic [15:0] adpcm_rom_data,
+    input  logic        adpcm_rom_ack,
+
+    // ── Sound CPU clock enable (3.5 MHz) ───────────────────────────────────────
+    input  logic        clk_sound,          // 3.5 MHz CE pulse in clk_sys domain
+
     // ── Video output ───────────────────────────────────────────────────────────
     output logic [7:0]  rgb_r,
     output logic [7:0]  rgb_g,
@@ -517,6 +530,21 @@ assign rgb_g = {pal_entry_r[9:5],   pal_entry_r[9:7]};
 assign rgb_b = {pal_entry_r[4:0],   pal_entry_r[4:2]};
 
 // =============================================================================
+// Sound Command Latch
+// =============================================================================
+// M68000 writes sound commands to 0x70000E (word address 0x380007 = A[3:1]=3'h7).
+// Z80 reads this latch on its bus.  We capture it here in the M68K domain.
+
+logic [7:0] sound_cmd;   // latched command byte for Z80
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n)
+        sound_cmd <= 8'h00;
+    else if (io_cs && !cpu_rw && (cpu_addr[3:1] == 3'h7) && !cpu_lds_n)
+        sound_cmd <= cpu_dout[7:0];   // latch lower byte on 68K write to 0x70000E
+end
+
+// =============================================================================
 // I/O Registers
 // =============================================================================
 // Batsugun I/O map (byte addresses within 0x700000 window, from MAME):
@@ -525,7 +553,7 @@ assign rgb_b = {pal_entry_r[4:0],   pal_entry_r[4:2]};
 //   0x700004 — Coins + service (read)
 //   0x700006 — DIP switch bank 1 (read)
 //   0x700008 — DIP switch bank 2 (read)
-//   0x70000E — Z80 sound command (write only — stub, ignored)
+//   0x70000E — Z80 sound command (write only, captured in sound_cmd above)
 //
 // All registers are byte-wide on the lower byte (D[7:0]).
 // Word reads return the active byte in [7:0], [15:8] = 0xFF.
@@ -666,6 +694,160 @@ always_comb begin
 end
 
 // =============================================================================
+// Audio Subsystem — YM2151 (jt51) + OKI M6295 (jt6295)
+// =============================================================================
+//
+// Sound CPU: Z80 @ 3.5 MHz (TODO: instantiate T80 here).
+//   - Receives sound commands from M68000 via sound_cmd latch (0x70000E).
+//   - Drives YM2151 at 0x4000-0x4001 (A0 = register select vs data write).
+//   - Drives OKI M6295 at 0x5000.
+//   - Z80 data bus and control stubs: all chips driven to inactive until
+//     the T80 is instantiated.
+//
+// YM2151 clock: 3.579545 MHz (clk_sound CE in clk_sys domain).
+// OKI M6295 clock: ~1 MHz (clk_sys / 32 ≈ 1 MHz; exact rate set by ss pin).
+
+// ── YM2151 control stubs (all inactive until T80 instantiated) ──────────────
+// TODO: wire to T80 once Z80 sound CPU is instantiated.
+wire        ym_cs_n  = 1'b1;   // chip select inactive
+wire        ym_wr_n  = 1'b1;   // write inactive
+wire        ym_a0    = 1'b0;   // address bit 0 (register vs data)
+wire [7:0]  ym_din   = 8'h00;  // data to YM2151
+wire [7:0]  ym_dout;           // data from YM2151 (used by Z80 read — TODO)
+
+// YM2151 clock enable halved (jt51 needs cen and cen_p1 at half-speed)
+// cen_p1 toggles on alternate cen edges; since clk_sound is already a CE
+// pulse (1 cycle every ~9 cycles at 32 MHz), generate a divided version.
+logic ym_cen_p1_r;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n)  ym_cen_p1_r <= 1'b0;
+    else if (clk_sound) ym_cen_p1_r <= ~ym_cen_p1_r;
+end
+wire ym_cen_p1 = clk_sound & ym_cen_p1_r;   // half-rate of clk_sound
+
+// YM2151 raw output (signed 16-bit per channel)
+wire signed [15:0] ym_left_raw, ym_right_raw;
+wire               ym_sample;
+
+jt51 u_jt51 (
+    .rst        (~reset_n),
+    .clk        (clk_sys),
+    .cen        (clk_sound),    // 3.5 MHz CE
+    .cen_p1     (ym_cen_p1),    // 1.75 MHz CE
+    .cs_n       (ym_cs_n),
+    .wr_n       (ym_wr_n),
+    .a0         (ym_a0),
+    .din        (ym_din),
+    .dout       (ym_dout),
+    // peripheral control (unused)
+    .ct1        (),
+    .ct2        (),
+    .irq_n      (),
+    // audio outputs — use standard-resolution left/right
+    .sample     (ym_sample),
+    .left       (ym_left_raw),
+    .right      (ym_right_raw),
+    .xleft      (),
+    .xright     ()
+);
+
+// ── OKI M6295 control stubs (all inactive until T80 instantiated) ────────────
+// TODO: wire to T80 once Z80 sound CPU is instantiated.
+// ss=1 → 8000 Hz sample rate with 1 MHz cen; ss=0 → 6000 Hz.
+wire        m6295_wrn  = 1'b1;   // write inactive (active low)
+wire [7:0]  m6295_din  = 8'h00;
+wire [7:0]  m6295_dout;          // status (busy flags) — for Z80 read TODO
+
+// M6295 clock enable: ~1 MHz from clk_sys / 32
+// At clk_sys=32 MHz: 32/32 = 1 MHz exactly.
+logic [4:0] m6295_ce_cnt;
+logic       m6295_cen;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        m6295_ce_cnt <= 5'd0;
+        m6295_cen    <= 1'b0;
+    end else begin
+        if (m6295_ce_cnt == 5'd31) begin
+            m6295_ce_cnt <= 5'd0;
+            m6295_cen    <= 1'b1;
+        end else begin
+            m6295_ce_cnt <= m6295_ce_cnt + 5'd1;
+            m6295_cen    <= 1'b0;
+        end
+    end
+end
+
+// ADPCM ROM interface: jt6295 outputs rom_addr[17:0] and takes rom_data[7:0] + rom_ok.
+// rom_ok is an INPUT to jt6295: high when the ROM has returned valid data for the
+// current rom_addr.  We bridge to the SDRAM toggle-req/ack protocol:
+//   - jt6295 drives rom_addr whenever it needs new data.
+//   - We latch a new SDRAM request (toggle adpcm_req_r) on each new jt6295 rom_addr.
+//   - When adpcm_rom_ack matches adpcm_rom_req, SDRAM data is valid; assert rom_ok.
+//
+// We detect address changes to trigger new SDRAM fetches.
+wire [17:0] m6295_rom_addr_w;   // from jt6295
+wire  [7:0] m6295_rom_data_w;   // to jt6295
+wire        m6295_rom_ok_in;    // to jt6295: data is valid
+wire signed [13:0] m6295_sound;
+wire               m6295_sample;
+
+// Map jt6295 18-bit byte address onto adpcm_rom_addr (24-bit, SDRAM byte offset).
+// ADPCM ROM sits at SDRAM byte offset 0x500000 (loaded at ioctl_index 0x02 in emu.sv).
+// emu.sv adds the 0x500000 base via adpcm_sdram_word_addr calculation.
+assign adpcm_rom_addr = {6'b0, m6295_rom_addr_w};
+
+// SDRAM toggle-req bridge for ADPCM:
+// Detect address changes from jt6295 and toggle adpcm_rom_req to initiate fetches.
+logic [17:0] adpcm_addr_prev;
+logic        adpcm_req_r;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        adpcm_addr_prev <= 18'b0;
+        adpcm_req_r     <= 1'b0;
+    end else begin
+        adpcm_addr_prev <= m6295_rom_addr_w;
+        // New address from jt6295 → toggle req to kick SDRAM fetch
+        if (m6295_rom_addr_w != adpcm_addr_prev)
+            adpcm_req_r <= ~adpcm_req_r;
+    end
+end
+assign adpcm_rom_req = adpcm_req_r;
+
+// Data back to jt6295: lower byte of 16-bit SDRAM word
+assign m6295_rom_data_w = adpcm_rom_data[7:0];
+
+// rom_ok to jt6295: asserted one cycle after SDRAM ack matches req
+logic adpcm_data_ok_r;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) adpcm_data_ok_r <= 1'b0;
+    else          adpcm_data_ok_r <= (adpcm_req_r == adpcm_rom_ack);
+end
+assign m6295_rom_ok_in = adpcm_data_ok_r;
+
+jt6295 u_jt6295 (
+    .rst        (~reset_n),
+    .clk        (clk_sys),
+    .cen        (m6295_cen),        // ~1 MHz CE
+    .ss         (1'b1),             // ss=1 → 8 kHz sample rate
+    .wrn        (m6295_wrn),
+    .din        (m6295_din),
+    .dout       (m6295_dout),
+    .rom_addr   (m6295_rom_addr_w),
+    .rom_data   (m6295_rom_data_w),
+    .rom_ok     (m6295_rom_ok_in),  // data-valid from SDRAM bridge
+    .sound      (m6295_sound),
+    .sample     (m6295_sample)
+);
+
+// ── Audio mixer: FM (16-bit) + ADPCM (14-bit sign-extended → 16-bit) ─────────
+// Sign-extend 14-bit ADPCM to 16-bit by replicating the sign bit into the top 2 bits.
+// Then sum FM and ADPCM with halved amplitudes to prevent overflow.
+wire signed [15:0] adpcm_16 = {{2{m6295_sound[13]}}, m6295_sound};   // 14→16 sign-extend
+assign snd_left  = (ym_left_raw  >>> 1) + (adpcm_16 >>> 1);
+assign snd_right = (ym_right_raw >>> 1) + (adpcm_16 >>> 1);
+
+// =============================================================================
 // Lint suppression
 // =============================================================================
 /* verilator lint_off UNUSED */
@@ -692,7 +874,12 @@ assign _unused = &{
     spr_rd_color_w, spr_rd_valid_w, spr_rd_priority_w,
     spr_render_done_w, spr_rom_rd,
     final_valid_w,
-    pal_entry_r[15]         // transparent/unused bit in R5G5B5 palette entry
+    pal_entry_r[15],        // transparent/unused bit in R5G5B5 palette entry
+    // Audio stubs — used by jt51/jt6295 but not consumed by system yet
+    ym_dout, ym_sample,
+    m6295_dout, m6295_sample,
+    sound_cmd,              // captured sound command (used by Z80 — TODO)
+    adpcm_rom_data[15:8]   // jt6295 only needs lower 8 bits
 };
 /* verilator lint_on UNUSED */
 

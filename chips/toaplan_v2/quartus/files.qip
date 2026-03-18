@@ -51,6 +51,54 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/uaddrPla.s
 set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/rtl/fx68k_adapter.sv
 
 # =========================================================================
+# YM2151 FM SYNTHESIZER (jt51)
+# =========================================================================
+# Source: jtcores/modules/jt51/hdl/
+# Path from chips/toaplan_v2/quartus/: ../../../../jtcores/modules/jt51/hdl/
+
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_acc.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_csr_op.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_eg.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_exp2lin.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_exprom.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_kon.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_lfo.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_lin2exp.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_mmr.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_mod.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_noise.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_noise_lfsr.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_op.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_pg.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_phinc_rom.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_phrom.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_pm.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_reg.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_reg_ch.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_sh.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt51/hdl/jt51_timers.v
+
+# =========================================================================
+# OKI M6295 ADPCM (jt6295)
+# =========================================================================
+# Source: jtcores/modules/jt6295/hdl/
+# Note: jt6295 depends on jtframe_fir_mono.v from jtcores/modules/jtframe/hdl/sound/
+
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt6295/hdl/jt6295.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt6295/hdl/jt6295_acc.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt6295/hdl/jt6295_adpcm.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt6295/hdl/jt6295_ctrl.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt6295/hdl/jt6295_rom.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt6295/hdl/jt6295_serial.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt6295/hdl/jt6295_sh_rst.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt6295/hdl/jt6295_timing.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt6295/hdl/jt12_comb.v
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jt6295/hdl/jt12_interpol.v
+# jtframe dependency (interpolation filter):
+set_global_assignment -name VERILOG_FILE ../../../../jtcores/modules/jtframe/hdl/sound/jtframe_fir_mono.v
+
+# =========================================================================
 # TIMING CONSTRAINTS
 # =========================================================================
 
