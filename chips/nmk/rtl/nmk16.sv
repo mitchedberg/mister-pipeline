@@ -92,16 +92,59 @@ module nmk16 #(
     output logic        spr_rd_valid,       // 1 = opaque sprite pixel at this X
 
     // Done strobe
-    output logic        spr_render_done     // 1-cycle pulse when scanline render complete
+    output logic        spr_render_done,    // 1-cycle pulse when scanline render complete
+
+    // ======== GATE 4: BG TILEMAP RENDERER ========
+    //
+    // Per-pixel BG layer rendering.  Both layers are serviced on alternate
+    // clocks (round-robin, mux_bg_layer: 0→1→0→1…).  Output registers are
+    // updated one layer at a time; the testbench reads them 2 clocks after
+    // driving bg_x/bg_y.
+    //
+    // Tilemap RAM:  CPU-writable via $110000–$11FFFF.
+    //   Word address = {layer[0], addr[9:0]}  (layer 0 = words 0..1023,
+    //                                          layer 1 = words 1024..2047)
+    //   Each word: [15:12]=palette[3:0]  [11]=flip_y  [10]=flip_x  [9:0]=tile_index
+    //
+    // Tilemap geometry (per layer):
+    //   32×32 tile map, each tile 16×16 pixels → 512×512 pixel scrolling space
+    //   tile_col = src_x[8:4]  (src_x = (bg_x + scroll_x) & 0x1FF)
+    //   tile_row = src_y[7:4]  (src_y = (bg_y + scroll_y) & 0x1FF, 8-bit wrap)
+    //   tilemap_addr = tile_row[4:0] * 32 + tile_col[4:0]   (0..1023)
+    //
+    // Tile ROM (external, byte-addressed):
+    //   One 16×16 tile @ 4bpp = 128 bytes
+    //   byte_addr = tile_index * 128 + pix_y * 8 + pix_x[3:1]
+    //   nibble    = (pix_x[0]) ? rom_byte[7:4] : rom_byte[3:0]
+    //
+    // Pipeline (2 stages + output FF):
+    //   Stage 0 (comb): apply scroll, read tilemap RAM, compute ROM address
+    //   Stage 1 (FF):   register ROM address, layer, palette, px_lsb → drive bg_rom_addr
+    //   Stage 2 (comb): nibble from bg_rom_data → output FF update
+    //
+    // Inputs
+    input  logic [8:0]  bg_x,              // current pixel X (0..319)
+    input  logic [7:0]  bg_y,              // current pixel Y (0..239)
+
+    // BG tile ROM interface (combinational, zero-latency)
+    output logic [21:0] bg_rom_addr,       // tile ROM byte address
+    input  logic [7:0]  bg_rom_data,       // tile ROM data (driven combinationally by TB)
+
+    // Per-layer BG pixel outputs (updated every 2 clocks: layer 0 then layer 1)
+    output logic [1:0]  bg_pix_valid,      // [layer]: 1 = opaque pixel
+    output logic [7:0]  bg_pix_color [0:1],// [layer]: {palette[3:0], index[3:0]}
+    output logic [1:0]  bg_pix_priority    // [layer]: priority bit from tilemap word
 );
 
     // ========== ADDRESS DECODE ==========
 
+    logic is_tilemap;   // $110000–$11FFFF (BG tilemap RAM, Gate 4)
     logic is_gpu;       // $120000–$12FFFF (graphics control)
     logic is_sprite;    // $130000–$13FFFF (sprite RAM)
     logic is_palette;   // $140000–$14FFFF (palette RAM)
 
     always_comb begin
+        is_tilemap  = (addr[20:16] == 5'b10001);                          // $110000–$11FFFF
         is_gpu      = (addr[20:16] == 5'b10010);                          // $120000–$12FFFF
         is_sprite   = (addr[20:16] == 5'b10011);                          // $130000–$13FFFF
         is_palette  = (addr[20:16] == 5'b10100);                          // $140000–$14FFFF
@@ -208,6 +251,9 @@ module nmk16 #(
                 end else begin
                     dout = 16'h0000;  // All other GPU addresses are reserved/mirrored
                 end
+            end else if (is_tilemap) begin
+                // Tilemap RAM read (registered — read_vram-style; direct comb here)
+                dout = tilemap_ram[tram_cpu_addr];
             end else if (is_sprite) begin
                 // Sprite RAM read (from internal or external BRAM)
                 dout = sprite_data_rd_muxed;
@@ -759,11 +805,202 @@ module nmk16 #(
     end
 
     // =========================================================================
+    // Gate 4: BG Tilemap Renderer
+    // =========================================================================
+    //
+    // 2-layer tilemap renderer.  Each layer covers a 512×512 pixel scrolling
+    // space built from a 32×32 grid of 16×16-pixel tiles (4bpp, packed).
+    //
+    // Tilemap RAM (internal BRAM, CPU-writable via $110000-$11FFFF):
+    //   2048 words × 16-bit.
+    //   Word index = {layer[0], tile_row[4:0], tile_col[4:0]}
+    //     = layer * 1024 + tile_row * 32 + tile_col   (0..2047)
+    //   Word format:
+    //     [15:12] palette (0..15)
+    //     [11]    flip_y
+    //     [10]    flip_x
+    //     [9:0]   tile_index (0..1023)
+    //
+    // CPU write address mapping ($110000-$11FFFF, word-aligned):
+    //   addr[20:16] = 5'b10001  → is_tilemap
+    //   addr[10:1]  = word index within the 2048-word space
+    //     addr[10]  = layer select (0=layer0, 1=layer1)
+    //     addr[9:5] = tile_row (0..31)
+    //     addr[4:1] = tile_col[3:0]  — NOTE: col is 5-bit; addr[5] = tile_col[4]
+    //   Simplest: word_idx = addr[10:1]  (maps to 0..2047 across both layers)
+    //
+    // Tile ROM (external, byte-addressed, combinational read):
+    //   16×16 tile @ 4bpp = 128 bytes/tile
+    //   byte_addr = tile_index * 128 + pix_y * 8 + pix_x[3:1]
+    //   nibble    = pix_x[0] ? byte[7:4] : byte[3:0]
+    //
+    // Pipeline (same pattern as GP9001 Gate 3):
+    //   Stage 0 (comb):  apply scroll, tile_row/col, read tilemap RAM,
+    //                    compute effective pix_x/pix_y (with flip), ROM addr
+    //   Stage 1 (FF):    register ROM addr → drive bg_rom_addr; latch metadata
+    //   Stage 2 (comb):  unpack nibble from bg_rom_data → output FF
+    //   Output FF:       update bg_pix_valid/color/priority for the processed layer
+    //
+    // Layers are serviced alternately: mux_bg_layer toggles 0↔1 each clock.
+    // =========================================================================
+
+    // ── Tilemap RAM: 2048 × 16-bit (both layers) ─────────────────────────────
+    // Word [2047:1024] = layer 1, [1023:0] = layer 0.
+
+    logic [15:0] tilemap_ram [0:2047];
+    logic [10:0] tram_cpu_addr;   // 11-bit word address (bit10=layer, bits9:0=cell)
+
+    always_comb tram_cpu_addr = addr[11:1];  // addr[11]=layer, addr[10:5]=row, addr[4:1]=col
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            for (int i = 0; i < 2048; i++) tilemap_ram[i] <= 16'h0000;
+        end else if (~cs_n & ~wr_n & is_tilemap) begin
+            tilemap_ram[tram_cpu_addr] <= din;
+        end
+    end
+
+    // ── Layer round-robin counter ─────────────────────────────────────────────
+
+    logic mux_bg_layer;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) mux_bg_layer <= 1'b0;
+        else        mux_bg_layer <= ~mux_bg_layer;
+    end
+
+    // ── Scroll register select (combinational) ────────────────────────────────
+    // Layer 0 → scroll0_x_active / scroll0_y_active
+    // Layer 1 → scroll1_x_active / scroll1_y_active
+
+    logic [8:0] g4_scroll_x, g4_scroll_y;
+
+    always_comb begin
+        if (mux_bg_layer == 1'b0) begin
+            g4_scroll_x = scroll0_x_active[8:0];
+            g4_scroll_y = scroll0_y_active[8:0];
+        end else begin
+            g4_scroll_x = scroll1_x_active[8:0];
+            g4_scroll_y = scroll1_y_active[8:0];
+        end
+    end
+
+    // ── Stage 0: scrolled coords, tilemap RAM read, ROM address ──────────────
+
+    // Scrolled pixel position (9-bit wrap for X, 8-bit for Y — 512px and 512px)
+    logic [8:0] g4s0_tx;   // scrolled X (0..511)
+    logic [8:0] g4s0_ty;   // scrolled Y (0..511) — use 9-bit for 32 rows × 16px
+    logic [4:0] g4s0_col;  // tile column (0..31)
+    logic [4:0] g4s0_row;  // tile row    (0..31)
+    logic [3:0] g4s0_px;   // pixel X within tile (0..15)
+    logic [3:0] g4s0_py;   // pixel Y within tile (0..15)
+
+    always_comb begin
+        g4s0_tx  = (9'(bg_x) + g4_scroll_x) & 9'h1FF;
+        g4s0_ty  = (9'({1'b0, bg_y}) + g4_scroll_y) & 9'h1FF;
+        g4s0_col = g4s0_tx[8:4];   // tile col = tx / 16
+        g4s0_row = g4s0_ty[8:4];   // tile row = ty / 16
+        g4s0_px  = g4s0_tx[3:0];   // pixel within tile (x)
+        g4s0_py  = g4s0_ty[3:0];   // pixel within tile (y)
+    end
+
+    // Tilemap RAM read (combinational)
+    logic [10:0] g4s0_tram_addr;
+    logic [15:0] g4s0_tram_word;
+
+    always_comb begin
+        // word_addr = layer * 1024 + row * 32 + col
+        g4s0_tram_addr = {mux_bg_layer, g4s0_row, g4s0_col};
+        g4s0_tram_word = tilemap_ram[g4s0_tram_addr];
+    end
+
+    // Decode tilemap word
+    logic [9:0]  g4s0_tile_idx;
+    logic [3:0]  g4s0_palette;
+    logic        g4s0_flip_x, g4s0_flip_y;
+
+    always_comb begin
+        g4s0_tile_idx = g4s0_tram_word[9:0];
+        g4s0_palette  = g4s0_tram_word[15:12];
+        g4s0_flip_y   = g4s0_tram_word[11];
+        g4s0_flip_x   = g4s0_tram_word[10];
+    end
+
+    // Apply flip to pixel coords
+    logic [3:0] g4s0_fpx, g4s0_fpy;
+
+    always_comb begin
+        g4s0_fpx = g4s0_flip_x ? (4'd15 - g4s0_px) : g4s0_px;
+        g4s0_fpy = g4s0_flip_y ? (4'd15 - g4s0_py) : g4s0_py;
+    end
+
+    // Tile ROM byte address:  tile_index * 128 + pix_y * 8 + pix_x[3:1]
+    // (16×16 @ 4bpp: 16 rows × 8 bytes/row = 128 bytes per tile)
+    logic [21:0] g4s0_rom_addr;
+
+    always_comb begin
+        g4s0_rom_addr = {12'h0, g4s0_tile_idx} * 22'd128
+                      + {15'h0, g4s0_fpy} * 22'd8
+                      + {18'h0, g4s0_fpx[3:1]};
+    end
+
+    // ── Stage 1 registers: latch ROM address and metadata ────────────────────
+
+    logic        g4s1_layer;
+    logic [3:0]  g4s1_palette;
+    logic        g4s1_px_lsb;   // fpx[0]: selects high/low nibble
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            g4s1_layer   <= 1'b0;
+            g4s1_palette <= 4'h0;
+            g4s1_px_lsb  <= 1'b0;
+            bg_rom_addr  <= 22'h0;
+        end else begin
+            g4s1_layer   <= mux_bg_layer;
+            g4s1_palette <= g4s0_palette;
+            g4s1_px_lsb  <= g4s0_fpx[0];
+            bg_rom_addr  <= g4s0_rom_addr;
+        end
+    end
+
+    // ── Stage 2: unpack nibble from bg_rom_data (combinational) ──────────────
+    // bg_rom_data is driven combinationally by the testbench / top-level after
+    // bg_rom_addr is presented.
+
+    logic [3:0] g4s2_nibble;
+
+    always_comb begin
+        g4s2_nibble = g4s1_px_lsb ? bg_rom_data[7:4] : bg_rom_data[3:0];
+    end
+
+    // ── Output registers: update the layer slot that was processed ────────────
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            bg_pix_valid    <= 2'h0;
+            bg_pix_priority <= 2'h0;
+            for (int i = 0; i < 2; i++) begin
+                bg_pix_color[i] <= 8'h00;
+            end
+        end else begin
+            // Update only the layer just processed (s1_layer)
+            for (int i = 0; i < 2; i++) begin
+                if (1'(i) == g4s1_layer) begin
+                    bg_pix_valid[i]    <= (g4s2_nibble != 4'h0);
+                    bg_pix_color[i]    <= {g4s1_palette, g4s2_nibble};
+                    bg_pix_priority[i] <= 1'b0;  // priority bit not in NMK16 tilemap word
+                end
+            end
+        end
+    end
+
+    // =========================================================================
     // LINT SUPPRESSION
     // =========================================================================
 
     /* verilator lint_off UNUSEDSIGNAL */
-    logic _unused = &{lds_n, uds_n, addr[20:11], status_reg,
+    logic _unused = &{lds_n, uds_n, addr[20:12], status_reg,
                       sprite_word_y[15:9], sprite_word_x[15:9],
                       sprite_word_tile[15:12], sprite_word_attr[13:11], sprite_word_attr[8:0],
                       g3_flip_y_saved, g3_spr_y,
