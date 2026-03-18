@@ -388,7 +388,13 @@ assign extend_mode = ctrl[15][7];
 // Text RAM (4096 × 16-bit = 8KB)
 // =============================================================================
 `ifdef QUARTUS
-(* ramstyle = "MLAB" *) logic [15:0] text_ram [0:4095];
+// Split into two 8-bit MLABs (one per byte lane) to avoid byte-slice writes.
+// Byte-slice writes to a 16-bit MLAB trigger Warning 10999 and fall back to
+// flip-flops (131,072 bits → exhausts ALMs).  With separate 8-bit arrays,
+// each write is a full-word write gated by a simple write-enable — the pattern
+// Quartus 17.0 correctly infers as MLAB.
+(* ramstyle = "MLAB" *) logic [7:0] text_ram_hi [0:4095]; // [15:8]
+(* ramstyle = "MLAB" *) logic [7:0] text_ram_lo [0:4095]; // [ 7:0]
 `else
 logic [15:0] text_ram [0:4095];
 `endif
@@ -400,9 +406,15 @@ assign text_cpu_raddr = cpu_addr[12:1];
 
 always_ff @(posedge clk) begin
     if (!rst_n) begin
+`ifdef QUARTUS
+    end else if (cs_text && !cpu_rw) begin
+        if (cpu_be[1]) text_ram_hi[text_wr_addr] <= cpu_din[15:8];
+        if (cpu_be[0]) text_ram_lo[text_wr_addr] <= cpu_din[ 7:0];
+`else
     end else if (cs_text && !cpu_rw) begin
         if (cpu_be[1]) text_ram[text_wr_addr][15:8] <= cpu_din[15:8];
         if (cpu_be[0]) text_ram[text_wr_addr][ 7:0] <= cpu_din[ 7:0];
+`endif
     end
 end
 
@@ -411,12 +423,20 @@ always_ff @(posedge clk) begin
     if (!rst_n)
         text_cpu_rdata <= 16'b0;
     else if (cs_text && cpu_rw)
+`ifdef QUARTUS
+        text_cpu_rdata <= {text_ram_hi[text_cpu_raddr], text_ram_lo[text_cpu_raddr]};
+`else
         text_cpu_rdata <= text_ram[text_cpu_raddr];
+`endif
 end
 
 logic [11:0] text_rd_addr_w;
 logic [15:0] text_q_w;
+`ifdef QUARTUS
+assign text_q_w = {text_ram_hi[text_rd_addr_w], text_ram_lo[text_rd_addr_w]};
+`else
 assign text_q_w = text_ram[text_rd_addr_w];
+`endif
 
 // =============================================================================
 // Character RAM (256 tiles × 8 rows × 4 bytes = 8KB)
