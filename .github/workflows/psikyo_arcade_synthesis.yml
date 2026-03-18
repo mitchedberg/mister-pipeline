@@ -1,0 +1,73 @@
+name: Psikyo Arcade Synthesis
+
+on:
+  push:
+    paths:
+      - 'chips/psikyo_arcade/**'
+      - '.github/workflows/psikyo_arcade_synthesis.yml'
+    branches:
+      - master
+      - main
+  pull_request:
+    paths:
+      - 'chips/psikyo_arcade/**'
+  workflow_dispatch:
+
+jobs:
+  quartus-psikyo-synthesis:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Quartus synthesis (Docker)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/psikyo_arcade/quartus && /opt/intelFPGA/quartus/bin/quartus_sh --flow compile psikyo_arcade 2>&1 | tee /workspace/psikyo_arcade_synthesis.log; exit \${PIPESTATUS[0]}"
+
+      - name: Upload synthesis log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: psikyo_arcade_synthesis_log
+          path: psikyo_arcade_synthesis.log
+          retention-days: 7
+
+      - name: Collect artifacts
+        if: success()
+        run: |
+          mkdir -p /tmp/psikyo_artifacts
+          cp chips/psikyo_arcade/quartus/output_files/psikyo_arcade.rbf /tmp/psikyo_artifacts/
+          cp chips/psikyo_arcade/mra/*.mra /tmp/psikyo_artifacts/ 2>/dev/null || true
+          ls -lh /tmp/psikyo_artifacts/
+
+      - name: Upload RBF
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: psikyo_arcade_rbf
+          path: /tmp/psikyo_artifacts/
+          retention-days: 30
+          compression-level: 0
+
+      - name: Upload synthesis reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: psikyo_arcade_synthesis_reports
+          path: |
+            chips/psikyo_arcade/quartus/output_files/*.rpt
+            chips/psikyo_arcade/quartus/*.rpt
+          retention-days: 14
+
+      - name: Report status
+        if: always()
+        run: |
+          echo "Job Status: ${{ job.status }}"
+          RPT=chips/psikyo_arcade/quartus/output_files/psikyo_arcade.fit.rpt
+          if [ -f "$RPT" ]; then
+            grep -E "^Total logic elements|Total memory bits|Total pins|I/O pins used" "$RPT" || true
+          fi
