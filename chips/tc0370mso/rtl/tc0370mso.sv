@@ -152,10 +152,12 @@ localparam int V_END   = 256;
 // =============================================================================
 
 `ifdef QUARTUS
-// MLAB supports combinational (asynchronous) reads — matches the scanner FSM
-// where state N sets scan_rd_addr and state N+1 reads scan_rd_data.
+// Two 8-bit MLABs (one per byte lane) to support combinational read + byte-enable write.
+// MLAB does not support byteena, so we gate write-enable per lane instead.
+// 8192 × 8 bits = 65,536 bits per lane → ~102 MLABs × 2 = 204 MLABs total.
 // Avoids synthesizing 131,072 flip-flops which would exhaust Cyclone V ALMs.
-(* ramstyle = "MLAB" *) logic [15:0] spr_ram [0:8191];
+(* ramstyle = "MLAB" *) logic [7:0] spr_hi [0:8191]; // [15:8]
+(* ramstyle = "MLAB" *) logic [7:0] spr_lo [0:8191]; // [ 7:0]
 `else
 logic [15:0] spr_ram [0:8191];
 `endif
@@ -163,20 +165,33 @@ logic [15:0] spr_ram [0:8191];
 // CPU write port, byte-enable, 1-cycle DTACK
 always_ff @(posedge clk) begin
     spr_dtack_n <= 1'b0;
+`ifdef QUARTUS
+    if (spr_cs && spr_we && spr_be[1]) spr_hi[spr_addr] <= spr_din[15:8];
+    if (spr_cs && spr_we && spr_be[0]) spr_lo[spr_addr] <= spr_din[ 7:0];
+`else
     if (spr_cs && spr_we) begin
         if (spr_be[1]) spr_ram[spr_addr][15:8] <= spr_din[15:8];
         if (spr_be[0]) spr_ram[spr_addr][ 7:0] <= spr_din[ 7:0];
     end
+`endif
 end
 
 always_ff @(posedge clk) begin
     if (spr_cs && !spr_we)
+`ifdef QUARTUS
+        spr_dout <= {spr_hi[spr_addr], spr_lo[spr_addr]};
+`else
         spr_dout <= spr_ram[spr_addr];
+`endif
 end
 
 // Scanner read port (combinational; FSM latches result one state later)
 logic [12:0] scan_rd_addr;
-wire  [15:0] scan_rd_data = spr_ram[scan_rd_addr];
+`ifdef QUARTUS
+wire [15:0] scan_rd_data = {spr_hi[scan_rd_addr], spr_lo[scan_rd_addr]};
+`else
+wire [15:0] scan_rd_data = spr_ram[scan_rd_addr];
+`endif
 
 // =============================================================================
 // VBlank edge detect
