@@ -232,7 +232,14 @@ module tc0630fdp_lineram (
 // =============================================================================
 // Line RAM: 32768 × 16-bit words (64 KB simulation BRAM)
 // =============================================================================
+`ifdef QUARTUS
+// Force M10K BRAM inference in Quartus 17.  Without this, combinational reads
+// (assign = line_ram[addr]) prevent BRAM inference and Quartus tries to
+// synthesize 524,288 flip-flops → Error 293007 OOM during map.
+(* ramstyle = "M10K" *) logic [15:0] line_ram [0:32767];
+`else
 logic [15:0] line_ram [0:32767];
+`endif
 
 // =============================================================================
 // CPU write port
@@ -282,59 +289,20 @@ logic [15:0] pa_word  [0:3]; // palette addition data per PF (§9.10)
 logic [15:0] pp_word  [0:3]; // pf priority data per PF (§9.12, bits[3:0]=prio)
 logic [15:0] sp_word;        // sprite group priority word (§9.8)
 
-// Combinational reads from line_ram (one address per wire).
-// Address arithmetic: 15-bit = base + {7'b0, next_scan}
-assign en_row_word   = line_ram[15'h0600 + {7'b0, next_scan}];
-assign en_col_word   = line_ram[15'h0000 + {7'b0, next_scan}];
-assign en_zoom_word  = line_ram[15'h0400 + {7'b0, next_scan}];  // §9.1 zoom enable
-assign en_pal_word   = line_ram[15'h0500 + {7'b0, next_scan}];  // §9.1 pal-add enable
-assign en_prio_word  = line_ram[15'h0700 + {7'b0, next_scan}];  // §9.1 pf-prio enable
-assign rs_word[0]    = line_ram[15'h5000 + {7'b0, next_scan}];
-assign rs_word[1]    = line_ram[15'h5100 + {7'b0, next_scan}];
-assign rs_word[2]    = line_ram[15'h5200 + {7'b0, next_scan}];
-assign rs_word[3]    = line_ram[15'h5300 + {7'b0, next_scan}];
-assign cs_word[0]    = line_ram[15'h2000 + {7'b0, next_scan}];
-assign cs_word[1]    = line_ram[15'h2100 + {7'b0, next_scan}];
-assign cs_word[2]    = line_ram[15'h2200 + {7'b0, next_scan}];
-assign cs_word[3]    = line_ram[15'h2300 + {7'b0, next_scan}];
-// Zoom data: PF1=0x4000, PF3=0x4100, PF2=0x4200, PF4=0x4300  (§9.9)
-assign zm_word[0]    = line_ram[15'h4000 + {7'b0, next_scan}];  // PF1
-assign zm_word[1]    = line_ram[15'h4200 + {7'b0, next_scan}];  // PF2 (X here; Y physically at PF4 addr)
-assign zm_word[2]    = line_ram[15'h4100 + {7'b0, next_scan}];  // PF3
-assign zm_word[3]    = line_ram[15'h4300 + {7'b0, next_scan}];  // PF4 (X here; Y physically at PF2 addr)
-// Palette addition data: §9.10  PF1=0x4800, PF2=0x4900, PF3=0x4A00, PF4=0x4B00
-assign pa_word[0]    = line_ram[15'h4800 + {7'b0, next_scan}];  // PF1
-assign pa_word[1]    = line_ram[15'h4900 + {7'b0, next_scan}];  // PF2
-assign pa_word[2]    = line_ram[15'h4A00 + {7'b0, next_scan}];  // PF3
-assign pa_word[3]    = line_ram[15'h4B00 + {7'b0, next_scan}];  // PF4
-// PF mix/priority data: §9.12  PF1=0x5800, PF2=0x5900, PF3=0x5A00, PF4=0x5B00
-assign pp_word[0]    = line_ram[15'h5800 + {7'b0, next_scan}];  // PF1
-assign pp_word[1]    = line_ram[15'h5900 + {7'b0, next_scan}];  // PF2
-assign pp_word[2]    = line_ram[15'h5A00 + {7'b0, next_scan}];  // PF3
-assign pp_word[3]    = line_ram[15'h5B00 + {7'b0, next_scan}];  // PF4
-// Sprite group priority: §9.8  word_addr=0x3B00+scan
-assign sp_word       = line_ram[15'h3B00 + {7'b0, next_scan}];
-
 // Clip plane boundary data: §9.3
 // Plane 0: byte 0x5000 → word 0x2800; plane 1: 0x2900; plane 2: 0x2A00; plane 3: 0x2B00
 logic [15:0] cp_word [0:3];  // clip plane data words
-assign cp_word[0]    = line_ram[15'h2800 + {7'b0, next_scan}];
-assign cp_word[1]    = line_ram[15'h2900 + {7'b0, next_scan}];
-assign cp_word[2]    = line_ram[15'h2A00 + {7'b0, next_scan}];
-assign cp_word[3]    = line_ram[15'h2B00 + {7'b0, next_scan}];
 
 // Sprite mix/clip: §9.7  byte 0x7400 → word 0x3A00
 /* verilator lint_off UNUSEDSIGNAL */
 logic [15:0] sm_word;  // sprite mix word (bits[15:12,3:1] unused in Step 12)
 /* verilator lint_on UNUSEDSIGNAL */
-assign sm_word       = line_ram[15'h3A00 + {7'b0, next_scan}];
 
 // Step 13: Alpha blend coefficients §9.5  byte 0x6200 → word 0x3100
 // bits[11:8]=A_src (normal blend), bits[3:0]=A_dst; bits[15:12]=B_src, bits[7:4]=B_dst (Step 14)
 /* verilator lint_off UNUSEDSIGNAL */
 logic [15:0] ab_word;  // alpha blend word: bits[11:8]=A_src, bits[3:0]=A_dst
 /* verilator lint_on UNUSEDSIGNAL */
-assign ab_word       = line_ram[15'h3100 + {7'b0, next_scan}];
 
 // Step 13/16: Pivot/sprite blend control §9.4  byte 0x6000 → word 0x3000
 // bits[7:0]  = sprite blend mode per group (2 bits each)
@@ -343,14 +311,12 @@ assign ab_word       = line_ram[15'h3100 + {7'b0, next_scan}];
 /* verilator lint_off UNUSEDSIGNAL */
 logic [15:0] sb_word;  // pivot/sprite blend word
 /* verilator lint_on UNUSEDSIGNAL */
-assign sb_word       = line_ram[15'h3000 + {7'b0, next_scan}];
 
 // Step 15: Mosaic / X-sample §9.6  byte 0x6400 → word 0x3200
 // bits[11:8]=mosaic_rate, bits[3:0]=PF mosaic enable, bit[8]=sprite enable
 /* verilator lint_off UNUSEDSIGNAL */
 logic [15:0] mo_word;  // mosaic word
 /* verilator lint_on UNUSEDSIGNAL */
-assign mo_word       = line_ram[15'h3200 + {7'b0, next_scan}];
 
 // PF2/PF4 Y-zoom cross-read wires (hardware swap, §9.9):
 // PF2 Y-zoom is stored at PF4's RAM address (0x4300+scan).
@@ -360,8 +326,106 @@ assign mo_word       = line_ram[15'h3200 + {7'b0, next_scan}];
 logic [15:0] zm_word_pf2_yswap;   // contains PF2 Y-zoom (from PF4's address)
 logic [15:0] zm_word_pf4_yswap;   // contains PF4 Y-zoom (from PF2's address)
 /* verilator lint_on UNUSEDSIGNAL */
+
+`ifdef QUARTUS
+// =============================================================================
+// Quartus synthesis: registered (synchronous) reads for M10K BRAM inference.
+//
+// Combinational reads (assign wire = array[addr]) prevent Quartus 17 from
+// inferring M10K BRAM → it falls back to 524,288 flip-flops → OOM (E293007).
+// Registered reads give Quartus the SDP pattern it needs to infer M10K.
+//
+// Latency: next_scan is constant for the entire active scanline (many hundreds
+// of cycles), so the 1-cycle read latency is invisible — at hblank_fall the
+// registered wires correctly hold data for the current next_scan value.
+// =============================================================================
+always_ff @(posedge clk) begin
+    en_row_word          <= line_ram[15'h0600 + {7'b0, next_scan}];
+    en_col_word          <= line_ram[15'h0000 + {7'b0, next_scan}];
+    en_zoom_word         <= line_ram[15'h0400 + {7'b0, next_scan}];
+    en_pal_word          <= line_ram[15'h0500 + {7'b0, next_scan}];
+    en_prio_word         <= line_ram[15'h0700 + {7'b0, next_scan}];
+    rs_word[0]           <= line_ram[15'h5000 + {7'b0, next_scan}];
+    rs_word[1]           <= line_ram[15'h5100 + {7'b0, next_scan}];
+    rs_word[2]           <= line_ram[15'h5200 + {7'b0, next_scan}];
+    rs_word[3]           <= line_ram[15'h5300 + {7'b0, next_scan}];
+    cs_word[0]           <= line_ram[15'h2000 + {7'b0, next_scan}];
+    cs_word[1]           <= line_ram[15'h2100 + {7'b0, next_scan}];
+    cs_word[2]           <= line_ram[15'h2200 + {7'b0, next_scan}];
+    cs_word[3]           <= line_ram[15'h2300 + {7'b0, next_scan}];
+    zm_word[0]           <= line_ram[15'h4000 + {7'b0, next_scan}];  // PF1
+    zm_word[1]           <= line_ram[15'h4200 + {7'b0, next_scan}];  // PF2 X (also pf4_yswap)
+    zm_word[2]           <= line_ram[15'h4100 + {7'b0, next_scan}];  // PF3
+    zm_word[3]           <= line_ram[15'h4300 + {7'b0, next_scan}];  // PF4 X (also pf2_yswap)
+    pa_word[0]           <= line_ram[15'h4800 + {7'b0, next_scan}];
+    pa_word[1]           <= line_ram[15'h4900 + {7'b0, next_scan}];
+    pa_word[2]           <= line_ram[15'h4A00 + {7'b0, next_scan}];
+    pa_word[3]           <= line_ram[15'h4B00 + {7'b0, next_scan}];
+    pp_word[0]           <= line_ram[15'h5800 + {7'b0, next_scan}];
+    pp_word[1]           <= line_ram[15'h5900 + {7'b0, next_scan}];
+    pp_word[2]           <= line_ram[15'h5A00 + {7'b0, next_scan}];
+    pp_word[3]           <= line_ram[15'h5B00 + {7'b0, next_scan}];
+    sp_word              <= line_ram[15'h3B00 + {7'b0, next_scan}];
+    cp_word[0]           <= line_ram[15'h2800 + {7'b0, next_scan}];
+    cp_word[1]           <= line_ram[15'h2900 + {7'b0, next_scan}];
+    cp_word[2]           <= line_ram[15'h2A00 + {7'b0, next_scan}];
+    cp_word[3]           <= line_ram[15'h2B00 + {7'b0, next_scan}];
+    sm_word              <= line_ram[15'h3A00 + {7'b0, next_scan}];
+    ab_word              <= line_ram[15'h3100 + {7'b0, next_scan}];
+    sb_word              <= line_ram[15'h3000 + {7'b0, next_scan}];
+    mo_word              <= line_ram[15'h3200 + {7'b0, next_scan}];
+    // Y-zoom cross-reads: pf2_yswap is at PF4's addr (0x4300) = zm_word[3];
+    // pf4_yswap is at PF2's addr (0x4200) = zm_word[1].  Read again so Quartus
+    // can share the read port with zm_word[3]/zm_word[1] after optimization.
+    zm_word_pf2_yswap    <= line_ram[15'h4300 + {7'b0, next_scan}];
+    zm_word_pf4_yswap    <= line_ram[15'h4200 + {7'b0, next_scan}];
+end
+`else
+// =============================================================================
+// Simulation: combinational (asynchronous) reads — instant access for verilator/
+// iverilog.  Address arithmetic: 15-bit = base + {7'b0, next_scan}
+// =============================================================================
+assign en_row_word       = line_ram[15'h0600 + {7'b0, next_scan}];
+assign en_col_word       = line_ram[15'h0000 + {7'b0, next_scan}];
+assign en_zoom_word      = line_ram[15'h0400 + {7'b0, next_scan}];  // §9.1 zoom enable
+assign en_pal_word       = line_ram[15'h0500 + {7'b0, next_scan}];  // §9.1 pal-add enable
+assign en_prio_word      = line_ram[15'h0700 + {7'b0, next_scan}];  // §9.1 pf-prio enable
+assign rs_word[0]        = line_ram[15'h5000 + {7'b0, next_scan}];
+assign rs_word[1]        = line_ram[15'h5100 + {7'b0, next_scan}];
+assign rs_word[2]        = line_ram[15'h5200 + {7'b0, next_scan}];
+assign rs_word[3]        = line_ram[15'h5300 + {7'b0, next_scan}];
+assign cs_word[0]        = line_ram[15'h2000 + {7'b0, next_scan}];
+assign cs_word[1]        = line_ram[15'h2100 + {7'b0, next_scan}];
+assign cs_word[2]        = line_ram[15'h2200 + {7'b0, next_scan}];
+assign cs_word[3]        = line_ram[15'h2300 + {7'b0, next_scan}];
+// Zoom data: PF1=0x4000, PF3=0x4100, PF2=0x4200, PF4=0x4300  (§9.9)
+assign zm_word[0]        = line_ram[15'h4000 + {7'b0, next_scan}];  // PF1
+assign zm_word[1]        = line_ram[15'h4200 + {7'b0, next_scan}];  // PF2 (X here; Y physically at PF4 addr)
+assign zm_word[2]        = line_ram[15'h4100 + {7'b0, next_scan}];  // PF3
+assign zm_word[3]        = line_ram[15'h4300 + {7'b0, next_scan}];  // PF4 (X here; Y physically at PF2 addr)
+// Palette addition data: §9.10  PF1=0x4800, PF2=0x4900, PF3=0x4A00, PF4=0x4B00
+assign pa_word[0]        = line_ram[15'h4800 + {7'b0, next_scan}];  // PF1
+assign pa_word[1]        = line_ram[15'h4900 + {7'b0, next_scan}];  // PF2
+assign pa_word[2]        = line_ram[15'h4A00 + {7'b0, next_scan}];  // PF3
+assign pa_word[3]        = line_ram[15'h4B00 + {7'b0, next_scan}];  // PF4
+// PF mix/priority data: §9.12  PF1=0x5800, PF2=0x5900, PF3=0x5A00, PF4=0x5B00
+assign pp_word[0]        = line_ram[15'h5800 + {7'b0, next_scan}];  // PF1
+assign pp_word[1]        = line_ram[15'h5900 + {7'b0, next_scan}];  // PF2
+assign pp_word[2]        = line_ram[15'h5A00 + {7'b0, next_scan}];  // PF3
+assign pp_word[3]        = line_ram[15'h5B00 + {7'b0, next_scan}];  // PF4
+// Sprite group priority: §9.8  word_addr=0x3B00+scan
+assign sp_word           = line_ram[15'h3B00 + {7'b0, next_scan}];
+assign cp_word[0]        = line_ram[15'h2800 + {7'b0, next_scan}];
+assign cp_word[1]        = line_ram[15'h2900 + {7'b0, next_scan}];
+assign cp_word[2]        = line_ram[15'h2A00 + {7'b0, next_scan}];
+assign cp_word[3]        = line_ram[15'h2B00 + {7'b0, next_scan}];
+assign sm_word           = line_ram[15'h3A00 + {7'b0, next_scan}];
+assign ab_word           = line_ram[15'h3100 + {7'b0, next_scan}];
+assign sb_word           = line_ram[15'h3000 + {7'b0, next_scan}];
+assign mo_word           = line_ram[15'h3200 + {7'b0, next_scan}];
 assign zm_word_pf2_yswap = line_ram[15'h4300 + {7'b0, next_scan}];  // PF2 Y from PF4 addr
 assign zm_word_pf4_yswap = line_ram[15'h4200 + {7'b0, next_scan}];  // PF4 Y from PF2 addr
+`endif
 
 // Register outputs at hblank_fall
 always_ff @(posedge clk) begin
