@@ -35,6 +35,21 @@
 // =============================================================================
 `default_nettype none
 
+// ============================================================================
+// Typedef: GP9001 Sprite Display List Entry
+// ============================================================================
+typedef struct packed {
+    logic [8:0]  x;         // X position (9-bit)
+    logic [8:0]  y;         // Y position (9-bit)
+    logic [9:0]  tile_num;  // tile index
+    logic        flip_x;
+    logic        flip_y;
+    logic        prio;      // 0 = below BG, 1 = above BG
+    logic [3:0]  palette;
+    logic [1:0]  size;      // 0=8×8, 1=16×16, 2=32×32, 3=64×64
+    logic        valid;
+} sprite_entry_t;
+
 /* verilator lint_off SYNCASYNCNET */
 module toaplan_v2 #(
     // ── Address decode parameters (WORD addresses = byte_addr >> 1) ────────────

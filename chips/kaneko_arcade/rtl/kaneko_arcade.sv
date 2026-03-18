@@ -35,6 +35,21 @@
 // =============================================================================
 `default_nettype none
 
+// ============================================================================
+// Typedef: Kaneko16 Sprite Descriptor
+// ============================================================================
+typedef struct packed {
+    logic [8:0]  y;
+    logic [15:0] tile_num;
+    logic [8:0]  x;
+    logic [3:0]  palette;
+    logic        flip_x;
+    logic        flip_y;
+    logic [3:0]  prio;
+    logic [3:0]  size;
+    logic        valid;
+} kaneko16_sprite_t;
+
 /* verilator lint_off SYNCASYNCNET */
 module kaneko_arcade #(
     // ── Address decode parameters (WORD addresses = byte_addr >> 1) ────────
