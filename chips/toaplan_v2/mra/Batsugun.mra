@@ -1,0 +1,59 @@
+<!--
+    Batsugun (1993) — Toaplan
+    MiSTer ROM descriptor for Toaplan V2 core
+
+    Hardware:
+      MC68000 @ 16 MHz
+      Z80 @ 8 MHz (sound, stubbed)
+      GP9001 graphics processor
+      YM2151 + OKI M6295 audio (stubbed)
+
+    ROM set: batsugun (from MAME 0.251)
+    Parent: batsugun
+    Manufacturer: Toaplan
+
+    SDRAM layout:
+      0x000000 – 0x0FFFFF   1MB    CPU program ROMs (batsugun.zip: tp-026-*.bin)
+      0x100000 – 0x4FFFFF   4MB    GFX ROMs (tiles + sprites, interleaved by MAME loader)
+
+    CRCs below are placeholders — replace with values from MAME dat files.
+    Use: mame -romident batsugun  or  mame -listxml batsugun
+-->
+
+<misterromdescription>
+    <name>Batsugun</name>
+    <setname>batsugun</setname>
+    <rbf>toaplan_v2</rbf>
+
+    <!-- DIP switches — defaults from MAME batsugun driver -->
+    <!-- Index 0xFE loaded as dsw[0] and dsw[1] in emu.sv -->
+    <nvram index="2" size="2"/>
+
+    <!-- Program ROMs (CPU, index 0x00) -->
+    <!-- SDRAM byte offset 0x000000 -->
+    <rom index="0" zip="batsugun.zip" md5="None" type="merged">
+        <!-- CPU program ROMs — Batsugun (World) -->
+        <!-- Actual filenames and CRCs from MAME batsugun driver in toaplan2.cpp -->
+        <!-- Replace XXXXXXXX with real CRC32 values from MAME dat or romident -->
+        <part name="tp026_1.u65" crc="XXXXXXXX"/>   <!-- 512KB even -->
+        <part name="tp026_2.u66" crc="XXXXXXXX"/>   <!-- 512KB odd  -->
+    </rom>
+
+    <!-- GFX ROMs (tiles + sprites, index 0x01) -->
+    <!-- SDRAM byte offset 0x100000 -->
+    <rom index="1" zip="batsugun.zip" md5="None" type="merged">
+        <!-- Tile / sprite GFX ROMs — interleaved by hardware (4bpp packed) -->
+        <!-- Replace filenames and CRCs with actual values from MAME dat -->
+        <part name="tp026_3.u1"  crc="XXXXXXXX"/>   <!-- GFX plane 0 -->
+        <part name="tp026_4.u2"  crc="XXXXXXXX"/>   <!-- GFX plane 1 -->
+        <part name="tp026_5.u3"  crc="XXXXXXXX"/>   <!-- GFX plane 2 -->
+        <part name="tp026_6.u4"  crc="XXXXXXXX"/>   <!-- GFX plane 3 -->
+    </rom>
+
+    <!-- DIP switch defaults (index 0xFE) -->
+    <rom index="254">
+        <!-- DSW1: difficulty, lives, etc. — all OFF = factory defaults -->
+        <part>00 00</part>
+    </rom>
+
+</misterromdescription>

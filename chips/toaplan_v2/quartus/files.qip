@@ -1,0 +1,61 @@
+# =============================================================================
+# Toaplan V2 Core — QIP File (Quartus Source Files)
+# =============================================================================
+#
+# Add core-specific RTL files here.
+# System framework files (sys.qip) are sourced from sys/sys.tcl.
+#
+# WARNING: Do not add files through Quartus IDE — edit this file directly!
+#
+# =============================================================================
+
+# =========================================================================
+# TOP-LEVEL EMU WRAPPER
+# =========================================================================
+
+set_global_assignment -name SYSTEMVERILOG_FILE emu.sv
+
+# =========================================================================
+# PLL (Phase-Locked Loop)
+# =========================================================================
+# Generates sys_clk (32 MHz) and sdram_clk (143 MHz) from 50 MHz reference
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/pll.sv
+
+# =========================================================================
+# TOAPLAN V2 CORE (Main Integration)
+# =========================================================================
+# Single MC68000 @ 16 MHz, GP9001 graphics, palette RAM, work RAM,
+# I/O registers. Z80 + YM2151 + OKI M6295 stubbed (silence).
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/toaplan_v2.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sdram_b.sv
+
+# =========================================================================
+# GP9001 GRAPHICS PROCESSOR
+# =========================================================================
+# Toaplan V2 custom VDP: 4 BG tilemaps + 256 sprites + priority mixer
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../gp9001/rtl/gp9001.sv
+
+# =========================================================================
+# MC68000 CPU CORE
+# =========================================================================
+# fx68k: Cycle-accurate 68000 implementation by Jorge Cwik
+# Source: https://github.com/ijor/fx68k
+# Downloaded to: chips/m68000/hdl/fx68k/
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/fx68k.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/fx68kAlu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/uaddrPla.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/rtl/fx68k_adapter.sv
+
+# =========================================================================
+# TIMING CONSTRAINTS
+# =========================================================================
+
+set_global_assignment -name SDC_FILE toaplan_v2.sdc
+
+# =============================================================================
+# END OF FILES.QIP
+# =============================================================================
