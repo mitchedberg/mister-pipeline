@@ -1,18 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Puzzle Bobble (pbobble) — Taito B, 1994
-  Single MC68000 @ 8 MHz, Z80 @ 4 MHz, YM2610 @ 8 MHz
-  TC0180VCU tilemap, TC0640FIO I/O (later revision), TC0260DAR palette, TC0140SYT
-
-  NOTE: Puzzle Bobble uses TC0640FIO instead of TC0220IOC, and address map differs.
-  This MRA assumes core parameter support for address layout selection.
-
-  SDRAM layout (pbobble hardware):
-    0x000000  CPU program ROM (512KB)
-    0x080000  Z80 audio program (128KB)
-    0x100000  TC0180VCU GFX ROM (2MB, larger than nastar)
-    0x300000  ADPCM samples (512KB + 512KB)
--->
+<?xml version='1.0' encoding='UTF-8'?>
 <misterromdescription>
   <name>Puzzle Bobble</name>
   <setname>pbobble</setname>
@@ -21,27 +7,27 @@
   <year>1994</year>
   <manufacturer>Taito</manufacturer>
   <category>Puzzle</category>
-  <buttons names="Rotate CW,Rotate CCW,Speed,Start,Coin" default="A,B,C,Start,Select"/>
+  <buttons names="Rotate CW,Rotate CCW,Speed,Start,Coin" default="A,B,C,Start,Select" />
 
-  <!-- CPU program ROM (512KB) -->
+  
   <rom index="0" zip="pbobble.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="pb-01.rom" crc="00000000" offset="0x000000" length="0x080000"/>
-    <part name="pb-02.rom" crc="00000000" offset="0x080000" length="0x020000"/>
+    <part name="pb-ic18.ic18" crc="5de14f49" offset="0x000000" length="0x080000" />
+    <part name="pb-ic2.ic2" crc="2abe07d1" offset="0x080000" length="0x020000" />
   </rom>
 
-  <!-- TC0180VCU GFX ROM (2MB) — larger than nastar! -->
+  
   <rom index="1" zip="pbobble.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="pb-07.rom" crc="00000000" offset="0x000000" length="0x100000"/>
-    <part name="pb-08.rom" crc="00000000" offset="0x100000" length="0x100000"/>
+    <part name="pb-ic14.ic14" crc="55f90ea4" offset="0x000000" length="0x100000" />
+    <part name="pb-ic9.ic9" crc="3253aac9" offset="0x100000" length="0x100000" />
   </rom>
 
-  <!-- ADPCM sample ROMs (512KB + 512KB) -->
+  
   <rom index="2" zip="pbobble.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="pb-05.rom" crc="00000000" offset="0x000000" length="0x080000"/>
-    <part name="pb-06.rom" crc="00000000" offset="0x080000" length="0x080000"/>
+    <part name="pb-05.rom" crc="00000000" offset="0x000000" length="0x080000" />
+    <part name="pb-06.rom" crc="00000000" offset="0x080000" length="0x080000" />
   </rom>
 
-  <!-- DIP switch defaults -->
+  
   <rom index="0xFE" type="ram" size="0x4">
     <part>00 ff ff ff</part>
   </rom>
