@@ -1,0 +1,3 @@
+[submodule "vendor/jtcores"]
+	path = vendor/jtcores
+	url = https://github.com/jotego/jtcores.git
