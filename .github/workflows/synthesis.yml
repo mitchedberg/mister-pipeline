@@ -53,7 +53,8 @@ jobs:
             fi
           fi
 
-          FILES=$(echo "$FILES" | xargs)
+          # Exclude MiSTer framework sys/ files and vendor code — lint our RTL only
+          FILES=$(echo "$FILES" | tr ' ' '\n' | grep -v 'quartus/sys/' | grep -v '/vendor/' | grep -v '/jtframe/' | tr '\n' ' ' | xargs)
           echo "files=$FILES" >> $GITHUB_OUTPUT
           echo "Processing files: $FILES"
 
