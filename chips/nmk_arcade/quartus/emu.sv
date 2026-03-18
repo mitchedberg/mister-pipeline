@@ -22,12 +22,14 @@
 //   0x00 — CPU prog ROM (sequential, SDRAM base 0x000000)
 //   0x01 — Sprite ROM   (SDRAM 0x0C0000)
 //   0x02 — BG tile ROM  (SDRAM 0x140000)
+//   0x03 — ADPCM ROM    (SDRAM 0x200000)   ← OKI M6295 sample ROM
 //   0xFE — DIP switch / NVRAM init data
 //
 // SDRAM layout (IS42S16320F, 32 MB):
 //   0x000000 – 0x07FFFF   512KB   CPU program ROM
 //   0x0C0000 – 0x13FFFF   512KB   Sprite ROM
 //   0x140000 – 0x1BFFFF   512KB   BG tile ROM
+//   0x200000 – 0x27FFFF   512KB   ADPCM sample ROM (OKI M6295)
 // -------------------------------------------------------------------------
 
 module emu
@@ -188,9 +190,9 @@ assign LED_DISK  = 2'd0;
 assign LED_POWER = 2'd0;
 assign BUTTONS   = 2'd0;
 
-// Audio: silence until YM2203 / OKI M6295 sound is implemented
-assign AUDIO_L = 16'h0;
-assign AUDIO_R = 16'h0;
+// Audio: driven from nmk_arcade (YM2203 + OKI M6295 mix)
+// snd_left/snd_right are signed 16-bit; MiSTer AUDIO_L/R expect same format.
+// AUDIO_S=1 (set above) declares signed samples to the framework.
 
 // LED: blink during ROM download
 assign LED_USER = ioctl_download;
@@ -375,6 +377,17 @@ wire [26:0] bg_sdr_addr;
 wire [15:0] bg_sdr_data;
 wire        bg_sdr_req, bg_sdr_ack;
 
+// CH4: ADPCM (OKI M6295) ROM — base 0x200000
+// adpcm_rom_addr from nmk_arcade is 24-bit; zero-extend to 27-bit for sdram_b.
+wire [23:0] adpcm_rom_addr_w;
+wire [26:0] adpcm_sdr_addr;
+wire [15:0] adpcm_sdr_data;
+wire        adpcm_sdr_req, adpcm_sdr_ack;
+assign adpcm_sdr_addr = {3'b0, adpcm_rom_addr_w};
+
+// Audio wires from core
+wire signed [15:0] snd_left_w, snd_right_w;
+
 sdram_b u_sdram
 (
     .clk        (clk_sdram),
@@ -403,6 +416,12 @@ sdram_b u_sdram
     .adpcm_data (bg_sdr_data),
     .adpcm_req  (bg_sdr_req),
     .adpcm_ack  (bg_sdr_ack),
+
+    // CH4: ADPCM (OKI M6295) sample ROM reads
+    .snd_addr   (adpcm_sdr_addr),
+    .snd_data   (adpcm_sdr_data),
+    .snd_req    (adpcm_sdr_req),
+    .snd_ack    (adpcm_sdr_ack),
 
     // SDRAM chip pins
     .SDRAM_A    (SDRAM_A),
@@ -515,8 +534,22 @@ nmk_arcade u_nmk_arcade
     .coin        (coin),
     .service     (service),
     .dipsw1      (dsw[0]),
-    .dipsw2      (dsw[1])
+    .dipsw2      (dsw[1]),
+
+    // Audio outputs
+    .snd_left    (snd_left_w),
+    .snd_right   (snd_right_w),
+
+    // ADPCM ROM (OKI M6295) SDRAM interface
+    .adpcm_rom_addr (adpcm_rom_addr_w),
+    .adpcm_rom_req  (adpcm_sdr_req),
+    .adpcm_rom_data (adpcm_sdr_data),
+    .adpcm_rom_ack  (adpcm_sdr_ack)
 );
+
+// Route core audio to MiSTer audio outputs
+assign AUDIO_L = snd_left_w;
+assign AUDIO_R = snd_right_w;
 
 //////////////////////////////////////////////////////////////////
 // Video pipeline

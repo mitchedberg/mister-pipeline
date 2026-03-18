@@ -106,7 +106,18 @@ module nmk_arcade #(
     input  logic  [1:0] coin,           // [0]=COIN1, [1]=COIN2 (active low)
     input  logic        service,        // service button (active low)
     input  logic  [7:0] dipsw1,
-    input  logic  [7:0] dipsw2
+    input  logic  [7:0] dipsw2,
+
+    // ── Audio Output ────────────────────────────────────────────────────────────
+    output logic signed [15:0] snd_left,   // mixed FM + ADPCM, signed 16-bit
+    output logic signed [15:0] snd_right,  // mixed FM + ADPCM, signed 16-bit
+
+    // ── ADPCM (OKI M6295) ROM SDRAM interface ───────────────────────────────────
+    // 18-bit ROM address from jt6295; mapped to SDRAM at base 0x200000.
+    output logic [23:0] adpcm_rom_addr,
+    output logic        adpcm_rom_req,
+    input  logic [15:0] adpcm_rom_data,
+    input  logic        adpcm_rom_ack
 );
 
 // =============================================================================
@@ -505,8 +516,18 @@ assign rgb_b = {pal_entry[4:0],   pal_entry[4:2]};
 //   +0x04: {coin[1], coin[0], service, 5'b11111} (active low)
 //   +0x06: DIP switch bank 1
 //   +0x08: DIP switch bank 2
+// Sound latch: 0x0E8002 byte write (lower byte) → sound_cmd
 // =============================================================================
 logic [15:0] io_dout;
+
+// Sound command latch — captured when M68000 writes to 0x0E8002 (lower byte)
+logic [7:0] sound_cmd;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n)
+        sound_cmd <= 8'h00;
+    else if (io_cs && !cpu_rw && (cpu_addr[4:1] == 4'h1) && !cpu_lds_n)
+        sound_cmd <= cpu_din[7:0];   // Z80 polls this via sound_cmd latch
+end
 
 always_comb begin
     io_dout = 16'hFFFF;
@@ -594,6 +615,164 @@ assign hsync_n = hsync_n_in;
 assign vsync_n = vsync_n_in;
 
 // =============================================================================
+// Sound — YM2203 (jt03) + OKI M6295 (jt6295)
+//
+// Z80 @ 8 MHz is stubbed: jt03 cs_n=1 (FM silent), jt6295 receives sound_cmd
+// via a simple write bridge. When a real Z80 sub-CPU is added, replace the
+// direct-command path with Z80 memory bus signals.
+//
+// YM2203 clock: 1.5 MHz (clk_sys / ~26.7). We use the closest integer divider
+// with a clock-enable: ce_fm fires every 27 clk_sys ticks (~1.48 MHz).
+// OKI M6295 clock: 1 MHz (clk_sys / 40). ce_oki fires every 40 clk_sys ticks.
+//
+// ADPCM ROM: jt6295 outputs an 18-bit byte address. Map to SDRAM at base
+// 0x200000 using a toggle-handshake bridge (same pattern as sprite ROM above).
+// =============================================================================
+
+// ── Clock enables ──────────────────────────────────────────────────────────
+logic [5:0] ce_fm_cnt;
+logic       ce_fm;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ce_fm_cnt <= 6'd0;
+        ce_fm     <= 1'b0;
+    end else begin
+        if (ce_fm_cnt == 6'd26) begin
+            ce_fm_cnt <= 6'd0;
+            ce_fm     <= 1'b1;
+        end else begin
+            ce_fm_cnt <= ce_fm_cnt + 6'd1;
+            ce_fm     <= 1'b0;
+        end
+    end
+end
+
+logic [5:0] ce_oki_cnt;
+logic       ce_oki;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ce_oki_cnt <= 6'd0;
+        ce_oki     <= 1'b0;
+    end else begin
+        if (ce_oki_cnt == 6'd39) begin
+            ce_oki_cnt <= 6'd0;
+            ce_oki     <= 1'b1;
+        end else begin
+            ce_oki_cnt <= ce_oki_cnt + 6'd1;
+            ce_oki     <= 1'b0;
+        end
+    end
+end
+
+// ── YM2203 (jt03) ───────────────────────────────────────────────────────────
+// cs_n=1 stubs FM output to silence until Z80 sub-CPU is implemented.
+wire signed [15:0] fm_snd_w;
+wire         [9:0] psg_snd_w;
+wire               fm_irq_n_w;
+
+jt03 u_ym2203 (
+    .rst        (~reset_n),
+    .clk        (clk_sys),
+    .cen        (ce_fm),
+    .din        (8'h00),
+    .addr       (1'b0),
+    .cs_n       (1'b1),         // stubbed: no Z80 writes yet
+    .wr_n       (1'b1),
+    .dout       (),
+    .irq_n      (fm_irq_n_w),
+    // YM2203 I/O pins — unused on NMK16 (Z80 GPIO not used for controls)
+    .IOA_in     (8'hFF),
+    .IOB_in     (8'hFF),
+    .IOA_out    (),
+    .IOB_out    (),
+    .IOA_oe     (),
+    .IOB_oe     (),
+    // Separated outputs
+    .psg_A      (),
+    .psg_B      (),
+    .psg_C      (),
+    .fm_snd     (fm_snd_w),
+    .psg_snd    (psg_snd_w),
+    .snd        (),
+    .snd_sample (),
+    .debug_view ()
+);
+
+// ── OKI M6295 (jt6295) ADPCM ROM bridge ─────────────────────────────────────
+// jt6295 rom_addr: 18-bit byte address into ADPCM sample ROM.
+// Map to SDRAM CH4 at base 0x200000: sdram_word_addr = 0x200000 + rom_addr[17:1]
+localparam logic [26:0] ADPCM_ROM_BASE = 27'h200000;
+
+wire [17:0] oki_rom_addr_w;
+wire  [7:0] oki_rom_data_w;
+wire        oki_rom_ok_w;
+wire signed [13:0] oki_sound_w;
+
+// Toggle-handshake bridge: jt6295 asserts new rom_addr each sample tick.
+// We issue an SDRAM read on every address change, return byte to oki_rom_data_w.
+logic        oki_req_pending;
+logic        oki_byte_sel_r;
+logic [17:0] oki_addr_prev;
+logic [15:0] oki_sdram_data_r;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        adpcm_rom_req   <= 1'b0;
+        oki_req_pending <= 1'b0;
+        oki_byte_sel_r  <= 1'b0;
+        oki_addr_prev   <= 18'h0;
+        oki_sdram_data_r<= 16'h0;
+    end else begin
+        if ((oki_rom_addr_w != oki_addr_prev) && !oki_req_pending) begin
+            // New address — issue SDRAM read
+            adpcm_rom_addr  <= {6'b0, oki_rom_addr_w[17:1]} + ADPCM_ROM_BASE[23:0];
+            oki_byte_sel_r  <= oki_rom_addr_w[0];
+            oki_addr_prev   <= oki_rom_addr_w;
+            oki_req_pending <= 1'b1;
+            adpcm_rom_req   <= ~adpcm_rom_req;
+        end else if (oki_req_pending && (adpcm_rom_req == adpcm_rom_ack)) begin
+            oki_sdram_data_r <= adpcm_rom_data;
+            oki_req_pending  <= 1'b0;
+        end
+    end
+end
+
+// Return correct byte to jt6295
+assign oki_rom_data_w = oki_byte_sel_r ? oki_sdram_data_r[7:0]
+                                       : oki_sdram_data_r[15:8];
+assign oki_rom_ok_w   = !oki_req_pending;
+
+jt6295 u_oki_m6295 (
+    .rst        (~reset_n),
+    .clk        (clk_sys),
+    .cen        (ce_oki),
+    .ss         (1'b1),         // ss=1 → 7350 Hz sample rate (standard NMK16)
+    // CPU interface — sound_cmd written directly (Z80 stub)
+    .wrn        (1'b1),         // no CPU writes yet (Z80 stub)
+    .din        (sound_cmd),
+    .dout       (),
+    // ROM interface
+    .rom_addr   (oki_rom_addr_w),
+    .rom_data   (oki_rom_data_w),
+    .rom_ok     (oki_rom_ok_w),
+    // Audio
+    .sound      (oki_sound_w),
+    .sample     ()
+);
+
+// ── Audio mix: FM (16-bit) + ADPCM (14-bit sign-extended to 16-bit) ──────────
+// Simple saturation-free add; keep 16-bit signed result.
+wire signed [15:0] oki_snd_16 = {{2{oki_sound_w[13]}}, oki_sound_w};
+wire signed [15:0] psg_snd_16 = {6'b0, psg_snd_w};   // PSG: unsigned 10-bit → pad
+
+always_comb begin
+    snd_left  = fm_snd_w + oki_snd_16 + psg_snd_16;
+    snd_right = fm_snd_w + oki_snd_16 + psg_snd_16;
+end
+
+// =============================================================================
 // Unused signal suppression
 // =============================================================================
 /* verilator lint_off UNUSED */
@@ -616,7 +795,9 @@ assign _unused = ^{
     spr_rd_color, spr_rd_valid, spr_rd_priority,
     spr_render_done,
     final_valid,
-    pal_entry[15]
+    pal_entry[15],
+    fm_irq_n_w,
+    sound_cmd
 };
 /* verilator lint_on UNUSED */
 
