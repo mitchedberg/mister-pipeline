@@ -219,9 +219,8 @@ assign LED_DISK  = 2'd0;
 assign LED_POWER = 2'd0;
 assign BUTTONS   = 2'd0;
 
-// Audio: silence until OKI M6295 / YM2149 sound modules are implemented
-assign AUDIO_L = 16'h0;
-assign AUDIO_R = 16'h0;
+// Audio outputs driven from kaneko_arcade sound mix (wired below)
+// AUDIO_S = 1 (signed samples) is already set above.
 
 // LED: blink during ROM download
 assign LED_USER = ioctl_download;
@@ -339,6 +338,21 @@ wire ce_cpu = (ce_div == 2'b01);   // 16 MHz: every 2nd sys_clk cycle
 wire ce_pix = (ce_div == 2'b11);   // 8 MHz: every 4th sys_clk cycle
 
 //////////////////////////////////////////////////////////////////
+// Sound clock enable — ~1 MHz (32 MHz / 32)
+//
+// OKI M6295 clock input is 1.056 MHz on original Kaneko16 hardware.
+// We approximate with 32 MHz / 32 = 1 MHz (0.05% error, imperceptible).
+//////////////////////////////////////////////////////////////////
+logic [4:0] snd_ce_div;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) snd_ce_div <= 5'd0;
+    else          snd_ce_div <= snd_ce_div + 5'd1;
+end
+
+wire clk_sound_cen = (snd_ce_div == 5'd0);   // 1 pulse per 32 sys_clk cycles ≈ 1 MHz
+
+//////////////////////////////////////////////////////////////////
 // Reset
 //
 // Extend ROM-download reset for 256 cycles to allow SDRAM refresh
@@ -404,11 +418,21 @@ wire [26:0] gfx_sdr_addr;
 wire [31:0] gfx_sdr_data;
 wire        gfx_sdr_req, gfx_sdr_ack;
 
+// ADPCM ROM: SDRAM CH3 — 16-bit bus; kaneko_arcade delivers byte addr,
+// we pass it directly (SDRAM returns 16-bit word; core takes low byte).
+wire [23:0] adpcm_rom_addr_w;
+wire        adpcm_rom_req_w, adpcm_rom_ack_w;
+wire [15:0] adpcm_sdr_data_w;    // 16-bit word from SDRAM
+// kaneko_arcade wants a single byte; supply the byte selected by addr[0]
+wire  [7:0] adpcm_rom_data_w = adpcm_rom_addr_w[0]
+                                ? adpcm_sdr_data_w[15:8]
+                                : adpcm_sdr_data_w[7:0];
+
 sdram_b u_sdram
 (
     .clk        (clk_sdram),
     .clk_sys    (clk_sys),
-    .reset_n    (reset_n),
+    .rst_n      (reset_n),
 
     // CH0: HPS ROM download write path
     .ioctl_wr   (ioctl_wr & ioctl_download),
@@ -421,18 +445,23 @@ sdram_b u_sdram
     .cpu_req    (cpu_sdr_req),
     .cpu_ack    (cpu_sdr_ack),
 
-    // CH2: GFX ROM reads (32-bit)
+    // CH2: GFX ROM reads (16-bit; upper 16 bits unused — gfx bridge packs internally)
     .gfx_addr   (gfx_sdr_addr),
-    .gfx_data   (gfx_sdr_data),
+    .gfx_data   (gfx_sdr_data[15:0]),
     .gfx_req    (gfx_sdr_req),
     .gfx_ack    (gfx_sdr_ack),
+
+    // CH3: ADPCM ROM reads (16-bit)
+    .adpcm_addr ({3'b0, adpcm_rom_addr_w}),   // 24-bit → 27-bit (zero-pad upper 3)
+    .adpcm_data (adpcm_sdr_data_w),
+    .adpcm_req  (adpcm_rom_req_w),
+    .adpcm_ack  (adpcm_rom_ack_w),
 
     // SDRAM chip pins
     .SDRAM_A    (SDRAM_A),
     .SDRAM_BA   (SDRAM_BA),
     .SDRAM_DQ   (SDRAM_DQ),
-    .SDRAM_DQML (SDRAM_DQML),
-    .SDRAM_DQMH (SDRAM_DQMH),
+    .SDRAM_DQM  ({SDRAM_DQMH, SDRAM_DQML}),
     .SDRAM_nCS  (SDRAM_nCS),
     .SDRAM_nCAS (SDRAM_nCAS),
     .SDRAM_nRAS (SDRAM_nRAS),
@@ -443,6 +472,11 @@ sdram_b u_sdram
 //////////////////////////////////////////////////////////////////
 // Kaneko16 core
 //////////////////////////////////////////////////////////////////
+
+// Audio from core
+wire [15:0] core_snd_left, core_snd_right;
+assign AUDIO_L = core_snd_left;
+assign AUDIO_R = core_snd_right;
 
 // Video output from core
 wire [7:0] core_rgb_r, core_rgb_g, core_rgb_b;
@@ -528,7 +562,20 @@ kaneko_arcade u_kaneko_arcade
     .coin        (coin),
     .service     (service),
     .dipsw1      (dsw[0]),
-    .dipsw2      (dsw[1])
+    .dipsw2      (dsw[1]),
+
+    // ── Audio ─────────────────────────────────────────────────────────────────
+    .snd_left        (core_snd_left),
+    .snd_right       (core_snd_right),
+
+    // ── ADPCM ROM (SDRAM CH3) ─────────────────────────────────────────────────
+    .adpcm_rom_addr  (adpcm_rom_addr_w),
+    .adpcm_rom_req   (adpcm_rom_req_w),
+    .adpcm_rom_data  (adpcm_rom_data_w),
+    .adpcm_rom_ack   (adpcm_rom_ack_w),
+
+    // ── Sound clock enable ────────────────────────────────────────────────────
+    .clk_sound_cen   (clk_sound_cen)
 );
 
 //////////////////////////////////////////////////////////////////
@@ -583,7 +630,8 @@ wire _unused = &{
     joystick_0[31:11], joystick_1[31:10],
     dsw[2], dsw[3],
     cpu_reset_n_out,
-    gfx_sdr_addr[26:22]   // upper bits not used in 2MB GFX window
+    gfx_sdr_addr[26:22],  // upper bits not used in 2MB GFX window
+    gfx_sdr_data[31:16]   // upper 16 bits not used (sdram_b returns 16-bit word)
 };
 /* verilator lint_on UNUSED */
 

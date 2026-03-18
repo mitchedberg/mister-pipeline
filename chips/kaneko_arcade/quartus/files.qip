@@ -52,6 +52,32 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/uaddrPla.s
 set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/rtl/fx68k_adapter.sv
 
 # =========================================================================
+# OKI M6295 ADPCM SOUND CORE (jt6295)
+# =========================================================================
+# Source: https://github.com/jotego/jtcores/tree/master/modules/jt6295
+# Downloaded to: /Volumes/2TB_20260220/Projects/jtcores/modules/jt6295/hdl/
+
+set_global_assignment -name VERILOG_FILE /Volumes/2TB_20260220/Projects/jtcores/modules/jt6295/hdl/jt6295.v
+set_global_assignment -name VERILOG_FILE /Volumes/2TB_20260220/Projects/jtcores/modules/jt6295/hdl/jt6295_acc.v
+set_global_assignment -name VERILOG_FILE /Volumes/2TB_20260220/Projects/jtcores/modules/jt6295/hdl/jt6295_adpcm.v
+set_global_assignment -name VERILOG_FILE /Volumes/2TB_20260220/Projects/jtcores/modules/jt6295/hdl/jt6295_ctrl.v
+set_global_assignment -name VERILOG_FILE /Volumes/2TB_20260220/Projects/jtcores/modules/jt6295/hdl/jt6295_rom.v
+set_global_assignment -name VERILOG_FILE /Volumes/2TB_20260220/Projects/jtcores/modules/jt6295/hdl/jt6295_serial.v
+set_global_assignment -name VERILOG_FILE /Volumes/2TB_20260220/Projects/jtcores/modules/jt6295/hdl/jt6295_sh_rst.v
+set_global_assignment -name VERILOG_FILE /Volumes/2TB_20260220/Projects/jtcores/modules/jt6295/hdl/jt6295_timing.v
+set_global_assignment -name VERILOG_FILE /Volumes/2TB_20260220/Projects/jtcores/modules/jt6295/hdl/jt12_comb.v
+set_global_assignment -name VERILOG_FILE /Volumes/2TB_20260220/Projects/jtcores/modules/jt6295/hdl/jt12_interpol.v
+
+# YM2149 (AY-3-8910) PSG — jt49 not yet in jtcores modules tree.
+# Add when available:
+#   set_global_assignment -name VERILOG_FILE /Volumes/.../jtcores/modules/jt49/hdl/jt49.v
+#   set_global_assignment -name VERILOG_FILE /Volumes/.../jtcores/modules/jt49/hdl/jt49_bus.v
+#   set_global_assignment -name VERILOG_FILE /Volumes/.../jtcores/modules/jt49/hdl/jt49_cen.v
+#   set_global_assignment -name VERILOG_FILE /Volumes/.../jtcores/modules/jt49/hdl/jt49_exp.v
+#   set_global_assignment -name VERILOG_FILE /Volumes/.../jtcores/modules/jt49/hdl/jt49_noise.v
+#   set_global_assignment -name VERILOG_FILE /Volumes/.../jtcores/modules/jt49/hdl/jt49_tone.v
+
+# =========================================================================
 # TIMING CONSTRAINTS
 # =========================================================================
 

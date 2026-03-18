@@ -10,9 +10,10 @@
 //   Palette RAM — 512 × 16-bit at 0x600000–0x6003FF (RGB555 format)
 //   I/O regs   — joysticks, coins, DIP switches at 0x700000–0x70000F
 //
-// Stubs (silence output, no logic):
-//   Z80 sound CPU
-//   OKI M6295 + YM2149 audio
+// Sound hardware:
+//   Z80 sound CPU         — stubbed (wrn=1, din=0xFF)
+//   OKI M6295 (ADPCM)    — instantiated via jt6295; ADPCM ROM via SDRAM CH3
+//   YM2149 (AY-3-8910)   — stub comment (jt49 not yet available in jtcores)
 //
 // Address map (byte addresses, from MAME kaneko16.cpp):
 //   0x000000–0x0FFFFF   1MB     Program ROM (from SDRAM)
@@ -117,7 +118,21 @@ module kaneko_arcade #(
     input  logic [1:0]  coin,            // [0]=COIN1, [1]=COIN2 (active low)
     input  logic        service,         // service button (active low)
     input  logic [7:0]  dipsw1,          // DIP switch bank 1
-    input  logic [7:0]  dipsw2           // DIP switch bank 2
+    input  logic [7:0]  dipsw2,          // DIP switch bank 2
+
+    // ── Audio Output ────────────────────────────────────────────────────────
+    output logic [15:0] snd_left,        // signed 16-bit mixed audio
+    output logic [15:0] snd_right,
+
+    // ── ADPCM ROM (OKI M6295, from SDRAM CH3) ───────────────────────────────
+    output logic [23:0] adpcm_rom_addr,  // byte address (18-bit OKI → 24-bit SDRAM)
+    output logic        adpcm_rom_req,   // toggle handshake
+    input  logic  [7:0] adpcm_rom_data,  // byte returned (low byte of 16-bit word)
+    input  logic        adpcm_rom_ack,   // toggle ack
+
+    // ── Sound clock enable ───────────────────────────────────────────────────
+    // 1 MHz clock enable (derived from clk_sys by emu.sv divider)
+    input  logic        clk_sound_cen    // 1-cycle pulse at ~1 MHz in clk_sys domain
 );
 
 // =============================================================================
@@ -589,6 +604,133 @@ always_comb begin
 end
 
 // =============================================================================
+// Sound Command Latch — M68000 → Z80 via I/O offset 0x70000C (word[7:0])
+// =============================================================================
+// The M68000 writes a command byte to 0x70000C; the Z80 sound CPU reads it.
+// Z80 is stubbed here, so we only latch the byte for completeness.
+
+logic [7:0] sound_cmd_r;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n)
+        sound_cmd_r <= 8'h00;
+    else if (io_cs && !cpu_rw && !cpu_as_n && (cpu_addr[3:1] == 3'h6))
+        sound_cmd_r <= cpu_dout[7:0];   // 0x70000C write
+end
+
+// =============================================================================
+// OKI M6295 — ADPCM Sound
+// =============================================================================
+//
+// jt6295 interface:
+//   clk/cen  — master clk + 1 MHz enable
+//   wrn      — active-low write (Z80 controls; stubbed to 1 = never write)
+//   din      — data bus from Z80 (stubbed to 0xFF)
+//   rom_addr — 18-bit byte address into ADPCM sample ROM
+//   rom_data — byte returned by SDRAM bridge
+//   rom_ok   — data valid (ack toggle matches req toggle)
+//   sound    — signed 14-bit output
+//
+// ADPCM ROM SDRAM bridge:
+//   jt6295 outputs a toggle on rom_addr change (we generate rom_ok = ack==req).
+//   We map jt6295 18-bit byte addr → SDRAM CH3 27-bit byte addr (base 0x200000).
+
+logic [17:0] oki_rom_addr_w;
+logic  [7:0] oki_rom_data_w;
+logic        oki_rom_ok_w;
+logic signed [13:0] oki_sound_w;
+logic        oki_sample_w;
+
+// ADPCM ROM SDRAM bridge — byte read, toggle handshake
+// jt6295 simply presents an address; we detect changes and issue new requests.
+logic [17:0] adpcm_prev_addr;
+logic        adpcm_req_r;
+logic  [7:0] adpcm_byte_r;
+logic        adpcm_ack_prev;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        adpcm_prev_addr <= 18'hx;
+        adpcm_req_r     <= 1'b0;
+        adpcm_byte_r    <= 8'hFF;
+        adpcm_ack_prev  <= 1'b0;
+    end else begin
+        // Fire a new SDRAM request whenever jt6295 changes its address
+        if (oki_rom_addr_w != adpcm_prev_addr) begin
+            adpcm_prev_addr <= oki_rom_addr_w;
+            adpcm_req_r     <= ~adpcm_req_r;   // toggle = new request
+        end
+        // Capture returned byte when ack toggles
+        if (adpcm_rom_ack != adpcm_ack_prev) begin
+            adpcm_ack_prev <= adpcm_rom_ack;
+            adpcm_byte_r   <= adpcm_rom_data;
+        end
+    end
+end
+
+// ADPCM ROM at SDRAM base 0x200000 (byte address)
+assign adpcm_rom_addr = {6'b000010, oki_rom_addr_w};   // 0x200000 + 18-bit offset
+assign adpcm_rom_req  = adpcm_req_r;
+assign oki_rom_data_w = adpcm_byte_r;
+// rom_ok: jt6295 wants a pulse when data arrives; we tie it to ack-toggle match
+assign oki_rom_ok_w   = (adpcm_rom_req == adpcm_rom_ack);
+
+jt6295 #(.INTERPOL(0)) u_oki (
+    .rst        (~reset_n),
+    .clk        (clk_sys),
+    .cen        (clk_sound_cen),   // ~1 MHz enable
+    .ss         (1'b1),            // ss=1 → 8 kHz sample rate (standard M6295 mode)
+    // CPU interface — Z80 stubbed: never write
+    .wrn        (1'b1),
+    .din        (8'hFF),
+    .dout       (),                // open; Z80 stub does not read
+    // ROM interface
+    .rom_addr   (oki_rom_addr_w),
+    .rom_data   (oki_rom_data_w),
+    .rom_ok     (oki_rom_ok_w),
+    // Audio
+    .sound      (oki_sound_w),
+    .sample     (oki_sample_w)
+);
+
+// =============================================================================
+// YM2149 (AY-3-8910) PSG — Stub
+// =============================================================================
+// jt49 (YM2149 core) is not yet available in the jtcores modules tree.
+// Instantiate when jt49.v is added under jtcores/modules/jt49/hdl/.
+// For now, PSG output is silent.
+//
+// Planned interface:
+//   jt49 u_ym2149 (
+//       .rst_n(reset_n), .clk(clk_sys), .clk_en(clk_sound_cen),
+//       .cs_n(1'b1), .wr_n(1'b1), .a9(1'b0), .din(8'hFF),
+//       .sound(ym_sound_w), ...
+//   );
+logic signed [9:0] ym_sound_w;
+assign ym_sound_w = 10'sd0;   // silence until jt49 integrated
+
+// =============================================================================
+// Audio Mix — OKI M6295 + YM2149 → snd_left / snd_right
+// =============================================================================
+// Scale OKI 14-bit signed → 16-bit by left-shifting 2, clip to 16-bit range.
+// YM2149 stub is 0; add here when jt49 is wired.
+
+// Sign-extend OKI 14-bit → 16-bit (arithmetic left shift 2) combinationally
+logic signed [15:0] oki_16;
+assign oki_16 = {oki_sound_w, 2'b00};   // sign-extend: MSB stays, 2 LSBs appended
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        snd_left  <= 16'h0000;
+        snd_right <= 16'h0000;
+    end else begin
+        // OKI is mono; route to both channels.
+        snd_left  <= oki_16;
+        snd_right <= oki_16;
+    end
+end
+
+// =============================================================================
 // Program ROM Request Bridge
 // =============================================================================
 // Toggle-handshake to SDRAM. CPU stalls via cpu_dtack_n.
@@ -697,6 +839,10 @@ end
 logic _unused;
 assign _unused = &{
     1'b0,
+    // Sound stubs / internal signals not consumed externally
+    sound_cmd_r,
+    oki_sample_w,
+    ym_sound_w,
     // Kaneko16 outputs not consumed at integration level
     k16_scroll_x_0, k16_scroll_y_0,
     k16_scroll_x_1, k16_scroll_y_1,
