@@ -61,15 +61,15 @@ module nmk16 #(
     // ======== GATE 2: SPRITE SCANNER OUTPUT ========
 
     // Display list output
-    output logic [8:0]              display_list_x [0:255],     // X position [8:0]
-    output logic [8:0]              display_list_y [0:255],     // Y position [8:0]
-    output logic [11:0]             display_list_tile [0:255],  // Tile code [11:0]
-    output logic                    display_list_flip_x [0:255],
-    output logic                    display_list_flip_y [0:255],
-    output logic [1:0]              display_list_size [0:255],
-    output logic [3:0]              display_list_palette [0:255],
-    output logic                    display_list_valid [0:255],
-    output logic                    display_list_priority [0:255], // Priority bit: 0=below BG0, 1=above all
+    output logic [255:0][8:0]       display_list_x,             // X position [8:0]
+    output logic [255:0][8:0]       display_list_y,             // Y position [8:0]
+    output logic [255:0][11:0]      display_list_tile,          // Tile code [11:0]
+    output logic [255:0]            display_list_flip_x,
+    output logic [255:0]            display_list_flip_y,
+    output logic [255:0][1:0]       display_list_size,
+    output logic [255:0][3:0]       display_list_palette,
+    output logic [255:0]            display_list_valid,
+    output logic [255:0]            display_list_priority,      // Priority bit: 0=below BG0, 1=above all
     output logic [7:0]              display_list_count,         // Number of visible sprites
     output logic                    display_list_ready,         // 1-cycle pulse when scan done
     output logic                    irq_vblank_pulse,           // 1-cycle pulse at scan end
@@ -134,7 +134,7 @@ module nmk16 #(
 
     // Per-layer BG pixel outputs (updated every 2 clocks: layer 0 then layer 1)
     output logic [1:0]  bg_pix_valid,      // [layer]: 1 = opaque pixel
-    output logic [7:0]  bg_pix_color [0:1],// [layer]: {palette[3:0], index[3:0]}
+    output logic [1:0][7:0]  bg_pix_color,  // [layer]: {palette[3:0], index[3:0]}
     output logic [1:0]  bg_pix_priority,   // [layer]: priority bit from tilemap word
 
     // ======== GATE 5: PRIORITY MIXER / COLOR COMPOSITOR ========
