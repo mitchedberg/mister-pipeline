@@ -1,0 +1,4 @@
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) nmk_arcade_top.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/nmk_arcade.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/sdram_b.sv]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) ../rtl/t80/T80s.v]

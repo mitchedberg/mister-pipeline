@@ -47,26 +47,26 @@ Formal width is 1 bit. Multi-bit connections cause Warning 12020.
 | tc0480scp | ✅ `chips/tc0480scp/standalone_synth/` | Not yet run | |
 | tc0370mso | ✅ `chips/tc0370mso/standalone_synth/` | Not yet run | |
 | tc0150rod | ❌ needed | — | |
-| tc0180vcu | ❌ needed | — | |
+| tc0180vcu | ✅ `chips/tc0180vcu/standalone_synth/` | Not yet run | |
 | tc0260dar | ❌ needed | — | |
-| nmk_arcade | ❌ needed | — | |
-| psikyo_arcade | ❌ needed | — | |
-| kaneko_arcade | ❌ needed | — | |
+| nmk_arcade | ✅ `chips/nmk_arcade/standalone_synth/` | Not yet run | Full system: FITS, -17ns timing |
+| psikyo_arcade | ✅ `chips/psikyo_arcade/standalone_synth/` | Not yet run | Full system: FITS, -42ns timing |
+| kaneko_arcade | ✅ `chips/kaneko_arcade/standalone_synth/` | Not yet run | |
 | toaplan_v2 | ❌ needed | — | GP9001 VRAM deferred |
-| taito_b | ❌ needed | — | |
-| taito_f3 | ❌ needed | — | |
-| taito_z | ❌ needed | — | ALM overflow, CPU swap needed |
-| taito_x | ❌ needed | — | |
+| taito_b | ❌ needed | — | Full system: ~165% ALM est. |
+| taito_f3 | ❌ needed | — | Full system: 128K/83K nodes |
+| taito_z | ❌ needed | — | Full system: 386% ALM overflow |
+| taito_x | ✅ `chips/taito_x/standalone_synth/` | Not yet run | |
 
 ---
 
 ## Open Architecture Issues
 
 ### Taito Z — CPU ALM overflow
-2× fx68k = ~18K ALMs before any GPU logic. Options in order of preference:
-1. Replace one fx68k with TG68K (Motorola 68000 clone, ~5K ALMs vs ~9K) — saves ~4K ALMs
-2. Accept Taito Z needs HDMI disabled to close timing
-3. Defer
+2× fx68k before any GPU logic. TG68K is NOT a resource-saver (15-20% larger than fx68k) and is NOT a drop-in replacement (completely different adapter interface). Options:
+1. Profile real ALM cost via standalone synthesis of fx68k_adapter alone first
+2. Accept Taito Z needs HDMI + audio disabled (jotego pattern for tight designs)
+3. Defer — Taito Z is architecturally the most complex system in the pipeline
 
 ### GP9001 VRAM — MLAB capacity
 32K×16 MLAB needs 819 MLABs vs 397 available. Requires pre-fetch pipeline restructure to M10K synchronous reads. Documented in `COMMUNITY_SYNTHESIS_GUIDE.md` Appendix C. Deferred until other chips are clean.

@@ -1,0 +1,5 @@
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) tc0180vcu_top.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/tc0180vcu.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/tc0180vcu_bg.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/tc0180vcu_sprite.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/tc0180vcu_tx.sv]

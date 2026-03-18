@@ -1,0 +1,5 @@
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) taito_x_top.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/taito_x.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/x1_001a.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/taito_x_colmix.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/sdram_x.sv]
