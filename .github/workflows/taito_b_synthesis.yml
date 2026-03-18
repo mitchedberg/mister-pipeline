@@ -63,6 +63,14 @@ jobs:
             chips/taito_b/quartus/*.rpt
           retention-days: 14
 
+      - name: Print synthesis errors
+        if: failure()
+        run: |
+          echo "=== SYNTHESIS LOG (last 60 lines) ==="
+          tail -60 taito_b_synthesis.log 2>/dev/null || echo "No log file found"
+          echo "=== ERROR LINES ==="
+          grep -i "error\|cannot\|missing\|not found\|failed" taito_b_synthesis.log 2>/dev/null | head -30 || true
+
       - name: Report status
         if: always()
         run: |
