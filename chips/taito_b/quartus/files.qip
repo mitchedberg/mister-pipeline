@@ -18,9 +18,9 @@ set_global_assignment -name SYSTEMVERILOG_FILE emu.sv
 # =========================================================================
 # PLL (Phase-Locked Loop)
 # =========================================================================
-# Generates sys_clk (16 MHz) and sdram_clk (143 MHz) from 50 MHz reference
+# 3-file canonical IP: rtl/pll.v + rtl/pll/pll_0002.v + rtl/pll/pll_0002.qip
 
-set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/pll.sv
+set_global_assignment -name QIP_FILE rtl/pll.qip
 
 # =========================================================================
 # TAITO B CORE (Main Integration)

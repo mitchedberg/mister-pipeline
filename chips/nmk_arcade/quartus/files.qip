@@ -20,7 +20,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE emu.sv
 # =========================================================================
 # Generates clk_sys (40 MHz) and clk_sdram (143 MHz) from 50 MHz reference
 
-set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/pll.sv
+set_global_assignment -name QIP_FILE rtl/pll.qip
 
 # =========================================================================
 # NMK16 ARCADE CORE (Main Integration)

@@ -20,7 +20,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE emu.sv
 # =========================================================================
 # Generates sys_clk (32 MHz) and sdram_clk (143 MHz) from 50 MHz reference
 
-set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/pll.sv
+set_global_assignment -name QIP_FILE rtl/pll.qip
 
 # =========================================================================
 # TOAPLAN V2 CORE (Main Integration)
