@@ -1,0 +1,1399 @@
+[
+  {
+    "mame_drivers": [
+      "neogeo.cpp"
+    ],
+    "display": "SNK Neo Geo",
+    "hardware": "68000 + Z80 + custom LSPC sprite ASIC",
+    "mister_core": "https://github.com/MiSTer-devel/NeoGeo_MiSTer",
+    "author": "furrtek",
+    "repo": "https://github.com/MiSTer-devel/NeoGeo_MiSTer",
+    "status": "mature",
+    "era": "1990-2004",
+    "genre": "Fighter / Shooter / Various",
+    "game_count": 166,
+    "top3": [
+      "2020 Super Baseball (set 1)",
+      "3 Count Bout / Fire Suplex (NGM-043 ~ NGH-043)",
+      "Neo-Geo AES (NTSC)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "galaxian.cpp"
+    ],
+    "display": "Galaxian Hardware",
+    "hardware": "Z80 + custom sprite",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-Galaxian_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-Galaxian_MiSTer",
+    "status": "mature",
+    "era": "1979-1984",
+    "genre": "Shooter",
+    "game_count": 56,
+    "top3": [
+      "Amidar",
+      "Anteater",
+      "Armored Car (set 1)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "segas16a.cpp",
+      "segas16b.cpp"
+    ],
+    "display": "Sega System 16A/16B",
+    "hardware": "68000 + custom tilemap + sprite ASICs",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-SEGASYS1_MiSTer",
+    "author": "MiSTer-devel / jotego",
+    "repo": "https://github.com/jotego/jtcores",
+    "status": "mature",
+    "era": "1986-1990",
+    "genre": "Various",
+    "game_count": 44,
+    "top3": [
+      "Action Fighter (FD1089A 317-0018)",
+      "Alex Kidd: The Lost Stars (set 2, unprotected)",
+      "Body Slam (8751 317-0015)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "cps1.cpp"
+    ],
+    "display": "Capcom CPS1",
+    "hardware": "68000 + CPS-A/B custom chips + YM2151",
+    "mister_core": "https://github.com/jotego/jtcores",
+    "author": "jotego",
+    "repo": "https://github.com/jotego/jtcores",
+    "status": "mature",
+    "era": "1988-1995",
+    "genre": "Fighter / Beat-em-up / Shooter",
+    "game_count": 40,
+    "top3": [
+      "1941: Counter Attack (World 900227)",
+      "Three Wonders (World 910520)",
+      "Captain Commando (World 911202)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "cps2.cpp"
+    ],
+    "display": "Capcom CPS2",
+    "hardware": "68000 + CPS-A/B + QSound + encryption",
+    "mister_core": "https://github.com/jotego/jtcores",
+    "author": "jotego",
+    "repo": "https://github.com/jotego/jtcores",
+    "status": "mature",
+    "era": "1993-2003",
+    "genre": "Fighter / Shooter / Various",
+    "game_count": 40,
+    "top3": [
+      "1944: The Loop Master (Europe 000620)",
+      "19XX: The War Against Destiny (Europe 960104)",
+      "Armored Warriors (Europe 941024)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "taito.cpp"
+    ],
+    "display": "Taito Classic (Z80)",
+    "hardware": "Z80 + custom tilemap",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-TaitoSystemSJ_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-TaitoSystemSJ_MiSTer",
+    "status": "mature",
+    "era": "1981-1987",
+    "genre": "Various",
+    "game_count": 31,
+    "top3": [
+      "Cavaleiro Negro (set 1)",
+      "Cosmic",
+      "Drakor"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "system1.cpp"
+    ],
+    "display": "Sega System 1/2",
+    "hardware": "Z80 + custom tilemap ASIC",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-SEGASYS1_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-SEGASYS1_MiSTer",
+    "status": "mature",
+    "era": "1983-1987",
+    "genre": "Various",
+    "game_count": 28,
+    "top3": [
+      "4-D Warriors (315-5162)",
+      "Block Gal (MC-8123B, 317-0029)",
+      "Brain"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "8080bw.cpp"
+    ],
+    "display": "Space Invaders / 8080 HW",
+    "hardware": "Intel 8080 + custom sprite",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-SpaceInvaders_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-SpaceInvaders_MiSTer",
+    "status": "mature",
+    "era": "1978-1982",
+    "genre": "Shooter",
+    "game_count": 28,
+    "top3": [
+      "Astropal",
+      "Attack Force (encrypted)",
+      "Balloon Bomber"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "pacman.cpp"
+    ],
+    "display": "Pac-Man / Z80 Classics",
+    "hardware": "Z80 + custom sprite chips",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-Pacman_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-Pacman_MiSTer",
+    "status": "mature",
+    "era": "1980-1984",
+    "genre": "Maze / Various",
+    "game_count": 27,
+    "top3": [
+      "Ali Baba and 40 Thieves",
+      "Big Bucks",
+      "Birdiy"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "cave.cpp"
+    ],
+    "display": "Cave 68K",
+    "hardware": "68000 + custom sprite + YM2151/OKI",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-Cave_MiSTer",
+    "author": "furrtek",
+    "repo": "https://github.com/MiSTer-devel/Arcade-Cave_MiSTer",
+    "status": "mature",
+    "era": "1994-2001",
+    "genre": "Shooter",
+    "game_count": 26,
+    "top3": [
+      "Air Gallet (Europe)",
+      "Cellage",
+      "Crusher Makochan (Japan)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "williams.cpp"
+    ],
+    "display": "Williams/Midway Classic",
+    "hardware": "6809 + custom hardware",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-Defender_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-Defender_MiSTer",
+    "status": "mature",
+    "era": "1980-1985",
+    "genre": "Shooter",
+    "game_count": 24,
+    "top3": [
+      "Alien Arena",
+      "Blaster",
+      "Bubbles"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "snk.cpp"
+    ],
+    "display": "SNK Triple Z80",
+    "hardware": "3x Z80 + custom chips",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-SNK_TripleZ80_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-SNK_TripleZ80_MiSTer",
+    "status": "mature",
+    "era": "1984-1989",
+    "genre": "Shooter / Action",
+    "game_count": 20,
+    "top3": [
+      "ASO - Armored Scrum Object",
+      "Athena",
+      "Bermuda Triangle (World?)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "konami.cpp"
+    ],
+    "display": "Konami 68K Classics",
+    "hardware": "68000 + custom Konami chips (K051960 etc)",
+    "mister_core": "https://github.com/jotego/jtcores",
+    "author": "jotego",
+    "repo": "https://github.com/jotego/jtcores",
+    "status": "mature",
+    "era": "1986-1995",
+    "genre": "Shooter / Beat-em-up",
+    "game_count": 16,
+    "top3": [
+      "MSX Cartridge - KONAMI",
+      "MSX Cartridge - KONAMI+SCC",
+      "MSX Cartridge - Sunrise+SCC"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "m72.cpp"
+    ],
+    "display": "Irem M72",
+    "hardware": "V30 CPU + custom tilemap/sprite chips",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-IremM72_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-IremM72_MiSTer",
+    "status": "mature",
+    "era": "1987-1992",
+    "genre": "Shooter / Action",
+    "game_count": 14,
+    "top3": [
+      "Air Duel (World, M82 hardware)",
+      "Battle Chopper (World)",
+      "Cosmic Cop (World)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "segas18.cpp"
+    ],
+    "display": "Sega System 18",
+    "hardware": "68000 + VDP + custom sprite",
+    "mister_core": "https://github.com/jotego/jtcores",
+    "author": "jotego",
+    "repo": "https://github.com/jotego/jtcores",
+    "status": "mature",
+    "era": "1990-1992",
+    "genre": "Various",
+    "game_count": 11,
+    "top3": [
+      "Alien Storm (World, 2 Players) (FD1094 317-0154)",
+      "Bloxeed (Japan) (FD1094 317-0139)",
+      "Clutch Hitter (US) (FD1094 317-0176)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "irem.cpp"
+    ],
+    "display": "Irem M62",
+    "hardware": "Z80 + M62 custom chips",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-IremM62_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-IremM62_MiSTer",
+    "status": "mature",
+    "era": "1984-1987",
+    "genre": "Platformer / Shooter",
+    "game_count": 8,
+    "top3": [
+      "Irem M62 Audio",
+      "Irem M52 SoundC Audio",
+      "Irem M52 Large Audio"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "galaga.cpp"
+    ],
+    "display": "Namco Galaga",
+    "hardware": "3x Z80 + custom chips",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-Galaga_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-Galaga_MiSTer",
+    "status": "mature",
+    "era": "1981-1987",
+    "genre": "Shooter",
+    "game_count": 5,
+    "top3": [
+      "Bosconian - Star Destroyer (version 5)",
+      "Dig Dug (rev 2)",
+      "Galaga (Namco rev. B)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "atarig1.cpp",
+      "atarig42.cpp"
+    ],
+    "display": "Atari Games G1/G42",
+    "hardware": "68000 + TMS34010 + custom GFX",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-Gauntlet_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-Gauntlet_MiSTer",
+    "status": "mature",
+    "era": "1985-1993",
+    "genre": "Beat-em-up / Shooter",
+    "game_count": 5,
+    "top3": [
+      "Hydra",
+      "Pit Fighter (rev 9)",
+      "Danger Express (prototype)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "tecmo.cpp"
+    ],
+    "display": "Tecmo Classic",
+    "hardware": "Z80 + custom sprite/tilemap",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-Tecmo_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-Tecmo_MiSTer",
+    "status": "mature",
+    "era": "1986-1991",
+    "genre": "Action / Shooter",
+    "game_count": 4,
+    "top3": [
+      "Back Fire (Tecmo)",
+      "Gemini Wing (World)",
+      "Rygar (US set 1)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "segaorun.cpp"
+    ],
+    "display": "Sega OutRun",
+    "hardware": "Dual 68000 + custom sprite scaler + YM2151",
+    "mister_core": "https://github.com/jotego/jtcores",
+    "author": "jotego",
+    "repo": "https://github.com/jotego/jtcores",
+    "status": "mature",
+    "era": "1986-1992",
+    "genre": "Racing",
+    "game_count": 3,
+    "top3": [
+      "Out Run (sitdown/upright, Rev B)",
+      "Super Hang-On (sitdown/upright) (unprotected)",
+      "Turbo Out Run (Out Run upgrade) (FD1094 317-0118)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "taito_f3.cpp"
+    ],
+    "display": "Taito F3",
+    "hardware": "68EC020 + TC0630FDP + ES5505",
+    "mister_core": null,
+    "author": "Our Work",
+    "repo": null,
+    "status": "our_work",
+    "era": "1992-1998",
+    "genre": "Various",
+    "game_count": 35,
+    "top3": [
+      "Arabian Magic (Ver 1.0O 1992/07/06)",
+      "Arkanoid Returns (Ver 2.02O 1997/02/10)",
+      "Bubble Memories: The Story Of Bubble Bobble III (V"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "nmk16.cpp"
+    ],
+    "display": "NMK16",
+    "hardware": "68000 + NMK-005 + NMK-112 + OKI6295",
+    "mister_core": null,
+    "author": "Our Work",
+    "repo": null,
+    "status": "our_work",
+    "era": "1990-1993",
+    "genre": "Shooter",
+    "game_count": 30,
+    "top3": [
+      "Acrobat Mission",
+      "Air Attack (set 1)",
+      "Arcadia (NMK)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "taito_b.cpp"
+    ],
+    "display": "Taito B",
+    "hardware": "68000 + TC0180VCU + TC0140SYT",
+    "mister_core": null,
+    "author": "Our Work",
+    "repo": null,
+    "status": "our_work",
+    "era": "1988-1992",
+    "genre": "Action / Shooter",
+    "game_count": 15,
+    "top3": [
+      "Ashura Blaster (World)",
+      "Crime City (World)",
+      "Hit the Ice (US)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "taito_b.cpp"
+    ],
+    "display": "Taito Ninja Warriors / Rastan 2",
+    "hardware": "68000 + TC0180VCU",
+    "mister_core": null,
+    "author": "Our Work",
+    "repo": null,
+    "status": "our_work",
+    "era": "1988-1991",
+    "genre": "Action",
+    "game_count": 15,
+    "top3": [
+      "Ashura Blaster (World)",
+      "Crime City (World)",
+      "Hit the Ice (US)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "batsugun.cpp",
+      "toaplan1.cpp",
+      "twincobr.cpp",
+      "fireshrk.cpp",
+      "tekipaki.cpp",
+      "truxton2.cpp",
+      "rallybik.cpp"
+    ],
+    "display": "Toaplan V1/V2",
+    "hardware": "68000 + GP9001 VDP + OKI6295",
+    "mister_core": "https://github.com/va7deo/zerowing",
+    "author": "va7deo",
+    "repo": "https://github.com/va7deo/zerowing",
+    "status": "our_work",
+    "era": "1987-1993",
+    "genre": "Shooter",
+    "game_count": 14,
+    "top3": [
+      "Batsugun",
+      "Demon's World (World) / Horror Story (Japan) (set ",
+      "Hellfire (2P set)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "kaneko16.cpp"
+    ],
+    "display": "Kaneko16",
+    "hardware": "68000 + CALC3 + KC-002 + OKI6295",
+    "mister_core": null,
+    "author": "Our Work",
+    "repo": null,
+    "status": "our_work",
+    "era": "1991-1995",
+    "genre": "Action / Fighter",
+    "game_count": 12,
+    "top3": [
+      "The Berlin Wall",
+      "Blaze On (World)",
+      "Blood Warrior"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "taito_z.cpp"
+    ],
+    "display": "Taito Z",
+    "hardware": "68000 + TC0150ROD + TC0220IOC",
+    "mister_core": null,
+    "author": "Our Work",
+    "repo": null,
+    "status": "our_work",
+    "era": "1988-1992",
+    "genre": "Racing / Action",
+    "game_count": 10,
+    "top3": [
+      "Aqua Jack (World)",
+      "Battle Shark (World)",
+      "Chase H.Q. (World)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "psikyo.cpp"
+    ],
+    "display": "Psikyo SH2",
+    "hardware": "SH-2 + custom sprite ASIC + YM2610B",
+    "mister_core": null,
+    "author": "Our Work",
+    "repo": null,
+    "status": "our_work",
+    "era": "1993-1998",
+    "genre": "Shooter",
+    "game_count": 5,
+    "top3": [
+      "Battle K-Road",
+      "Gunbird (World)",
+      "Strikers 1945 (World)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "taitoair.cpp"
+    ],
+    "display": "Taito Air System",
+    "hardware": "68000 + TC0480SCP + TC0620SCC",
+    "mister_core": null,
+    "author": "Our Work",
+    "repo": null,
+    "status": "our_work",
+    "era": "1992-1996",
+    "genre": "Shooter / Action",
+    "game_count": 2,
+    "top3": [
+      "Air Inferno (World)",
+      "Top Landing (World)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "taito_f2.cpp"
+    ],
+    "display": "Taito F2",
+    "hardware": "68000 + TC0100SCN + TC0360PRI",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-TaitoF2_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-TaitoF2_MiSTer",
+    "status": "beta",
+    "era": "1988-1994",
+    "genre": "Various",
+    "game_count": 29,
+    "top3": [
+      "Cameltry (World, YM2610)",
+      "Dead Connection (World)",
+      "Dino Rex (World)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "vicdual.cpp"
+    ],
+    "display": "Gremlin / Sega VIC Dual",
+    "hardware": "Z80 + custom tilemap",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-SegaVICZ80_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-SegaVICZ80_MiSTer",
+    "status": "beta",
+    "era": "1977-1983",
+    "genre": "Various",
+    "game_count": 24,
+    "top3": [
+      "Alpha Fighter / Head On",
+      "Borderline",
+      "Car Hunt / Deep Scan (France)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "megasys1.cpp"
+    ],
+    "display": "Jaleco Mega System 1",
+    "hardware": "68000 + custom sprite/tilemap ASICs",
+    "mister_core": "https://github.com/va7deo/MegaSys1_A",
+    "author": "va7deo",
+    "repo": "https://github.com/va7deo/MegaSys1_A",
+    "status": "beta",
+    "era": "1988-1994",
+    "genre": "Shooter / Various",
+    "game_count": 21,
+    "top3": [
+      "64th. Street: A Detective Story (World)",
+      "The Astyanax (EPROM version)",
+      "Avenging Spirit"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "namcos1.cpp"
+    ],
+    "display": "Namco System 1",
+    "hardware": "2x 6809 + custom chip-set",
+    "mister_core": "https://github.com/jotego/jtcores",
+    "author": "jotego",
+    "repo": "https://github.com/jotego/jtcores",
+    "status": "beta",
+    "era": "1987-1994",
+    "genre": "Platformer / Shooter / Various",
+    "game_count": 20,
+    "top3": [
+      "Bakutotsu Kijuutei",
+      "Chou Zetsurinjin Berabowman (Japan, Rev C)",
+      "Blast Off (Japan)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "cps3.cpp"
+    ],
+    "display": "Capcom CPS3",
+    "hardware": "SH-2 + custom GFX ASICs + SCSI",
+    "mister_core": "https://github.com/jotego/jtcores",
+    "author": "jotego",
+    "repo": "https://github.com/jotego/jtcores",
+    "status": "beta",
+    "era": "1996-1999",
+    "genre": "Fighter",
+    "game_count": 7,
+    "top3": [
+      "CPS3 Multi-game bootleg for HD6417095 type SH2 (V4",
+      "JoJo's Venture (Europe 990128)",
+      "JoJo's Bizarre Adventure (Europe 991015, NO CD)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "atarisy1.cpp"
+    ],
+    "display": "Atari System 1",
+    "hardware": "68010 + custom Slapstic + TMS5220",
+    "mister_core": "https://github.com/MiSTer-devel/Arcade-Atari-system1_MiSTer",
+    "author": "MiSTer-devel",
+    "repo": "https://github.com/MiSTer-devel/Arcade-Atari-system1_MiSTer",
+    "status": "beta",
+    "era": "1984-1987",
+    "genre": "Various",
+    "game_count": 7,
+    "top3": [
+      "Atari System 1 BIOS",
+      "Indiana Jones and the Temple of Doom (set 1)",
+      "Marble Madness (set 1)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "raizing.cpp",
+      "raizing_batrider.cpp"
+    ],
+    "display": "Raizing / 8ing",
+    "hardware": "68000 + GP9001 VDP (Toaplan derivative)",
+    "mister_core": "https://github.com/psomashekar/Raizing_FPGA",
+    "author": "psomashekar",
+    "repo": "https://github.com/psomashekar/Raizing_FPGA",
+    "status": "beta",
+    "era": "1992-1999",
+    "genre": "Shooter",
+    "game_count": 6,
+    "top3": [
+      "Battle Garegga (Europe / USA / Japan / Asia) (Sat ",
+      "Kingdom Grandprix",
+      "Sorcer Striker"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "segas32.cpp"
+    ],
+    "display": "Sega System 32",
+    "hardware": "V60 + custom GFX ASICs",
+    "mister_core": "https://github.com/jotego/jtcores",
+    "author": "jotego",
+    "repo": "https://github.com/jotego/jtcores",
+    "status": "wip",
+    "era": "1992-1995",
+    "genre": "Various",
+    "game_count": 35,
+    "top3": [
+      "Alien3: The Gun (World)",
+      "Arabian Fight (World)",
+      "Air Rescue (World)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "pgm.cpp"
+    ],
+    "display": "IGS PGM",
+    "hardware": "68000 + custom sprite ASIC + M6295",
+    "mister_core": "https://github.com/jotego/jtcores",
+    "author": "jotego",
+    "repo": "https://github.com/jotego/jtcores",
+    "status": "wip",
+    "era": "1997-2005",
+    "genre": "Fighter / Shooter",
+    "game_count": 32,
+    "top3": [
+      "DoDonPachi II - Bee Storm (World, ver. 102)",
+      "DoDonPachi III (World, 2002.05.15 Master Ver)",
+      "Demon Front / Moyu Zhanxian (68k label V105, ROM M"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "namcos2.cpp"
+    ],
+    "display": "Namco System 2",
+    "hardware": "68000 + 6809 + DSP + custom chips",
+    "mister_core": "https://github.com/jotego/jtcores",
+    "author": "jotego",
+    "repo": "https://github.com/jotego/jtcores",
+    "status": "wip",
+    "era": "1987-1996",
+    "genre": "Various",
+    "game_count": 28,
+    "top3": [
+      "Assault (Rev B)",
+      "Bubble Trouble - Golly! Ghost! 2 (World, Rev B)",
+      "Burning Force (Japan, new version (Rev C))"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "naomi.cpp"
+    ],
+    "display": "Sega NAOMI",
+    "hardware": "SH-4 + PowerVR GPU",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1998-2006",
+    "genre": "Various",
+    "game_count": 203,
+    "top3": [
+      "18 Wheeler: American Pro Trucker (deluxe, Rev A)",
+      "NAOMI Airline Pilots (deluxe) BIOS",
+      "Alien Front (Rev T)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "stv.cpp"
+    ],
+    "display": "Sega Saturn / ST-V",
+    "hardware": "Dual SH-2 + VDP1/VDP2",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1994-2000",
+    "genre": "Various",
+    "game_count": 95,
+    "top3": [
+      "Astra SuperStars (J 980514 V1.002)",
+      "Baku Baku Animal (J 950407 V1.000)",
+      "Batman Forever (JUE 960507 V1.000)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "ksys573.cpp"
+    ],
+    "display": "Konami System 573 (DDR)",
+    "hardware": "MIPS R3000 (PS1-based) + PCMCIA",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1997-2003",
+    "genre": "Rhythm",
+    "game_count": 71,
+    "top3": [
+      "Anime Champ (GCA07 VER. JAA)",
+      "CD-ROM Drive Updater 2.0 (700B04)",
+      "CD-ROM Drive Updater (700A04)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "zn.cpp"
+    ],
+    "display": "Capcom / Tecmo ZN (PS1-based)",
+    "hardware": "MIPS R3000 (PlayStation hardware)",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1995-2000",
+    "genre": "Fighter / Various",
+    "game_count": 48,
+    "top3": [
+      "1 on 1 Government (Japan)",
+      "Aero Fighters Special (USA)",
+      "Bust a Move 2 - Dance Tengoku Mix (HDD Japanese RO"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "decocass.cpp"
+    ],
+    "display": "DECO Cassette",
+    "hardware": "6502 + custom chips",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1980-1984",
+    "genre": "Various",
+    "game_count": 40,
+    "top3": [
+      "Angler Dangler (DECO Cassette) (US)",
+      "Astro Fantasia (DECO Cassette) (US)",
+      "Boulder Dash (DECO Cassette) (US)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "model2.cpp"
+    ],
+    "display": "Sega Model 2",
+    "hardware": "Intel i960 + DSPs + custom 3D",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1993-1998",
+    "genre": "Racing / Shooter (3D)",
+    "game_count": 36,
+    "top3": [
+      "Air Walkers",
+      "Behind Enemy Lines",
+      "Daytona USA (Revision A)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "seta.cpp"
+    ],
+    "display": "SETA 1",
+    "hardware": "68000 + X1-010 sound + custom sprite",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1988-1994",
+    "genre": "Shooter / Fighter / Puzzle",
+    "game_count": 35,
+    "top3": [
+      "Athena no Hatena?",
+      "Blandia",
+      "Block Carnival / Thunder & Lightning 2"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "namcos10.cpp"
+    ],
+    "display": "Namco System 10",
+    "hardware": "MIPS R3000 (PS1-based)",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "2000-2005",
+    "genre": "Various",
+    "game_count": 35,
+    "top3": [
+      "Ball Pom Line",
+      "Uchuu Daisakusen: Chocovader Contactee (Japan, CVC",
+      "Golgo 13: Juusei no Requiem (Japan, GLT1 VER.A)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "taitogn.cpp"
+    ],
+    "display": "Taito G-Net",
+    "hardware": "SH-2 + 3D GFX ASIC",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1998-2002",
+    "genre": "Fighter / Various",
+    "game_count": 34,
+    "top3": [
+      "Aero Fighters Special (VER 1.00G)",
+      "Brave Blade (VER 1.40G)",
+      "Chaos Heat (V2.09O 1998/10/02 17:00)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "chihiro.cpp"
+    ],
+    "display": "Sega Chihiro (Xbox-based)",
+    "hardware": "Intel Celeron + NVidia GPU",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "2003-2007",
+    "genre": "Various",
+    "game_count": 30,
+    "top3": [
+      "Chihiro Firmware Update For Compact Flash Box (4.0",
+      "Chihiro BIOS",
+      "Chihiro Change Region GD USA (611-0028A)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "segac2.cpp"
+    ],
+    "display": "Sega C2 (Mega Drive variant)",
+    "hardware": "68000 + VDP (Genesis-based)",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1990-1993",
+    "genre": "Puzzle / Shooter",
+    "game_count": 29,
+    "top3": [
+      "Soreike! Anpanman Popcorn Koujou (Rev B)",
+      "Borench (set 1)",
+      "Columns (World)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "dc_atomiswave.cpp"
+    ],
+    "display": "Sammy Atomiswave (DC-based)",
+    "hardware": "SH-4 + PowerVR GPU (DC-based)",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "2003-2007",
+    "genre": "Fighter / Shooter",
+    "game_count": 29,
+    "top3": [
+      "Animal Basket / Hustle Tamaire Kyousou (24 Jan 200",
+      "Atomiswave BIOS",
+      "Sega Bass Fishing Challenge Version A"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "namcos12.cpp"
+    ],
+    "display": "Namco System 12",
+    "hardware": "SH-2 + custom GFX (PS1-based)",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1996-2001",
+    "genre": "Fighter / Various",
+    "game_count": 28,
+    "top3": [
+      "Attack Pla Rail (Japan, AP1/VER.A)",
+      "Aqua Rush (Japan, AQ1/VER.A1)",
+      "Ehrgeiz (World, EG2/VER.A)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "ssv.cpp"
+    ],
+    "display": "SSV (Sammy Seibu Video)",
+    "hardware": "V60 + SSV custom GFX ASIC",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1993-1998",
+    "genre": "Shooter / Various",
+    "game_count": 26,
+    "top3": [
+      "Change Air Blade (Japan)",
+      "Drift Out '94 - The Hard Order (Japan)",
+      "Dyna Gear"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "metro.cpp"
+    ],
+    "display": "Metro / Mitchell",
+    "hardware": "68000 + Metro custom GFX ASICs",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1991-1998",
+    "genre": "Shooter / Puzzle",
+    "game_count": 26,
+    "top3": [
+      "Sankokushi (Japan)",
+      "Bal Cube",
+      "Bang Bang Ball (v1.05)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "gaelco.cpp",
+      "gaelco2.cpp",
+      "gaelco3d.cpp"
+    ],
+    "display": "Gaelco",
+    "hardware": "68000 + custom GFX",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1990-1999",
+    "genre": "Various",
+    "game_count": 25,
+    "top3": [
+      "Big Karnak (ver. 1.0, checksum 1e38c94)",
+      "Biomechanical Toy (ver. 1.0.1885, checksum 69f5e03",
+      "Last KM (ver 1.0.0275, checksum 13bff751, prototyp"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "model3.cpp"
+    ],
+    "display": "Sega Model 3",
+    "hardware": "PPC603 + 3D custom ASICs",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1996-2000",
+    "genre": "Racing (3D)",
+    "game_count": 23,
+    "top3": [
+      "Sega Bass Fishing Deluxe",
+      "Daytona USA 2: Power Edition",
+      "Daytona USA 2: Battle on the Edge (Revision A)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "seta2.cpp"
+    ],
+    "display": "SETA 2 / Sammy",
+    "hardware": "68000 + ST-0032 sprite ASIC",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1994-2002",
+    "genre": "Various",
+    "game_count": 23,
+    "top3": [
+      "Balance Try (Japan, ver 1.00)",
+      "Deer Hunting USA V4.3",
+      "Endless Riches (Ver 1.21)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "mw8080bw.cpp"
+    ],
+    "display": "Midway 8080",
+    "hardware": "Intel 8080 + custom",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1976-1980",
+    "genre": "Various",
+    "game_count": 23,
+    "top3": [
+      "280-ZZZAP (set 1)",
+      "Blue Shark (Midway)",
+      "Boot Hill"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "triforce.cpp"
+    ],
+    "display": "Namco-Sega-Nintendo Triforce",
+    "hardware": "PPC750 + ATI GPU (GameCube-based)",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "2002-2007",
+    "genre": "Various",
+    "game_count": 22,
+    "top3": [
+      "The Key Of Avalon 1.3 - Chaotic Sabbat (client, Re",
+      "The Key Of Avalon 2.5 - War of the Key (client, Re",
+      "The Key Of Avalon 1.3 - Chaotic Sabbat (server, Re"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "harddriv.cpp"
+    ],
+    "display": "Atari Hard Drivin'",
+    "hardware": "TMS34010 + DSP + custom 3D",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1988-1993",
+    "genre": "Racing (3D)",
+    "game_count": 21,
+    "top3": [
+      "Hard Drivin' (cockpit, rev 7)",
+      "Hard Drivin's Airborne (prototype, rev 2.7)",
+      "Race Drivin' (cockpit, rev 5)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "snowbros.cpp"
+    ],
+    "display": "Toaplan / Hanafram (Snow Bros HW)",
+    "hardware": "68000 + custom sprite",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1990-1996",
+    "genre": "Platformer / Shooter",
+    "game_count": 21,
+    "top3": [
+      "New HyperMan (3-in-1 with Cookie & Bibi & HyperMan",
+      "Puzzle King (PacMan 2, Tetris, HyperMan 2, Snow Br",
+      "Cookie & Bibi 2 (English, set 1)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "segaxbd.cpp"
+    ],
+    "display": "Sega X Board",
+    "hardware": "Dual 68000 + sprite scaler + YM2151",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1987-1991",
+    "genre": "Shooter / Racing",
+    "game_count": 19,
+    "top3": [
+      "A.B. Cop (World) (FD1094 317-0169b)",
+      "After Burner",
+      "After Burner II"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "vamphalf.cpp"
+    ],
+    "display": "Danbi / F2 System",
+    "hardware": "68000 + custom sprite ASIC",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1999-2003",
+    "genre": "Fighter / Puzzle",
+    "game_count": 19,
+    "top3": [
+      "Age Of Heroes - Silkroad 2 (v0.63 - 2001/02/07)",
+      "Boong-Ga Boong-Ga (Spank'em!)",
+      "Cool Minigame Collection"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "konamigx.cpp"
+    ],
+    "display": "Konami GX",
+    "hardware": "68020 + 68000 + K056832 tilemap",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1994-1998",
+    "genre": "Fighter / Racing / Shooter",
+    "game_count": 18,
+    "top3": [
+      "Crazy Cross (ver EAA)",
+      "Daisu-Kiss (ver JAA)",
+      "Dragoon Might (ver AAB)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "namcos22.cpp"
+    ],
+    "display": "Namco System 22",
+    "hardware": "68020 + DSP + custom 3D",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1993-1998",
+    "genre": "Racing / Shooter (3D)",
+    "game_count": 18,
+    "top3": [
+      "Ace Driver: Racing Evolution (World, AD2)",
+      "Armadillo Racing (World, AM2 Ver.A)",
+      "Air Combat 22 (Japan, ACS1 Ver.B)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "mitchell.cpp"
+    ],
+    "display": "Mitchell / Capcom Classic",
+    "hardware": "Z80 + custom sprite/tile",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1988-1994",
+    "genre": "Puzzle / Various",
+    "game_count": 14,
+    "top3": [
+      "Block Block (World 911219 Joystick)",
+      "Capcom World (Japan)",
+      "Dokaben (Japan)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "taito_l.cpp"
+    ],
+    "display": "Taito L System",
+    "hardware": "Z80 + YM2203 + custom sprite",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1988-1991",
+    "genre": "Action / Puzzle",
+    "game_count": 13,
+    "top3": [
+      "Cachat (Japan)",
+      "Champion Wrestler (World)",
+      "Cuby Bop (location test)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "psikyosh.cpp"
+    ],
+    "display": "Psikyo SH",
+    "hardware": "SH-2 + custom sprite ASIC",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1998-2003",
+    "genre": "Shooter",
+    "game_count": 10,
+    "top3": [
+      "The Fallen Angels (World) / Daraku Tenshi: The Fal",
+      "Dragon Blaze",
+      "Gunbarich"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "psikyo4.cpp"
+    ],
+    "display": "Psikyo SH4 Mahjong",
+    "hardware": "SH-2 + custom chips",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1997-2000",
+    "genre": "Mahjong",
+    "game_count": 7,
+    "top3": [
+      "Taisen Hot Gimmick Kairakuten (Japan)",
+      "Quiz de Idol! Hot Debut (Japan)",
+      "Taisen Hot Gimmick 4 Ever (Japan)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "segaybd.cpp"
+    ],
+    "display": "Sega Y Board",
+    "hardware": "3x 68000 + sprite scaler",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1988-1990",
+    "genre": "Shooter / Racing",
+    "game_count": 6,
+    "top3": [
+      "Galaxy Force 2",
+      "G-LOC Air Battle (World)",
+      "Power Drift (World, Rev A)"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "pgm2.cpp"
+    ],
+    "display": "IGS PGM2",
+    "hardware": "ARM Cortex + custom 3D GFX",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "2008-2016",
+    "genre": "Fighter",
+    "game_count": 6,
+    "top3": [
+      "Bu Bu Car (English)",
+      "DoDonPachi Dai-Ou-Jou Tamashii (V201, China)",
+      "The King of Fighters '98: Ultimate Match HERO (Chi"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "model1.cpp"
+    ],
+    "display": "Sega Model 1",
+    "hardware": "V60 + MB86233 DSP + custom 3D",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1992-1994",
+    "genre": "Racing / Sports (3D)",
+    "game_count": 5,
+    "top3": [
+      "Sega NetMerc",
+      "Star Wars Arcade (US)",
+      "Virtua Fighter"
+    ]
+  },
+  {
+    "mame_drivers": [
+      "atarisy2.cpp"
+    ],
+    "display": "Atari System 2",
+    "hardware": "T11 + custom chips + POKEY",
+    "mister_core": null,
+    "author": null,
+    "repo": null,
+    "status": "gap",
+    "era": "1984-1987",
+    "genre": "Shooter / Racing",
+    "game_count": 5,
+    "top3": [
+      "720 Degrees (rev 4)",
+      "APB - All Points Bulletin (rev 7)",
+      "Championship Sprint (rev 3)"
+    ]
+  }
+]

@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ecosystem — MiSTer Pipeline</title>
+<title>Full Ecosystem — MiSTer Pipeline</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0d1117;color:#e2e8f0;min-height:100vh;padding:2rem}
-.container{max-width:1200px;margin:0 auto}
+.container{max-width:1600px;margin:0 auto}
 a{color:#60a5fa;text-decoration:none}
 a:hover{text-decoration:underline}
 header{margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid #1e293b}
@@ -17,80 +17,215 @@ h1{font-size:1.75rem;color:#fbbf24;margin-bottom:.3rem}
 .nav-links a{color:#a5f3fc;font-size:.85rem;padding:.25rem .65rem;border:1px solid #0e7490;border-radius:.35rem}
 .nav-links a:hover{background:rgba(6,182,212,.1);text-decoration:none}
 
-.callout{background:rgba(34,197,94,.06);border:1px solid #14532d;border-radius:.65rem;padding:1.1rem 1.4rem;margin-bottom:1.75rem}
-.callout h3{color:#86efac;font-size:1rem;margin-bottom:.4rem}
-.callout p{font-size:.85rem;color:#64748b;line-height:1.6}
+/* Stats */
+.stats-row{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.stat-box{background:#161b22;border:1px solid #21262d;border-radius:.5rem;padding:.75rem 1.25rem;text-align:center;min-width:100px}
+.stat-val{font-size:1.5rem;font-weight:700;color:#fbbf24;display:block}
+.stat-lbl{font-size:.75rem;color:#64748b}
 
-.eco-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:1rem}
-.eco-card{background:#161b22;border:1px solid #21262d;border-radius:.75rem;padding:1.25rem}
-.eco-card-header{display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.65rem}
-.eco-name{font-size:1.05rem;font-weight:700;color:#f1f5f9}
-.eco-author{font-size:.75rem;font-family:monospace;color:#475569;margin-top:.15rem}
-.status-pill{display:inline-block;padding:.15rem .55rem;border-radius:.3rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;margin-left:auto;flex-shrink:0}
-.status-pill.mature{background:rgba(34,197,94,.15);color:#86efac;border:1px solid #166534}
-.status-pill.active{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid #1e3a5f}
-.status-pill.archived{background:rgba(234,179,8,.1);color:#fcd34d;border:1px solid #713f12}
-.eco-notes{font-size:.82rem;color:#64748b;line-height:1.5;margin-bottom:.65rem}
-.eco-opportunity{font-size:.82rem;color:#a5f3fc;line-height:1.5;padding:.5rem .75rem;
-  background:rgba(6,182,212,.06);border:1px solid #0e4a56;border-radius:.4rem}
-.eco-opportunity-label{font-size:.7rem;font-weight:600;color:#0e7490;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem}
-.eco-game-count{font-size:.78rem;color:#374151;margin-bottom:.65rem}
-footer{margin-top:2rem;padding-top:1rem;border-top:1px solid #1e293b;color:#374151;font-size:.82rem;text-align:center}
+/* Controls */
+.controls{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+.controls input,.controls select{background:#161b22;border:1px solid #21262d;color:#e2e8f0;
+  padding:.4rem .7rem;border-radius:.4rem;font-size:.85rem;outline:none}
+.controls input:focus,.controls select:focus{border-color:#3b82f6}
+
+/* Legend */
+.legend{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+.legend-lbl{font-size:.78rem;color:#64748b;margin-right:.25rem}
+.lpill{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .6rem;border-radius:.3rem;font-size:.75rem;font-weight:700;cursor:pointer;transition:opacity .15s}
+.lpill:hover{opacity:.75}
+.lpill.mature{background:rgba(34,197,94,.15);color:#86efac;border:1px solid #166534}
+.lpill.our_work{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid #1e3a5f}
+.lpill.beta{background:rgba(250,204,21,.15);color:#fcd34d;border:1px solid #713f12}
+.lpill.wip{background:rgba(168,85,247,.15);color:#c084fc;border:1px solid #581c87}
+.lpill.gap{background:rgba(107,114,128,.1);color:#6b7280;border:1px solid #374151}
+.lpill .lc{background:rgba(255,255,255,.1);border-radius:.2rem;padding:0 .3rem;font-size:.7rem}
+
+/* Table */
+.table-wrap{overflow-x:auto;border:1px solid #21262d;border-radius:.6rem}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th{background:#0a0f16;color:#64748b;font-weight:600;padding:.6rem .85rem;text-align:left;
+  border-bottom:2px solid #1e293b;white-space:nowrap;position:sticky;top:0;z-index:2;cursor:pointer}
+th:hover{color:#94a3b8}
+td{padding:.5rem .85rem;border-bottom:1px solid #111827;vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.025)}
+tr[data-status="gap"] td{opacity:.7}
+
+.platform{font-weight:700;color:#f1f5f9}
+.hw{font-size:.72rem;color:#475569;font-family:monospace;margin-top:.12rem}
+.era{font-size:.75rem;color:#334155;font-family:monospace}
+.genre{font-size:.75rem;color:#475569}
+.driver{font-size:.7rem;font-family:monospace;color:#334155}
+.cnt{font-size:.85rem;font-weight:600;color:#94a3b8}
+.titles{font-size:.72rem;color:#475569;line-height:1.4}
+.author{font-size:.78rem;font-family:monospace;color:#64748b}
+.repo-link{font-size:.78rem;color:#60a5fa;display:inline-flex;align-items:center;gap:.2rem}
+.no-core{font-size:.78rem;color:#374151}
+
+.spill{display:inline-block;padding:.18rem .55rem;border-radius:.3rem;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.spill.mature{background:rgba(34,197,94,.15);color:#86efac;border:1px solid #166534}
+.spill.our_work{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid #1e3a5f}
+.spill.beta{background:rgba(250,204,21,.15);color:#fcd34d;border:1px solid #713f12}
+.spill.wip{background:rgba(168,85,247,.15);color:#c084fc;border:1px solid #581c87}
+.spill.gap{background:rgba(107,114,128,.1);color:#6b7280;border:1px solid #374151}
+
+footer{margin-top:2rem;padding-top:1rem;border-top:1px solid #1e293b;color:#334155;font-size:.82rem;text-align:center}
+#row-count{font-size:.82rem;color:#475569}
 </style>
 </head>
 <body>
 <div class="container">
 <header>
-  <h1>Community Ecosystem</h1>
-  <p class="subtitle">Public MiSTer cores that already exist — avoid duplication, find opportunities &mdash; Updated: {{ updated_at }}</p>
+  <h1>Full MiSTer Arcade Ecosystem</h1>
+  <p class="subtitle">{{ ecosystem|length }} hardware platforms &mdash; MAME drivers &rarr; core status &mdash; Updated: {{ updated_at }}</p>
   <nav class="nav-links">
     <a href="/">Dashboard</a>
     <a href="/games">Game Library</a>
-    <a href="/ecosystem">Ecosystem</a>
+    <a href="/api/ecosystem">API: Ecosystem JSON</a>
   </nav>
 </header>
 
-<div class="callout">
-  <h3>Strategy: Build on community work, not around it</h3>
-  <p>
-    Before starting any new core, check this list. If a core exists and is mature,
-    contributing missing game support is faster than building from scratch. Archived cores may
-    just need updates. Our work focuses on the systems with <em>no</em> public implementation.
-  </p>
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-box"><span class="stat-val">{{ eco_stats.mature }}</span><span class="stat-lbl">Mature</span></div>
+  <div class="stat-box"><span class="stat-val">{{ eco_stats.our_work }}</span><span class="stat-lbl">Our Work</span></div>
+  <div class="stat-box"><span class="stat-val">{{ eco_stats.beta }}</span><span class="stat-lbl">Beta</span></div>
+  <div class="stat-box"><span class="stat-val">{{ eco_stats.wip }}</span><span class="stat-lbl">WIP</span></div>
+  <div class="stat-box"><span class="stat-val">{{ eco_stats.gap }}</span><span class="stat-lbl">Gap</span></div>
+  <div class="stat-box"><span class="stat-val">{{ ecosystem|length }}</span><span class="stat-lbl">Total Platforms</span></div>
 </div>
 
-<div class="eco-cards">
-  {% for ec in ecosystem %}
-  <div class="eco-card">
-    <div class="eco-card-header">
-      <div>
-        <div class="eco-name">{{ ec.name }}</div>
-        <div class="eco-author">{{ ec.author }}{% if ec.repo %} &mdash; <a href="{{ ec.repo }}">repo ↗</a>{% endif %}</div>
-      </div>
-      <span class="status-pill {{ ec.status }}">{{ ec.status_label }}</span>
-    </div>
-
-    {% if ec.game_total %}
-    <div class="eco-game-count">{{ ec.game_total }} total ROM sets, {{ ec.game_parents }} parent games in MAME</div>
-    {% elif ec.games_supported %}
-    <div class="eco-game-count">~{{ ec.games_supported }} titles supported</div>
-    {% endif %}
-
-    <div class="eco-notes">{{ ec.notes }}</div>
-
-    {% if ec.opportunity %}
-    <div class="eco-opportunity">
-      <div class="eco-opportunity-label">Our opportunity</div>
-      {{ ec.opportunity }}
-    </div>
-    {% endif %}
-  </div>
-  {% endfor %}
+<!-- Legend + Controls -->
+<div class="legend">
+  <span class="legend-lbl">Filter:</span>
+  <span class="lpill mature" onclick="setFilter('mature')">Mature <span class="lc">{{ eco_stats.mature }}</span></span>
+  <span class="lpill our_work" onclick="setFilter('our_work')">Our Work <span class="lc">{{ eco_stats.our_work }}</span></span>
+  <span class="lpill beta" onclick="setFilter('beta')">Beta <span class="lc">{{ eco_stats.beta }}</span></span>
+  <span class="lpill wip" onclick="setFilter('wip')">WIP <span class="lc">{{ eco_stats.wip }}</span></span>
+  <span class="lpill gap" onclick="setFilter('gap')">Gap <span class="lc">{{ eco_stats.gap }}</span></span>
+  <span class="lpill" style="background:rgba(255,255,255,.05);color:#94a3b8;border:1px solid #334155" onclick="setFilter('')">All</span>
+  <span id="row-count" style="margin-left:auto"></span>
 </div>
 
-<footer>
-  MiSTer FPGA Arcade Pipeline — Ecosystem Overview
-</footer>
+<div class="controls">
+  <input type="text" id="srch" placeholder="Search platform, hardware, genre&hellip;" oninput="applyFilter()" style="flex:1;min-width:200px;max-width:380px">
+  <select id="srt" onchange="applyFilter()">
+    <option value="status">Sort: Status</option>
+    <option value="games">Sort: Most Games</option>
+    <option value="era">Sort: Era (oldest first)</option>
+    <option value="name">Sort: Name A–Z</option>
+  </select>
 </div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Hardware Platform</th>
+        <th>Era</th>
+        <th>Genre</th>
+        <th>MAME Driver(s)</th>
+        <th style="text-align:right">Games</th>
+        <th>Top Titles</th>
+        <th>Core Repo</th>
+        <th>Author</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      {% for e in ecosystem %}
+      <tr data-status="{{ e.status }}"
+          data-games="{{ e.game_count }}"
+          data-era="{{ e.era or '9999' }}"
+          data-name="{{ e.display }}"
+          data-srch="{{ (e.display + ' ' + (e.hardware or '') + ' ' + (e.era or '') + ' ' + (e.genre or '') + ' ' + (e.author or ''))|lower }}">
+        <td>
+          <div class="platform">{{ e.display }}</div>
+          <div class="hw">{{ e.hardware or '' }}</div>
+        </td>
+        <td><span class="era">{{ e.era or '—' }}</span></td>
+        <td><span class="genre">{{ e.genre or '—' }}</span></td>
+        <td>
+          {% for d in e.mame_drivers %}
+          <div class="driver">{{ d }}</div>
+          {% endfor %}
+        </td>
+        <td style="text-align:right"><span class="cnt">{{ e.game_count }}</span></td>
+        <td>
+          <div class="titles">
+            {% for t in e.top3 %}{{ t }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+          </div>
+        </td>
+        <td>
+          {% if e.repo %}
+          <a class="repo-link" href="{{ e.repo }}" target="_blank">{{ e.repo.replace('https://github.com/','') }} ↗</a>
+          {% elif e.status == 'our_work' %}
+          <span style="font-size:.75rem;color:#60a5fa;font-style:italic">In Development</span>
+          {% else %}
+          <span class="no-core">—</span>
+          {% endif %}
+        </td>
+        <td><span class="author">{{ e.author or '—' }}</span></td>
+        <td>
+          <span class="spill {{ e.status }}">
+            {% if e.status == 'mature' %}Mature
+            {% elif e.status == 'our_work' %}Our Work
+            {% elif e.status == 'beta' %}Beta
+            {% elif e.status == 'wip' %}WIP
+            {% else %}Gap{% endif %}
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<footer>MiSTer FPGA Arcade Pipeline — Full Ecosystem Table &mdash; {{ ecosystem|length }} platforms</footer>
+</div>
+
+<script>
+const ALL_ROWS = Array.from(document.querySelectorAll('#tbody tr'));
+let statusFilter = '';
+
+function setFilter(s) {
+  statusFilter = s;
+  applyFilter();
+}
+
+function applyFilter() {
+  const search = document.getElementById('srch').value.toLowerCase();
+  const sort = document.getElementById('srt').value;
+  const statusOrder = {mature:0, our_work:1, beta:2, wip:3, gap:4};
+
+  let rows = ALL_ROWS.filter(r => {
+    if (statusFilter && r.dataset.status !== statusFilter) return false;
+    if (search && !r.dataset.srch.includes(search)) return false;
+    return true;
+  });
+
+  if (sort === 'games') {
+    rows.sort((a, b) => parseInt(b.dataset.games) - parseInt(a.dataset.games));
+  } else if (sort === 'era') {
+    rows.sort((a, b) => a.dataset.era.localeCompare(b.dataset.era));
+  } else if (sort === 'name') {
+    rows.sort((a, b) => a.dataset.name.localeCompare(b.dataset.name));
+  } else {
+    rows.sort((a, b) => {
+      const ao = statusOrder[a.dataset.status] ?? 5;
+      const bo = statusOrder[b.dataset.status] ?? 5;
+      if (ao !== bo) return ao - bo;
+      return parseInt(b.dataset.games) - parseInt(a.dataset.games);
+    });
+  }
+
+  const tbody = document.getElementById('tbody');
+  ALL_ROWS.forEach(r => r.style.display = 'none');
+  rows.forEach(r => { r.style.display = ''; tbody.appendChild(r); });
+  document.getElementById('row-count').textContent = rows.length + ' of ' + ALL_ROWS.length + ' platforms';
+}
+
+applyFilter();
+</script>
 </body>
 </html>

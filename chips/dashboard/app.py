@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-MiSTer Pipeline Dashboard — 3-Tier Layout
+MiSTer Pipeline Dashboard — Comprehensive Arcade Ecosystem View
 Tier 1: Our Work (8 systems in active development)
-Tier 2: Ecosystem (community cores that already exist)
-Tier 3: Future Targets (genuine gaps with no public core)
+Tier 2: Full MiSTer Ecosystem — all hardware platforms with core status
+Tier 3: Individual game cores catalog
 """
 
 import os
@@ -25,8 +25,11 @@ with open(os.path.join(DASH, 'game_data.json')) as f:
 with open(os.path.join(DASH, 'candidates.json')) as f:
     CANDIDATES = json.load(f)
 
+with open(os.path.join(DASH, 'ecosystem_data.json')) as f:
+    ECOSYSTEM_DATA = json.load(f)
+
 # ---------------------------------------------------------------------------
-# Per-system game counts
+# Per-system game counts (our systems)
 # ---------------------------------------------------------------------------
 SYSTEM_GAME_COUNTS = {}
 for system_key, games in GAME_DATA.items():
@@ -245,179 +248,6 @@ def get_our_system_status(sys_def):
 
 
 # ---------------------------------------------------------------------------
-# Tier 2: Ecosystem — community cores that already exist
-# ---------------------------------------------------------------------------
-ECOSYSTEM_CORES = [
-    {
-        'name': 'Cave 68K',
-        'system_key': 'cave_68k',
-        'author': 'furrtek',
-        'repo': 'https://github.com/MiSTer-devel/Arcade-Cave_MiSTer',
-        'status': 'mature',
-        'status_label': 'Mature',
-        'games_supported': 8,
-        'notes': 'Chisel-written. 8 games public (DoDonPachi, DonPachi, ESP Ra.De., Guwange, etc). 7 more unimplemented.',
-        'opportunity': 'Contribute missing game support (Air Gallet, Gogetsuji Legends, Power Instinct 2)',
-    },
-    {
-        'name': 'Sega OutRun',
-        'system_key': 'sega_outrun',
-        'author': 'jotego',
-        'repo': 'https://github.com/jotego/jtoutrun',
-        'status': 'mature',
-        'status_label': 'Mature',
-        'games_supported': 3,
-        'notes': 'OutRun, Turbo OutRun, OutRunners. Full sprite-scaling support.',
-        'opportunity': None,
-    },
-    {
-        'name': 'Sega System 18',
-        'system_key': 'sega_sys18',
-        'author': 'jotego',
-        'repo': 'https://github.com/jotego/jts18',
-        'status': 'active',
-        'status_label': 'Active',
-        'games_supported': 11,
-        'notes': 'Alien Storm, Blaze On, D.D. Crew, Moonwalker, Shadow Dancer. Jotego patreon core.',
-        'opportunity': None,
-    },
-    {
-        'name': 'Raizing / 8ing',
-        'system_key': None,
-        'author': 'archived',
-        'repo': 'https://github.com/MiSTer-devel/Arcade-Raizing_MiSTer',
-        'status': 'archived',
-        'status_label': 'Archived',
-        'games_supported': 4,
-        'notes': 'Battle Garegga, Mahou Daisakusen, Kingdom Grandprix. GP9001 derivative — free unlock once Toaplan V2 done.',
-        'opportunity': 'Revive/extend once GP9001 VDP complete in our Toaplan V2 work',
-    },
-    {
-        'name': 'Jaleco MS1',
-        'system_key': 'jaleco_ms1',
-        'author': 'va7deo',
-        'repo': 'https://github.com/va7deo/ArmedF',
-        'status': 'active',
-        'status_label': 'Active',
-        'games_supported': 6,
-        'notes': 'Armed Formation, P-47, Psychic 5. va7deo cores. Jaleco Mega System 1.',
-        'opportunity': None,
-    },
-    {
-        'name': 'Irem M72',
-        'system_key': 'irem_m72',
-        'author': 'MiSTer-devel',
-        'repo': 'https://github.com/MiSTer-devel/Arcade-IremM72_MiSTer',
-        'status': 'mature',
-        'status_label': 'Mature',
-        'games_supported': 14,
-        'notes': 'R-Type, Dragon Breed, Image Fight, X Multiply, Air Duel. Community maintained.',
-        'opportunity': None,
-    },
-    {
-        'name': 'Irem M92',
-        'system_key': 'irem_m92',
-        'author': 'MiSTer-devel',
-        'repo': 'https://github.com/MiSTer-devel/Arcade-IremM92_MiSTer',
-        'status': 'mature',
-        'status_label': 'Mature',
-        'games_supported': 12,
-        'notes': 'In The Hunt, Undercover Cops, Blade Master, Hook. V33 CPU based.',
-        'opportunity': None,
-    },
-    {
-        'name': 'Technos',
-        'system_key': None,
-        'author': 'Coin-Op Collection',
-        'repo': 'https://github.com/Coin-OpCollection',
-        'status': 'active',
-        'status_label': 'Active',
-        'games_supported': 4,
-        'notes': 'Double Dragon, Renegade, Combatribes. Coin-Op Collection team.',
-        'opportunity': None,
-    },
-    {
-        'name': 'Sega System 16A/B',
-        'system_key': 'sega_sys16b',
-        'author': 'MiSTer-devel / jotego',
-        'repo': 'https://github.com/MiSTer-devel/Arcade-Segasys16_MiSTer',
-        'status': 'mature',
-        'status_label': 'Mature',
-        'games_supported': 35,
-        'notes': 'Golden Axe, Altered Beast, Shinobi, Streets of Rage, Fantasy Zone. Multiple community implementations.',
-        'opportunity': None,
-    },
-]
-
-
-# ---------------------------------------------------------------------------
-# Tier 3: Future Targets — genuine gaps with no public core
-# ---------------------------------------------------------------------------
-FUTURE_TARGETS = [
-    {
-        'name': 'Konami GX',
-        'system_key': 'konami_gx',
-        'cpu': '68020 @ 24 MHz',
-        'lut_estimate': 72000,
-        'feasibility': 'yellow',
-        'key_games': ['Lethal Enforcers', 'Midnight Run', 'Rushing Heroes', 'Martial Champions'],
-        'notes': '68020 is larger than 68000 but still fits. Custom tilemap + sprite ASICs. No public MiSTer core.',
-        'priority': 1,
-    },
-    {
-        'name': 'Video System',
-        'system_key': 'video_system',
-        'cpu': '68000 @ 16 MHz',
-        'lut_estimate': 38000,
-        'feasibility': 'green',
-        'key_games': ['Aero Fighters', 'Turbo Force', 'Rabio Lepus'],
-        'notes': 'Simple sprite hardware, similar complexity to NMK16. No public core. Small game library but includes shmup classics.',
-        'priority': 2,
-    },
-    {
-        'name': 'SETA 1',
-        'system_key': 'seta1',
-        'cpu': '68000 @ 16 MHz',
-        'lut_estimate': 45000,
-        'feasibility': 'green',
-        'key_games': ['Thundercade', 'Twin Eagles', 'Blandia', 'Caliber 50', 'Quiz Kokology'],
-        'notes': '35 parent games. X1-010 sound chip. No public MiSTer core. Good library diversity (shmups + fighters + quiz).',
-        'priority': 3,
-    },
-    {
-        'name': 'Sega X Board',
-        'system_key': 'sega_xboard',
-        'cpu': 'Dual 68000 @ 12.5 MHz',
-        'lut_estimate': 65000,
-        'feasibility': 'yellow',
-        'key_games': ['After Burner II', 'Thunder Blade', 'AB Cop'],
-        'notes': 'Sprite scaling hardware. Tight but fits on DE-10 Nano. 19 parent games. No public core.',
-        'priority': 4,
-    },
-    {
-        'name': 'Sega Y Board',
-        'system_key': 'sega_yboard',
-        'cpu': 'Triple 68000 @ 12.5 MHz',
-        'lut_estimate': 75000,
-        'feasibility': 'yellow',
-        'key_games': ['Galaxy Force II', 'Power Drift', 'Strike Fighter'],
-        'notes': 'Three CPUs + sprite scaler. Most complex Sega arcade board of the era. Fits but tight.',
-        'priority': 5,
-    },
-    {
-        'name': 'Psikyo SH',
-        'system_key': 'psikyo_sh',
-        'cpu': 'SH-2 @ 28.6 MHz',
-        'lut_estimate': 55000,
-        'feasibility': 'green',
-        'key_games': ['Strikers 1945 II', 'Strikers 1945 III', 'Gunbird 2', 'Dragon Blaze'],
-        'notes': '10 parent games. Successor to Psikyo hardware with SH-2. No public core. Our Psikyo work is directly applicable.',
-        'priority': 6,
-    },
-]
-
-
-# ---------------------------------------------------------------------------
 # System display names (for game library)
 # ---------------------------------------------------------------------------
 SYSTEM_DISPLAY = {
@@ -446,6 +276,17 @@ SYSTEM_DISPLAY = {
 }
 
 # ---------------------------------------------------------------------------
+# Ecosystem statistics
+# ---------------------------------------------------------------------------
+def get_ecosystem_stats():
+    stats = {'mature': 0, 'beta': 0, 'wip': 0, 'gap': 0, 'our_work': 0}
+    for entry in ECOSYSTEM_DATA:
+        s = entry.get('status', 'gap')
+        if s in stats:
+            stats[s] += 1
+    return stats
+
+# ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
 
@@ -453,34 +294,39 @@ SYSTEM_DISPLAY = {
 def dashboard():
     our_systems = [get_our_system_status(s) for s in OUR_SYSTEMS]
 
-    # Attach game counts to ecosystem entries
-    ecosystem = []
-    for ec in ECOSYSTEM_CORES:
-        sk = ec.get('system_key')
-        counts = SYSTEM_GAME_COUNTS.get(sk, {'total': 0, 'parents': 0, 'top10': []}) if sk else {}
-        ecosystem.append({**ec, 'game_total': counts.get('total', 0), 'game_parents': counts.get('parents', 0)})
-
-    # Attach game counts to future targets
-    future = []
-    for ft in FUTURE_TARGETS:
-        sk = ft.get('system_key')
-        counts = SYSTEM_GAME_COUNTS.get(sk, {'total': 0, 'parents': 0, 'top10': []}) if sk else {}
-        future.append({**ft, 'game_total': counts.get('total', 0), 'game_parents': counts.get('parents', 0)})
+    # Split ecosystem by status
+    mature_cores = [e for e in ECOSYSTEM_DATA if e['status'] == 'mature']
+    beta_cores = [e for e in ECOSYSTEM_DATA if e['status'] == 'beta']
+    wip_cores = [e for e in ECOSYSTEM_DATA if e['status'] == 'wip']
+    gap_cores = [e for e in ECOSYSTEM_DATA if e['status'] == 'gap']
+    our_work_eco = [e for e in ECOSYSTEM_DATA if e['status'] == 'our_work']
 
     total_games = sum(c['total'] for c in SYSTEM_GAME_COUNTS.values())
     total_parents = sum(c['parents'] for c in SYSTEM_GAME_COUNTS.values())
 
+    eco_stats = get_ecosystem_stats()
+
+    # Total game coverage from ecosystem
+    eco_games_covered = sum(e.get('game_count', 0) for e in ECOSYSTEM_DATA if e['status'] in ('mature', 'beta', 'wip', 'our_work'))
+    eco_games_total = sum(e.get('game_count', 0) for e in ECOSYSTEM_DATA)
+
     return render_template(
         'template.html',
         our_systems=our_systems,
-        ecosystem=ecosystem,
-        future_targets=future,
+        ecosystem_data=ECOSYSTEM_DATA,
+        mature_cores=mature_cores,
+        beta_cores=beta_cores,
+        wip_cores=wip_cores,
+        gap_cores=gap_cores,
+        our_work_eco=our_work_eco,
+        eco_stats=eco_stats,
+        eco_games_covered=eco_games_covered,
+        eco_games_total=eco_games_total,
         system_game_counts=SYSTEM_GAME_COUNTS,
         system_display=SYSTEM_DISPLAY,
         systems_list=sorted(GAME_DATA.keys()),
         total_games=total_games,
         total_parents=total_parents,
-        # JSON-serialised for client-side filtering in the game library widget
         all_games_js=json.dumps(ALL_GAMES),
         system_display_js=json.dumps(SYSTEM_DISPLAY),
         updated_at=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -518,16 +364,11 @@ def games_page():
 
 @app.route('/ecosystem')
 def ecosystem_page():
-    """Community core status overview."""
-    ecosystem = []
-    for ec in ECOSYSTEM_CORES:
-        sk = ec.get('system_key')
-        counts = SYSTEM_GAME_COUNTS.get(sk, {'total': 0, 'parents': 0, 'top10': []}) if sk else {}
-        ecosystem.append({**ec, 'game_total': counts.get('total', 0), 'game_parents': counts.get('parents', 0)})
-
+    """Full ecosystem table — all hardware platforms."""
     return render_template(
         'ecosystem.html',
-        ecosystem=ecosystem,
+        ecosystem=ECOSYSTEM_DATA,
+        eco_stats=get_ecosystem_stats(),
         updated_at=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
     )
 
@@ -551,12 +392,7 @@ def api_games():
 
 @app.route('/api/ecosystem')
 def api_ecosystem():
-    return jsonify(ECOSYSTEM_CORES)
-
-
-@app.route('/api/future')
-def api_future():
-    return jsonify(FUTURE_TARGETS)
+    return jsonify(ECOSYSTEM_DATA)
 
 
 if __name__ == '__main__':
