@@ -1,6 +1,7 @@
 # --------------------------------------------------------------------------
 #
 # MiSTer project — Taito Z Core
+# tc0180vcu: switched to two DUAL_PORT instances per proven tc0110pcr pattern
 #
 # WARNING WARNING WARNING:
 # Do not add files to project in Quartus IDE! It will mess this file!
