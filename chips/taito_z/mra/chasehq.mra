@@ -23,45 +23,52 @@
   <category>Racing</category>
   <buttons names="Brake,Gear,Start,Coin" default="A,B,Start,Select"/>
 
-  <!-- CPU A + CPU B + Z80 program ROMs -->
-  <rom index="0" zip="chasehq.zip" type="merged" md5="00000000000000000000000000000000">
-    <!-- CPU A: 4x64KB -->
-    <part name="b52-ww.ic19" crc="00000000" offset="0x000000" length="0x010000"/>
-    <part name="b52-xx.ic7"  crc="00000000" offset="0x010000" length="0x010000"/>
-    <part name="b52-yy.ic18" crc="00000000" offset="0x020000" length="0x010000"/>
-    <part name="b52-zz.ic6"  crc="00000000" offset="0x030000" length="0x010000"/>
-    <!-- CPU B: 2x64KB -->
-    <part name="b52-aa.ic35" crc="00000000" offset="0x080000" length="0x010000"/>
-    <part name="b52-bb.ic35" crc="00000000" offset="0x090000" length="0x010000"/>
-    <!-- Z80 -->
-    <part name="b52-cc.ic32" crc="00000000" offset="0x0C0000" length="0x010000"/>
+  <!-- CPU A + CPU B + Z80 program ROMs from MAME chasehq set -->
+  <rom index="0" zip="chasehq.zip" type="merged" md5="None">
+    <!-- CPU A (maincpu): 4x64KB -->
+    <part name="b52-130.36" crc="4e7beb46" sha1="b8890c4a2121aa93cfc3a41ddbb3b840d0804cfa" offset="0x000000" length="0x020000"/>
+    <part name="b52-136.29" crc="2f414df0" sha1="0daad8b1f7512a5af0722983751841b5b18064ac" offset="0x020000" length="0x020000"/>
+    <part name="b52-131.37" crc="aa945d83" sha1="9d8a8186a199cacc0e24cf1ee75d81ab8b056406" offset="0x040000" length="0x020000"/>
+    <part name="b52-129.30" crc="0eaebc08" sha1="1dde3304b251ddeb52f1378ef3845269c3667169" offset="0x060000" length="0x020000"/>
+    <!-- CPU B (sub): 2x64KB -->
+    <part name="b52-132.39" crc="a2f54789" sha1="941a6470e3a5ae35d079657260a8d7d6a9fca122" offset="0x080000" length="0x010000"/>
+    <part name="b52-133.55" crc="12232f95" sha1="2894b95fc1d0a6e5b323bf3e7f1968f02b30a845" offset="0x090000" length="0x010000"/>
+    <!-- Z80 (audiocpu) -->
+    <part name="b52-137.51" crc="37abb74a" sha1="1feb1e49102c13a90e02c150472545cd9f6334da" offset="0x0C0000" length="0x010000"/>
   </rom>
 
-  <!-- SCR GFX ROM (TC0100SCN) -->
-  <rom index="1" zip="chasehq.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="b52-dd.ic12" crc="00000000" offset="0x000000" length="0x080000"/>
-    <part name="b52-ee.ic11" crc="00000000" offset="0x080000" length="0x080000"/>
+  <!-- SCR GFX ROM (TC0100SCN) from MAME chasehq set -->
+  <rom index="1" zip="chasehq.zip" type="merged" md5="None">
+    <part name="b52-29.27" crc="8366d27c" sha1="d7c5f588b39742927228ce73e5d69bda1e903df6" offset="0x000000" length="0x080000"/>
   </rom>
 
-  <!-- Sprite OBJ GFX ROM (2x1MB for front/rear) -->
-  <rom index="2" zip="chasehq.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="b52-ff.ic25" crc="00000000" offset="0x000000" length="0x100000"/>
-    <part name="b52-gg.ic33" crc="00000000" offset="0x100000" length="0x100000"/>
+  <!-- Sprite OBJ GFX ROM (4x512KB for objects) -->
+  <rom index="2" zip="chasehq.zip" type="merged" md5="None">
+    <part name="b52-34.5"  crc="7d8dce36" sha1="ca082e647d10378144c05a70a8e4fe352d95eeaf" offset="0x000000" length="0x080000"/>
+    <part name="b52-35.7"  crc="78eeec0d" sha1="2e82186ca17c579816865ef21c52aef9e133fbf5" offset="0x080000" length="0x080000"/>
+    <part name="b52-36.9"  crc="61e89e91" sha1="f655b3caa37a8835c2eb11f4d72e985636ac5379" offset="0x100000" length="0x080000"/>
+    <part name="b52-37.11" crc="f02e47b9" sha1="093864bd18bd58dafa57990e999f394ca3124452" offset="0x180000" length="0x080000"/>
   </rom>
 
   <!-- TC0150ROD road ROM -->
-  <rom index="3" zip="chasehq.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="b52-hh.ic28" crc="00000000" offset="0x000000" length="0x080000"/>
+  <rom index="3" zip="chasehq.zip" type="merged" md5="None">
+    <part name="b52-28.4" crc="963bc82b" sha1="e3558aecd1b82ddbf10ab2b71843a3664705f1f1" offset="0x000000" length="0x080000"/>
   </rom>
 
-  <!-- STY spritemap ROM -->
-  <rom index="4" zip="chasehq.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="b52-ii.ic3"  crc="00000000" offset="0x000000" length="0x080000"/>
+  <!-- STY spritemap ROM (2nd sprite layer) -->
+  <rom index="4" zip="chasehq.zip" type="merged" md5="None">
+    <part name="b52-30.4" crc="1b8cc647" sha1="8807fe01b6804507564fc179adf995bf86521fda" offset="0x000000" length="0x080000"/>
+    <part name="b52-31.6" crc="f1998e20" sha1="b03d4e373e88933391f3533b885817edfca4cfdf" offset="0x080000" length="0x080000"/>
+    <part name="b52-32.8" crc="8620780c" sha1="2545fd8fb03dcddc3da86d5ea06a6dc915acd1a1" offset="0x100000" length="0x080000"/>
+    <part name="b52-33.10" crc="e6f4b8c4" sha1="8d15c75a16953aa56fb3dc6fd3b691e227bef622" offset="0x180000" length="0x080000"/>
   </rom>
 
-  <!-- ADPCM samples -->
-  <rom index="5" zip="chasehq.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="b52-jj.ic42" crc="00000000" offset="0x000000" length="0x080000"/>
+  <!-- ADPCM samples (4x512KB) from MAME chasehq set -->
+  <rom index="5" zip="chasehq.zip" type="merged" md5="None">
+    <part name="b52-115.71" crc="4e117e93" sha1="51d893fa21793335878c76f6d5987d99da60be04" offset="0x000000" length="0x080000"/>
+    <part name="b52-114.72" crc="3a73d6b1" sha1="419f02a875b30913331db207e344d0eaa275297e" offset="0x080000" length="0x080000"/>
+    <part name="b52-113.73" crc="2c6a3a05" sha1="f2f0dfbbbb6930bf53025064ebae9c07a95c6deb" offset="0x100000" length="0x080000"/>
+    <part name="b52-116.70" crc="ad46983c" sha1="6fcad67456fbd8c967cd4786815f70b57a24a969" offset="0x180000" length="0x080000"/>
   </rom>
 
   <!-- DIP switches -->

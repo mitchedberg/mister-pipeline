@@ -22,18 +22,19 @@
   <players>2</players>
   <buttons names="Fire,Bomb,Start,Coin" default="A,B,Start,Select"/>
 
-  <!-- 68000 program ROM (Japan version) + Z80 audio -->
-  <rom index="0" zip="daisenpu.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="c45-09.ic52" crc="00000000" offset="0x000000" length="0x040000"/>
-    <part name="c45-08.ic51" crc="00000000" offset="0x040000" length="0x040000"/>
-    <part name="c45-10.ic28" crc="00000000" offset="0x080000" length="0x010000"/>
+  <!-- 68000 program ROM (Japan version) + Z80 audio from MAME daisenpu set -->
+  <rom index="0" zip="daisenpu.zip" type="merged" md5="None">
+    <part name="b87-06.u7" crc="cf236100" sha1="7944a20950188f64c0a09edd1a4efe0270264b27" offset="0x000000" length="0x020000"/>
+    <part name="b87-05.u5" crc="7f15edc7" sha1="3deba512f3c97f354ed4155f62058da160047bc5" offset="0x020000" length="0x020000"/>
+    <part name="b87-07.13e" crc="e2e0efa0" sha1="4f1435ba738895996f26a64c2237e8349337df4a" offset="0x080000" length="0x008000"/>
   </rom>
 
-  <!-- Sprite/Tile GFX ROM: shared with twinhawk parent -->
-  <rom index="1" zip="twinhawk.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="c45-02.ic14" crc="00000000" offset="0x000000" length="0x080000"/>
-    <part name="c45-03.ic15" crc="00000000" offset="0x080000" length="0x080000"/>
-    <part name="c45-04.ic16" crc="00000000" offset="0x100000" length="0x080000"/>
+  <!-- Sprite/Tile GFX ROM: shared with twinhawk parent (MAME twinhawk set) -->
+  <rom index="1" zip="twinhawk.zip" type="merged" md5="None">
+    <part name="b87-04.3k" crc="958434b6" sha1="cf5912c4468cb2079ff180203045a436175c037c" offset="0x000000" length="0x080000"/>
+    <part name="b87-03.3j" crc="ce155ae0" sha1="7293125fc23f2411c4edd427a2576c145b3f2dd4" offset="0x080000" length="0x080000"/>
+    <part name="b87-02.3h" crc="89ad43a0" sha1="6ff6ee085c1c06a05f4f8743d979d3552b7475a0" offset="0x100000" length="0x080000"/>
+    <part name="b87-01.3f" crc="81e82ae1" sha1="d4dbdbf9ae0af69bbeccafb3cc2f67dadda72432" offset="0x180000" length="0x080000"/>
   </rom>
 
   <rom index="0xFE">

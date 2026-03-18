@@ -31,22 +31,25 @@
   -->
 
   <!-- CPU program ROM (2 MB) -->
-  <rom index="0" zip="gunbird.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="gunbird.u23" crc="00000000" offset="0x000000" length="0x200000"/>
+  <rom index="0" zip="gunbird.zip" type="merged" md5="None">
+    <!-- MC68EC020 program ROM (512KB interleaved as 2x262KB) from MAME gunbird set -->
+    <part name="4.u46" crc="b78ec99d" sha1="399b79931652d9df1632cd4d7ec3d214e473a5c3" offset="0x000000" length="0x040000"/>
+    <part name="5.u39" crc="925f095d" sha1="301a536119a0320a756e9c6e51fb10e36b90ef16" offset="0x000001" length="0x040000"/>
   </rom>
 
-  <!-- Sprite ROM (Gate 3 — PS2001B) -->
+  <!-- Sprite ROM (Gate 3 — PS2001B) from MAME gunbird set -->
   <!-- Loaded to SDRAM offset 0x200000 -->
-  <rom index="1" zip="gunbird.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="gunbird.u1"  crc="00000000" offset="0x000000" length="0x200000"/>
-    <part name="gunbird.u2"  crc="00000000" offset="0x200000" length="0x200000"/>
+  <rom index="1" zip="gunbird.zip" type="merged" md5="None">
+    <part name="u14.bin" crc="7d7e8a00" sha1="9f35f5b54ae928e9bf2aa6ad4604f669857955ec" offset="0x000000" length="0x200000"/>
+    <part name="u24.bin" crc="5e3ffc9d" sha1="c284eb9ef56c8e6261fe11f91a10c5c5a56c9803" offset="0x200000" length="0x200000"/>
+    <part name="u15.bin" crc="a827bfb5" sha1="6e02436e12085016cf1982c9ae07b6c6dec82f1b" offset="0x400000" length="0x200000"/>
+    <part name="u25.bin" crc="ef652e0c" sha1="6dd994a15ced31d1bbd1a3b0e9d8d86eca33e217" offset="0x600000" length="0x100000"/>
   </rom>
 
-  <!-- BG tile ROM (Gate 4 — PS3103) -->
+  <!-- BG tile ROM (Gate 4 — PS3103) from MAME gunbird set -->
   <!-- Loaded to SDRAM offset 0x600000 -->
-  <rom index="2" zip="gunbird.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="gunbird.u3"  crc="00000000" offset="0x000000" length="0x200000"/>
-    <part name="gunbird.u4"  crc="00000000" offset="0x200000" length="0x200000"/>
+  <rom index="2" zip="gunbird.zip" type="merged" md5="None">
+    <part name="u33.bin" crc="54494e6b" sha1="f5d090d2d34d908b56b53a246def194929eba990" offset="0x000000" length="0x200000"/>
   </rom>
 
   <!-- DIP switch defaults -->

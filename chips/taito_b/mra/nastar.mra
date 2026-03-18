@@ -31,25 +31,29 @@
     0xFE: DIP switches
   -->
 
-  <!-- CPU program ROM (512KB) -->
-  <rom index="0" zip="nastar.zip" type="merged" md5="00000000000000000000000000000000">
-    <!-- CPU: 0x000000-0x07FFFF (512KB) -->
-    <part name="c09-27.rom" crc="00000000" offset="0x000000" length="0x080000"/>
-    <!-- Z80 audio: 0x080000-0x0FFFFF (128KB + 128KB pad) -->
-    <part name="c09-28.rom" crc="00000000" offset="0x080000" length="0x020000"/>
+  <!-- CPU program ROM (512KB interleaved) + Z80 audio -->
+  <rom index="0" zip="nastar.zip" type="merged" md5="None">
+    <!-- CPU: 4x 128KB interleaved (offset 0 and 1 for first pair, then +0x40000 offset and 1) -->
+    <part name="b81-08.50" crc="d6da9169" sha1="33d74315754576e6f879059de033f96f9003f819" offset="0x000000" length="0x020000"/>
+    <part name="b81-13.31" crc="60d176fb" sha1="fbe3a0603bcd23e565b0d474a63742d20a3ce8cc" offset="0x000001" length="0x020000"/>
+    <part name="b81-10.49" crc="53f34344" sha1="9930c3fd9c17f7d9b654221da3896d0ff5778c97" offset="0x040000" length="0x020000"/>
+    <part name="b81-09.30" crc="630d34af" sha1="42452111b10f1d543e03661012dda879218dea62" offset="0x040001" length="0x020000"/>
+    <!-- Z80 audio: 0x080000-0x09FFFF (64KB) -->
+    <part name="b81-11.37" crc="3704bf09" sha1="a0a37b23e3df482c5f5aa43825345ea8affbba34" offset="0x080000" length="0x010000"/>
   </rom>
 
-  <!-- TC0180VCU GFX ROM (1MB) -->
+  <!-- TC0180VCU GFX ROM (1MB interleaved) -->
   <!-- Loaded to SDRAM offset 0x100000 -->
-  <rom index="1" zip="nastar.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="c09-01.rom" crc="00000000" offset="0x000000" length="0x100000"/>
+  <rom index="1" zip="nastar.zip" type="merged" md5="None">
+    <part name="b81-03.14" crc="551b75e6" sha1="5b8388ee2c6262f359c9e6d04c951ea8dc3901c9" offset="0x000000" length="0x080000"/>
+    <part name="b81-04.15" crc="cf734e12" sha1="4201a74468058761454515738fbf3a7b22a66e00" offset="0x080000" length="0x080000"/>
   </rom>
 
   <!-- ADPCM sample ROMs (512KB ADPCM-A + 512KB ADPCM-B) -->
   <!-- Loaded to SDRAM offset 0x200000 -->
-  <rom index="2" zip="nastar.zip" type="merged" md5="00000000000000000000000000000000">
-    <part name="c09-29.rom" crc="00000000" offset="0x000000" length="0x080000"/>
-    <part name="c09-30.rom" crc="00000000" offset="0x080000" length="0x080000"/>
+  <rom index="2" zip="nastar.zip" type="merged" md5="None">
+    <part name="b81-02.2" crc="20ec3b86" sha1="fcdcc7f0a09feb824d8d73b1af0aae7ec30fd1ed" offset="0x000000" length="0x080000"/>
+    <part name="b81-01.1" crc="b33f796b" sha1="6cdb32f56283acdf20eb46a1e658e3bd7c97978c" offset="0x080000" length="0x080000"/>
   </rom>
 
   <!-- DIP switch defaults (8 bytes per DIP bank, SDRAM 0xFE address) -->
