@@ -612,10 +612,39 @@ assign snd_dtack_n = 1'b0;   // BRAM always ready
 // but the physical RAM is 128KB so cpu_addr[16] is the mirror bit, ignored).
 
 `ifdef QUARTUS
-(* ramstyle = "M10K" *) logic [31:0] work_ram [0:32767];   // 32K × 32-bit = 128KB
+// altsyncram DUAL_PORT: port A = write (4-bit byteena for 32-bit), port B = read
+// widthad=15, numwords=32768, width=32, width_byteena_a=4
+logic [31:0] wram_dout_r;
+logic [14:0] wram_idx;
+logic        wram_we;
+logic [3:0]  wram_be;
+assign wram_idx = cpu_addr[15:1];
+assign wram_we  = main_ram_cs & !cpu_rw;
+assign wram_be  = {!cpu_be_n[3], !cpu_be_n[2], !cpu_be_n[1], !cpu_be_n[0]};
+
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (32), .widthad_a (15), .numwords_a (32768),
+    .width_b                   (32), .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (4), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) wram_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(wram_idx), .data_a(cpu_dout),
+    .wren_a(wram_we), .byteena_a(wram_be),
+    .address_b(wram_idx), .q_b(wram_dout_r),
+    .wren_b(1'b0), .data_b(32'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(4'hF), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
 `else
 logic [31:0] work_ram [0:32767];   // 32K × 32-bit = 128KB
-`endif
 logic [31:0] wram_dout_r;
 logic [14:0] wram_idx;
 assign wram_idx = cpu_addr[15:1];  // 15-bit longword index into 128KB
@@ -629,6 +658,7 @@ always_ff @(posedge clk_sys) begin
     end
     if (main_ram_cs) wram_dout_r <= work_ram[wram_idx];
 end
+`endif
 
 // =============================================================================
 // Program ROM SDRAM Bridge

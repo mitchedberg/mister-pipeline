@@ -230,20 +230,14 @@ module tc0630fdp_lineram (
 );
 
 // =============================================================================
-// Line RAM: 32768 × 16-bit words (64 KB simulation BRAM)
+// Line RAM: 32768 × 16-bit words (64 KB BRAM)
+// Under QUARTUS: explicit altsyncram instances (35 total) for M10K inference.
+// Under simulation: behavioral array with CPU write/read always_ff blocks.
 // =============================================================================
-`ifdef QUARTUS
-// Force M10K BRAM inference in Quartus 17.  Without this, combinational reads
-// (assign = line_ram[addr]) prevent BRAM inference and Quartus tries to
-// synthesize 524,288 flip-flops → Error 293007 OOM during map.
-(* ramstyle = "M10K" *) logic [15:0] line_ram [0:32767];
-`else
+`ifndef QUARTUS
 logic [15:0] line_ram [0:32767];
-`endif
 
-// =============================================================================
 // CPU write port
-// =============================================================================
 always_ff @(posedge clk) begin
     if (cpu_cs && !cpu_rw) begin
         if (cpu_be[1]) line_ram[cpu_addr[15:1]][15:8] <= cpu_din[15:8];
@@ -251,15 +245,14 @@ always_ff @(posedge clk) begin
     end
 end
 
-// =============================================================================
 // CPU read port (registered, one-cycle latency)
-// =============================================================================
 always_ff @(posedge clk) begin
     if (!rst_n)
         cpu_dout <= 16'b0;
     else if (cpu_cs && cpu_rw)
         cpu_dout <= line_ram[cpu_addr[15:1]];
 end
+`endif
 
 // =============================================================================
 // HBLANK parser
@@ -329,57 +322,834 @@ logic [15:0] zm_word_pf4_yswap;   // contains PF4 Y-zoom (from PF2's address)
 
 `ifdef QUARTUS
 // =============================================================================
-// Quartus synthesis: registered (synchronous) reads for M10K BRAM inference.
-//
-// Combinational reads (assign wire = array[addr]) prevent Quartus 17 from
-// inferring M10K BRAM → it falls back to 524,288 flip-flops → OOM (E293007).
-// Registered reads give Quartus the SDP pattern it needs to infer M10K.
-//
-// Latency: next_scan is constant for the entire active scanline (many hundreds
-// of cycles), so the 1-cycle read latency is invisible — at hblank_fall the
-// registered wires correctly hold data for the current next_scan value.
+// Quartus synthesis: 35 explicit altsyncram instances for M10K inference.
+// 34 × 256×16-bit section instances for display reads (one per scanline section).
+// 1 × 32768×16-bit instance for CPU reads.
+// CPU writes fan out to all 35 instances simultaneously via section address decode.
 // =============================================================================
-always_ff @(posedge clk) begin
-    en_row_word          <= line_ram[15'h0600 + {7'b0, next_scan}];
-    en_col_word          <= line_ram[15'h0000 + {7'b0, next_scan}];
-    en_zoom_word         <= line_ram[15'h0400 + {7'b0, next_scan}];
-    en_pal_word          <= line_ram[15'h0500 + {7'b0, next_scan}];
-    en_prio_word         <= line_ram[15'h0700 + {7'b0, next_scan}];
-    rs_word[0]           <= line_ram[15'h5000 + {7'b0, next_scan}];
-    rs_word[1]           <= line_ram[15'h5100 + {7'b0, next_scan}];
-    rs_word[2]           <= line_ram[15'h5200 + {7'b0, next_scan}];
-    rs_word[3]           <= line_ram[15'h5300 + {7'b0, next_scan}];
-    cs_word[0]           <= line_ram[15'h2000 + {7'b0, next_scan}];
-    cs_word[1]           <= line_ram[15'h2100 + {7'b0, next_scan}];
-    cs_word[2]           <= line_ram[15'h2200 + {7'b0, next_scan}];
-    cs_word[3]           <= line_ram[15'h2300 + {7'b0, next_scan}];
-    zm_word[0]           <= line_ram[15'h4000 + {7'b0, next_scan}];  // PF1
-    zm_word[1]           <= line_ram[15'h4200 + {7'b0, next_scan}];  // PF2 X (also pf4_yswap)
-    zm_word[2]           <= line_ram[15'h4100 + {7'b0, next_scan}];  // PF3
-    zm_word[3]           <= line_ram[15'h4300 + {7'b0, next_scan}];  // PF4 X (also pf2_yswap)
-    pa_word[0]           <= line_ram[15'h4800 + {7'b0, next_scan}];
-    pa_word[1]           <= line_ram[15'h4900 + {7'b0, next_scan}];
-    pa_word[2]           <= line_ram[15'h4A00 + {7'b0, next_scan}];
-    pa_word[3]           <= line_ram[15'h4B00 + {7'b0, next_scan}];
-    pp_word[0]           <= line_ram[15'h5800 + {7'b0, next_scan}];
-    pp_word[1]           <= line_ram[15'h5900 + {7'b0, next_scan}];
-    pp_word[2]           <= line_ram[15'h5A00 + {7'b0, next_scan}];
-    pp_word[3]           <= line_ram[15'h5B00 + {7'b0, next_scan}];
-    sp_word              <= line_ram[15'h3B00 + {7'b0, next_scan}];
-    cp_word[0]           <= line_ram[15'h2800 + {7'b0, next_scan}];
-    cp_word[1]           <= line_ram[15'h2900 + {7'b0, next_scan}];
-    cp_word[2]           <= line_ram[15'h2A00 + {7'b0, next_scan}];
-    cp_word[3]           <= line_ram[15'h2B00 + {7'b0, next_scan}];
-    sm_word              <= line_ram[15'h3A00 + {7'b0, next_scan}];
-    ab_word              <= line_ram[15'h3100 + {7'b0, next_scan}];
-    sb_word              <= line_ram[15'h3000 + {7'b0, next_scan}];
-    mo_word              <= line_ram[15'h3200 + {7'b0, next_scan}];
-    // Y-zoom cross-reads: pf2_yswap is at PF4's addr (0x4300) = zm_word[3];
-    // pf4_yswap is at PF2's addr (0x4200) = zm_word[1].  Read again so Quartus
-    // can share the read port with zm_word[3]/zm_word[1] after optimization.
-    zm_word_pf2_yswap    <= line_ram[15'h4300 + {7'b0, next_scan}];
-    zm_word_pf4_yswap    <= line_ram[15'h4200 + {7'b0, next_scan}];
-end
+
+// Shared write-path decode signals
+logic        lram_we;
+logic [1:0]  lram_be;
+logic [7:0]  lram_row;
+logic [6:0]  lram_section;
+assign lram_we      = cpu_cs && !cpu_rw;
+assign lram_be      = cpu_be;
+assign lram_row     = cpu_addr[8:1];   // low 8 bits = row within 256-entry section
+assign lram_section = cpu_addr[15:9];  // high 7 bits = section selector
+
+// Section 0x00 → en_col_word
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) en_col_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h00)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(en_col_word),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x04 → en_zoom_word
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) en_zoom_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h04)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(en_zoom_word),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x05 → en_pal_word
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) en_pal_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h05)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(en_pal_word),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x06 → en_row_word
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) en_row_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h06)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(en_row_word),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x07 → en_prio_word
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) en_prio_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h07)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(en_prio_word),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x20 → cs_word[0]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) cs0_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h20)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(cs_word[0]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x21 → cs_word[1]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) cs1_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h21)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(cs_word[1]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x22 → cs_word[2]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) cs2_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h22)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(cs_word[2]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x23 → cs_word[3]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) cs3_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h23)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(cs_word[3]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x28 → cp_word[0]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) cp0_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h28)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(cp_word[0]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x29 → cp_word[1]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) cp1_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h29)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(cp_word[1]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x2A → cp_word[2]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) cp2_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h2A)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(cp_word[2]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x2B → cp_word[3]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) cp3_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h2B)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(cp_word[3]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x30 → sb_word
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) sb_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h30)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(sb_word),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x31 → ab_word
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) ab_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h31)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(ab_word),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x32 → mo_word
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) mo_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h32)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(mo_word),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x3A → sm_word
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) sm_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h3A)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(sm_word),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x3B → sp_word
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) sp_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h3B)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(sp_word),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x40 → zm_word[0]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) zm0_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h40)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(zm_word[0]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x41 → zm_word[2]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) zm2_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h41)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(zm_word[2]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x42 → zm_word[1]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) zm1_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h42)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(zm_word[1]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x43 → zm_word[3]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) zm3_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h43)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(zm_word[3]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x48 → pa_word[0]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) pa0_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h48)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(pa_word[0]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x49 → pa_word[1]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) pa1_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h49)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(pa_word[1]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x4A → pa_word[2]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) pa2_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h4A)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(pa_word[2]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x4B → pa_word[3]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) pa3_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h4B)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(pa_word[3]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x50 → rs_word[0]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) rs0_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h50)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(rs_word[0]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x51 → rs_word[1]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) rs1_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h51)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(rs_word[1]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x52 → rs_word[2]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) rs2_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h52)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(rs_word[2]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x53 → rs_word[3]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) rs3_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h53)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(rs_word[3]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x58 → pp_word[0]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) pp0_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h58)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(pp_word[0]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x59 → pp_word[1]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) pp1_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h59)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(pp_word[1]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x5A → pp_word[2]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) pp2_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h5A)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(pp_word[2]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Section 0x5B → pp_word[3]
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(8), .numwords_a(256),
+    .width_b                    (16), .widthad_b(8), .numwords_b(256),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) pp3_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(lram_row), .data_a(cpu_din),
+    .wren_a(lram_we && (lram_section == 7'h5B)), .byteena_a(lram_be),
+    .address_b(next_scan), .q_b(pp_word[3]),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// PF2/PF4 Y-zoom cross-reads share zm3_inst and zm1_inst outputs
+// (zm_word_pf2_yswap reads from section 0x43 = zm_word[3]; zm_word_pf4_yswap from 0x42 = zm_word[1])
+assign zm_word_pf2_yswap = zm_word[3];
+assign zm_word_pf4_yswap = zm_word[1];
+
+// Full 32768×16-bit instance for CPU reads
+logic [15:0] cpu_dout_r;
+altsyncram #(
+    .operation_mode             ("DUAL_PORT"),
+    .width_a                    (16), .widthad_a(15), .numwords_a(32768),
+    .width_b                    (16), .widthad_b(15), .numwords_b(32768),
+    .outdata_reg_b              ("CLOCK1"), .address_reg_b("CLOCK1"),
+    .clock_enable_input_a       ("BYPASS"), .clock_enable_input_b("BYPASS"),
+    .clock_enable_output_b      ("BYPASS"),
+    .intended_device_family     ("Cyclone V"),
+    .lpm_type                   ("altsyncram"), .ram_block_type("M10K"),
+    .width_byteena_a            (2), .power_up_uninitialized("FALSE"),
+    .read_during_write_mode_port_b("NEW_DATA_NO_NBE_READ")
+) cpu_read_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(cpu_addr[15:1]), .data_a(cpu_din),
+    .wren_a(lram_we), .byteena_a(lram_be),
+    .address_b(cpu_addr[15:1]), .q_b(cpu_dout_r),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+assign cpu_dout = cpu_dout_r;
+
 `else
 // =============================================================================
 // Simulation: combinational (asynchronous) reads — instant access for verilator/

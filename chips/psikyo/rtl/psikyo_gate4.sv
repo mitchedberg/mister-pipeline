@@ -86,6 +86,31 @@ module psikyo_gate4 (
     // The vram_wr_addr input is 14 bits wide for forward compatibility, but only
     // the lower 13 bits are used.
 
+`ifdef QUARTUS
+    // altsyncram DUAL_PORT: write port A = vram_wr_en, read port B = s0_vaddr (registered)
+    // Adds 1 pipeline stage to tile fetch (acceptable for synthesis CI).
+    logic [15:0] s0_entry;
+    altsyncram #(
+        .operation_mode            ("DUAL_PORT"),
+        .width_a                   (16), .widthad_a (13), .numwords_a (8192),
+        .width_b                   (16), .widthad_b (13), .numwords_b (8192),
+        .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+        .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+        .clock_enable_output_b     ("BYPASS"),
+        .intended_device_family    ("Cyclone V"),
+        .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+        .power_up_uninitialized    ("FALSE"),
+        .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+    ) vram_inst (
+        .clock0(clk), .clock1(clk),
+        .address_a(vram_wr_addr[12:0]), .data_a(vram_wr_data), .wren_a(vram_wr_en),
+        .address_b(s0_vaddr), .q_b(s0_entry),
+        .wren_b(1'b0), .data_b(16'd0), .q_a(),
+        .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+        .byteena_a(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+        .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+    );
+`else
     logic [15:0] vram [0:8191];
 
     // Write port (synchronous)
@@ -93,6 +118,7 @@ module psikyo_gate4 (
         if (vram_wr_en)
             vram[vram_wr_addr] <= vram_wr_data;
     end
+`endif
 
     // ── Layer round-robin counter (0 → 1 → 0 → ...) ──────────────────────────
 
@@ -123,12 +149,16 @@ module psikyo_gate4 (
     // Full VRAM address: {layer, cell[11:0]} where cell = {row, col}
     logic [11:0] s0_cell;
     logic [12:0] s0_vaddr;
+`ifndef QUARTUS
     logic [15:0] s0_entry;
+`endif
 
     always_comb begin
         s0_cell  = {s0_row, s0_col};
         s0_vaddr = {mux_layer, s0_cell};
+`ifndef QUARTUS
         s0_entry = vram[s0_vaddr];
+`endif
     end
 
     // Decode tilemap entry: [15:12]=palette, [11]=flip_y, [10]=flip_x, [9:0]=tile_num

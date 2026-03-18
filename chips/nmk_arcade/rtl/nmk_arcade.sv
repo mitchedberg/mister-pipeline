@@ -465,6 +465,37 @@ assign prog_rom_addr = prog_req_addr_r;
 // =============================================================================
 // Work RAM — 64KB synchronous block RAM
 // =============================================================================
+`ifdef QUARTUS
+// altsyncram DUAL_PORT: port A = write (byteena), port B = read
+// WRAM_ABITS=15 → widthad=15, numwords=32768
+logic        wram_we;
+logic [1:0]  wram_be;
+logic [15:0] wram_dout_r;
+assign wram_we = wram_cs & !cpu_rw;
+assign wram_be = {!cpu_uds_n, !cpu_lds_n};
+
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (15), .numwords_a (32768),
+    .width_b                   (16), .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) wram_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpu_addr[15:1]), .data_a(cpu_din),
+    .wren_a(wram_we), .byteena_a(wram_be),
+    .address_b(cpu_addr[15:1]), .q_b(wram_dout_r),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+`else
 logic [15:0] work_ram [0:(1<<WRAM_ABITS)-1];
 logic [15:0] wram_dout_r;
 
@@ -478,12 +509,82 @@ end
 always_ff @(posedge clk_sys) begin
     if (wram_cs) wram_dout_r <= work_ram[cpu_addr[WRAM_ABITS:1]];
 end
+`endif
 
 // =============================================================================
 // Palette RAM — 512 × 16-bit synchronous block RAM
 // CPU-writable; video output reads directly in combinational path below.
 // Format: RGB555 (bit 15 unused or priority, bits [14:10]=R, [9:5]=G, [4:0]=B)
 // =============================================================================
+`ifdef QUARTUS
+// Two DUAL_PORT instances sharing port A (write). PAL_ABITS=9 → numwords=512.
+logic        pal_we;
+logic [1:0]  pal_be;
+logic [15:0] pal_dout_r;
+assign pal_we = pal_cs & !cpu_rw;
+assign pal_be = {!cpu_uds_n, !cpu_lds_n};
+
+// Instance 1: CPU read port
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (9), .numwords_a (512),
+    .width_b                   (16), .widthad_b (9), .numwords_b (512),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) pal_cpu_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpu_addr[9:1]), .data_a(cpu_din),
+    .wren_a(pal_we), .byteena_a(pal_be),
+    .address_b(cpu_addr[9:1]), .q_b(pal_dout_r),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Instance 2: pixel palette lookup (combinational → registered, 1-cycle latency acceptable)
+logic  [8:0] pal_index_w;
+logic [15:0] pal_entry;
+assign pal_index_w = final_valid ? {1'b0, final_color} : 9'h000;
+
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (9), .numwords_a (512),
+    .width_b                   (16), .widthad_b (9), .numwords_b (512),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) pal_pix_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpu_addr[9:1]), .data_a(cpu_din),
+    .wren_a(pal_we), .byteena_a(pal_be),
+    .address_b(pal_index_w), .q_b(pal_entry),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// =============================================================================
+// Palette Lookup — final_color (8-bit index) → RGB888  (1-cycle registered latency under QUARTUS)
+// =============================================================================
+// pal_entry is now the registered q_b output of pal_pix_inst.
+// pal_index_w declared above.
+
+// Expand 5-bit colour components to 8-bit
+assign rgb_r = {pal_entry[14:10], pal_entry[14:12]};
+assign rgb_g = {pal_entry[9:5],   pal_entry[9:7]};
+assign rgb_b = {pal_entry[4:0],   pal_entry[4:2]};
+`else
 logic [15:0] palette_ram [0:(1<<PAL_ABITS)-1];
 logic [15:0] pal_dout_r;
 
@@ -500,12 +601,6 @@ end
 
 // =============================================================================
 // Palette Lookup — final_color (8-bit index) → RGB888
-// final_color = {palette[3:0], pixel_index[3:0]}
-// Palette entry format: RGB555 in bits [14:0]
-//   R[4:0] = pal[14:10]
-//   G[4:0] = pal[9:5]
-//   B[4:0] = pal[4:0]
-// Expand 5-bit to 8-bit: {val[4:0], val[4:2]}
 // =============================================================================
 logic [15:0] pal_entry;
 logic  [8:0] pal_index_w;
@@ -516,6 +611,7 @@ assign pal_entry   = palette_ram[pal_index_w];
 assign rgb_r = {pal_entry[14:10], pal_entry[14:12]};
 assign rgb_g = {pal_entry[9:5],   pal_entry[9:7]};
 assign rgb_b = {pal_entry[4:0],   pal_entry[4:2]};
+`endif
 
 // =============================================================================
 // I/O Register File

@@ -283,6 +283,36 @@ assign prom_cs = (cpu_addr[23:PROM_ABITS] == PROM_BASE[23:PROM_ABITS]) && !cpu_a
 // =============================================================================
 // Work RAM — 64KB synchronous block RAM (word-wide)
 // =============================================================================
+`ifdef QUARTUS
+// altsyncram DUAL_PORT: WRAM_ABITS=15 → widthad=15, numwords=32768
+logic        wram_we;
+logic [1:0]  wram_be;
+logic [15:0] wram_dout_r;
+assign wram_we = wram_cs & !cpu_rw;
+assign wram_be = {!cpu_uds_n, !cpu_lds_n};
+
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (15), .numwords_a (32768),
+    .width_b                   (16), .widthad_b (15), .numwords_b (32768),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) wram_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpu_addr[15:1]), .data_a(cpu_dout),
+    .wren_a(wram_we), .byteena_a(wram_be),
+    .address_b(cpu_addr[15:1]), .q_b(wram_dout_r),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+`else
 logic [15:0] work_ram [0:(1<<WRAM_ABITS)-1];
 logic [15:0] wram_dout_r;
 
@@ -296,11 +326,108 @@ end
 always_ff @(posedge clk_sys) begin
     if (wram_cs) wram_dout_r <= work_ram[cpu_addr[WRAM_ABITS:1]];
 end
+`endif
 
 // =============================================================================
 // Sprite RAM — 32KB synchronous block RAM (word-wide, 16-bit access from CPU)
 // PS2001B reads 32-bit sprite entries; we keep word-granular access here.
 // =============================================================================
+
+// Shared wire declarations used by both ifdef paths
+/* verilator lint_off UNUSEDSIGNAL */
+logic [15:0] sprite_ram_addr_w;   // [15:14] unused — Gate 1/2 stub always 0 in upper bits
+/* verilator lint_on UNUSEDSIGNAL */
+logic [15:0] sprite_ram_din_w;
+logic [1:0]  sprite_ram_wsel_w;
+logic        sprite_ram_wr_en_w;
+
+`ifdef QUARTUS
+// Three DUAL_PORT instances sharing port A (muxed write). SPRAM_ABITS=14.
+// CPU has priority over DMA writes.
+logic [13:0] spram_wr_addr;
+logic [15:0] spram_wr_data;
+logic [1:0]  spram_be;
+logic        spram_we;
+logic [15:0] spram_dout_r;
+logic [15:0] sp_ram_lo, sp_ram_hi;
+logic [31:0] sprite_ram_dout_w;
+
+assign spram_we      = (spram_cs & !cpu_rw) | (sprite_ram_wr_en_w & sprite_ram_wsel_w[0] & !(spram_cs & !cpu_rw));
+assign spram_wr_addr = (spram_cs & !cpu_rw) ? cpu_addr[14:1] : sprite_ram_addr_w[13:0];
+assign spram_wr_data = (spram_cs & !cpu_rw) ? cpu_dout : sprite_ram_din_w;
+assign spram_be      = (spram_cs & !cpu_rw) ? {!cpu_uds_n, !cpu_lds_n} : 2'b11;
+
+// Instance 1: CPU read port
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (14), .numwords_a (16384),
+    .width_b                   (16), .widthad_b (14), .numwords_b (16384),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) spram_cpu_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(spram_wr_addr), .data_a(spram_wr_data),
+    .wren_a(spram_we), .byteena_a(spram_be),
+    .address_b(cpu_addr[14:1]), .q_b(spram_dout_r),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Instance 2: sprite engine lo word (even addresses)
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (14), .numwords_a (16384),
+    .width_b                   (16), .widthad_b (14), .numwords_b (16384),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) spram_lo_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(spram_wr_addr), .data_a(spram_wr_data),
+    .wren_a(spram_we), .byteena_a(spram_be),
+    .address_b({sprite_ram_addr_w[13:1], 1'b0}), .q_b(sp_ram_lo),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Instance 3: sprite engine hi word (odd addresses)
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (14), .numwords_a (16384),
+    .width_b                   (16), .widthad_b (14), .numwords_b (16384),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) spram_hi_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(spram_wr_addr), .data_a(spram_wr_data),
+    .wren_a(spram_we), .byteena_a(spram_be),
+    .address_b({sprite_ram_addr_w[13:1], 1'b1}), .q_b(sp_ram_hi),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+assign sprite_ram_dout_w = {sp_ram_hi, sp_ram_lo};
+`else
 logic [15:0] sprite_ram [0:(1<<SPRAM_ABITS)-1];
 logic [15:0] spram_dout_r;
 
@@ -322,12 +449,6 @@ end
 // psikyo Gate 1/2 sprite RAM read port (32-bit, even word is [31:16])
 logic [15:0] sp_ram_lo, sp_ram_hi;
 logic [31:0] sprite_ram_dout_w;
-/* verilator lint_off UNUSEDSIGNAL */
-logic [15:0] sprite_ram_addr_w;   // [15:14] unused — Gate 1/2 stub always 0 in upper bits
-/* verilator lint_on UNUSEDSIGNAL */
-logic [15:0] sprite_ram_din_w;
-logic [1:0]  sprite_ram_wsel_w;
-logic        sprite_ram_wr_en_w;
 
 // Gate 1/2 may write DMA data back; read is 32-bit (two consecutive words)
 // sprite_ram has 2^SPRAM_ABITS = 16384 entries; index is 14-bit.
@@ -340,15 +461,51 @@ end
 /* verilator lint_on UNUSEDSIGNAL */
 
 assign sprite_ram_dout_w = {sp_ram_hi, sp_ram_lo};
+`endif
 
 // =============================================================================
 // Tilemap VRAM — 8192 × 16-bit (2 layers × 4096 cells)
 // Write port: CPU; read port: psikyo_gate4 (combinational)
 // =============================================================================
-logic [15:0]  vram_mem [0:8191];
+
+// Forward VRAM write to gate4 for its internal copy (used by both paths)
 logic [12:0]  vram_wr_addr_w;
 logic [15:0]  vram_wr_data_w;
 logic         vram_wr_en_w;
+assign vram_wr_addr_w = cpu_addr[13:1];
+assign vram_wr_data_w = cpu_dout;
+assign vram_wr_en_w   = vram_cs && !cpu_rw;
+
+`ifdef QUARTUS
+logic        vram_we;
+logic [1:0]  vram_be_q;
+logic [15:0] vram_cpu_dout;
+assign vram_we   = vram_cs & !cpu_rw;
+assign vram_be_q = {!cpu_uds_n, !cpu_lds_n};
+
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (13), .numwords_a (8192),
+    .width_b                   (16), .widthad_b (13), .numwords_b (8192),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) vram_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpu_addr[13:1]), .data_a(cpu_dout),
+    .wren_a(vram_we), .byteena_a(vram_be_q),
+    .address_b(cpu_addr[13:1]), .q_b(vram_cpu_dout),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+`else
+logic [15:0]  vram_mem [0:8191];
 
 // CPU VRAM write: addr[13:1] = 13-bit index into 8192-word space
 always_ff @(posedge clk_sys) begin
@@ -359,20 +516,75 @@ always_ff @(posedge clk_sys) begin
     end
 end
 
-// Forward VRAM write to gate4 for its internal copy
-assign vram_wr_addr_w = cpu_addr[13:1];
-assign vram_wr_data_w = cpu_dout;
-assign vram_wr_en_w   = vram_cs && !cpu_rw;
-
 logic [15:0] vram_cpu_dout;
 always_ff @(posedge clk_sys) begin
     if (vram_cs) vram_cpu_dout <= vram_mem[cpu_addr[13:1]];
 end
+`endif
 
 // =============================================================================
 // Palette RAM — 256 × 16-bit R5G5B5
 // Format: [15]=unused, [14:10]=R, [9:5]=G, [4:0]=B
 // =============================================================================
+
+// final_color_w used by both paths
+logic [7:0]  final_color_w;
+logic        final_valid_w;
+
+`ifdef QUARTUS
+logic        palram_we;
+logic [1:0]  palram_be;
+logic [15:0] palram_cpu_dout;
+logic [15:0] pal_entry_r;
+assign palram_we = palram_cs & !cpu_rw;
+assign palram_be = {!cpu_uds_n, !cpu_lds_n};
+
+// Instance 1: CPU read port
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (8), .numwords_a (256),
+    .width_b                   (16), .widthad_b (8), .numwords_b (256),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) palram_cpu_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpu_addr[8:1]), .data_a(cpu_dout),
+    .wren_a(palram_we), .byteena_a(palram_be),
+    .address_b(cpu_addr[8:1]), .q_b(palram_cpu_dout),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// Instance 2: pixel palette lookup (clk_pix gates via rden_b)
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (8), .numwords_a (256),
+    .width_b                   (16), .widthad_b (8), .numwords_b (256),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) palram_pix_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpu_addr[8:1]), .data_a(cpu_dout),
+    .wren_a(palram_we), .byteena_a(palram_be),
+    .address_b(final_color_w), .q_b(pal_entry_r),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(2'h3), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(clk_pix)
+);
+`else
 logic [15:0] palette_ram [0:255];
 logic [15:0] palram_cpu_dout;
 
@@ -389,12 +601,11 @@ end
 
 // Pixel-domain palette lookup: final_color[7:0] → palette entry → R5G5B5 → R8G8B8
 logic [15:0] pal_entry_r;
-logic [7:0]  final_color_w;
-logic        final_valid_w;
 
 always_ff @(posedge clk_sys) begin
     if (clk_pix) pal_entry_r <= palette_ram[final_color_w];
 end
+`endif
 
 // Expand R5G5B5 → R8G8B8 (replicate 3 MSBs into low 3 bits)
 assign rgb_r = {pal_entry_r[14:10], pal_entry_r[14:12]};

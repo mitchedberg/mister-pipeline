@@ -276,7 +276,11 @@ module nmk16 #(
                 end
             end else if (is_tilemap) begin
                 // Tilemap RAM read (registered — read_vram-style; direct comb here)
+`ifdef QUARTUS
+                dout = tram_cpu_dout_r;
+`else
                 dout = tilemap_ram[tram_cpu_addr];
+`endif
             end else if (is_sprite) begin
                 // Sprite RAM read (from internal or external BRAM)
                 dout = sprite_data_rd_muxed;
@@ -290,6 +294,32 @@ module nmk16 #(
 
     // ========== SPRITE RAM STORAGE (Internal Dual-Port BRAM) ==========
 
+`ifdef QUARTUS
+    // altsyncram DUAL_PORT: write port A = CPU, read port B = sprite_addr_rd (registered)
+    // 1-cycle read latency → scanner capture uses sprite_scan_idx_r (delayed 1 cycle)
+    logic [15:0] sprite_data_rd_muxed;
+    altsyncram #(
+        .operation_mode            ("DUAL_PORT"),
+        .width_a                   (16), .widthad_a (10), .numwords_a (1024),
+        .width_b                   (16), .widthad_b (10), .numwords_b (1024),
+        .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+        .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+        .clock_enable_output_b     ("BYPASS"),
+        .intended_device_family    ("Cyclone V"),
+        .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+        .power_up_uninitialized    ("FALSE"),
+        .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+    ) sprite_ram_inst (
+        .clock0(clk), .clock1(clk),
+        .address_a(addr[10:1]), .data_a(din),
+        .wren_a(~cs_n & ~wr_n & is_sprite),
+        .address_b(sprite_addr_rd), .q_b(sprite_data_rd_muxed),
+        .wren_b(1'b0), .data_b(16'd0), .q_a(),
+        .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+        .byteena_a(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+        .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+    );
+`else
     logic [15:0] sprite_ram_storage [0:1023];  // 256 sprites × 4 words
     logic [15:0] sprite_data_rd_muxed;
 
@@ -306,6 +336,7 @@ module nmk16 #(
     always_comb begin
         sprite_data_rd_muxed = sprite_ram_storage[sprite_addr_rd];
     end
+`endif
 
     // ========== SPRITE RAM WRITE/READ INTERFACE (GATE 1) - Stubbed (internal BRAM used) ==========
 
@@ -460,6 +491,12 @@ module nmk16 #(
 
     // ========== SPRITE DATA CAPTURE (BUFFERED FOR TIMING) ==========
 
+`ifdef QUARTUS
+    // Registered copy of sprite_scan_idx for 1-cycle altsyncram read latency compensation
+    logic [9:0] sprite_scan_idx_r;
+    always_ff @(posedge clk) sprite_scan_idx_r <= sprite_scan_idx;
+`endif
+
     /* verilator lint_off UNUSEDSIGNAL */
     logic [15:0] sprite_word_y, sprite_word_x, sprite_word_tile, sprite_word_attr;
     /* verilator lint_on UNUSEDSIGNAL */
@@ -468,6 +505,31 @@ module nmk16 #(
 
     localparam INACTIVE_Y = 9'h1FF;  // Y position sentinel for hidden sprites
 
+`ifdef QUARTUS
+    // Under QUARTUS: sprite_data_rd_muxed is registered (1-cycle latency from altsyncram).
+    // Use sprite_scan_idx_r (1-cycle delayed) to match the data word to correct slot.
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            sprite_word_y <= 16'h0000;
+            sprite_word_x <= 16'h0000;
+            sprite_word_tile <= 16'h0000;
+            sprite_word_attr <= 16'h0000;
+            sprite_y_cached <= 9'h000;
+            sprite_visible_cached <= 1'b0;
+        end else if (scanner_state == SCAN) begin
+            case (sprite_scan_idx_r[1:0])
+                2'b00: begin
+                    sprite_word_y <= sprite_data_rd_muxed;
+                    sprite_y_cached <= sprite_data_rd_muxed[8:0];
+                    sprite_visible_cached <= (sprite_data_rd_muxed[8:0] != INACTIVE_Y);
+                end
+                2'b01: sprite_word_x <= sprite_data_rd_muxed;
+                2'b10: sprite_word_tile <= sprite_data_rd_muxed;
+                2'b11: sprite_word_attr <= sprite_data_rd_muxed;
+            endcase
+        end
+    end
+`else
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             sprite_word_y <= 16'h0000;
@@ -490,6 +552,7 @@ module nmk16 #(
             endcase
         end
     end
+`endif
 
     // ========== SPRITE VISIBILITY CHECK & EXTRACTION ==========
 
@@ -514,7 +577,11 @@ module nmk16 #(
             _display_list_palette  <= '0;
             _display_list_valid    <= '0;
             _display_list_priority <= '0;
+`ifdef QUARTUS
+        end else if (scanner_state == SCAN && sprite_scan_idx_r[1:0] == 2'b11 && sprite_is_visible) begin
+`else
         end else if (scanner_state == SCAN && sprite_scan_idx[1:0] == 2'b11 && sprite_is_visible) begin
+`endif
             // When word 3 (attributes) is presented and sprite is visible, write to display list.
             // Use sprite_data_rd_muxed directly for attr fields: sprite_word_attr is registered
             // on this same edge so it still holds the previous sprite's attr.
@@ -877,10 +944,61 @@ module nmk16 #(
     // ── Tilemap RAM: 2048 × 16-bit (both layers) ─────────────────────────────
     // Word [2047:1024] = layer 1, [1023:0] = layer 0.
 
-    logic [15:0] tilemap_ram [0:2047];
     logic [10:0] tram_cpu_addr;   // 11-bit word address (bit10=layer, bits9:0=cell)
 
     always_comb tram_cpu_addr = addr[11:1];  // addr[11]=layer, addr[10:5]=row, addr[4:1]=col
+
+`ifdef QUARTUS
+    logic [15:0] tram_cpu_dout_r;
+    logic [15:0] g4s0_tram_word_r;
+    logic        tram_we;
+    assign tram_we = ~cs_n & ~wr_n & is_tilemap;
+
+    // Instance 1: CPU read port
+    altsyncram #(
+        .operation_mode            ("DUAL_PORT"),
+        .width_a                   (16), .widthad_a (11), .numwords_a (2048),
+        .width_b                   (16), .widthad_b (11), .numwords_b (2048),
+        .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+        .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+        .clock_enable_output_b     ("BYPASS"),
+        .intended_device_family    ("Cyclone V"),
+        .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+        .power_up_uninitialized    ("FALSE"),
+        .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+    ) tram_cpu_inst (
+        .clock0(clk), .clock1(clk),
+        .address_a(tram_cpu_addr), .data_a(din), .wren_a(tram_we),
+        .address_b(tram_cpu_addr), .q_b(tram_cpu_dout_r),
+        .wren_b(1'b0), .data_b(16'd0), .q_a(),
+        .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+        .byteena_a(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+        .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+    );
+
+    // Instance 2: tile fetch read port
+    altsyncram #(
+        .operation_mode            ("DUAL_PORT"),
+        .width_a                   (16), .widthad_a (11), .numwords_a (2048),
+        .width_b                   (16), .widthad_b (11), .numwords_b (2048),
+        .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+        .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+        .clock_enable_output_b     ("BYPASS"),
+        .intended_device_family    ("Cyclone V"),
+        .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+        .power_up_uninitialized    ("FALSE"),
+        .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+    ) tram_fetch_inst (
+        .clock0(clk), .clock1(clk),
+        .address_a(tram_cpu_addr), .data_a(din), .wren_a(tram_we),
+        .address_b(g4s0_tram_addr), .q_b(g4s0_tram_word_r),
+        .wren_b(1'b0), .data_b(16'd0), .q_a(),
+        .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+        .byteena_a(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+        .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+    );
+`else
+    logic [15:0] tilemap_ram [0:2047];
 
     // No reset initialization — Cyclone V M10K powers up to 0 (CPU writes before use).
     // Reset loop removed to avoid Error 10028 (multiple constant drivers) in Quartus 17.0.
@@ -889,6 +1007,7 @@ module nmk16 #(
             tilemap_ram[tram_cpu_addr] <= din;
         end
     end
+`endif
 
     // ── Layer round-robin counter ─────────────────────────────────────────────
 
@@ -941,7 +1060,11 @@ module nmk16 #(
     always_comb begin
         // word_addr = layer * 1024 + row * 32 + col
         g4s0_tram_addr = {mux_bg_layer, g4s0_row, g4s0_col};
+`ifdef QUARTUS
+        g4s0_tram_word = g4s0_tram_word_r;
+`else
         g4s0_tram_word = tilemap_ram[g4s0_tram_addr];
+`endif
     end
 
     // Decode tilemap word

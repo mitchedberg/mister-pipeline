@@ -98,13 +98,105 @@ assign cpu_dtack_n = 1'b0;
 //   bits[15:8]  — G[7:0]
 //   bits[7:0]   — B[7:0]
 // =============================================================================
+// =============================================================================
+// 12-bit mode address masking (outside ifdef — used in both QUARTUS and sim paths)
+// In 12-bit mode the effective address is {1'b0, idx[11:0]}.
+// =============================================================================
+logic [12:0] src_eff_idx;
+logic [12:0] dst_eff_idx;
+always_comb begin
+    src_eff_idx = mode_12bit ? {1'b0, src_pal[11:0]} : src_pal;
+    dst_eff_idx = mode_12bit ? {1'b0, dst_pal[11:0]} : dst_pal;
+end
+
 `ifdef QUARTUS
-(* ramstyle = "M10K" *) logic [31:0] src_bram [0:8191];
-(* ramstyle = "M10K" *) logic [31:0] dst_bram [0:8191];
+// =============================================================================
+// Palette BRAM — altsyncram DUAL_PORT instances (Quartus M10K, byteena write)
+// src_bram: two instances — one for CPU read-back, one for pixel pipeline read
+// dst_bram: one instance — pixel pipeline read only
+// All three share the same write port (cpu_addr, cpu_din, bram_we, bram_be).
+// =============================================================================
+
+// CPU write path signals
+logic        bram_we;
+logic [3:0]  bram_be;
+assign bram_we = cpu_cs & cpu_we;
+assign bram_be = cpu_be;
+
+// src_bram instance 1: CPU read-back
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (32), .widthad_a (13), .numwords_a (8192),
+    .width_b                   (32), .widthad_b (13), .numwords_b (8192),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (4), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) src_cpu_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(cpu_addr[12:0]), .data_a(cpu_din),
+    .wren_a(bram_we), .byteena_a(bram_be),
+    .address_b(cpu_addr[12:0]), .q_b(cpu_rd_raw),
+    .wren_b(1'b0), .data_b(32'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(4'hF), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// src_bram instance 2: pixel pipeline read
+logic [31:0] src_pix_q;
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (32), .widthad_a (13), .numwords_a (8192),
+    .width_b                   (32), .widthad_b (13), .numwords_b (8192),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (4), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) src_pix_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(cpu_addr[12:0]), .data_a(cpu_din),
+    .wren_a(bram_we), .byteena_a(bram_be),
+    .address_b(src_eff_idx[12:0]), .q_b(src_pix_q),
+    .wren_b(1'b0), .data_b(32'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(4'hF), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+// dst_bram instance: pixel pipeline read
+logic [31:0] dst_pix_q;
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (32), .widthad_a (13), .numwords_a (8192),
+    .width_b                   (32), .widthad_b (13), .numwords_b (8192),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (4), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) dst_pix_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(cpu_addr[12:0]), .data_a(cpu_din),
+    .wren_a(bram_we), .byteena_a(bram_be),
+    .address_b(dst_eff_idx[12:0]), .q_b(dst_pix_q),
+    .wren_b(1'b0), .data_b(32'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(4'hF), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
 `else
 logic [31:0] src_bram [0:8191];
 logic [31:0] dst_bram [0:8191];
-`endif
 
 // ── CPU write port (system clock, no pixel-clock gating) ──────────────────
 always_ff @(posedge clk) begin
@@ -140,17 +232,7 @@ end
 always_ff @(posedge clk) begin
     cpu_rd_raw <= src_bram[cpu_addr];
 end
-
-// =============================================================================
-// 12-bit mode address masking
-// In 12-bit mode the effective address is {1'b0, idx[11:0]}.
-// =============================================================================
-logic [12:0] src_eff_idx;
-logic [12:0] dst_eff_idx;
-always_comb begin
-    src_eff_idx = mode_12bit ? {1'b0, src_pal[11:0]} : src_pal;
-    dst_eff_idx = mode_12bit ? {1'b0, dst_pal[11:0]} : dst_pal;
-end
+`endif
 
 // =============================================================================
 // 3-Stage MAC Pipeline
@@ -170,6 +252,30 @@ logic [ 3:0] dst_blend_s1;
 logic        do_blend_s1;
 logic        pv_s1;
 
+`ifdef QUARTUS
+// Under QUARTUS: altsyncram q_b outputs are already registered (CLOCK1 domain).
+// Use src_pix_q / dst_pix_q directly; still gate pipeline advance by ce_pixel.
+always_ff @(posedge clk) begin
+    if (ce_pixel) begin
+        if (!mode_12bit) begin
+            src_rgb_s1 <= src_pix_q[23:0];
+            dst_rgb_s1 <= dst_pix_q[23:0];
+        end else begin
+            // 12-bit nibble-repeat decode: bits[15:12]=R, [11:8]=G, [7:4]=B
+            src_rgb_s1 <= {src_pix_q[15:12], src_pix_q[15:12],
+                           src_pix_q[11:8],  src_pix_q[11:8],
+                           src_pix_q[7:4],   src_pix_q[7:4]};
+            dst_rgb_s1 <= {dst_pix_q[15:12], dst_pix_q[15:12],
+                           dst_pix_q[11:8],  dst_pix_q[11:8],
+                           dst_pix_q[7:4],   dst_pix_q[7:4]};
+        end
+        src_blend_s1 <= src_blend;
+        dst_blend_s1 <= dst_blend;
+        do_blend_s1  <= do_blend;
+        pv_s1        <= pixel_valid;
+    end
+end
+`else
 always_ff @(posedge clk) begin
     if (ce_pixel) begin
         // Read both BRAMs and decode 12-bit or standard
@@ -191,6 +297,7 @@ always_ff @(posedge clk) begin
         pv_s1        <= pixel_valid;
     end
 end
+`endif
 
 // ── Stage 2 registers — multiply ─────────────────────────────────────────────
 // 8-bit × 4-bit products: max 255×8 = 2040, fits in 12 bits.
