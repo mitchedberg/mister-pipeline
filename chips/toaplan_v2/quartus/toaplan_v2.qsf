@@ -111,6 +111,8 @@ set_global_assignment -name SEED 1
 # SOURCE FILES (Toaplan V2 Core)
 # ==========================================================================
 
+set_global_assignment -name VERILOG_MACRO "QUARTUS=1"
+
 source files.qip
 
 # ==========================================================================

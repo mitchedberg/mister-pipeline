@@ -111,6 +111,8 @@ set_global_assignment -name SEED 1
 # SOURCE FILES (Taito X Core)
 # ==========================================================================
 
+set_global_assignment -name VERILOG_MACRO "QUARTUS=1"
+
 source files.qip
 
 # ==========================================================================

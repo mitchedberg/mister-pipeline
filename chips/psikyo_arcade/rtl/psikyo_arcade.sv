@@ -82,7 +82,7 @@ module psikyo_arcade #(
     parameter logic [26:0] PROM_SDR_BASE  = 27'h000000,  // prog ROM at SDRAM 0x000000
     parameter logic [26:0] SPR_SDR_BASE   = 27'h200000,  // sprite ROM at SDRAM 0x200000
     parameter logic [26:0] BG_SDR_BASE    = 27'h600000,  // BG tile ROM at SDRAM 0x600000
-    parameter logic [26:0] ADPCM_SDR_BASE = 27'hA00000   // ADPCM ROM at SDRAM 0xA00000
+    parameter logic [26:0] ADPCM_SDR_BASE = 27'hA00000,  // ADPCM ROM at SDRAM 0xA00000
 
     // VBLANK interrupt level (level 4 on Psikyo)
     parameter logic [2:0] VBLANK_LEVEL  = 3'd4

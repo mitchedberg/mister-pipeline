@@ -440,7 +440,8 @@ module psikyo (
 
   // Output assignment from internal display list
   generate
-    for (genvar k = 0; k < 256; k++) begin : display_list_assign
+    genvar k;
+    for (k = 0; k < 256; k++) begin : display_list_assign
       assign display_list_x[k] = display_list_internal[k].x;
       assign display_list_y[k] = display_list_internal[k].y;
       assign display_list_tile[k] = display_list_internal[k].tile_num;
