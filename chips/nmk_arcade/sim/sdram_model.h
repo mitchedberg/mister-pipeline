@@ -7,11 +7,11 @@
 // 3-cycle latency per request.
 //
 // SDRAM layout (byte addresses, per Thunder_Dragon.mra):
-//   0x000000 — CPU program ROM (512KB)
-//   0x0C0000 — Sprite ROM      (512KB)
-//   0x140000 — BG tile ROM     (512KB)
-//   0x200000 — ADPCM ROM       (varies)
-//   0x280000 — Z80 ROM         (48KB, byte-wide)
+//   0x000000 — CPU program ROM (up to 512KB; 256KB for Thunder Dragon)
+//   0x0C0000 — Sprite ROM      (up to 1MB;  1MB  for Thunder Dragon)
+//   0x1C0000 — BG tile ROM     (128KB, fgtile only — tile_idx is 10-bit)
+//   0x200000 — ADPCM ROM       (up to 512KB OKI M6295 bank 0)
+//   0x280000 — Z80 ROM         (64KB NMK004 MCU / Z80 sound, byte-wide)
 // =============================================================================
 #pragma once
 #include <vector>

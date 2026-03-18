@@ -41,6 +41,8 @@ import os
 import subprocess
 import sys
 import glob
+import zipfile
+import tempfile
 
 # ── PPM comparison helper ────────────────────────────────────────────────────
 
@@ -151,7 +153,7 @@ def main():
     parser.add_argument('--spr',      default=None,
                         help='Sprite ROM binary (SDRAM 0x0C0000)')
     parser.add_argument('--bg',       default=None,
-                        help='BG tile ROM binary (SDRAM 0x140000)')
+                        help='BG tile ROM binary (SDRAM 0x1C0000 — fgtile only, 128KB)')
     parser.add_argument('--adpcm',    default=None,
                         help='ADPCM ROM binary (SDRAM 0x200000)')
     parser.add_argument('--z80',      default=None,
@@ -166,8 +168,76 @@ def main():
                         help='Force rebuild before running')
     parser.add_argument('--no-build', action='store_true',
                         help='Skip build step')
+    parser.add_argument('--tdragon-zip', default=None, metavar='ZIP',
+                        help='Auto-extract Thunder Dragon ROMs from tdragon.zip and run')
 
     args = parser.parse_args()
+
+    # ── Thunder Dragon ZIP extraction ─────────────────────────────────────────
+    _tmpdir = None
+    if args.tdragon_zip:
+        zip_path = os.path.abspath(args.tdragon_zip)
+        if not os.path.exists(zip_path):
+            print(f"ERROR: ROM ZIP not found: {zip_path}")
+            return 1
+        print(f"Extracting Thunder Dragon ROMs from {zip_path}...")
+        _tmpdir = tempfile.mkdtemp(prefix='tdragon_sim_')
+
+        # CRCs as verification comments; actual extraction is by filename
+        TDRAGON_FILES = {
+            'prog':  ('91070_68k.8', '91070_68k.7'),  # even/odd interleaved CPU ROM
+            'spr':   ('91070.4',),                     # 1MB sprite ROM
+            'bg':    ('91070.6',),                     # 128KB fgtile ROM
+            'adpcm': ('91070.3',),                     # 512KB ADPCM ROM (bank 0)
+            'z80':   ('91070.1',),                     # 64KB NMK004 MCU code
+        }
+
+        with zipfile.ZipFile(zip_path, 'r') as zf:
+            names_in_zip = zf.namelist()
+
+            # Extract each ROM, interleave CPU ROMs
+            for slot, files in TDRAGON_FILES.items():
+                for fname in files:
+                    if fname not in names_in_zip:
+                        print(f"  WARN: {fname} not found in ZIP")
+                        continue
+                    zf.extract(fname, _tmpdir)
+                    print(f"  extracted {fname}")
+
+        # Interleave CPU ROMs: even bytes (D15:D8) then odd bytes (D7:D0) per word
+        even_path = os.path.join(_tmpdir, '91070_68k.8')
+        odd_path  = os.path.join(_tmpdir, '91070_68k.7')
+        prog_path = os.path.join(_tmpdir, 'tdragon_prog.bin')
+        if os.path.exists(even_path) and os.path.exists(odd_path):
+            with open(even_path, 'rb') as fe, open(odd_path, 'rb') as fo:
+                even = fe.read()
+                odd  = fo.read()
+            interleaved = bytearray()
+            for i in range(min(len(even), len(odd))):
+                interleaved.append(even[i])  # D15:D8
+                interleaved.append(odd[i])   # D7:D0
+            with open(prog_path, 'wb') as fp:
+                fp.write(interleaved)
+            print(f"  CPU ROM interleaved: {len(interleaved)} bytes → {prog_path}")
+        else:
+            prog_path = None
+            print("  WARN: CPU ROMs not found for interleaving")
+
+        # Set args from extracted files (don't override explicit --prog/--spr etc.)
+        if not args.prog and prog_path:
+            args.prog  = prog_path
+        if not args.spr:
+            p = os.path.join(_tmpdir, '91070.4')
+            if os.path.exists(p): args.spr = p
+        if not args.bg:
+            p = os.path.join(_tmpdir, '91070.6')
+            if os.path.exists(p): args.bg = p
+        if not args.adpcm:
+            p = os.path.join(_tmpdir, '91070.3')
+            if os.path.exists(p): args.adpcm = p
+        if not args.z80:
+            p = os.path.join(_tmpdir, '91070.1')
+            if os.path.exists(p): args.z80 = p
 
     # Resolve the sim directory (where this script lives)
     script_dir = os.path.dirname(os.path.abspath(__file__))
