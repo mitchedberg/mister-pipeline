@@ -23,6 +23,7 @@
 //   0x01 — Sprite ROM   (SDRAM 0x0C0000)
 //   0x02 — BG tile ROM  (SDRAM 0x140000)
 //   0x03 — ADPCM ROM    (SDRAM 0x200000)   ← OKI M6295 sample ROM
+//   0x04 — Z80 sound ROM (SDRAM 0x280000)
 //   0xFE — DIP switch / NVRAM init data
 //
 // SDRAM layout (IS42S16320F, 32 MB):
@@ -30,6 +31,7 @@
 //   0x0C0000 – 0x13FFFF   512KB   Sprite ROM
 //   0x140000 – 0x1BFFFF   512KB   BG tile ROM
 //   0x200000 – 0x27FFFF   512KB   ADPCM sample ROM (OKI M6295)
+//   0x280000 – 0x28BFFF   48KB    Z80 sound ROM
 // -------------------------------------------------------------------------
 
 module emu
@@ -377,13 +379,74 @@ wire [26:0] bg_sdr_addr;
 wire [15:0] bg_sdr_data;
 wire        bg_sdr_req, bg_sdr_ack;
 
-// CH4: ADPCM (OKI M6295) ROM — base 0x200000
+// CH4 (snd): shared between ADPCM ROM and Z80 sound ROM
 // adpcm_rom_addr from nmk_arcade is 24-bit; zero-extend to 27-bit for sdram_b.
 wire [23:0] adpcm_rom_addr_w;
-wire [26:0] adpcm_sdr_addr;
-wire [15:0] adpcm_sdr_data;
 wire        adpcm_sdr_req, adpcm_sdr_ack;
-assign adpcm_sdr_addr = {3'b0, adpcm_rom_addr_w};
+wire [15:0] adpcm_sdr_data;
+
+// Z80 ROM SDRAM signals
+wire [15:0] z80_rom_addr_w;
+wire        z80_sdr_req, z80_sdr_ack;
+wire  [7:0] z80_sdr_byte;
+wire [15:0] z80_sdr_data;
+
+// Byte lane select for Z80 ROM (Z80 addr bit 0)
+assign z80_sdr_byte = z80_rom_addr_w[0] ? z80_sdr_data[15:8] : z80_sdr_data[7:0];
+
+// CH4 arbiter: ADPCM and Z80 ROM share the snd channel
+// ADPCM gets priority when both pending (ADPCM is time-critical for samples).
+wire [26:0] ch4_addr;
+wire        ch4_req;
+wire        ch4_ack;
+
+logic ch4_owner;   // 0=ADPCM, 1=Z80
+logic ch4_busy;
+
+wire adpcm_pend = (adpcm_sdr_req != adpcm_sdr_ack);
+wire z80_pend   = (z80_sdr_req   != z80_sdr_ack);
+
+logic ch4_req_r;
+logic [26:0] ch4_addr_r;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ch4_req_r  <= 1'b0;
+        ch4_addr_r <= 27'b0;
+        ch4_owner  <= 1'b0;
+        ch4_busy   <= 1'b0;
+    end else begin
+        if (!ch4_busy) begin
+            if (adpcm_pend) begin
+                ch4_addr_r <= {3'b0, adpcm_rom_addr_w};
+                ch4_req_r  <= ~ch4_req_r;
+                ch4_owner  <= 1'b0;
+                ch4_busy   <= 1'b1;
+            end else if (z80_pend) begin
+                // Z80 ROM at SDRAM 0x280000: add base offset to 16-bit address
+                ch4_addr_r <= 27'h280000 + {11'b0, z80_rom_addr_w[15:1]};
+                ch4_req_r  <= ~ch4_req_r;
+                ch4_owner  <= 1'b1;
+                ch4_busy   <= 1'b1;
+            end
+        end else begin
+            if (ch4_req_r == ch4_ack)
+                ch4_busy <= 1'b0;
+        end
+    end
+end
+
+assign ch4_addr = ch4_addr_r;
+assign ch4_req  = ch4_req_r;
+
+// Route ack back to the winning client
+assign adpcm_sdr_ack = (ch4_owner == 1'b0) ? ch4_ack : adpcm_sdr_req;
+assign z80_sdr_ack   = (ch4_owner == 1'b1) ? ch4_ack : z80_sdr_req;
+
+// ch4_data_w: returned by sdram_b snd port; shared word for both clients
+wire [15:0] ch4_data_w;
+assign adpcm_sdr_data = ch4_data_w;
+assign z80_sdr_data   = ch4_data_w;
 
 // Audio wires from core
 wire signed [15:0] snd_left_w, snd_right_w;
@@ -417,11 +480,11 @@ sdram_b u_sdram
     .adpcm_req  (bg_sdr_req),
     .adpcm_ack  (bg_sdr_ack),
 
-    // CH4: ADPCM (OKI M6295) sample ROM reads
-    .snd_addr   (adpcm_sdr_addr),
-    .snd_data   (adpcm_sdr_data),
-    .snd_req    (adpcm_sdr_req),
-    .snd_ack    (adpcm_sdr_ack),
+    // CH4: ADPCM + Z80 ROM (arbitrated)
+    .snd_addr   (ch4_addr),
+    .snd_data   (ch4_data_w),
+    .snd_req    (ch4_req),
+    .snd_ack    (ch4_ack),
 
     // SDRAM chip pins
     .SDRAM_A    (SDRAM_A),
@@ -544,7 +607,13 @@ nmk_arcade u_nmk_arcade
     .adpcm_rom_addr (adpcm_rom_addr_w),
     .adpcm_rom_req  (adpcm_sdr_req),
     .adpcm_rom_data (adpcm_sdr_data),
-    .adpcm_rom_ack  (adpcm_sdr_ack)
+    .adpcm_rom_ack  (adpcm_sdr_ack),
+
+    // Z80 sound ROM SDRAM interface
+    .z80_rom_addr   (z80_rom_addr_w),
+    .z80_rom_req    (z80_sdr_req),
+    .z80_rom_data   (z80_sdr_byte),
+    .z80_rom_ack    (z80_sdr_ack)
 );
 
 // Route core audio to MiSTer audio outputs

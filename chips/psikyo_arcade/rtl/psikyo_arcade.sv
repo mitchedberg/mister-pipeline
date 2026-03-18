@@ -18,7 +18,7 @@
 //
 // Audio:
 //   YM2610B (jt10): FM + ADPCM-A + ADPCM-B
-//   Z80 bus stubbed (cs_n=1, wr_n=1) until Z80 CPU is added.
+//   Z80 @ ~6.4 MHz (T80s core); drives YM2610B via Z80 bus.
 //   ADPCM-A/B ROM path exposed as adpcm_rom_* ports → SDRAM CH3.
 //
 // Hardware reference: MAME src/mame/psikyo/psikyo.cpp (Gunbird, Strikers 1945)
@@ -136,6 +136,13 @@ module psikyo_arcade #(
 
     // ── Sound clock ───────────────────────────────────────────────────────
     input  logic        clk_sound,        // 8 MHz clock enable (one pulse per 8 MHz cycle)
+
+    // ── Z80 Sound CPU ROM SDRAM interface ────────────────────────────────────
+    // Z80 ROM: 32KB at SDRAM base 0xA00000 + offset.
+    output logic [15:0] z80_rom_addr,    // Z80 16-bit address
+    output logic        z80_rom_req,     // toggle on new fetch request
+    input  logic  [7:0] z80_rom_data,   // byte returned from SDRAM
+    input  logic        z80_rom_ack,    // toggle when data is ready
 
     // ── Video Output ────────────────────────────────────────────────────────
     output logic [7:0]  rgb_r,
@@ -636,29 +643,160 @@ psikyo_gate5 u_gate5 (
 );
 
 // =============================================================================
-// YM2610B Audio — jt10 instantiation
+// Z80 Sound CPU — T80s @ ~6.4 MHz (clk_sys=32 MHz / 5)
 // =============================================================================
 //
-// Z80 CPU bus is stubbed (cs_n=1, wr_n=1) until Z80 is added.
-// Sound command written by M68K to psikyo cs_z80 region is latched in
-// z80_cmd_latch for future use when the Z80 soft-core is wired.
+// Z80 address map (Psikyo SH201B):
+//   0x0000–0x7FFF   32KB Z80 ROM (SDRAM)
+//   0x8000–0x87FF   2KB  Z80 RAM (BRAM, mirrored across 0x8000–0xFFFF)
+//   0xC000–0xC003   YM2610B (2-bit addr bus A[1:0])
+//   0xF000          Sound command latch (read from M68K)
 //
+// YM2610B audio — jt10 instantiation.
 // ADPCM-A: jt10 drives adpcma_addr[19:0] + adpcma_bank[3:0].
-//   Effective byte address = {adpcma_bank, adpcma_addr} → 24-bit → SDRAM[ADPCM_SDR_BASE].
 // ADPCM-B: jt10 drives adpcmb_addr[23:0] directly.
 //   We arbitrate A and B onto the single adpcm_rom_* SDRAM channel.
-//   Priority: ADPCM-B over ADPCM-A (both are infrequent vs BG scanline fetches).
-//
+//   Priority: ADPCM-B over ADPCM-A.
 // =============================================================================
 
-// Sound command latch: M68K writes to psikyo cs_z80 address; psikyo.sv
-// stores the byte in z80_cmd_reply (output port). We hold a local copy
-// here for future Z80 wiring.
+// Z80 clock enable: 32 MHz / 5 = 6.4 MHz (close to real 6.144 MHz)
+logic [2:0] ce_z80_cnt;
+logic       ce_z80;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ce_z80_cnt <= 3'd0;
+        ce_z80     <= 1'b0;
+    end else begin
+        if (ce_z80_cnt == 3'd4) begin
+            ce_z80_cnt <= 3'd0;
+            ce_z80     <= 1'b1;
+        end else begin
+            ce_z80_cnt <= ce_z80_cnt + 3'd1;
+            ce_z80     <= 1'b0;
+        end
+    end
+end
+
+// Sound command latch (M68K → Z80 via psikyo register interface)
 logic [7:0] z80_cmd_latch;
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) z80_cmd_latch <= 8'h00;
     else          z80_cmd_latch <= psikyo_dout[7:0];  // shadow psikyo Z80 cmd reg
 end
+
+// Z80 bus signals
+logic        z80_mreq_n, z80_iorq_n, z80_rd_n, z80_wr_n;
+logic        z80_m1_n, z80_rfsh_n, z80_halt_n, z80_busak_n;
+logic [15:0] z80_addr;
+logic  [7:0] z80_dout_cpu;
+
+// Z80 wait: held low while ROM SDRAM fetch is pending
+logic        z80_wait_n;
+
+// Z80 interrupt: YM2610B irq_n → Z80 INT
+wire         z80_int_n;
+
+// Z80 2KB internal RAM (0x8000–0x87FF, mirrored)
+logic [7:0] z80_ram [0:2047];
+logic [7:0] z80_ram_dout_r;
+
+// ── Z80 chip-select decode ───────────────────────────────────────────────────
+logic z80_rom_cs;   // 0x0000–0x7FFF
+logic z80_ym_cs;    // 0xC000–0xC003 (YM2610B)
+logic z80_ram_cs;   // 0x8000–0x87FF (2KB RAM)
+logic z80_cmd_cs;   // 0xF000        (sound command latch)
+
+always_comb begin
+    z80_rom_cs = (!z80_mreq_n) && (z80_addr[15] == 1'b0);
+    z80_ym_cs  = (!z80_mreq_n) && (z80_addr[15:2] == 14'h3000);
+    z80_ram_cs = (!z80_mreq_n) && (z80_addr[15:11] == 5'b10000);
+    z80_cmd_cs = (!z80_mreq_n) && (z80_addr[15:12] == 4'hF);
+end
+
+// ── Z80 ROM SDRAM bridge ─────────────────────────────────────────────────────
+logic z80_rom_pending;
+logic z80_rom_req_r;
+logic [7:0] z80_rom_latch;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        z80_rom_req_r   <= 1'b0;
+        z80_rom_pending <= 1'b0;
+        z80_rom_latch   <= 8'hFF;
+        z80_wait_n      <= 1'b1;
+    end else begin
+        if (z80_rom_cs && !z80_rd_n && !z80_rom_pending) begin
+            z80_rom_req_r   <= ~z80_rom_req_r;
+            z80_rom_pending <= 1'b1;
+            z80_wait_n      <= 1'b0;
+        end else if (z80_rom_pending && (z80_rom_req_r == z80_rom_ack)) begin
+            z80_rom_latch   <= z80_rom_data;
+            z80_rom_pending <= 1'b0;
+            z80_wait_n      <= 1'b1;
+        end
+    end
+end
+
+assign z80_rom_req  = z80_rom_req_r;
+assign z80_rom_addr = z80_addr;
+
+// ── Z80 RAM ──────────────────────────────────────────────────────────────────
+always_ff @(posedge clk_sys) begin
+    if (z80_ram_cs && !z80_wr_n)
+        z80_ram[z80_addr[10:0]] <= z80_dout_cpu;
+end
+
+always_ff @(posedge clk_sys) begin
+    if (z80_ram_cs) z80_ram_dout_r <= z80_ram[z80_addr[10:0]];
+end
+
+// ── Z80 data bus read mux ────────────────────────────────────────────────────
+logic [7:0] z80_din_mux;
+wire  [7:0] ym_dout_w;   // YM2610B read data
+
+always_comb begin
+    if (z80_ym_cs)
+        z80_din_mux = ym_dout_w;
+    else if (z80_cmd_cs)
+        z80_din_mux = z80_cmd_latch;
+    else if (z80_ram_cs)
+        z80_din_mux = z80_ram_dout_r;
+    else if (z80_rom_cs)
+        z80_din_mux = z80_rom_latch;
+    else
+        z80_din_mux = 8'hFF;
+end
+
+T80s u_z80 (
+    .RESET_n  (reset_n),
+    .CLK      (clk_sys),
+    .CEN      (ce_z80),
+    .WAIT_n   (z80_wait_n),
+    .INT_n    (z80_int_n),
+    .NMI_n    (1'b1),
+    .BUSRQ_n  (1'b1),
+    .OUT0     (1'b0),
+    .DI       (z80_din_mux),
+    .M1_n     (z80_m1_n),
+    .MREQ_n   (z80_mreq_n),
+    .IORQ_n   (z80_iorq_n),
+    .RD_n     (z80_rd_n),
+    .WR_n     (z80_wr_n),
+    .RFSH_n   (z80_rfsh_n),
+    .HALT_n   (z80_halt_n),
+    .BUSAK_n  (z80_busak_n),
+    .A        (z80_addr),
+    .DOUT     (z80_dout_cpu)
+);
+
+// ── YM2610B chip-select and write enables ────────────────────────────────────
+wire        ym_cs_n_w = ~z80_ym_cs;
+wire        ym_wr_n_w = z80_wr_n | ~z80_ym_cs;
+wire [1:0]  ym_addr_w = z80_addr[1:0];   // A[1:0] → YM2610B address
+
+wire ym_irq_n_w;
+assign z80_int_n = ym_irq_n_w;
 
 // jt10 ROM output enable signals (active low)
 wire        adpcma_roe_n_w;
@@ -675,20 +813,19 @@ logic [7:0] adpcmb_data_r;
 
 // jt10 instance — YM2610B (FM + ADPCM-A + ADPCM-B)
 jt10 u_ym2610b (
-    .rst            (~reset_n),         // active-high reset
+    .rst            (~reset_n),
     .clk            (clk_sys),
     .cen            (clk_sound),        // 8 MHz clock enable
 
-    // Z80 register bus — stubbed until Z80 is added
-    .din            (8'h00),
-    .addr           (2'b00),
-    .cs_n           (1'b1),             // chip not selected
-    .wr_n           (1'b1),             // no write
+    // Z80 register bus
+    .din            (z80_dout_cpu),
+    .addr           (ym_addr_w),
+    .cs_n           (ym_cs_n_w),
+    .wr_n           (ym_wr_n_w),
 
-    // Data output / IRQ (not connected to M68K yet)
+    .dout           (ym_dout_w),
     /* verilator lint_off PINCONNECTEMPTY */
-    .dout           (),
-    .irq_n          (),
+    .irq_n          (ym_irq_n_w),
     /* verilator lint_on PINCONNECTEMPTY */
 
     // ADPCM-A ROM interface
@@ -1031,7 +1168,8 @@ assign _unused = &{
     pal_entry_r[15],          // R5G5B5 unused bit (transparent flag)
     sprite_ram_din_w,
     sprite_ram_wsel_w,
-    z80_cmd_latch             // reserved for Z80 wiring
+    // Z80 signals not consumed at top level
+    z80_m1_n, z80_rfsh_n, z80_halt_n, z80_busak_n, z80_iorq_n
 };
 /* verilator lint_on UNUSED */
 

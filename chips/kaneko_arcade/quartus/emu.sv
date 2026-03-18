@@ -31,11 +31,13 @@
 // ROM loading (ioctl_index values, set in .mra file):
 //   0x00 — CPU prog ROM (SDRAM base 0x000000)
 //   0x01 — GFX ROM: sprites + BG tiles (SDRAM base 0x100000)
+//   0x02 — Z80 sound ROM (SDRAM base 0x300000)
 //   0xFE — DIP switch / NVRAM init data
 //
 // SDRAM layout (IS42S16320F, 32 MB):
-//   0x000000 – 0x0FFFFF   1MB   CPU program ROM (Berlin Wall)
-//   0x100000 – 0x2FFFFF   2MB   GFX ROM (sprites + BG tiles)
+//   0x000000 – 0x0FFFFF   1MB    CPU program ROM (Berlin Wall)
+//   0x100000 – 0x2FFFFF   2MB    GFX ROM (sprites + BG tiles)
+//   0x300000 – 0x307FFF   32KB   Z80 sound ROM
 // -------------------------------------------------------------------------
 
 module emu
@@ -418,15 +420,78 @@ wire [26:0] gfx_sdr_addr;
 wire [31:0] gfx_sdr_data;
 wire        gfx_sdr_req, gfx_sdr_ack;
 
-// ADPCM ROM: SDRAM CH3 — 16-bit bus; kaneko_arcade delivers byte addr,
-// we pass it directly (SDRAM returns 16-bit word; core takes low byte).
+// ADPCM ROM: kaneko_arcade delivers byte addr;
+// SDRAM returns 16-bit word; core takes byte selected by addr[0].
 wire [23:0] adpcm_rom_addr_w;
 wire        adpcm_rom_req_w, adpcm_rom_ack_w;
-wire [15:0] adpcm_sdr_data_w;    // 16-bit word from SDRAM
-// kaneko_arcade wants a single byte; supply the byte selected by addr[0]
+wire [15:0] adpcm_sdr_data_w;
 wire  [7:0] adpcm_rom_data_w = adpcm_rom_addr_w[0]
                                 ? adpcm_sdr_data_w[15:8]
                                 : adpcm_sdr_data_w[7:0];
+
+// Z80 ROM wires (share CH3 with ADPCM via arbiter below)
+wire [15:0] z80_rom_addr_w;
+wire        z80_sdr_req_w, z80_sdr_ack_w;
+wire [15:0] z80_sdr_data_w;
+wire  [7:0] z80_sdr_byte_w = z80_rom_addr_w[0]
+                               ? z80_sdr_data_w[15:8]
+                               : z80_sdr_data_w[7:0];
+
+//----------------------------------------------------------------
+// CH3 arbiter: ADPCM and Z80 ROM share adpcm channel.
+// ADPCM has priority (time-critical for audio samples).
+//   owner: 0=ADPCM, 1=Z80
+//----------------------------------------------------------------
+wire [26:0] ch3_addr;
+wire        ch3_req;
+wire [15:0] ch3_data_out;
+wire        ch3_ack;
+
+logic ch3_owner;
+logic ch3_busy;
+
+wire adpcm_pend = (adpcm_rom_req_w != adpcm_rom_ack_w);
+wire z80_pend   = (z80_sdr_req_w   != z80_sdr_ack_w);
+
+logic ch3_req_r;
+logic [26:0] ch3_addr_r;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ch3_req_r  <= 1'b0;
+        ch3_addr_r <= 27'b0;
+        ch3_owner  <= 1'b0;
+        ch3_busy   <= 1'b0;
+    end else begin
+        if (!ch3_busy) begin
+            if (adpcm_pend) begin
+                ch3_addr_r <= {3'b0, adpcm_rom_addr_w};
+                ch3_req_r  <= ~ch3_req_r;
+                ch3_owner  <= 1'b0;
+                ch3_busy   <= 1'b1;
+            end else if (z80_pend) begin
+                // Z80 ROM at SDRAM 0x300000
+                ch3_addr_r <= 27'h300000 + {11'b0, z80_rom_addr_w[15:1]};
+                ch3_req_r  <= ~ch3_req_r;
+                ch3_owner  <= 1'b1;
+                ch3_busy   <= 1'b1;
+            end
+        end else begin
+            if (ch3_req_r == ch3_ack)
+                ch3_busy <= 1'b0;
+        end
+    end
+end
+
+assign ch3_addr = ch3_addr_r;
+assign ch3_req  = ch3_req_r;
+
+// Route ack back to winning client
+assign adpcm_rom_ack_w = (ch3_owner == 1'b0) ? ch3_ack : adpcm_rom_req_w;
+assign z80_sdr_ack_w   = (ch3_owner == 1'b1) ? ch3_ack : z80_sdr_req_w;
+
+assign adpcm_sdr_data_w = ch3_data_out;
+assign z80_sdr_data_w   = ch3_data_out;
 
 sdram_b u_sdram
 (
@@ -451,11 +516,11 @@ sdram_b u_sdram
     .gfx_req    (gfx_sdr_req),
     .gfx_ack    (gfx_sdr_ack),
 
-    // CH3: ADPCM ROM reads (16-bit)
-    .adpcm_addr ({3'b0, adpcm_rom_addr_w}),   // 24-bit → 27-bit (zero-pad upper 3)
-    .adpcm_data (adpcm_sdr_data_w),
-    .adpcm_req  (adpcm_rom_req_w),
-    .adpcm_ack  (adpcm_rom_ack_w),
+    // CH3: ADPCM + Z80 ROM (arbitrated)
+    .adpcm_addr (ch3_addr),
+    .adpcm_data (ch3_data_out),
+    .adpcm_req  (ch3_req),
+    .adpcm_ack  (ch3_ack),
 
     // SDRAM chip pins
     .SDRAM_A    (SDRAM_A),
@@ -568,14 +633,20 @@ kaneko_arcade u_kaneko_arcade
     .snd_left        (core_snd_left),
     .snd_right       (core_snd_right),
 
-    // ── ADPCM ROM (SDRAM CH3) ─────────────────────────────────────────────────
+    // ── ADPCM ROM (SDRAM CH3, arbitrated) ────────────────────────────────────
     .adpcm_rom_addr  (adpcm_rom_addr_w),
     .adpcm_rom_req   (adpcm_rom_req_w),
     .adpcm_rom_data  (adpcm_rom_data_w),
     .adpcm_rom_ack   (adpcm_rom_ack_w),
 
     // ── Sound clock enable ────────────────────────────────────────────────────
-    .clk_sound_cen   (clk_sound_cen)
+    .clk_sound_cen   (clk_sound_cen),
+
+    // ── Z80 sound ROM (SDRAM CH3, arbitrated) ────────────────────────────────
+    .z80_rom_addr    (z80_rom_addr_w),
+    .z80_rom_req     (z80_sdr_req_w),
+    .z80_rom_data    (z80_sdr_byte_w),
+    .z80_rom_ack     (z80_sdr_ack_w)
 );
 
 //////////////////////////////////////////////////////////////////

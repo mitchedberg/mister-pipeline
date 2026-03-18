@@ -48,6 +48,14 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/uaddrPla.s
 set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/rtl/fx68k_adapter.sv
 
 # =========================================================================
+# Z80 SOUND CPU (T80s)
+# =========================================================================
+# T80s: Cycle-accurate Z80 implementation (from jtframe / T80 project)
+# Copied from chips/toaplan_v2/rtl/t80/ (same binary as jtframe source)
+
+set_global_assignment -name VERILOG_FILE ../rtl/t80/T80s.v
+
+# =========================================================================
 # SOUND CHIPS
 # =========================================================================
 

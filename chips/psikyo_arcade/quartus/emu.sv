@@ -26,12 +26,14 @@
 //   0x00 — Program ROM (2 MB, SDRAM base 0)
 //   0x01 — Sprite / GFX ROM (to SDRAM 0x200000)
 //   0x02 — BG tile ROM (to SDRAM 0x600000)
+//   0x03 — Z80 sound ROM (to SDRAM 0xA80000)
 //   0xFE — DIP switch / NVRAM init data
 //
 // SDRAM layout (IS42S16320F, 32 MB):
 //   0x000000 – 0x1FFFFF   2 MB    CPU program ROM
 //   0x200000 – 0x5FFFFF   4 MB    Sprite ROM (PS2001B / Gate 3)
 //   0x600000 – 0x9FFFFF   4 MB    BG tile ROM (PS3103 / Gate 4)
+//   0xA80000 – 0xA87FFF   32KB    Z80 sound ROM
 // -------------------------------------------------------------------------
 
 module emu
@@ -413,25 +415,29 @@ wire [15:0] adpcm_sdr_data;
 wire        adpcm_sdr_req, adpcm_sdr_ack;
 
 //----------------------------------------------------------------
-// CH3 arbiter: BG and ADPCM share the single adpcm port on sdram_b.
-// BG is priority 0 (scanline-critical); ADPCM is priority 1.
-// We use a round-robin / BG-priority scheme:
-//   - If BG req differs from BG ack, forward BG to CH3.
-//   - Else if ADPCM req differs from ADPCM ack, forward ADPCM to CH3.
-//   - Shared data and ack are returned to the winner.
+// CH3 arbiter: BG, ADPCM, and Z80 ROM share the single adpcm port on sdram_b.
+// Priority: BG (scanline-critical) > ADPCM > Z80 ROM (background fetch).
+//   owner: 0=BG, 1=ADPCM, 2=Z80 ROM
 //----------------------------------------------------------------
 wire [26:0] ch3_addr;
 wire        ch3_req;
 wire [15:0] ch3_data_out;
 wire        ch3_ack;
 
-// Which client currently owns CH3 (0 = BG, 1 = ADPCM)
-logic ch3_owner;   // registered at time of arbitration
-logic ch3_busy;    // CH3 has an in-flight request
+// Z80 ROM wires
+wire [15:0] z80_rom_addr_w;
+wire        z80_sdr_req, z80_sdr_ack;
+wire  [7:0] z80_sdr_byte;
 
-// Pend flags: a new request arrived for each client
+// Byte lane select for Z80 ROM (addr bit 0)
+assign z80_sdr_byte = z80_rom_addr_w[0] ? ch3_data_out[15:8] : ch3_data_out[7:0];
+
+logic [1:0] ch3_owner;   // 0=BG, 1=ADPCM, 2=Z80
+logic ch3_busy;
+
 wire bg_pend    = (bg_sdr_req    != bg_sdr_ack);
 wire adpcm_pend = (adpcm_sdr_req != adpcm_sdr_ack);
+wire z80_pend   = (z80_sdr_req   != z80_sdr_ack);
 
 logic ch3_req_r;
 logic [26:0] ch3_addr_r;
@@ -440,39 +446,45 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         ch3_req_r  <= 1'b0;
         ch3_addr_r <= 27'b0;
-        ch3_owner  <= 1'b0;
+        ch3_owner  <= 2'd0;
         ch3_busy   <= 1'b0;
     end else begin
         if (!ch3_busy) begin
             if (bg_pend) begin
                 ch3_addr_r <= bg_sdr_addr;
                 ch3_req_r  <= ~ch3_req_r;
-                ch3_owner  <= 1'b0;
+                ch3_owner  <= 2'd0;
                 ch3_busy   <= 1'b1;
             end else if (adpcm_pend) begin
                 ch3_addr_r <= adpcm_sdr_addr;
                 ch3_req_r  <= ~ch3_req_r;
-                ch3_owner  <= 1'b1;
+                ch3_owner  <= 2'd1;
+                ch3_busy   <= 1'b1;
+            end else if (z80_pend) begin
+                // Z80 ROM at SDRAM 0xA80000; z80_rom_addr_w is 16-bit byte addr
+                ch3_addr_r <= 27'hA80000 + {11'b0, z80_rom_addr_w[15:1]};
+                ch3_req_r  <= ~ch3_req_r;
+                ch3_owner  <= 2'd2;
                 ch3_busy   <= 1'b1;
             end
         end else begin
-            // Wait for sdram_b to ack
             if (ch3_req_r == ch3_ack)
                 ch3_busy <= 1'b0;
         end
     end
 end
 
-assign ch3_addr   = ch3_addr_r;
-assign ch3_req    = ch3_req_r;
+assign ch3_addr = ch3_addr_r;
+assign ch3_req  = ch3_req_r;
 
 // Route ack back to the winning client
-assign bg_sdr_ack    = (ch3_owner == 1'b0) ? ch3_ack    : bg_sdr_req;
-assign adpcm_sdr_ack = (ch3_owner == 1'b1) ? ch3_ack    : adpcm_sdr_req;
+assign bg_sdr_ack    = (ch3_owner == 2'd0) ? ch3_ack : bg_sdr_req;
+assign adpcm_sdr_ack = (ch3_owner == 2'd1) ? ch3_ack : adpcm_sdr_req;
+assign z80_sdr_ack   = (ch3_owner == 2'd2) ? ch3_ack : z80_sdr_req;
 
-// Route read data back to the winning client (both see the same word;
-// byte-lane selection is done inside psikyo_arcade / gate4 respectively)
-assign bg_sdr_data   = ch3_data_out;
+// Route read data back to the winning client (all see the same 16-bit word;
+// byte-lane selection for Z80 is done above via z80_sdr_byte)
+assign bg_sdr_data    = ch3_data_out;
 assign adpcm_sdr_data = ch3_data_out;
 
 sdram_b u_sdram
@@ -620,7 +632,13 @@ psikyo_arcade u_psikyo_arcade
     .coin            (coin),
     .service         (service),
     .dipsw1          (dsw[0]),
-    .dipsw2          (dsw[1])
+    .dipsw2          (dsw[1]),
+
+    // Z80 sound ROM (shared CH3 via arbiter)
+    .z80_rom_addr    (z80_rom_addr_w),
+    .z80_rom_req     (z80_sdr_req),
+    .z80_rom_data    (z80_sdr_byte),
+    .z80_rom_ack     (z80_sdr_ack)
 );
 
 // Route YM2610B audio to MiSTer AUDIO_L/R

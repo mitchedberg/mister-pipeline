@@ -10,8 +10,7 @@
 //   work_ram   — 64KB at 0x080000–0x08FFFF (MC68000 general-purpose)
 //   palette_ram — 512 entries × 16-bit at 0x0E0000–0x0E03FF (CPU-writable)
 //
-// Stubbed:
-//   Z80 sound CPU, YM2203, OKI M6295 (silence)
+// Z80 sound CPU: T80s core, 8 MHz, drives YM2203 and OKI M6295
 //
 // Target game: Thunder Dragon (nmk16 hardware variant)
 //   MC68000 @ 10 MHz, VBLANK IRQ = level 4
@@ -117,7 +116,14 @@ module nmk_arcade #(
     output logic [23:0] adpcm_rom_addr,
     output logic        adpcm_rom_req,
     input  logic [15:0] adpcm_rom_data,
-    input  logic        adpcm_rom_ack
+    input  logic        adpcm_rom_ack,
+
+    // ── Z80 Sound CPU ROM SDRAM interface ────────────────────────────────────────
+    // Z80 ROM: 48KB at SDRAM base 0x280000.  16-bit word address output.
+    output logic [15:0] z80_rom_addr,    // Z80 16-bit PC / address
+    output logic        z80_rom_req,     // toggle on new fetch request
+    input  logic  [7:0] z80_rom_data,   // byte returned from SDRAM
+    input  logic        z80_rom_ack     // toggle when data is ready
 );
 
 // =============================================================================
@@ -615,21 +621,43 @@ assign hsync_n = hsync_n_in;
 assign vsync_n = vsync_n_in;
 
 // =============================================================================
-// Sound — YM2203 (jt03) + OKI M6295 (jt6295)
+// Sound — Z80 @ 8 MHz (T80s) + YM2203 (jt03) + OKI M6295 (jt6295)
 //
-// Z80 @ 8 MHz is stubbed: jt03 cs_n=1 (FM silent), jt6295 receives sound_cmd
-// via a simple write bridge. When a real Z80 sub-CPU is added, replace the
-// direct-command path with Z80 memory bus signals.
+// Z80 address map (NMK16 / Thunder Dragon hardware):
+//   0x0000–0x7FFF   ROM (from SDRAM, via z80_rom_* ports)
+//   0x8000–0x8001   YM2203 (A0=reg/data select)
+//   0xA000          OKI M6295
+//   0xC000–0xCFFF   Z80 RAM (4KB BRAM, mirrored to 0xDFFF)
+//   0xF000          Sound command latch (read from M68K)
 //
-// YM2203 clock: 1.5 MHz (clk_sys / ~26.7). We use the closest integer divider
-// with a clock-enable: ce_fm fires every 27 clk_sys ticks (~1.48 MHz).
-// OKI M6295 clock: 1 MHz (clk_sys / 40). ce_oki fires every 40 clk_sys ticks.
-//
-// ADPCM ROM: jt6295 outputs an 18-bit byte address. Map to SDRAM at base
-// 0x200000 using a toggle-handshake bridge (same pattern as sprite ROM above).
+// Clock enables (clk_sys = 40 MHz):
+//   ce_z80 : 8 MHz  — every 5th cycle
+//   ce_fm  : 1.5 MHz — every 27th cycle  (YM2203 input)
+//   ce_oki : 1 MHz   — every 40th cycle  (OKI M6295 input)
 // =============================================================================
 
 // ── Clock enables ──────────────────────────────────────────────────────────
+
+// Z80 clock enable: 40 MHz / 5 = 8 MHz
+logic [2:0] ce_z80_cnt;
+logic       ce_z80;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ce_z80_cnt <= 3'd0;
+        ce_z80     <= 1'b0;
+    end else begin
+        if (ce_z80_cnt == 3'd4) begin
+            ce_z80_cnt <= 3'd0;
+            ce_z80     <= 1'b1;
+        end else begin
+            ce_z80_cnt <= ce_z80_cnt + 3'd1;
+            ce_z80     <= 1'b0;
+        end
+    end
+end
+
+// YM2203 clock enable: 40 MHz / 27 ≈ 1.48 MHz
 logic [5:0] ce_fm_cnt;
 logic       ce_fm;
 
@@ -648,6 +676,7 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     end
 end
 
+// OKI clock enable: 40 MHz / 40 = 1 MHz
 logic [5:0] ce_oki_cnt;
 logic       ce_oki;
 
@@ -666,23 +695,144 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     end
 end
 
-// ── YM2203 (jt03) ───────────────────────────────────────────────────────────
-// cs_n=1 stubs FM output to silence until Z80 sub-CPU is implemented.
+// =============================================================================
+// Z80 Sound CPU — T80s
+// =============================================================================
+
+// Z80 bus signals
+logic        z80_mreq_n, z80_iorq_n, z80_rd_n, z80_wr_n;
+logic        z80_m1_n, z80_rfsh_n, z80_halt_n, z80_busak_n;
+logic [15:0] z80_addr;
+logic  [7:0] z80_dout_cpu;
+
+// Z80 wait: held low while ROM SDRAM fetch is pending
+logic        z80_wait_n;
+
+// Z80 interrupt: driven by YM2203 irq_n
+wire         z80_int_n;
+
+// Z80 4KB internal RAM (0xC000–0xCFFF)
+logic [7:0] z80_ram [0:4095];
+logic [7:0] z80_ram_dout_r;
+
+// ── Z80 chip-select decode ────────────────────────────────────────────────────
+logic z80_rom_cs;   // 0x0000–0x7FFF
+logic z80_ym_cs;    // 0x8000–0x8001 (YM2203)
+logic z80_oki_cs;   // 0xA000        (OKI M6295)
+logic z80_ram_cs;   // 0xC000–0xCFFF (4KB RAM)
+logic z80_cmd_cs;   // 0xF000        (sound command latch)
+
+always_comb begin
+    z80_rom_cs = (!z80_mreq_n) && (z80_addr[15] == 1'b0);
+    z80_ym_cs  = (!z80_mreq_n) && (z80_addr[15:1] == 15'h4000);
+    z80_oki_cs = (!z80_mreq_n) && (z80_addr[15:12] == 4'hA);
+    z80_ram_cs = (!z80_mreq_n) && (z80_addr[15:12] == 4'hC);
+    z80_cmd_cs = (!z80_mreq_n) && (z80_addr[15:12] == 4'hF);
+end
+
+// ── Z80 ROM SDRAM bridge ─────────────────────────────────────────────────────
+logic z80_rom_pending;
+logic z80_rom_req_r;
+logic [7:0] z80_rom_latch;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        z80_rom_req_r   <= 1'b0;
+        z80_rom_pending <= 1'b0;
+        z80_rom_latch   <= 8'hFF;
+        z80_wait_n      <= 1'b1;
+    end else begin
+        if (z80_rom_cs && !z80_rd_n && !z80_rom_pending) begin
+            z80_rom_req_r   <= ~z80_rom_req_r;
+            z80_rom_pending <= 1'b1;
+            z80_wait_n      <= 1'b0;    // stall Z80
+        end else if (z80_rom_pending && (z80_rom_req_r == z80_rom_ack)) begin
+            z80_rom_latch   <= z80_rom_data;
+            z80_rom_pending <= 1'b0;
+            z80_wait_n      <= 1'b1;    // release Z80
+        end
+    end
+end
+
+assign z80_rom_req  = z80_rom_req_r;
+assign z80_rom_addr = z80_addr;
+
+// ── Z80 RAM ──────────────────────────────────────────────────────────────────
+always_ff @(posedge clk_sys) begin
+    if (z80_ram_cs && !z80_wr_n)
+        z80_ram[z80_addr[11:0]] <= z80_dout_cpu;
+end
+
+always_ff @(posedge clk_sys) begin
+    if (z80_ram_cs) z80_ram_dout_r <= z80_ram[z80_addr[11:0]];
+end
+
+// ── Z80 data bus read mux ────────────────────────────────────────────────────
+logic [7:0] z80_din_mux;
+
+wire  [7:0] ym_dout_w;    // YM2203 read data (for Z80)
+wire  [7:0] oki_dout_w;   // OKI M6295 read data
+
+always_comb begin
+    if (z80_ym_cs)
+        z80_din_mux = ym_dout_w;
+    else if (z80_oki_cs)
+        z80_din_mux = oki_dout_w;
+    else if (z80_cmd_cs)
+        z80_din_mux = sound_cmd;
+    else if (z80_ram_cs)
+        z80_din_mux = z80_ram_dout_r;
+    else if (z80_rom_cs)
+        z80_din_mux = z80_rom_latch;
+    else
+        z80_din_mux = 8'hFF;
+end
+
+T80s u_z80 (
+    .RESET_n  (reset_n),
+    .CLK      (clk_sys),
+    .CEN      (ce_z80),
+    .WAIT_n   (z80_wait_n),
+    .INT_n    (z80_int_n),
+    .NMI_n    (1'b1),
+    .BUSRQ_n  (1'b1),
+    .OUT0     (1'b0),
+    .DI       (z80_din_mux),
+    .M1_n     (z80_m1_n),
+    .MREQ_n   (z80_mreq_n),
+    .IORQ_n   (z80_iorq_n),
+    .RD_n     (z80_rd_n),
+    .WR_n     (z80_wr_n),
+    .RFSH_n   (z80_rfsh_n),
+    .HALT_n   (z80_halt_n),
+    .BUSAK_n  (z80_busak_n),
+    .A        (z80_addr),
+    .DOUT     (z80_dout_cpu)
+);
+
+// ── YM2203 chip-select and write enables ──────────────────────────────────────
+wire        ym_cs_n_w = ~z80_ym_cs;
+wire        ym_wr_n_w = z80_wr_n | ~z80_ym_cs;
+wire        ym_addr_w = z80_addr[0];    // A0 selects register vs data
+
+// YM2203 irq_n → Z80 INT
+wire        fm_irq_n_w;
+assign      z80_int_n = fm_irq_n_w;
+
 wire signed [15:0] fm_snd_w;
 wire         [9:0] psg_snd_w;
-wire               fm_irq_n_w;
 
 jt03 u_ym2203 (
     .rst        (~reset_n),
     .clk        (clk_sys),
     .cen        (ce_fm),
-    .din        (8'h00),
-    .addr       (1'b0),
-    .cs_n       (1'b1),         // stubbed: no Z80 writes yet
-    .wr_n       (1'b1),
-    .dout       (),
+    .din        (z80_dout_cpu),
+    .addr       (ym_addr_w),
+    .cs_n       (ym_cs_n_w),
+    .wr_n       (ym_wr_n_w),
+    .dout       (ym_dout_w),
     .irq_n      (fm_irq_n_w),
-    // YM2203 I/O pins — unused on NMK16 (Z80 GPIO not used for controls)
+    // YM2203 I/O pins — unused on NMK16
     .IOA_in     (8'hFF),
     .IOB_in     (8'hFF),
     .IOA_out    (),
@@ -701,8 +851,6 @@ jt03 u_ym2203 (
 );
 
 // ── OKI M6295 (jt6295) ADPCM ROM bridge ─────────────────────────────────────
-// jt6295 rom_addr: 18-bit byte address into ADPCM sample ROM.
-// Map to SDRAM CH4 at base 0x200000: sdram_word_addr = 0x200000 + rom_addr[17:1]
 localparam logic [26:0] ADPCM_ROM_BASE = 27'h200000;
 
 wire [17:0] oki_rom_addr_w;
@@ -710,8 +858,6 @@ wire  [7:0] oki_rom_data_w;
 wire        oki_rom_ok_w;
 wire signed [13:0] oki_sound_w;
 
-// Toggle-handshake bridge: jt6295 asserts new rom_addr each sample tick.
-// We issue an SDRAM read on every address change, return byte to oki_rom_data_w.
 logic        oki_req_pending;
 logic        oki_byte_sel_r;
 logic [17:0] oki_addr_prev;
@@ -726,7 +872,6 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
         oki_sdram_data_r<= 16'h0;
     end else begin
         if ((oki_rom_addr_w != oki_addr_prev) && !oki_req_pending) begin
-            // New address — issue SDRAM read
             adpcm_rom_addr  <= {6'b0, oki_rom_addr_w[17:1]} + ADPCM_ROM_BASE[23:0];
             oki_byte_sel_r  <= oki_rom_addr_w[0];
             oki_addr_prev   <= oki_rom_addr_w;
@@ -739,20 +884,22 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     end
 end
 
-// Return correct byte to jt6295
 assign oki_rom_data_w = oki_byte_sel_r ? oki_sdram_data_r[7:0]
                                        : oki_sdram_data_r[15:8];
 assign oki_rom_ok_w   = !oki_req_pending;
+
+// OKI write enable: Z80 writes when z80_oki_cs asserted and wr_n low
+wire oki_wrn_w = z80_wr_n | ~z80_oki_cs;
 
 jt6295 u_oki_m6295 (
     .rst        (~reset_n),
     .clk        (clk_sys),
     .cen        (ce_oki),
     .ss         (1'b1),         // ss=1 → 7350 Hz sample rate (standard NMK16)
-    // CPU interface — sound_cmd written directly (Z80 stub)
-    .wrn        (1'b1),         // no CPU writes yet (Z80 stub)
-    .din        (sound_cmd),
-    .dout       (),
+    // CPU interface — driven by Z80
+    .wrn        (oki_wrn_w),
+    .din        (z80_dout_cpu),
+    .dout       (oki_dout_w),
     // ROM interface
     .rom_addr   (oki_rom_addr_w),
     .rom_data   (oki_rom_data_w),
@@ -762,10 +909,9 @@ jt6295 u_oki_m6295 (
     .sample     ()
 );
 
-// ── Audio mix: FM (16-bit) + ADPCM (14-bit sign-extended to 16-bit) ──────────
-// Simple saturation-free add; keep 16-bit signed result.
+// ── Audio mix: FM (16-bit) + ADPCM (14-bit) + PSG (10-bit) ──────────────────
 wire signed [15:0] oki_snd_16 = {{2{oki_sound_w[13]}}, oki_sound_w};
-wire signed [15:0] psg_snd_16 = {6'b0, psg_snd_w};   // PSG: unsigned 10-bit → pad
+wire signed [15:0] psg_snd_16 = {6'b0, psg_snd_w};
 
 always_comb begin
     snd_left  = fm_snd_w + oki_snd_16 + psg_snd_16;
@@ -797,7 +943,9 @@ assign _unused = ^{
     final_valid,
     pal_entry[15],
     fm_irq_n_w,
-    sound_cmd
+    // Z80 signals not consumed at top level
+    z80_m1_n, z80_rfsh_n, z80_halt_n, z80_busak_n, z80_iorq_n,
+    oki_dout_w
 };
 /* verilator lint_on UNUSED */
 
