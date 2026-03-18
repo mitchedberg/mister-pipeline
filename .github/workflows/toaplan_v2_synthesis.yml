@@ -1,0 +1,73 @@
+name: Toaplan V2 Synthesis
+
+on:
+  push:
+    paths:
+      - 'chips/toaplan_v2/**'
+      - '.github/workflows/toaplan_v2_synthesis.yml'
+    branches:
+      - master
+      - main
+  pull_request:
+    paths:
+      - 'chips/toaplan_v2/**'
+  workflow_dispatch:
+
+jobs:
+  quartus-toaplan-v2-synthesis:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Quartus synthesis (Docker)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/toaplan_v2/quartus && /opt/intelFPGA/quartus/bin/quartus_sh --flow compile toaplan_v2 2>&1 | tee /workspace/toaplan_v2_synthesis.log; exit \${PIPESTATUS[0]}"
+
+      - name: Upload synthesis log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toaplan_v2_synthesis_log
+          path: toaplan_v2_synthesis.log
+          retention-days: 7
+
+      - name: Collect artifacts
+        if: success()
+        run: |
+          mkdir -p /tmp/v2_artifacts
+          cp chips/toaplan_v2/quartus/output_files/toaplan_v2.rbf /tmp/v2_artifacts/
+          cp chips/toaplan_v2/mra/*.mra /tmp/v2_artifacts/ 2>/dev/null || true
+          ls -lh /tmp/v2_artifacts/
+
+      - name: Upload RBF
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toaplan_v2_rbf
+          path: /tmp/v2_artifacts/
+          retention-days: 30
+          compression-level: 0
+
+      - name: Upload synthesis reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toaplan_v2_synthesis_reports
+          path: |
+            chips/toaplan_v2/quartus/output_files/*.rpt
+            chips/toaplan_v2/quartus/*.rpt
+          retention-days: 14
+
+      - name: Report status
+        if: always()
+        run: |
+          echo "Job Status: ${{ job.status }}"
+          RPT=chips/toaplan_v2/quartus/output_files/toaplan_v2.fit.rpt
+          if [ -f "$RPT" ]; then
+            grep -E "^Total logic elements|Total memory bits|Total pins|I/O pins used" "$RPT" || true
+          fi
