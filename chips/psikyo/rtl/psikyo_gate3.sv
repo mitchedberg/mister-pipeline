@@ -39,15 +39,15 @@ module psikyo_gate3 (
     input  logic        rst_n,
 
     // ── Gate 2 display list (from PS2001B sprite scanner) ─────────────────
-    input  logic [9:0]  display_list_x       [0:255],
-    input  logic [9:0]  display_list_y       [0:255],
-    input  logic [15:0] display_list_tile    [0:255],
-    input  logic [3:0]  display_list_palette [0:255],
-    input  logic        display_list_flip_x  [0:255],
-    input  logic        display_list_flip_y  [0:255],
-    input  logic [1:0]  display_list_priority[0:255],
-    input  logic [2:0]  display_list_size    [0:255],
-    input  logic        display_list_valid   [0:255],
+    input  logic [255:0][9:0]  display_list_x,
+    input  logic [255:0][9:0]  display_list_y,
+    input  logic [255:0][15:0] display_list_tile,
+    input  logic [255:0][3:0]  display_list_palette,
+    input  logic [255:0]       display_list_flip_x,
+    input  logic [255:0]       display_list_flip_y,
+    input  logic [255:0][1:0]  display_list_priority,
+    input  logic [255:0][2:0]  display_list_size,
+    input  logic [255:0]       display_list_valid,
     input  logic [7:0]  display_list_count,           // number of entries to render
 
     // ── Rasterizer control ────────────────────────────────────────────────

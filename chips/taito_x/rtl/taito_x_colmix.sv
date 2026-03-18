@@ -156,8 +156,7 @@ altsyncram #(
     .wren_a     (cpu_pal_cs && cpu_pal_we),
     .byteena_a  (cpu_pal_be),
     .q_a        (pal_ram_cpu_q),
-    // Port B — pixel display read
-    .clock1     (clk),
+    // Port B — pixel display read (all port B regs on CLOCK0 via address_reg_b)
     .address_b  (win_index[10:0]),
     .data_b     (16'b0),
     .wren_b     (1'b0),
