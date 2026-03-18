@@ -179,9 +179,10 @@ altsyncram #(
     .ram_block_type         ("M10K"),
     .read_during_write_mode_port_a ("NEW_DATA_WITH_NBE_READ"),
     .read_during_write_mode_port_b ("NEW_DATA_WITH_NBE_READ"),
-    .outdata_reg_a          ("UNREGISTERED"),
-    .outdata_reg_b          ("UNREGISTERED"),
+    .outdata_reg_a          ("CLOCK0"),
+    .outdata_reg_b          ("CLOCK0"),
     .address_reg_b          ("CLOCK0"),
+    .rdcontrol_reg_b        ("CLOCK0"),
     .numwords_a             (32768),
     .numwords_b             (32768)
 ) vram_inst (

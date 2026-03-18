@@ -517,16 +517,11 @@ module kaneko16 #(
     logic [DATA_WIDTH-1:0] sprite_ram_dout_r;
 
     // Write to sprite RAM on write strobe
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            // Initialize sprite RAM to sentinel (0x01FF means inactive)
-            for (int i = 0; i < 8192; i++) begin
-                sprite_ram_mem[i] <= 16'h01FF;
-            end
-        end else begin
-            if (write_strobe && is_sprite_ram) begin
-                sprite_ram_mem[cpu_addr[12:0]] <= cpu_din;
-            end
+    // Note: no reset initialization — CPU writes all entries before display starts.
+    // (Quartus limits reset loops to 5000 iterations; 8192-entry init is not synthesis-friendly.)
+    always_ff @(posedge clk) begin
+        if (write_strobe && is_sprite_ram) begin
+            sprite_ram_mem[cpu_addr[12:0]] <= cpu_din;
         end
     end
 
