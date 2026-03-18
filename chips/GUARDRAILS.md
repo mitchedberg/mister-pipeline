@@ -46,16 +46,16 @@ Formal width is 1 bit. Multi-bit connections cause Warning 12020.
 | tc0630fdp | ✅ `chips/tc0630fdp/standalone_synth/` | Not yet run | |
 | tc0480scp | ✅ `chips/tc0480scp/standalone_synth/` | Not yet run | |
 | tc0370mso | ✅ `chips/tc0370mso/standalone_synth/` | Not yet run | |
-| tc0150rod | ❌ needed | — | |
+| tc0150rod | ✅ `chips/tc0150rod/standalone_synth/` | Not yet run | |
 | tc0180vcu | ✅ `chips/tc0180vcu/standalone_synth/` | Not yet run | |
-| tc0260dar | ❌ needed | — | |
-| nmk_arcade | ✅ `chips/nmk_arcade/standalone_synth/` | Not yet run | Full system: FITS, -17ns timing |
-| psikyo_arcade | ✅ `chips/psikyo_arcade/standalone_synth/` | Not yet run | Full system: FITS, -42ns timing |
+| tc0650fda | ✅ `chips/tc0650fda/standalone_synth/` | Not yet run | |
+| nmk_arcade | ✅ `chips/nmk_arcade/standalone_synth/` | Not yet run | Full system FITS, SDC multicycle added |
+| psikyo_arcade | ✅ `chips/psikyo_arcade/standalone_synth/` | Not yet run | Full system FITS, SDC multicycle added |
 | kaneko_arcade | ✅ `chips/kaneko_arcade/standalone_synth/` | Not yet run | |
-| toaplan_v2 | ❌ needed | — | GP9001 VRAM deferred |
-| taito_b | ❌ needed | — | Full system: ~165% ALM est. |
-| taito_f3 | ❌ needed | — | Full system: 128K/83K nodes |
-| taito_z | ❌ needed | — | Full system: 386% ALM overflow |
+| toaplan_v2 | ✅ `chips/toaplan_v2/standalone_synth/` | Not yet run | GP9001 VRAM deferred (32K MLAB→M10K) |
+| taito_b | ✅ `chips/taito_b/standalone_synth/` | Not yet run | Full system: ~165% ALM est. |
+| taito_f3 | ✅ `chips/taito_f3/standalone_synth/` | Not yet run | Full system: 128K/83K nodes |
+| taito_z | ✅ `chips/taito_z/standalone_synth/` | Not yet run | Full system: 386% ALM overflow |
 | taito_x | ✅ `chips/taito_x/standalone_synth/` | Not yet run | |
 
 ---
