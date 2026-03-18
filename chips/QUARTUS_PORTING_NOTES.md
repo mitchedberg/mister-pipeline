@@ -580,6 +580,132 @@ Affected: `tc0630fdp_lineram.sv` (13 packed 2D outputs, each with 4-element rese
 
 ---
 
+## 21. Large Arrays With Combinational Reads OOM (Error 293007) — MLAB vs M10K
+
+Any large unpacked array with a **combinational (async) read** (`assign q = ram[addr]`) blocks
+BRAM inference in Quartus 17.0. Quartus tries to synthesize the whole array as flip-flops,
+which instantly OOMs quartus_map (Error 293007) for anything >a few KB.
+
+**Root cause:** Quartus 17.0 BRAM inference requires *registered* (synchronous) reads.
+Combinational reads prevent M10K inference. The fallback is N×W flip-flops — too expensive.
+
+### Decision matrix
+
+| Array size | Read type | Recommended fix |
+|------------|-----------|----------------|
+| ≤ 512 Kbits | Combinational (`assign q = ram[addr]`) | `(* ramstyle = "MLAB" *)` — Cyclone V MLAB supports async read |
+| > 512 Kbits | Combinational | Must convert to registered read + `(* ramstyle = "M10K" *)` |
+| Any size | Registered (`always_ff q <= ram[addr]`) | `(* ramstyle = "M10K" *)` sufficient |
+
+**MLAB capacity rough guide (Cyclone V, 41,910 ALMs):**
+- Each ALM = 64-bit MLAB
+- N-entry × W-bit array needs N×W/64 ALMs
+- 8K×16 = 128 Kbits → 2,048 ALMs (OK)
+- 32K×16 = 512 Kbits → 8,192 ALMs (marginal — ~20% of device, use only if necessary)
+- 14K×72 = 1 Mbit → 16,384 ALMs (too large — use M10K + registered read)
+
+**MLAB pattern (for arrays with combinational reads):**
+```verilog
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [15:0] spr_ram [0:8191];
+`else
+logic [15:0] spr_ram [0:8191];
+`endif
+// assign rd_data = spr_ram[addr];  ← keep this as-is, MLAB supports it
+```
+
+**M10K pattern (for arrays too large for MLAB, requires registered read):**
+```verilog
+`ifdef QUARTUS
+(* ramstyle = "M10K" *) logic [71:0] slist_ram [0:14847];
+`else
+logic [71:0] slist_ram [0:14847];
+`endif
+
+`ifdef QUARTUS
+always_ff @(posedge clk)
+    rd_data <= slist_ram[rd_addr];  // registered read for M10K inference
+`else
+assign rd_data = slist_ram[rd_addr];  // combinational for simulation
+`endif
+```
+
+Wrap declarations in `` `ifdef QUARTUS `` so simulation is unaffected.
+
+**Arrays found in Taito F3/Z chips requiring BRAM attributes:**
+
+| Array | Module | Size | Fix |
+|-------|--------|------|-----|
+| `line_ram [0:32767]` | tc0630fdp_lineram | 512 Kbits | M10K + registered |
+| `text_ram [0:4095]` | tc0630fdp | 64 Kbits | MLAB |
+| `char_ram [0:8191]` | tc0630fdp | 64 Kbits | MLAB |
+| `pf_ram [0:3][0:6143]` | tc0630fdp | 393 Kbits | MLAB |
+| `spr_ram [0:32767]` | tc0630fdp | 512 Kbits | MLAB |
+| `pivot_ram [0:16383]` | tc0630fdp | 512 Kbits | MLAB |
+| `slist_ram [0:14847]` | tc0630fdp | 1 Mbit | M10K + registered |
+| `gfx_rom [0:GFX_ROM_WORDS-1]` | tc0630fdp | 128 Kbits | MLAB |
+| `pal_ram [0:8191]` | tc0630fdp | 128 Kbits | M10K (already registered) |
+| `mem [0:255][0:319]` | tc0370mso fbuf | 1 Mbit | M10K + registered |
+| `spr_ram [0:8191]` | tc0370mso | 128 Kbits | MLAB |
+| `road_ram [0:4095]` | tc0150rod | 64 Kbits | MLAB |
+
+---
+
+## 22. Registered-Read BRAM Latency — Pre-Advance Address by +1
+
+When converting a combinational read to a registered (synchronous) read for M10K inference,
+data appears **1 cycle after** the address. In display pipelines, the read address is typically
+the current pixel position, so data arrives one pixel late.
+
+**Fix: pre-advance the read address by +1 to compensate:**
+
+```verilog
+`ifdef QUARTUS
+    out_rd_x = hpos[8:0] + 9'd1;  // pre-advance: data arrives next cycle = current pixel
+`else
+    out_rd_x = hpos[8:0];          // simulation: combinational = same cycle
+`endif
+```
+
+**When this is needed:** any `always_ff` read where the read address is set and the data is
+consumed in the same conceptual cycle (same state machine step, same scan position).
+
+**When it is NOT needed:** FSMs where there is already a 1-cycle gap between address and
+data consumption ("state N sets address, state N+1 reads data"). These are already compatible
+with registered reads — the gap exists naturally.
+
+The "FSM-safe" label in the MLAB table above means the FSM already has a gap, so conversion
+to registered reads would also work if needed. MLAB is preferred for simplicity.
+
+---
+
+## 23. sdram_b Port Naming: `rst_n` not `reset_n`
+
+The `sdram_b` module (used by NMK, Psikyo, Kaneko, Toaplan V2) declares its reset port as
+`rst_n`, not `reset_n`. Connecting it as `.reset_n(reset_n)` causes Error (12002):
+"port does not exist in the entity".
+
+```verilog
+// WRONG — port doesn't exist:
+sdram_b sdram_b_inst (
+    ...
+    .reset_n(reset_n),   // ← Error 12002
+    ...
+);
+
+// Correct:
+sdram_b sdram_b_inst (
+    ...
+    .rst_n(reset_n),     // ← matches sdram_b declaration
+    ...
+);
+```
+
+Check the actual `sdram_b` module port list when instantiating any SDRAM controller —
+port naming conventions vary between `sdram_a`, `sdram_b`, `sdram_c` variants.
+
+---
+
 ## Systematic Error Peeling
 
 Each Quartus synthesis run reveals one layer of errors. Typical order for a new chip:
