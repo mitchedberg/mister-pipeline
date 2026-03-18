@@ -296,7 +296,11 @@ end
 // Write: linebuf[tile_col*16 + px] during BG_GFX3 (left) and BG_GFX7 (right)
 // Read:  layer_pixel = linebuf[(hpos + scrollX_frac) & 511]  (async)
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [9:0] linebuf [0:511];
+`else
 logic [9:0] linebuf [0:511];
+`endif
 
 assign layer_pixel = linebuf[(9'(hpos) + {5'b0, scroll_x_frac_r}) & 9'h1FF];
 

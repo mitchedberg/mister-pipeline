@@ -150,7 +150,11 @@ end
 // Written in TX_P2 (8 pixels per tile simultaneously).
 // Read combinationally during active display.
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [7:0] linebuf [0:511];
+`else
 logic [7:0] linebuf [0:511];
+`endif
 
 assign tx_pixel = linebuf[hpos];
 

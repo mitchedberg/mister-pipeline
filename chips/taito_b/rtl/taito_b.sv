@@ -300,7 +300,11 @@ logic        pal_ram_wel_n;
 logic        pal_ram_weh_n;
 
 // TC0260DAR drives RA[13:0] for both CPU and pixel access (muxed internally)
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [15:0] pal_ram [0:8191];
+`else
 logic [15:0] pal_ram [0:8191];
+`endif
 
 always_ff @(posedge clk_sys) begin
     if (!pal_ram_wel_n) pal_ram[pal_ram_addr[12:0]][7:0]  <= pal_ram_din[7:0];
@@ -694,7 +698,11 @@ assign z80_dout    = z80_cpu_din;
 // Width: 16-bit words; depth: 2^WRAM_ABITS words
 // nastar: 32KB (14-bit word addr, WRAM_ABITS=14)
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "M10K" *) logic [15:0] work_ram [0:(1<<WRAM_ABITS)-1];
+`else
 logic [15:0] work_ram [0:(1<<WRAM_ABITS)-1];
+`endif
 logic [15:0] wram_dout_r;
 
 always_ff @(posedge clk_sys) begin
