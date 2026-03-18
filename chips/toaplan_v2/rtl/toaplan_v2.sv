@@ -486,7 +486,11 @@ assign gfx_rom_addr = gfx_pending_addr;
 // Work RAM — 64KB synchronous block RAM
 // =============================================================================
 
+`ifdef QUARTUS
+(* ramstyle = "M10K" *) logic [15:0] work_ram [0:WRAM_WORDS-1];
+`else
 logic [15:0] work_ram [0:WRAM_WORDS-1];
+`endif
 logic [15:0] wram_dout_r;
 
 always_ff @(posedge clk_sys) begin

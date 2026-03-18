@@ -675,7 +675,12 @@ module gp9001 #(
     // ── VRAM storage: 32768 × 16-bit ─────────────────────────────────────────
     // Address: {layer[1:0], cell[11:0], word_sel[0]} = 15 bits
     // CPU window: {layer[1:0], 3'b000, addr[9:0]} (zero-extended, cells 0..511)
+    // MLAB: tile pipeline uses combinational reads (Stage 0 reads data same cycle as addr)
+    `ifdef QUARTUS
+    (* ramstyle = "MLAB" *) logic [15:0] vram [0:32767];
+    `else
     logic [15:0] vram [0:32767];
+    `endif
 
     logic [14:0] vram_cpu_addr;
     always_comb vram_cpu_addr = {vram_layer_sel_r, 3'b000, addr[9:0]};
@@ -896,9 +901,15 @@ module gp9001 #(
 
     // ── Scanline pixel buffer (Gate 4 internal) ──────────────────────────────
     // Internal buffer; read out via spr_rd_addr / spr_rd_color / spr_rd_valid.
+    `ifdef QUARTUS
+    (* ramstyle = "MLAB" *) logic [7:0]  spr_pix_color    [0:319];
+    (* ramstyle = "MLAB" *) logic        spr_pix_valid    [0:319];
+    (* ramstyle = "MLAB" *) logic        spr_pix_priority [0:319];
+    `else
     logic [7:0]  spr_pix_color    [0:319];
     logic        spr_pix_valid    [0:319];
     logic        spr_pix_priority [0:319];
+    `endif
 
     // ── Read-back port (combinational) ────────────────────────────────────────
     always_comb begin
