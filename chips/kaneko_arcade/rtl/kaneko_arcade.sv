@@ -534,19 +534,47 @@ assign gfx_rom_addr = gfx_pending_addr;
 // Work RAM — 64KB synchronous block RAM
 // =============================================================================
 
-logic [15:0] work_ram [0:WRAM_WORDS-1];
 logic [15:0] wram_dout_r;
 
+`ifdef QUARTUS
+altsyncram #(
+    .operation_mode         ("SINGLE_PORT"),
+    .width_a                (16),
+    .widthad_a              (WRAM_ABITS),
+    .numwords_a             (WRAM_WORDS),
+    .outdata_reg_a          ("CLOCK0"),
+    .clock_enable_input_a   ("BYPASS"),
+    .clock_enable_output_a  ("BYPASS"),
+    .intended_device_family ("Cyclone V"),
+    .lpm_type               ("altsyncram"),
+    .ram_block_type         ("M10K"),
+    .width_byteena_a        (2),
+    .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_a ("NEW_DATA_NO_NBE_READ")
+) work_ram_inst (
+    .clock0     (clk_sys),
+    .address_a  (cpu_addr[WRAM_ABITS:1]),
+    .data_a     (cpu_dout),
+    .wren_a     (wram_cs && !cpu_rw),
+    .byteena_a  ({~cpu_uds_n, ~cpu_lds_n}),
+    .q_a        (wram_dout_r),
+    .aclr0(1'b0), .addressstall_a(1'b0), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(1'b1)
+);
+`else
+logic [15:0] work_ram [0:WRAM_WORDS-1];
 always_ff @(posedge clk_sys) begin
     if (wram_cs && !cpu_rw) begin
         if (!cpu_uds_n) work_ram[cpu_addr[WRAM_ABITS:1]][15:8] <= cpu_dout[15:8];
         if (!cpu_lds_n) work_ram[cpu_addr[WRAM_ABITS:1]][ 7:0] <= cpu_dout[ 7:0];
     end
 end
-
+`endif
+`ifndef QUARTUS
 always_ff @(posedge clk_sys) begin
     if (wram_cs) wram_dout_r <= work_ram[cpu_addr[WRAM_ABITS:1]];
 end
+`endif
 
 // =============================================================================
 // Palette RAM — 512 × 16-bit synchronous block RAM
@@ -556,27 +584,75 @@ end
 // During active display, final_color from Gate 5 (8-bit palette index)
 // indexes into this RAM to produce RGB output.
 
-logic [15:0] palette_ram [0:511];
 logic [15:0] palram_cpu_dout;
 
+`ifdef QUARTUS
+logic [15:0] palram_cpu_raw, palram_pix_raw;
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (9), .numwords_a (512),
+    .width_b                   (16), .widthad_b (9), .numwords_b (512),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) palram_cpu_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpu_addr[9:1]),  .data_a(cpu_dout),
+    .wren_a(palram_cs && !cpu_rw), .byteena_a({~cpu_uds_n, ~cpu_lds_n}),
+    .address_b(cpu_addr[9:1]),  .q_b(palram_cpu_raw),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (9), .numwords_a (512),
+    .width_b                   (16), .widthad_b (9), .numwords_b (512),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) palram_pix_inst (
+    .clock0(clk_sys), .clock1(clk_sys),
+    .address_a(cpu_addr[9:1]),           .data_a(cpu_dout),
+    .wren_a(palram_cs && !cpu_rw), .byteena_a({~cpu_uds_n, ~cpu_lds_n}),
+    .address_b({1'b0, k16_final_color}), .q_b(palram_pix_raw),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+always_ff @(posedge clk_sys) begin
+    if (palram_cs) palram_cpu_dout <= palram_cpu_raw;
+end
+logic [15:0] pal_entry_r;
+always_ff @(posedge clk_sys) begin
+    if (clk_pix) pal_entry_r <= palram_pix_raw;
+end
+`else
+logic [15:0] palette_ram [0:511];
 always_ff @(posedge clk_sys) begin
     if (palram_cs && !cpu_rw) begin
         if (!cpu_uds_n) palette_ram[cpu_addr[9:1]][15:8] <= cpu_dout[15:8];
         if (!cpu_lds_n) palette_ram[cpu_addr[9:1]][ 7:0] <= cpu_dout[ 7:0];
     end
 end
-
 always_ff @(posedge clk_sys) begin
     if (palram_cs) palram_cpu_dout <= palette_ram[cpu_addr[9:1]];
 end
-
-// Pixel-domain palette lookup: final_color_w[7:0] → palette_ram entry
-// final_color is {palette[3:0], index[3:0]} = 8-bit → 256 palette entries.
-// Palette RAM has 512 entries; use bit 8 = 0 for standard entries.
 logic [15:0] pal_entry_r;
 always_ff @(posedge clk_sys) begin
     if (clk_pix) pal_entry_r <= palette_ram[{1'b0, k16_final_color}];
 end
+`endif
 
 // Expand R5G5B5 → R8G8B8 (replicate 3 MSBs into low 3 bits for linear scaling)
 assign rgb_r = {pal_entry_r[14:10], pal_entry_r[14:12]};
