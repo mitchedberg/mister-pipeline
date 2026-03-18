@@ -422,10 +422,14 @@ assign text_q_w = text_ram[text_rd_addr_w];
 // Character RAM (256 tiles × 8 rows × 4 bytes = 8KB)
 // =============================================================================
 `ifdef QUARTUS
-// BRAM-inferrable: widened to 32-bit so CPU writes to single word address
-// (the original 8-bit array had writes to {word,1'b0}/{word,1'b1} = two different
-// addresses, preventing MLAB inference) and engine reads one 32-bit word.
-(* ramstyle = "MLAB" *) logic [31:0] char_ram [0:2047];
+// Four 2048×8 MLAB arrays, one per byte lane of the 32-bit row word.
+// Splitting by lane eliminates byte-enable writes (each array has a plain write-enable
+// on the full 8-bit word) — the canonical pattern Quartus 17.0 infers as MLAB
+// without Warning 10999.  A 4:1 mux on the read side reassembles the 32-bit word.
+(* ramstyle = "MLAB" *) logic [7:0] char_ram_b3 [0:2047];  // bits [31:24]
+(* ramstyle = "MLAB" *) logic [7:0] char_ram_b2 [0:2047];  // bits [23:16]
+(* ramstyle = "MLAB" *) logic [7:0] char_ram_b1 [0:2047];  // bits [15: 8]
+(* ramstyle = "MLAB" *) logic [7:0] char_ram_b0 [0:2047];  // bits [ 7: 0]
 `else
 logic [7:0] char_ram [0:8191];
 `endif
@@ -436,8 +440,6 @@ assign char_word_addr = cpu_addr[12:1];
 `ifdef QUARTUS
 // Precomputed 4-bit byte-enable: maps cpu_be[1:0] into the correct byte lanes of the
 // 32-bit word based on which 16-bit half is being addressed (char_word_addr[0]).
-// All four writes target a single word address — the canonical pattern Quartus 17.0
-// infers as MLAB (conditional bit-range branches inside always_ff confuse the engine).
 logic [3:0] char_be4;
 logic [31:0] char_din32;
 assign char_be4   = char_word_addr[0] ? {cpu_be, 2'b00} : {2'b00, cpu_be};
@@ -447,10 +449,12 @@ assign char_din32 = {cpu_din, cpu_din};   // duplicate; byte enables select the 
 always_ff @(posedge clk) begin
     if (cs_char && !cpu_rw) begin
 `ifdef QUARTUS
-        if (char_be4[3]) char_ram[char_word_addr[11:1]][31:24] <= char_din32[31:24];
-        if (char_be4[2]) char_ram[char_word_addr[11:1]][23:16] <= char_din32[23:16];
-        if (char_be4[1]) char_ram[char_word_addr[11:1]][15: 8] <= char_din32[15: 8];
-        if (char_be4[0]) char_ram[char_word_addr[11:1]][ 7: 0] <= char_din32[ 7: 0];
+        // Each lane writes its full 8-bit word with a plain write-enable.
+        // No bit-range partial writes — each array is simple WE-guarded, MLAB-inferrable.
+        if (char_be4[3]) char_ram_b3[char_word_addr[11:1]] <= char_din32[31:24];
+        if (char_be4[2]) char_ram_b2[char_word_addr[11:1]] <= char_din32[23:16];
+        if (char_be4[1]) char_ram_b1[char_word_addr[11:1]] <= char_din32[15: 8];
+        if (char_be4[0]) char_ram_b0[char_word_addr[11:1]] <= char_din32[ 7: 0];
 `else
         if (cpu_be[1]) char_ram[{char_word_addr, 1'b0}] <= cpu_din[15:8];
         if (cpu_be[0]) char_ram[{char_word_addr, 1'b1}] <= cpu_din[ 7:0];
@@ -465,8 +469,8 @@ always_ff @(posedge clk) begin
     else if (cs_char && cpu_rw) begin
 `ifdef QUARTUS
         char_cpu_rdata <= char_word_addr[0]
-            ? char_ram[char_word_addr[11:1]][31:16]
-            : char_ram[char_word_addr[11:1]][15:0];
+            ? {char_ram_b3[char_word_addr[11:1]], char_ram_b2[char_word_addr[11:1]]}
+            : {char_ram_b1[char_word_addr[11:1]], char_ram_b0[char_word_addr[11:1]]};
 `else
         char_cpu_rdata <= {char_ram[{char_word_addr, 1'b0}],
                            char_ram[{char_word_addr, 1'b1}]};
@@ -477,8 +481,9 @@ end
 logic [10:0] char_rd_addr_w;
 logic [31:0] char_q_w;
 `ifdef QUARTUS
-// Single 32-bit async read — MLAB-inferrable (no multi-address access)
-assign char_q_w = char_ram[char_rd_addr_w];
+// Four async reads, one per lane — each 2048×8 MLAB has a single async read port.
+assign char_q_w = {char_ram_b3[char_rd_addr_w], char_ram_b2[char_rd_addr_w],
+                   char_ram_b1[char_rd_addr_w], char_ram_b0[char_rd_addr_w]};
 `else
 assign char_q_w = {char_ram[{char_rd_addr_w, 2'd3}],
                    char_ram[{char_rd_addr_w, 2'd2}],
