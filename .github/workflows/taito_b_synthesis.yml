@@ -27,6 +27,22 @@ jobs:
             -v "${{ github.workspace }}:/workspace" \
             raetro/quartus:17.0 \
             sh -c "cd /workspace/chips/taito_b/quartus && /opt/intelFPGA/quartus/bin/quartus_sh --flow compile taito_b 2>&1 | tee /workspace/taito_b_synthesis.log; exit \${PIPESTATUS[0]}"
+        continue-on-error: true
+
+      - name: Show synthesis log
+        if: always()
+        run: |
+          echo "### Synthesis Log" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat taito_b_synthesis.log 2>/dev/null || echo "No log file generated" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat taito_b_synthesis.log 2>/dev/null || true
+          # Fail the step if synthesis failed
+          test -f taito_b_synthesis.log && grep -q "^Error\|^Error " taito_b_synthesis.log && exit 1 || exit 0
+
+      - name: Fail if synthesis failed
+        run: |
+          grep -q "^Error\|^Error " taito_b_synthesis.log && exit 1 || exit 0
 
       - name: Upload synthesis log
         if: always()
