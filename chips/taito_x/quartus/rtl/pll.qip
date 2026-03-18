@@ -1,0 +1,3 @@
+# PLL implemented via altpll megafunction in ../rtl/pll.sv (included via files.qip)
+# This placeholder satisfies the pll_q17.qip reference to rtl/pll.qip
+set_global_assignment -name SYNTHESIS_ONLY_QIP ON
