@@ -334,16 +334,16 @@ module nmk16 #(
     logic [9:0] sprite_scan_idx;      // Current sprite index (0-255 × 4 words)
     logic [7:0] display_list_idx;     // Write index into display list
 
-    // Display list arrays (internal)
-    logic [8:0]  _display_list_x [0:255];
-    logic [8:0]  _display_list_y [0:255];
-    logic [11:0] _display_list_tile [0:255];
-    logic        _display_list_flip_x [0:255];
-    logic        _display_list_flip_y [0:255];
-    logic [1:0]  _display_list_size [0:255];
-    logic [3:0]  _display_list_palette [0:255];
-    logic        _display_list_valid [0:255];
-    logic        _display_list_priority [0:255];  // ATTR[11]: 0=below BG0, 1=above all
+    // Display list arrays (internal — packed to match output port types, avoids Quartus auto-generated multi-driver)
+    logic [255:0][8:0]  _display_list_x;
+    logic [255:0][8:0]  _display_list_y;
+    logic [255:0][11:0] _display_list_tile;
+    logic [255:0]       _display_list_flip_x;
+    logic [255:0]       _display_list_flip_y;
+    logic [255:0][1:0]  _display_list_size;
+    logic [255:0][3:0]  _display_list_palette;
+    logic [255:0]       _display_list_valid;
+    logic [255:0]       _display_list_priority;
 
     // Temporary sprite read data (will be replaced by buffered capture)
     logic [8:0]  sprite_y_pos, sprite_x_pos;
@@ -530,22 +530,18 @@ module nmk16 #(
     end
 
     // ========== OUTPUT ASSIGNMENT (DISPLAY LIST) ==========
+    // Direct assign from packed internal to packed output — avoids always_comb loop multi-driver in Quartus 17.0
 
-    always_comb begin
-        for (int i = 0; i < 256; i = i + 1) begin
-            display_list_x[i]        = _display_list_x[i];
-            display_list_y[i]        = _display_list_y[i];
-            display_list_tile[i]     = _display_list_tile[i];
-            display_list_flip_x[i]   = _display_list_flip_x[i];
-            display_list_flip_y[i]   = _display_list_flip_y[i];
-            display_list_size[i]     = _display_list_size[i];
-            display_list_palette[i]  = _display_list_palette[i];
-            display_list_valid[i]    = _display_list_valid[i];
-            display_list_priority[i] = _display_list_priority[i];
-        end
-
-        display_list_count = display_list_idx;
-    end
+    assign display_list_x        = _display_list_x;
+    assign display_list_y        = _display_list_y;
+    assign display_list_tile     = _display_list_tile;
+    assign display_list_flip_x   = _display_list_flip_x;
+    assign display_list_flip_y   = _display_list_flip_y;
+    assign display_list_size     = _display_list_size;
+    assign display_list_palette  = _display_list_palette;
+    assign display_list_valid    = _display_list_valid;
+    assign display_list_priority = _display_list_priority;
+    assign display_list_count    = display_list_idx;
 
     // ========== PULSE GENERATION ==========
 
