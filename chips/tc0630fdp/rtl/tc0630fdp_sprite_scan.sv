@@ -249,8 +249,6 @@ assign scount_rd_addr = 8'd0;
 // ---------------------------------------------------------------------------
 // FSM (single always_ff)
 // ---------------------------------------------------------------------------
-integer ci;  // loop variable for scan_slot reset
-
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         state          <= S_IDLE;
@@ -275,8 +273,7 @@ always_ff @(posedge clk) begin
         anchor_sy      <= 12'd0;
         anchor_x_zoom  <= 8'd0;
         anchor_y_zoom  <= 8'd0;
-        for (ci = 0; ci < NSCANS; ci = ci + 1)
-            scan_slot[ci] <= 7'd0;
+        // scan_slot FFs power up to 0 on Cyclone V — no reset loop needed.
     end else begin
         slist_wr  <= 1'b0;
         scount_wr <= 1'b0;
@@ -286,8 +283,10 @@ always_ff @(posedge clk) begin
             // ─ Idle: wait for VBLANK ─────────────────────────────────────
             S_IDLE: begin
                 if (vblank_rise) begin
-                    for (ci = 0; ci < NSCANS; ci = ci + 1)
-                        scan_slot[ci] <= 7'd0;
+                    // scan_slot[0] cleared here; [1..NSCANS-1] cleared in S_CLEAR.
+                    // (Distributes 232-entry clear across S_CLEAR cycles — avoids
+                    //  Quartus 17 Error 10028 from the 232-iteration for-loop.)
+                    scan_slot[8'd0] <= 7'd0;
                     clear_cnt      <= 8'd0;
                     scount_wr      <= 1'b1;
                     scount_wr_addr <= 8'd0;
@@ -299,13 +298,14 @@ always_ff @(posedge clk) begin
                 end
             end
 
-            // ─ Clear scount BRAM (one entry per cycle) ───────────────────
+            // ─ Clear scount BRAM + scan_slot (one entry per cycle) ───────
             S_CLEAR: begin
                 if (clear_cnt == 8'(NSCANS - 2)) begin
                     // Write entry NSCANS-1, then done
                     scount_wr      <= 1'b1;
                     scount_wr_addr <= 8'(NSCANS - 1);
                     scount_wr_data <= 7'd0;
+                    scan_slot[8'(NSCANS - 1)] <= 7'd0;  // last scan_slot entry
                     // Start walk — issue address for word 0 of sprite 0
                     spr_idx        <= 10'd0;
                     spr_rd_addr    <= 15'd0;  // sprite 0, word 0
@@ -315,6 +315,7 @@ always_ff @(posedge clk) begin
                     scount_wr      <= 1'b1;
                     scount_wr_addr <= clear_cnt + 8'd1;
                     scount_wr_data <= 7'd0;
+                    scan_slot[clear_cnt + 8'd1] <= 7'd0;  // parallel scan_slot clear
                 end
             end
 
