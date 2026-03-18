@@ -1,0 +1,6 @@
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) tc0480scp_top.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/tc0480scp.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/tc0480scp_bg.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/tc0480scp_colmix.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/tc0480scp_textlayer.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/tc0480scp_vram.sv]
