@@ -78,7 +78,7 @@ module psikyo_gate4 (
     // ── Per-layer pixel outputs ───────────────────────────────────────────────
     output logic [1:0]  bg_pix_valid,          // one bit per layer (2 layers)
     output logic [7:0]  bg_pix_color  [0:1],   // {palette[3:0], nybble[3:0]}
-    output logic        bg_pix_priority [0:1]  // priority bit per layer
+    output logic [1:0]  bg_pix_priority        // priority bit per layer
 );
 
     // ── VRAM: 8192 × 16-bit (13-bit address: {layer[0], cell[11:0]}) ───────────

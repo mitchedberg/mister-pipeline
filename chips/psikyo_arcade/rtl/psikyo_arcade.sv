@@ -412,15 +412,15 @@ assign rgb_b = {pal_entry_r[4:0],   pal_entry_r[4:2]};
 // =============================================================================
 
 // Outputs from Gate 1/2
-logic [9:0]  dl_x       [0:255];
-logic [9:0]  dl_y       [0:255];
-logic [15:0] dl_tile    [0:255];
-logic [3:0]  dl_palette [0:255];
-logic        dl_flip_x  [0:255];
-logic        dl_flip_y  [0:255];
-logic [1:0]  dl_priority[0:255];
-logic [2:0]  dl_size    [0:255];
-logic        dl_valid   [0:255];
+logic [255:0][9:0]   dl_x;
+logic [255:0][9:0]   dl_y;
+logic [255:0][15:0]  dl_tile;
+logic [255:0][3:0]   dl_palette;
+logic [255:0]        dl_flip_x;
+logic [255:0]        dl_flip_y;
+logic [255:0][1:0]   dl_priority;
+logic [255:0][2:0]   dl_size;
+logic [255:0]        dl_valid;
 logic [7:0]  dl_count;
 logic        dl_ready;
 
@@ -580,7 +580,7 @@ logic [1:0]  g4_bg_layer_sel;
 
 logic [1:0]  bg_pix_valid_w;
 logic [7:0]  bg_pix_color_w   [0:1];
-logic        bg_pix_priority_w[0:1];
+logic [1:0]  bg_pix_priority_w;
 
 psikyo_gate4 u_gate4 (
     .clk            (clk_sys),

@@ -34,15 +34,15 @@ module psikyo (
 
   // PS2001B (Sprite Scanner) outputs
   // Display list and related signals
-  output logic [9:0]   display_list_x [0:255],
-  output logic [9:0]   display_list_y [0:255],
-  output logic [15:0]  display_list_tile [0:255],
-  output logic [3:0]   display_list_palette [0:255],
-  output logic         display_list_flip_x [0:255],
-  output logic         display_list_flip_y [0:255],
-  output logic [1:0]   display_list_priority [0:255],
-  output logic [2:0]   display_list_size [0:255],
-  output logic         display_list_valid [0:255],
+  output logic [255:0][9:0]    display_list_x,
+  output logic [255:0][9:0]    display_list_y,
+  output logic [255:0][15:0]   display_list_tile,
+  output logic [255:0][3:0]    display_list_palette,
+  output logic [255:0]         display_list_flip_x,
+  output logic [255:0]         display_list_flip_y,
+  output logic [255:0][1:0]    display_list_priority,
+  output logic [255:0][2:0]    display_list_size,
+  output logic [255:0]         display_list_valid,
   output logic [7:0]   display_list_count,
   output logic         display_list_ready,
 
