@@ -1,33 +1,120 @@
+// =============================================================================
+// pll.sv — Altera ALTPLL megafunction for Taito F3 on MiSTer DE-10 Nano
+// =============================================================================
+//
+// Target device : Intel Cyclone V 5CSEBA6U23I7 (DE-10 Nano)
+// Input         : 50 MHz (CLK_50M)
+// Outputs       :
+//   outclk_0 = 53.5 MHz  — clk_sys  (50 * 107 / 100)
+//              Taito F3 master XTAL is ~53.372 MHz; 53.5 MHz is the closest
+//              Quartus-achievable integer ratio (within 0.24% of target).
+//              Pixel clock = clk_sys / 2 = 26.75 MHz (hardware: 26.686 MHz).
+//   outclk_1 = 142.857 MHz ≈ 143 MHz — clk_sdram (50 * 20 / 7), phase -2.5 ns
+//
+// Clock enable relationships in emu.sv:
+//   ce_pix = ~ce_pix each cycle → 26.75 MHz pixel clock (clk_sys / 2)
+//
+// This file is synthesisable with Quartus Prime (ALTPLL primitive).
+// =============================================================================
 `default_nettype none
-// =============================================================================
-// pll.sv — Simulation/lint stub for Taito F3 PLL
-// =============================================================================
-//
-// Replace with a Quartus Altera PLL megafunction for synthesis.
-//
-// Target frequencies (from MAME taito_f3.cpp / hardware measurements):
-//   outclk_0 = 53.372 MHz  — sys_clk (CPU + all logic; pixel clock = sys_clk / 2)
-//   outclk_1 = 143.0  MHz  — sdram_clk
-//
-// For simulation: both outputs simply pass through the 50 MHz reference.
-// Quartus PLL IP wizard will generate the real file from taito_f3.qpf.
-//
-// Port contract matches standard MiSTer sys/pll.v wrapper.
-// =============================================================================
+
 module pll (
-    input  logic refclk,    // 50 MHz from DE10-Nano CLK_50M
-    input  logic rst,       // active-high reset (tie 0 in emu.sv)
+    input  wire refclk,    // 50 MHz from DE10-Nano CLK_50M
+    input  wire rst,       // active-high async reset
 
-    output logic outclk_0,  // 53.372 MHz — sys_clk
-    output logic outclk_1,  // 143.0  MHz — sdram_clk
+    output wire outclk_0,  // 53.5 MHz — clk_sys (≈53.372 MHz Taito F3 XTAL)
+    output wire outclk_1,  // ~143 MHz — clk_sdram (phase-shifted -2.5 ns)
 
-    output logic locked     // 1 when PLL has acquired lock
+    output wire locked     // asserts when PLL has acquired lock
 );
 
-    // Simulation stub: pass through reference clock, report locked immediately.
-    // Synthesis: replace this module body with Quartus PLL IP.
-    assign outclk_0 = refclk;
-    assign outclk_1 = refclk;
-    assign locked   = 1'b1;
+altpll #(
+    .bandwidth_type                 ("AUTO"),
+    .clk0_divide_by                 (100),
+    .clk0_duty_cycle                (50),
+    .clk0_multiply_by               (107),
+    .clk0_phase_shift               ("0"),
+    .clk1_divide_by                 (7),
+    .clk1_duty_cycle                (50),
+    .clk1_multiply_by               (20),
+    .clk1_phase_shift               ("-2500"),
+    .compensate_clock               ("CLK0"),
+    .inclk0_input_frequency         (20000),
+    .intended_device_family         ("Cyclone V"),
+    .lpm_hint                       ("CBX_MODULE_PREFIX=pll"),
+    .lpm_type                       ("altpll"),
+    .operation_mode                 ("NORMAL"),
+    .pll_type                       ("AUTO"),
+    .port_activeclock               ("PORT_UNUSED"),
+    .port_areset                    ("PORT_USED"),
+    .port_clkbad0                   ("PORT_UNUSED"),
+    .port_clkbad1                   ("PORT_UNUSED"),
+    .port_clkloss                   ("PORT_UNUSED"),
+    .port_clkswitch                 ("PORT_UNUSED"),
+    .port_configupdate              ("PORT_UNUSED"),
+    .port_fbin                      ("PORT_UNUSED"),
+    .port_inclk0                    ("PORT_USED"),
+    .port_inclk1                    ("PORT_UNUSED"),
+    .port_locked                    ("PORT_USED"),
+    .port_pfdena                    ("PORT_UNUSED"),
+    .port_phasecounterselect        ("PORT_UNUSED"),
+    .port_phasedone                 ("PORT_UNUSED"),
+    .port_phasestep                 ("PORT_UNUSED"),
+    .port_phaseupdown               ("PORT_UNUSED"),
+    .port_pllena                    ("PORT_UNUSED"),
+    .port_scanaclr                  ("PORT_UNUSED"),
+    .port_scanclk                   ("PORT_UNUSED"),
+    .port_scanclkena                ("PORT_UNUSED"),
+    .port_scandata                  ("PORT_UNUSED"),
+    .port_scandataout               ("PORT_UNUSED"),
+    .port_scandone                  ("PORT_UNUSED"),
+    .port_scanread                  ("PORT_UNUSED"),
+    .port_scanwrite                 ("PORT_UNUSED"),
+    .port_clk0                      ("PORT_USED"),
+    .port_clk1                      ("PORT_USED"),
+    .port_clk2                      ("PORT_UNUSED"),
+    .port_clk3                      ("PORT_UNUSED"),
+    .port_clk4                      ("PORT_UNUSED"),
+    .port_clk5                      ("PORT_UNUSED"),
+    .using_fbmux_clk                ("FALSE")
+) altpll_component (
+    .areset                         (rst),
+    .inclk                          ({1'b0, refclk}),
+    .clk                            ({5'b00000, outclk_1, outclk_0}),
+    .locked                         (locked),
+    .activeclock                    (),
+    .clkbad                         (),
+    .clkena                         ({6{1'b1}}),
+    .clkloss                        (),
+    .clkswitch                      (1'b0),
+    .configupdate                   (1'b0),
+    .enable0                        (),
+    .enable1                        (),
+    .extclk                         (),
+    .extclkena                      ({4{1'b1}}),
+    .fbin                           (1'b1),
+    .fbmimicbidir                   (),
+    .fbout                          (),
+    .fref                           (),
+    .icdrclk                        (),
+    .pfdena                         (1'b1),
+    .phasecounterselect             ({4{1'b1}}),
+    .phasedone                      (),
+    .phasestep                      (1'b1),
+    .phaseupdown                    (1'b1),
+    .pllena                         (1'b1),
+    .scanaclr                       (1'b0),
+    .scanclk                        (1'b0),
+    .scanclkena                     (1'b1),
+    .scandata                       (1'b0),
+    .scandataout                    (),
+    .scandone                       (),
+    .scanread                       (1'b0),
+    .scanwrite                      (1'b0),
+    .sclkout0                       (),
+    .sclkout1                       (),
+    .vcooverrange                   (),
+    .vcounderrange                  ()
+);
 
 endmodule
