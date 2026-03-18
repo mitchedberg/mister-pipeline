@@ -1,0 +1,48 @@
+<!--
+    Thunder Dragon
+    NMK16 hardware
+    MC68000 @ 10 MHz, Z80 @ 3.58 MHz (sound — stubbed)
+
+    ROM loading:
+      ioctl_index 0x00 — CPU program ROM (512KB, SDRAM 0x000000)
+      ioctl_index 0x01 — Sprite ROM      (512KB, SDRAM 0x0C0000)
+      ioctl_index 0x02 — BG tile ROM     (512KB, SDRAM 0x140000)
+      ioctl_index 0xFE — DIP switches
+
+    MAME driver: nmk16.cpp, set: tdragon
+-->
+<misterromdescription>
+    <name>Thunder Dragon</name>
+    <setname>tdragon</setname>
+    <rbf>NMK16</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <!-- DIP SW1: Coinage, Lives, Difficulty -->
+        <!-- DIP SW2: Screen flip, Demo sound -->
+        <dip name="Coinage"     ids="0,0" bits="0,1" values="1 Coin/1 Credit,2 Coins/1 Credit,1 Coin/2 Credits,Free Play"/>
+        <dip name="Lives"       ids="0,0" bits="2,3" values="3,4,5,2"/>
+        <dip name="Difficulty"  ids="0,0" bits="4,5" values="Normal,Hard,Easy,Very Hard"/>
+        <dip name="Demo Sound"  ids="1,1" bits="0,0" values="On,Off"/>
+        <dip name="Screen Flip" ids="1,1" bits="1,1" values="Normal,Flipped"/>
+    </switches>
+
+    <!-- CPU Program ROM (512KB) — loaded at SDRAM 0x000000 -->
+    <rom index="0" zip="tdragon.zip" md5="placeholder" address="0x000000">
+        <part name="11.bin" crc="placeholder"/>
+        <part name="12.bin" crc="placeholder"/>
+    </rom>
+
+    <!-- Sprite ROM (512KB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="tdragon.zip" md5="placeholder" address="0x0C0000">
+        <part name="spr1.bin" crc="placeholder"/>
+        <part name="spr2.bin" crc="placeholder"/>
+    </rom>
+
+    <!-- BG Tile ROM (512KB) — loaded at SDRAM 0x140000 -->
+    <rom index="2" zip="tdragon.zip" md5="placeholder" address="0x140000">
+        <part name="bg1.bin" crc="placeholder"/>
+        <part name="bg2.bin" crc="placeholder"/>
+    </rom>
+
+</misterromdescription>

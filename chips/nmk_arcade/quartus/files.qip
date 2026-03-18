@@ -1,0 +1,58 @@
+# =============================================================================
+# NMK16 Arcade Core — QIP File (Quartus Source Files)
+# =============================================================================
+#
+# Add core-specific RTL files here.
+# System framework files (sys.qip) are sourced from sys/sys.tcl.
+#
+# WARNING: Do not add files through Quartus IDE — edit this file directly!
+#
+# =============================================================================
+
+# =========================================================================
+# TOP-LEVEL EMU WRAPPER
+# =========================================================================
+
+set_global_assignment -name SYSTEMVERILOG_FILE emu.sv
+
+# =========================================================================
+# PLL (Phase-Locked Loop)
+# =========================================================================
+# Generates clk_sys (40 MHz) and clk_sdram (143 MHz) from 50 MHz reference
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/pll.sv
+
+# =========================================================================
+# NMK16 ARCADE CORE (Main Integration)
+# =========================================================================
+# MC68000 + NMK16 chip + palette RAM + work RAM + I/O
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/nmk_arcade.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sdram_b.sv
+
+# =========================================================================
+# NMK16 GRAPHICS SUBSYSTEM
+# =========================================================================
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../nmk/rtl/nmk16.sv
+
+# =========================================================================
+# MC68000 CPU CORE
+# =========================================================================
+# fx68k: Cycle-accurate 68000 implementation by Jorge Cwik
+# Source: https://github.com/ijor/fx68k
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/fx68k.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/fx68kAlu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/uaddrPla.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/rtl/fx68k_adapter.sv
+
+# =========================================================================
+# TIMING CONSTRAINTS
+# =========================================================================
+
+set_global_assignment -name SDC_FILE nmk_arcade.sdc
+
+# =============================================================================
+# END OF FILES.QIP
+# =============================================================================
