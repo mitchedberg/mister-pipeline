@@ -1,0 +1,162 @@
+{"op": "reset"}
+{"op": "set_layer_ctrl", "data": 0}
+{"op": "set_spr", "color": 0, "valid": 0, "prio": 0}
+{"op": "set_bg", "layer": 0, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 1, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 2, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 3, "color": 0, "valid": 0}
+{"op": "check_final", "exp_valid": 0, "exp_color": 0}
+{"op": "set_layer_ctrl", "data": 0}
+{"op": "set_spr", "color": 0, "valid": 0, "prio": 0}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 2, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 3, "color": 0, "valid": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 17}
+{"op": "set_layer_ctrl", "data": 0}
+{"op": "set_spr", "color": 0, "valid": 0, "prio": 0}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 3, "color": 0, "valid": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 34}
+{"op": "set_layer_ctrl", "data": 0}
+{"op": "set_spr", "color": 170, "valid": 1, "prio": 0}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 0, "valid": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 170}
+{"op": "set_layer_ctrl", "data": 64}
+{"op": "set_spr", "color": 170, "valid": 1, "prio": 0}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 0, "valid": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 51}
+{"op": "set_layer_ctrl", "data": 128}
+{"op": "set_spr", "color": 187, "valid": 1, "prio": 4}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 68, "valid": 1}
+{"op": "check_final", "exp_valid": 1, "exp_color": 68}
+{"op": "set_layer_ctrl", "data": 128}
+{"op": "set_spr", "color": 187, "valid": 1, "prio": 4}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 68, "valid": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 187}
+{"op": "set_layer_ctrl", "data": 128}
+{"op": "set_spr", "color": 204, "valid": 1, "prio": 8}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 68, "valid": 1}
+{"op": "check_final", "exp_valid": 1, "exp_color": 204}
+{"op": "set_layer_ctrl", "data": 128}
+{"op": "set_spr", "color": 221, "valid": 1, "prio": 15}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 68, "valid": 1}
+{"op": "check_final", "exp_valid": 1, "exp_color": 221}
+{"op": "set_layer_ctrl", "data": 0}
+{"op": "set_spr", "color": 0, "valid": 0, "prio": 0}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 0}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 68, "valid": 1}
+{"op": "check_final", "exp_valid": 1, "exp_color": 34}
+{"op": "set_layer_ctrl", "data": 64}
+{"op": "set_spr", "color": 0, "valid": 0, "prio": 0}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 0}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 0}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 68, "valid": 1}
+{"op": "check_final", "exp_valid": 1, "exp_color": 51}
+{"op": "set_layer_ctrl", "data": 128}
+{"op": "set_spr", "color": 255, "valid": 0, "prio": 15}
+{"op": "set_bg", "layer": 0, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 1, "color": 85, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 3, "color": 0, "valid": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 85}
+{"op": "set_layer_ctrl", "data": 64}
+{"op": "set_spr", "color": 238, "valid": 1, "prio": 3}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 0, "valid": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 51}
+{"op": "set_layer_ctrl", "data": 128}
+{"op": "set_spr", "color": 255, "valid": 1, "prio": 7}
+{"op": "set_bg", "layer": 0, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 1, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 2, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 3, "color": 119, "valid": 1}
+{"op": "check_final", "exp_valid": 1, "exp_color": 119}
+{"op": "set_layer_ctrl", "data": 64}
+{"op": "set_spr", "color": 170, "valid": 1, "prio": 0}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 0, "valid": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 51}
+{"op": "set_layer_ctrl", "data": 128}
+{"op": "set_spr", "color": 0, "valid": 0, "prio": 0}
+{"op": "set_bg", "layer": 0, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 1, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 2, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 3, "color": 153, "valid": 1}
+{"op": "check_final", "exp_valid": 1, "exp_color": 153}
+{"op": "set_layer_ctrl", "data": 192}
+{"op": "set_spr", "color": 0, "valid": 0, "prio": 0}
+{"op": "set_bg", "layer": 0, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 1, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 2, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 3, "color": 153, "valid": 1}
+{"op": "check_final", "exp_valid": 1, "exp_color": 153}
+{"op": "set_layer_ctrl", "data": 64}
+{"op": "set_spr", "color": 238, "valid": 1, "prio": 0}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 3, "color": 0, "valid": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 238}
+{"op": "set_layer_ctrl", "data": 128}
+{"op": "set_spr", "color": 171, "valid": 1, "prio": 12}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 68, "valid": 1}
+{"op": "check_final", "exp_valid": 1, "exp_color": 171}
+{"op": "set_layer_ctrl", "data": 128}
+{"op": "set_spr", "color": 0, "valid": 0, "prio": 0}
+{"op": "set_bg", "layer": 0, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 1, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 2, "color": 0, "valid": 0}
+{"op": "set_bg", "layer": 3, "color": 254, "valid": 1}
+{"op": "check_final", "exp_valid": 1, "exp_color": 254}
+{"op": "set_layer_ctrl", "data": 0}
+{"op": "set_spr", "color": 205, "valid": 1, "prio": 1}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 68, "valid": 1}
+{"op": "check_final", "exp_valid": 1, "exp_color": 205}
+{"op": "set_layer_ctrl", "data": 64}
+{"op": "set_spr", "color": 222, "valid": 1, "prio": 5}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 0, "valid": 0}
+{"op": "check_final", "exp_valid": 1, "exp_color": 222}
+{"op": "set_layer_ctrl", "data": 128}
+{"op": "set_spr", "color": 188, "valid": 1, "prio": 10}
+{"op": "set_bg", "layer": 0, "color": 17, "valid": 1}
+{"op": "set_bg", "layer": 1, "color": 34, "valid": 1}
+{"op": "set_bg", "layer": 2, "color": 51, "valid": 1}
+{"op": "set_bg", "layer": 3, "color": 68, "valid": 1}
+{"op": "check_final", "exp_valid": 1, "exp_color": 188}

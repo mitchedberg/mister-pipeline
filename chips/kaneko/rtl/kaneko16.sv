@@ -144,6 +144,7 @@ module kaneko16 #(
     // Gate 4 BG pixel outputs (registered, valid 2 cycles after set_pixel)
     output logic [3:0]   bg_pix_valid,     // one valid bit per layer (4 layers)
     output logic [7:0]   bg_pix_color  [0:3], // {palette[3:0], nybble[3:0]}
+    output logic [3:0]   bg_pix_priority,  // per-layer priority bit (reserved, always 0)
 
     // ======== GATE 3: Per-scanline sprite rasterizer ========
     //
@@ -193,9 +194,41 @@ module kaneko16 #(
     input  logic [8:0]  spr_rd_addr,        // pixel X address to read (0..319)
     output logic [7:0]  spr_rd_color,       // {palette[3:0], nybble[3:0]}
     output logic        spr_rd_valid,       // 1 = opaque sprite pixel at this X
+    output logic [3:0]  spr_rd_priority,    // sprite priority at this X (from descriptor prio field)
 
     // Done strobe
-    output logic        spr_render_done     // 1-cycle pulse when scanline render complete
+    output logic        spr_render_done,    // 1-cycle pulse when scanline render complete
+
+    // ======== GATE 5: Priority Mixer / Color Compositor ========
+    //
+    // Purely combinational.  Combines Gate 3 sprite pixel and Gate 4 BG pixels
+    // into a single winning pixel using the Kaneko16 painter's algorithm.
+    //
+    // Priority order (lowest → highest, painter overwrites):
+    //   BG0 (back)
+    //   BG1
+    //   Sprite if spr_rd_priority[3:2] == 2'b00  (prio  0–3,  behind all BG)
+    //   BG2
+    //   Sprite if spr_rd_priority[3:2] == 2'b01  (prio  4–7,  between BG2 and BG3)
+    //   BG3
+    //   Sprite if spr_rd_priority[3:2] != 2'b00 && != 2'b01  (prio 8–15, above all)
+    //
+    // Transparent pixels (valid=0) are skipped; the last opaque pixel wins.
+    // If all pixels are transparent, final_valid=0.
+    //
+    // layer_ctrl[7:6] selects which BG layers are active (same encoding as Gate 4):
+    //   2'b00 → 2 active layers (BG0 + BG1)
+    //   2'b01 → 3 active layers (BG0–BG2)
+    //   2'b10, 2'b11 → 4 active layers (BG0–BG3)
+    //
+    // Input layer_ctrl uses the active register value from Gate 1 (passed directly
+    // because Gate 5 is instantaneous — no shadow/active staging needed here).
+
+    /* verilator lint_off UNUSEDSIGNAL */
+    input  logic [15:0] layer_ctrl,         // active layer control register from Gate 1
+    /* verilator lint_on UNUSEDSIGNAL */
+    output logic [7:0]  final_color,        // winning pixel color {palette[3:0], index[3:0]}
+    output logic        final_valid         // 1 = at least one opaque pixel contributed
 );
 
     // ========================================================================
@@ -812,6 +845,7 @@ module kaneko16 #(
     logic [15:0] g3_tile_base;    // sprite.tile_num (16-bit)
     logic        g3_flip_x;
     logic [3:0]  g3_palette;
+    logic [3:0]  g3_prio;         // sprite priority field (used by Gate 5)
     logic [1:0]  g3_size;         // effective size[1:0]: 0=16px, 1=32px, 2=64px, 3=128px
 
     // Derived geometry (combinational)
@@ -823,13 +857,15 @@ module kaneko16 #(
     logic [19:0] g3_full_tile;    // tile_base + tile_row*tiles_wide + tile_col (20-bit max)
 
     // ── Scanline pixel buffer (320 pixels) ───────────────────────────────────
-    logic [7:0]  spr_pix_color [0:319];
-    logic        spr_pix_valid [0:319];
+    logic [7:0]  spr_pix_color    [0:319];
+    logic        spr_pix_valid    [0:319];
+    logic [3:0]  spr_pix_priority [0:319];  // sprite prio field from descriptor
 
     // ── Read-back port (combinational) ───────────────────────────────────────
     always_comb begin
-        spr_rd_color = spr_pix_color[spr_rd_addr];
-        spr_rd_valid = spr_pix_valid[spr_rd_addr];
+        spr_rd_color    = spr_pix_color[spr_rd_addr];
+        spr_rd_valid    = spr_pix_valid[spr_rd_addr];
+        spr_rd_priority = spr_pix_priority[spr_rd_addr];
     end
 
     // ── ROM address drive (combinational) ────────────────────────────────────
@@ -862,12 +898,14 @@ module kaneko16 #(
             g3_flip_x       <= 1'b0;
             g3_flip_y_saved <= 1'b0;
             g3_palette      <= 4'h0;
+            g3_prio         <= 4'h0;
             g3_size         <= 2'h0;
             g3_row_in_spr   <= 8'h00;
             spr_render_done <= 1'b0;
             for (int i = 0; i < 320; i++) begin
-                spr_pix_color[i] <= 8'h00;
-                spr_pix_valid[i] <= 1'b0;
+                spr_pix_color[i]    <= 8'h00;
+                spr_pix_valid[i]    <= 1'b0;
+                spr_pix_priority[i] <= 4'h0;
             end
         end else begin
             spr_render_done <= 1'b0;  // default: not done
@@ -878,8 +916,9 @@ module kaneko16 #(
                 G3_IDLE: begin
                     if (scan_trigger) begin
                         for (int i = 0; i < 320; i++) begin
-                            spr_pix_color[i] <= 8'h00;
-                            spr_pix_valid[i] <= 1'b0;
+                            spr_pix_color[i]    <= 8'h00;
+                            spr_pix_valid[i]    <= 1'b0;
+                            spr_pix_priority[i] <= 4'h0;
                         end
                         g3_spr_idx <= 8'h00;
                         g3_state   <= G3_CHECK;
@@ -912,6 +951,7 @@ module kaneko16 #(
                                     g3_flip_x       <= e.flip_x;
                                     g3_flip_y_saved <= e.flip_y;
                                     g3_palette      <= e.palette;
+                                    g3_prio         <= e.prio;
                                     g3_size         <= e_size2;
 
                                     // Row within sprite (with flip_y)
@@ -979,12 +1019,14 @@ module kaneko16 #(
 
                             /* verilator lint_off WIDTHTRUNC */
                             if (px_lo_x < 10'd320 && eff_nib_lo != 4'h0) begin
-                                spr_pix_color[px_lo_x[8:0]] <= {g3_palette, eff_nib_lo};
-                                spr_pix_valid[px_lo_x[8:0]] <= 1'b1;
+                                spr_pix_color[px_lo_x[8:0]]    <= {g3_palette, eff_nib_lo};
+                                spr_pix_valid[px_lo_x[8:0]]    <= 1'b1;
+                                spr_pix_priority[px_lo_x[8:0]] <= g3_prio;
                             end
                             if (px_hi_x < 10'd320 && eff_nib_hi != 4'h0) begin
-                                spr_pix_color[px_hi_x[8:0]] <= {g3_palette, eff_nib_hi};
-                                spr_pix_valid[px_hi_x[8:0]] <= 1'b1;
+                                spr_pix_color[px_hi_x[8:0]]    <= {g3_palette, eff_nib_hi};
+                                spr_pix_valid[px_hi_x[8:0]]    <= 1'b1;
+                                spr_pix_priority[px_hi_x[8:0]] <= g3_prio;
                             end
                             /* verilator lint_on WIDTHTRUNC */
                         end
@@ -1132,16 +1174,108 @@ module kaneko16 #(
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            bg_pix_valid <= 4'h0;
+            bg_pix_valid    <= 4'h0;
+            bg_pix_priority <= 4'h0;
             for (int i = 0; i < 4; i++)
                 bg_pix_color[i] <= 8'h00;
         end else begin
             for (int i = 0; i < 4; i++) begin
                 if (2'(i) == g4s1_layer) begin
-                    bg_pix_valid[i]  <= (g4s2_nybble != 4'h0);
-                    bg_pix_color[i]  <= {g4s1_palette, g4s2_nybble};
+                    bg_pix_valid[i]    <= (g4s2_nybble != 4'h0);
+                    bg_pix_color[i]    <= {g4s1_palette, g4s2_nybble};
+                    bg_pix_priority[i] <= 1'b0;  // BG tile priority bit (reserved, always 0)
                 end
             end
+        end
+    end
+
+    // =========================================================================
+    // Gate 5: Priority Mixer / Color Compositor
+    // =========================================================================
+    //
+    // Painter's algorithm: start with a transparent canvas, overwrite with each
+    // enabled layer in priority order (lowest first).  Higher-priority opaque
+    // pixels overwrite lower-priority ones; transparent pixels (valid=0) skip.
+    //
+    // Priority stack (low → high):
+    //   BG0   (back, always active)
+    //   BG1   (always active)
+    //   Sprite if prio[3:2] == 2'b00  (prio  0–3)
+    //   BG2   (active when num_layers >= 3)
+    //   Sprite if prio[3:2] == 2'b01  (prio  4–7)
+    //   BG3   (active when num_layers == 4)
+    //   Sprite if prio[3:2] >= 2'b10  (prio 8–15, above all BG)
+    //
+    // num_layers from layer_ctrl[7:6]:
+    //   2'b00 → 2 layers   (BG0+BG1 only)
+    //   2'b01 → 3 layers   (BG0–BG2)
+    //   2'b10, 2'b11 → 4 layers (BG0–BG3)
+
+    logic [1:0] g5_num_layers_code;
+    assign g5_num_layers_code = layer_ctrl[7:6];
+
+    // num_layers: 2 = 2-layer mode, 3 = 3-layer mode, 4 = 4-layer mode
+    // Encoded as a 3-bit value for comparisons
+    logic [2:0] g5_num_layers;
+    always_comb begin
+        case (g5_num_layers_code)
+            2'b00:   g5_num_layers = 3'd2;
+            2'b01:   g5_num_layers = 3'd3;
+            default: g5_num_layers = 3'd4;  // 2'b10, 2'b11 → 4
+        endcase
+    end
+
+    // Sprite priority group:
+    //   group 0 (prio 0–3):   below BG2 (inserted between BG1 and BG2)
+    //   group 1 (prio 4–7):   below BG3 (inserted between BG2 and BG3)
+    //   group 2+ (prio 8–15): above all BG
+    logic [1:0] g5_spr_group;
+    assign g5_spr_group = spr_rd_priority[3:2];  // 0,1 → below BG2/BG3; 2,3 → above all
+
+    always_comb begin
+        final_color = 8'h00;
+        final_valid = 1'b0;
+
+        // Layer BG0 — always active (back)
+        if (bg_pix_valid[0]) begin
+            final_color = bg_pix_color[0];
+            final_valid = 1'b1;
+        end
+
+        // Layer BG1 — always active
+        if (bg_pix_valid[1]) begin
+            final_color = bg_pix_color[1];
+            final_valid = 1'b1;
+        end
+
+        // Sprite group 0 (prio 0–3): above BG1, below BG2
+        if (spr_rd_valid && g5_spr_group == 2'b00) begin
+            final_color = spr_rd_color;
+            final_valid = 1'b1;
+        end
+
+        // Layer BG2 — active when num_layers >= 3
+        if (g5_num_layers >= 3'd3 && bg_pix_valid[2]) begin
+            final_color = bg_pix_color[2];
+            final_valid = 1'b1;
+        end
+
+        // Sprite group 1 (prio 4–7): above BG2, below BG3
+        if (spr_rd_valid && g5_spr_group == 2'b01) begin
+            final_color = spr_rd_color;
+            final_valid = 1'b1;
+        end
+
+        // Layer BG3 — active when num_layers == 4
+        if (g5_num_layers >= 3'd4 && bg_pix_valid[3]) begin
+            final_color = bg_pix_color[3];
+            final_valid = 1'b1;
+        end
+
+        // Sprite groups 2–3 (prio 8–15): above all BG
+        if (spr_rd_valid && g5_spr_group[1]) begin
+            final_color = spr_rd_color;
+            final_valid = 1'b1;
         end
     end
 
@@ -1151,7 +1285,7 @@ module kaneko16 #(
 
     /* verilator lint_off UNUSEDPARAM */
     /* verilator lint_off UNUSEDSIGNAL */
-    logic _unused = &{hsync_n, 1'b0};
+    logic _unused = &{hsync_n, bg_pix_priority, 1'b0};
     /* verilator lint_on UNUSEDPARAM */
     /* verilator lint_on UNUSEDSIGNAL */
 
