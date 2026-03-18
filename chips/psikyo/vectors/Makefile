@@ -1,5 +1,5 @@
-# Psikyo Gates 1, 2 & 3 Testbench Makefile
-# Targets: all, gate1, gate2, gate3, vectors, build, run, test, clean
+# Psikyo Gates 1, 2, 3 & 4 Testbench Makefile
+# Targets: all, gate1, gate2, gate3, gate4, vectors, build, run, test, clean
 
 RTL_DIR = ../rtl
 VERILATOR ?= verilator
@@ -10,24 +10,29 @@ LIBS = -lm
 
 RTL       = $(RTL_DIR)/psikyo.sv
 RTL_GATE3 = $(RTL_DIR)/psikyo_gate3.sv
+RTL_GATE4 = $(RTL_DIR)/psikyo_gate4.sv
 
 TB_GATE1 = tb_gate1.cpp
 TB_GATE2 = tb_gate2.cpp
 TB_GATE3 = tb_gate3.cpp
+TB_GATE4 = tb_gate4.cpp
 
 OBJ_DIR_GATE1 = obj_dir_gate1
 OBJ_DIR_GATE2 = obj_dir_gate2
 OBJ_DIR_GATE3 = obj_dir_gate3
+OBJ_DIR_GATE4 = obj_dir_gate4
 
 TARGET_GATE1 = $(OBJ_DIR_GATE1)/Vpsikyo
 TARGET_GATE2 = $(OBJ_DIR_GATE2)/Vpsikyo
 TARGET_GATE3 = $(OBJ_DIR_GATE3)/Vpsikyo_gate3
+TARGET_GATE4 = $(OBJ_DIR_GATE4)/Vpsikyo_gate4
 
 PYTHON = python3
 
-.PHONY: all gate1 gate2 gate3 vectors vectors-gate1 vectors-gate2 vectors-gate3 \
-        build build-gate1 build-gate2 build-gate3 \
-        test test-gate1 test-gate2 test-gate3 run clean help
+.PHONY: all gate1 gate2 gate3 gate4 \
+        vectors vectors-gate1 vectors-gate2 vectors-gate3 vectors-gate4 \
+        build build-gate1 build-gate2 build-gate3 build-gate4 \
+        test test-gate1 test-gate2 test-gate3 test-gate4 run clean help
 
 all: test
 
@@ -37,7 +42,9 @@ gate2: vectors-gate2 build-gate2 test-gate2
 
 gate3: vectors-gate3 build-gate3 test-gate3
 
-vectors: vectors-gate1 vectors-gate2 vectors-gate3
+gate4: vectors-gate4 build-gate4 test-gate4
+
+vectors: vectors-gate1 vectors-gate2 vectors-gate3 vectors-gate4
 
 vectors-gate1:
 	$(PYTHON) generate_gate1.py
@@ -48,13 +55,18 @@ vectors-gate2:
 vectors-gate3:
 	$(PYTHON) generate_gate3.py
 
-build: build-gate1 build-gate2 build-gate3
+vectors-gate4:
+	$(PYTHON) generate_gate4.py
+
+build: build-gate1 build-gate2 build-gate3 build-gate4
 
 build-gate1: vectors-gate1 $(TARGET_GATE1)
 
 build-gate2: vectors-gate2 $(TARGET_GATE2)
 
 build-gate3: vectors-gate3 $(TARGET_GATE3)
+
+build-gate4: vectors-gate4 $(TARGET_GATE4)
 
 $(TARGET_GATE1): $(RTL) $(TB_GATE1)
 	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR_GATE1) -Wall --top-module psikyo \
@@ -74,7 +86,13 @@ $(TARGET_GATE3): $(RTL_GATE3) $(TB_GATE3)
 		-O0 -fno-dfg -fno-dfg-peephole \
 		$(RTL_GATE3) $(TB_GATE3) --build -CFLAGS "-O2 -std=c++17 -I/opt/homebrew/include" 2>&1
 
-test: test-gate1 test-gate2 test-gate3
+$(TARGET_GATE4): $(RTL_GATE4) $(TB_GATE4)
+	$(VERILATOR) --cc --exe --Mdir $(OBJ_DIR_GATE4) -Wall --top-module psikyo_gate4 \
+		-Wno-MODMISSING \
+		-O0 -fno-dfg -fno-dfg-peephole \
+		$(RTL_GATE4) $(TB_GATE4) --build -CFLAGS "-O2 -std=c++17 -I/opt/homebrew/include" 2>&1
+
+test: test-gate1 test-gate2 test-gate3 test-gate4
 
 test-gate1: build-gate1
 	cd $(OBJ_DIR_GATE1) && ./Vpsikyo ../gate1_vectors.jsonl
@@ -88,19 +106,26 @@ test-gate3: build-gate3
 		echo "PASS: Gate 3 all tests passed" || \
 		(echo "FAIL: Gate 3 some tests failed" && exit 1)
 
+test-gate4: build-gate4
+	cd $(OBJ_DIR_GATE4) && ./Vpsikyo_gate4 ../gate4_vectors.jsonl 2>&1 | tee gate4_test.log
+	@grep -q "Failed: 0" $(OBJ_DIR_GATE4)/gate4_test.log && \
+		echo "PASS: Gate 4 all tests passed" || \
+		(echo "FAIL: Gate 4 some tests failed" && exit 1)
+
 run: test
 
 clean:
-	rm -rf $(OBJ_DIR_GATE1) $(OBJ_DIR_GATE2) $(OBJ_DIR_GATE3)
-	rm -f gate1_vectors.jsonl gate2_vectors.jsonl gate3_vectors.jsonl
+	rm -rf $(OBJ_DIR_GATE1) $(OBJ_DIR_GATE2) $(OBJ_DIR_GATE3) $(OBJ_DIR_GATE4)
+	rm -f gate1_vectors.jsonl gate2_vectors.jsonl gate3_vectors.jsonl gate4_vectors.jsonl
 	rm -f *.vcd *.log
 
 help:
-	@echo "Psikyo Gate 1, 2 & 3 Test Targets:"
+	@echo "Psikyo Gate 1, 2, 3 & 4 Test Targets:"
 	@echo "  all         - Run all tests (default)"
 	@echo "  gate1       - Run Gate 1 tests only"
 	@echo "  gate2       - Run Gate 2 tests only"
 	@echo "  gate3       - Run Gate 3 tests only"
+	@echo "  gate4       - Run Gate 4 tests only"
 	@echo "  vectors     - Generate all test vectors"
 	@echo "  build       - Compile all testbenches"
 	@echo "  test        - Run all tests"
