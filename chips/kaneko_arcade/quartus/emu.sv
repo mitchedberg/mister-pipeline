@@ -438,9 +438,16 @@ wire [26:0] cpu_sdr_addr;
 wire [15:0] cpu_sdr_data;
 wire        cpu_sdr_req, cpu_sdr_ack;
 
+// GFX ROM channel — core-side (32-bit, toggle-handshake)
 wire [26:0] gfx_sdr_addr;
 wire [31:0] gfx_sdr_data;
 wire        gfx_sdr_req, gfx_sdr_ack;
+
+// GFX ROM channel — SDRAM-side (16-bit, toggle-handshake; driven by 2-beat FSM below)
+logic [26:0] gfx2_sdram_addr;
+logic        gfx2_sdram_req;
+wire  [15:0] gfx2_sdram_data;
+wire         gfx2_sdram_ack;
 
 // ADPCM ROM: kaneko_arcade delivers byte addr;
 // SDRAM returns 16-bit word; core takes byte selected by addr[0].
@@ -532,11 +539,11 @@ sdram_b u_sdram
     .cpu_req    (cpu_sdr_req),
     .cpu_ack    (cpu_sdr_ack),
 
-    // CH2: GFX ROM reads (16-bit; upper 16 bits unused — gfx bridge packs internally)
-    .gfx_addr   (gfx_sdr_addr),
-    .gfx_data   (gfx_sdr_data[15:0]),
-    .gfx_req    (gfx_sdr_req),
-    .gfx_ack    (gfx_sdr_ack),
+    // CH2: GFX ROM reads (16-bit; 2-beat FSM below assembles 32-bit result)
+    .gfx_addr   (gfx2_sdram_addr),
+    .gfx_data   (gfx2_sdram_data),
+    .gfx_req    (gfx2_sdram_req),
+    .gfx_ack    (gfx2_sdram_ack),
 
     // CH3: ADPCM + Z80 ROM (arbitrated)
     .adpcm_addr (ch3_addr),
@@ -555,6 +562,78 @@ sdram_b u_sdram
     .SDRAM_nWE  (SDRAM_nWE),
     .SDRAM_CKE  (SDRAM_CKE)
 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GFX 2-beat read state machine
+//
+// kaneko16 requests 32-bit GFX ROM words via a toggle-handshake.
+// sdram_b CH2 returns only 16 bits per access.  This FSM intercepts the
+// core-side request, performs TWO sequential 16-bit SDRAM reads at
+//   beat 0 : gfx_sdr_addr + 0  → gfx_sdr_data[15:0]
+//   beat 1 : gfx_sdr_addr + 1  → gfx_sdr_data[31:16]
+// then toggles the ack back to the core.
+//
+// State encoding:
+//   GFX_IDLE  (2'b00) : waiting for new core request
+//   GFX_BEAT0 (2'b01) : first SDRAM read in flight
+//   GFX_BEAT1 (2'b10) : second SDRAM read in flight
+// ─────────────────────────────────────────────────────────────────────────────
+localparam GFX_IDLE  = 2'b00;
+localparam GFX_BEAT0 = 2'b01;
+localparam GFX_BEAT1 = 2'b10;
+
+logic [1:0]  gfx_state;
+logic [31:0] gfx_data_r;      // assembled 32-bit result
+logic        gfx_ack_r;       // ack toggled back to core
+logic        gfx_req_prev;    // track previous req to detect edge
+
+assign gfx_sdr_data = gfx_data_r;
+assign gfx_sdr_ack  = gfx_ack_r;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        gfx_state        <= GFX_IDLE;
+        gfx_data_r       <= 32'b0;
+        gfx_ack_r        <= 1'b0;
+        gfx_req_prev     <= 1'b0;
+        gfx2_sdram_req   <= 1'b0;
+        gfx2_sdram_addr  <= 27'b0;
+    end else begin
+        case (gfx_state)
+            GFX_IDLE: begin
+                gfx_req_prev <= gfx_sdr_req;
+                if (gfx_sdr_req != gfx_req_prev) begin
+                    // New request from core: issue first SDRAM read (lower word)
+                    gfx2_sdram_addr <= gfx_sdr_addr;
+                    gfx2_sdram_req  <= ~gfx2_sdram_req;
+                    gfx_state       <= GFX_BEAT0;
+                end
+            end
+
+            GFX_BEAT0: begin
+                if (gfx2_sdram_req == gfx2_sdram_ack) begin
+                    // First read complete — latch lower 16 bits
+                    gfx_data_r[15:0] <= gfx2_sdram_data;
+                    // Issue second SDRAM read (upper word, address + 1)
+                    gfx2_sdram_addr <= gfx_sdr_addr + 27'd1;
+                    gfx2_sdram_req  <= ~gfx2_sdram_req;
+                    gfx_state       <= GFX_BEAT1;
+                end
+            end
+
+            GFX_BEAT1: begin
+                if (gfx2_sdram_req == gfx2_sdram_ack) begin
+                    // Second read complete — latch upper 16 bits and ack the core
+                    gfx_data_r[31:16] <= gfx2_sdram_data;
+                    gfx_ack_r         <= ~gfx_ack_r;
+                    gfx_state         <= GFX_IDLE;
+                end
+            end
+
+            default: gfx_state <= GFX_IDLE;
+        endcase
+    end
+end
 
 //////////////////////////////////////////////////////////////////
 // Kaneko16 core
@@ -726,8 +805,7 @@ wire _unused = &{
     joystick_0[31:10], joystick_1[31:9],
     dsw[2], dsw[3],
     cpu_reset_n_out,
-    gfx_sdr_addr[26:22],  // upper bits not used in 2MB GFX window
-    gfx_sdr_data[31:16]   // upper 16 bits not used (sdram_b returns 16-bit word)
+    gfx_sdr_addr[26:22]   // upper bits not used in 2MB GFX window
 };
 /* verilator lint_on UNUSED */
 

@@ -441,9 +441,16 @@ wire [19:1] prog_sdr_addr_w;
 wire [15:0] prog_sdr_data_w;
 wire        prog_sdr_req_w, prog_sdr_ack_w;
 
+// GFX ROM channel — core-side (32-bit, toggle-handshake)
 wire [21:0] gfx_sdr_addr_w;
 wire [31:0] gfx_sdr_data_w;
 wire        gfx_sdr_req_w, gfx_sdr_ack_w;
+
+// GFX ROM channel — SDRAM-side (16-bit, toggle-handshake; driven by 2-beat FSM below)
+logic [26:0] gfx2_sdram_addr;
+logic        gfx2_sdram_req;
+wire  [15:0] gfx2_sdram_data;
+wire         gfx2_sdram_ack;
 
 // ADPCM ROM channel — jt6295 uses 18-bit byte address; SDRAM CH3 is 27-bit word address.
 // ADPCM ROM sits at SDRAM byte base 0x500000 (word base 0x280000).
@@ -502,11 +509,11 @@ sdram_b u_sdram
     .cpu_req    (prog_sdr_req_w),
     .cpu_ack    (prog_sdr_ack_w),
 
-    // CH2: GFX ROM reads (16-bit SDRAM; 32-bit reconstructed below)
-    .gfx_addr   (gfx_sdram_word_addr),
-    .gfx_data   (gfx_sdr_data_w[15:0]),
-    .gfx_req    (gfx_sdr_req_w),
-    .gfx_ack    (gfx_sdr_ack_w),
+    // CH2: GFX ROM reads (16-bit; 2-beat FSM below assembles 32-bit result)
+    .gfx_addr   (gfx2_sdram_addr),
+    .gfx_data   (gfx2_sdram_data),
+    .gfx_req    (gfx2_sdram_req),
+    .gfx_ack    (gfx2_sdram_ack),
 
     // CH3: ADPCM ROM — OKI M6295 sample data at SDRAM base 0x500000
     .adpcm_addr (adpcm_sdram_word_addr),
@@ -532,10 +539,77 @@ sdram_b u_sdram
     .SDRAM_CKE  (SDRAM_CKE)
 );
 
-// GFX ROM upper 16 bits: sdram_b provides 16-bit reads; pad upper half to zero
-// for now. A full 32-bit wide fetch would need two sequential 16-bit reads;
-// toaplan_v2 byte-selects from [31:0] but gp9001 only reads 1 byte per fetch.
-assign gfx_sdr_data_w[31:16] = 16'b0;
+// ─────────────────────────────────────────────────────────────────────────────
+// GFX 2-beat read state machine
+//
+// The GP9001 chip requests 32-bit GFX ROM words via a toggle-handshake.
+// sdram_b CH2 returns only 16 bits per access.  This FSM intercepts the
+// core-side request, performs TWO sequential 16-bit SDRAM reads at
+//   beat 0 : gfx_sdram_word_addr + 0  → gfx_sdr_data_w[15:0]
+//   beat 1 : gfx_sdram_word_addr + 1  → gfx_sdr_data_w[31:16]
+// then toggles the ack back to the core.
+//
+// State encoding:
+//   GFX_IDLE  (2'b00) : waiting for new core request
+//   GFX_BEAT0 (2'b01) : first SDRAM read in flight
+//   GFX_BEAT1 (2'b10) : second SDRAM read in flight
+// ─────────────────────────────────────────────────────────────────────────────
+localparam GFX_IDLE  = 2'b00;
+localparam GFX_BEAT0 = 2'b01;
+localparam GFX_BEAT1 = 2'b10;
+
+logic [1:0]  gfx_state;
+logic [31:0] gfx_data_r;      // assembled 32-bit result
+logic        gfx_ack_r;       // ack toggled back to core
+logic        gfx_req_prev;    // track previous req to detect edge
+
+assign gfx_sdr_data_w = gfx_data_r;
+assign gfx_sdr_ack_w  = gfx_ack_r;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        gfx_state        <= GFX_IDLE;
+        gfx_data_r       <= 32'b0;
+        gfx_ack_r        <= 1'b0;
+        gfx_req_prev     <= 1'b0;
+        gfx2_sdram_req   <= 1'b0;
+        gfx2_sdram_addr  <= 27'b0;
+    end else begin
+        case (gfx_state)
+            GFX_IDLE: begin
+                gfx_req_prev <= gfx_sdr_req_w;
+                if (gfx_sdr_req_w != gfx_req_prev) begin
+                    // New request from core: issue first SDRAM read (lower word)
+                    gfx2_sdram_addr <= gfx_sdram_word_addr;
+                    gfx2_sdram_req  <= ~gfx2_sdram_req;
+                    gfx_state       <= GFX_BEAT0;
+                end
+            end
+
+            GFX_BEAT0: begin
+                if (gfx2_sdram_req == gfx2_sdram_ack) begin
+                    // First read complete — latch lower 16 bits
+                    gfx_data_r[15:0] <= gfx2_sdram_data;
+                    // Issue second SDRAM read (upper word, address + 1)
+                    gfx2_sdram_addr <= gfx_sdram_word_addr + 27'd1;
+                    gfx2_sdram_req  <= ~gfx2_sdram_req;
+                    gfx_state       <= GFX_BEAT1;
+                end
+            end
+
+            GFX_BEAT1: begin
+                if (gfx2_sdram_req == gfx2_sdram_ack) begin
+                    // Second read complete — latch upper 16 bits and ack the core
+                    gfx_data_r[31:16] <= gfx2_sdram_data;
+                    gfx_ack_r         <= ~gfx_ack_r;
+                    gfx_state         <= GFX_IDLE;
+                end
+            end
+
+            default: gfx_state <= GFX_IDLE;
+        endcase
+    end
+end
 
 //////////////////////////////////////////////////////////////////
 // Toaplan V2 core
@@ -704,7 +778,6 @@ wire _unused = &{
     joystick_0[31:10], joystick_1[31:9],
     dsw[2], dsw[3],
     cpu_reset_n_out,
-    gfx_sdram_word_addr,    // upper bits not used by sdram_b CH2 (would need wider port)
     prog_sdram_word_addr,   // forwarded to sdram_b; suppress unused warning on wire
     adpcm_sdram_word_addr,  // forwarded to sdram_b CH3; suppress unused warning on wire
     z80_sdram_word_addr     // forwarded to sdram_b CH4; suppress unused warning on wire
