@@ -14,16 +14,24 @@
 //   Z80 sound CPU
 //   YM2151 + OKI M6295 audio
 //
-// Address map (byte addresses, from MAME toaplan2.cpp):
-//   0x000000–0x0FFFFF   1MB     Program ROM (from SDRAM)
+// Address map (byte addresses, from MAME batsugun.cpp batsugun_68k_mem):
+//   0x000000–0x07FFFF   512KB   Program ROM (from SDRAM)
 //   0x100000–0x10FFFF   64KB    Work RAM
-//   0x400000–0x40FFFF   64KB    GP9001 (registers + sprite RAM + VRAM)
-//   0x500000–0x5003FF   1KB     Palette RAM (512 × 16-bit, R5G5B5)
-//   0x700000–0x700FFF   4KB     I/O registers
+//   0x200010–0x200019           I/O ports (IN1/IN2/SYS)
+//   0x210000–0x21FFFF   64KB    Shared RAM (68K/V25 shared, byte-wide via V25)
+//   0x300000–0x30000D           GP9001 VDP[0] (tile + sprite processor)
+//   0x400000–0x400FFF   4KB     Palette RAM (512 × 16-bit, R5G5B5)
+//   0x500000–0x50000D           GP9001 VDP[1] (second tile/sprite processor)
+//   0x700000–0x700001           VDP[0] video count (vblank/scanline status)
 //
-// IRQ assignment (from MAME):
-//   IRQ2 (IPL = 3'b101) — VBLANK
-//   IRQ1 (IPL = 3'b110) — GP9001 sprite scan complete
+// NOTE: This RTL currently maps GP9001 at 0x400000 and palette at 0x500000,
+// which differs from the actual MAME map above. These addresses need to be
+// corrected to match the real hardware (GP9001 VDP[0] at 0x300000, palette
+// at 0x400000, VDP[1] at 0x500000).
+//
+// IRQ assignment (from MAME batsugun.cpp):
+//   IRQ4 (M68K_IRQ_4) — GP9001 VDP[0] vblank interrupt
+//   (No IRQ1/IRQ2 in batsugun — the old IRQ mapping was incorrect)
 //
 // Video timing: 320×240, standard arcade horizontal/vertical rates.
 // Palette format: 0xRRRRRGGGGGBBBBB (standard GP9001 5-5-5 RGB).
@@ -37,23 +45,10 @@
 
 // ============================================================================
 // Typedef: GP9001 Sprite Display List Entry
-// Guard against redefinition when compiled alongside gp9001.sv
-// (Verilator sees both files in a single compilation unit).
+// Defined in gp9001.sv (which is compiled first in the same Verilator unit).
+// Do not redefine here — Verilator 5.x does not honour `ifndef guards across
+// files in a single compilation run and will flag duplicate typedefs.
 // ============================================================================
-`ifndef SPRITE_ENTRY_T_DEFINED
-`define SPRITE_ENTRY_T_DEFINED
-typedef struct packed {
-    logic [8:0]  x;         // X position (9-bit)
-    logic [8:0]  y;         // Y position (9-bit)
-    logic [9:0]  tile_num;  // tile index
-    logic        flip_x;
-    logic        flip_y;
-    logic        prio;      // 0 = below BG, 1 = above BG
-    logic [3:0]  palette;
-    logic [1:0]  size;      // 0=8×8, 1=16×16, 2=32×32, 3=64×64
-    logic        valid;
-} sprite_entry_t;
-`endif
 
 /* verilator lint_off SYNCASYNCNET */
 module toaplan_v2 #(

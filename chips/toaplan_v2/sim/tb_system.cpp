@@ -122,7 +122,9 @@ int main(int argc, char** argv) {
     SdramModel sdram;
 
     // CPU program ROM: SDRAM byte 0x000000
-    if (env_prog)  sdram.load(env_prog,  0x000000);
+    // Batsugun uses ROM_LOAD16_WORD_SWAP in MAME — each 16-bit word has its
+    // bytes stored swapped (lo first, hi second) in the ROM file.
+    if (env_prog)  sdram.load_word_swap(env_prog, 0x000000);
 
     // GFX ROM: SDRAM byte 0x100000 (4 MB, 32-bit wide tiles/sprites)
     if (env_gfx)   sdram.load(env_gfx,   0x100000);

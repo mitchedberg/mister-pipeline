@@ -6,10 +6,10 @@
 // data is ready (matches the toaplan_v2.sv bridge logic).
 //
 // SDRAM layout (byte addresses, per emu.sv / Batsugun MRA):
-//   0x000000 — CPU program ROM (1 MB)
-//   0x100000 — GFX ROM (4 MB; sprites + BG tiles from gp9001)
-//   0x500000 — ADPCM ROM (OKI M6295 sample data, 1 MB)
-//   0x600000 — Z80 sound CPU ROM (32 KB; byte-wide)
+//   0x000000 — CPU program ROM (512 KB; WORD-SWAPPED per ROM_LOAD16_WORD_SWAP)
+//   0x100000 — GFX ROM (6 MB; sprites + BG tiles from two GP9001 VDPs)
+//   0x500000 — ADPCM ROM (OKI M6295 sample data, 256 KB)
+//   (no Z80 ROM — Batsugun uses NEC V25 which uploads its code from main ROM)
 //
 // The GFX channel is 32-bit wide (gfx_rom_data[31:0]).
 // All other channels are 16-bit (prog, adpcm) or 8-bit (z80).
@@ -48,6 +48,32 @@ public:
         }
         fclose(f);
         fprintf(stderr, "SDRAM: loaded '%s' at byte 0x%06X (%zu words)\n",
+                path, byte_offset, count);
+        return true;
+    }
+
+    // Load a raw binary file applying MAME ROM_LOAD16_WORD_SWAP byte order.
+    // The ROM file has each 16-bit word stored with bytes swapped (lo byte first,
+    // hi byte second).  Swap them back to produce correct big-endian 68000 words.
+    // This matches MAME's ROM_LOAD16_WORD_SWAP / ROM_GROUPWORD | ROM_REVERSE.
+    bool load_word_swap(const char* path, uint32_t byte_offset) {
+        if (!path || !*path) return false;
+        FILE* f = fopen(path, "rb");
+        if (!f) {
+            fprintf(stderr, "SDRAM: cannot open (word-swap) '%s'\n", path);
+            return false;
+        }
+        size_t word_idx = byte_offset / 2;
+        uint8_t buf[2];
+        size_t count = 0;
+        while (fread(buf, 1, 2, f) == 2) {
+            if (word_idx >= mem.size()) break;
+            // ROM file stores [lo][hi]; swap to produce big-endian word (hi<<8)|lo
+            mem[word_idx++] = ((uint16_t)buf[1] << 8) | buf[0];
+            ++count;
+        }
+        fclose(f);
+        fprintf(stderr, "SDRAM: loaded (word-swap) '%s' at byte 0x%06X (%zu words)\n",
                 path, byte_offset, count);
         return true;
     }
