@@ -607,6 +607,12 @@ taito_b u_taito_b
     .snd_left    (core_snd_left),
     .snd_right   (core_snd_right),
 
+    // ── CPU Program ROM SDRAM (CH1) ───────────────────────────────────────────
+    .prog_rom_addr (cpu_sdr_addr),
+    .prog_rom_data (cpu_sdr_data),
+    .prog_rom_req  (cpu_sdr_req),
+    .prog_rom_ack  (cpu_sdr_ack),
+
     // ── GFX ROM (TC0180VCU) ──────────────────────────────────────────────────
     .gfx_rom_addr (gfx_sdr_addr),
     .gfx_rom_data (gfx_sdr_data),
@@ -704,10 +710,6 @@ wire _unused = &{
     joystick_0[31:10], joystick_1[31:9],
     dsw[2], dsw[3],
     cpu_reset_n_out,       // CPU RESET instruction output (not used at top level)
-    cpu_sdr_addr,          // CPU ROM address (TODO: wire to 68K bus)
-    cpu_sdr_data,          // CPU ROM data
-    cpu_sdr_req,
-    cpu_sdr_ack,
     // Z80 debug bus outputs (informational only)
     z80_addr_dbg, z80_din_dbg, z80_dout_dbg,
     z80_rd_n_dbg, z80_wr_n_dbg, z80_mreq_n_dbg, z80_iorq_n_dbg, z80_int_n_dbg,

@@ -104,6 +104,15 @@ module taito_b #(
     output logic        z80_opx_n,       // YM2610 chip select (0xE000–0xE0FF)
     output logic        z80_reset_n,     // Z80 CPU reset (from SYT reset register)
 
+    // ── CPU Program ROM SDRAM Interface ─────────────────────────────────────
+    // 68000 reads from 0x000000–0x07FFFF (512KB) are served from SDRAM CH1.
+    // SDRAM word address = cpu_addr[22:1] (byte addr shifted right by 1).
+    // Toggle handshake: core toggles prog_rom_req; SDRAM mirrors ack when done.
+    output logic [26:0] prog_rom_addr,   // SDRAM word address
+    input  logic [15:0] prog_rom_data,   // SDRAM read data (16-bit word)
+    output logic        prog_rom_req,    // request toggle
+    input  logic        prog_rom_ack,    // acknowledge toggle
+
     // ── GFX ROM SDRAM Interface ─────────────────────────────────────────────
     // 16-bit word access; gfx_rom_addr is a word address in SDRAM.
     output logic [26:0] gfx_rom_addr,    // SDRAM word address for GFX ROM
@@ -171,6 +180,14 @@ module taito_b #(
 // All comparisons use cpu_addr[23:1] (word address).
 // AS_N qualification omitted here — the caller (or a registered CS pipeline)
 // must ensure cpu_addr is stable when these selects are used.
+
+// CPU Program ROM: 0x000000–0x07FFFF byte (512KB)
+//   Word address range: 0x000000–0x03FFFF → top 9 bits [23:15] = 9'h000..9'h001
+//   Simpler: top 9 bits [23:15] == 0 (i.e. cpu_addr[23:15] == 0 covers 0x000000–0x007FFF word = 0x000000–0x00FFFF byte — too narrow)
+//   Correct: byte 0x000000–0x07FFFF → word 0x000000–0x03FFFF → bits [23:18] == 6'b000000
+//   (top 6 bits zero means the address is in the first 256KB×2 = bottom 512KB)
+logic prog_rom_cs;
+assign prog_rom_cs = (cpu_addr[23:18] == 6'b000000) && !cpu_as_n;
 
 // TC0180VCU: 512KB window (19-bit word offset → top 5 bits of 23-bit word addr)
 //   nastar byte 0x400000–0x47FFFF → word 0x200000–0x23FFFF
@@ -246,6 +263,58 @@ tc0180vcu u_vcu (
     .pixel_out   (vcu_pixel_out),
     .pixel_valid (vcu_pixel_valid)
 );
+
+// =============================================================================
+// CPU Program ROM SDRAM Bridge
+// =============================================================================
+// The 68000 reads program ROM from 0x000000–0x07FFFF (512KB).
+// SDRAM word address = cpu_addr[22:1] (word-addressed; top bit [23] is always 0
+// in this range, and the SDRAM layout places CPU ROM at byte offset 0x000000).
+//
+// Toggle-handshake protocol (same as GFX and Z80 ROM bridges above):
+//   1. When prog_rom_cs asserts for a CPU read (!cpu_as_n && cpu_rw), toggle
+//      prog_rom_req to initiate an SDRAM fetch.
+//   2. Wait for prog_rom_ack == prog_rom_req (SDRAM controller has returned data).
+//   3. Latch prog_rom_data into prog_rom_data_r.
+//   4. Assert prog_dtack_now combinationally the cycle ack arrives; this feeds
+//      directly into cpu_dtack_n so no extra cycle of latency is added.
+//
+// Guard condition !dtack_r prevents re-issuing a request during the same
+// bus cycle once DTACK has already been asserted (same guard as nmk_arcade).
+// =============================================================================
+logic        prog_req_pending;
+logic [26:0] prog_req_addr_r;
+logic [15:0] prog_rom_data_r;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        prog_rom_req     <= 1'b0;
+        prog_req_pending <= 1'b0;
+        prog_req_addr_r  <= 27'b0;
+        prog_rom_data_r  <= 16'hFFFF;
+    end else begin
+        if (prog_rom_cs && cpu_rw && !prog_req_pending && !dtack_r) begin
+            // New CPU ROM read — issue SDRAM request
+            // Word address: cpu_addr[23:1] is already a word address;
+            // SDRAM expects a 27-bit word address (base 0 for CPU ROM).
+            prog_req_addr_r  <= {4'b0, cpu_addr[22:0]};  // 27-bit word addr
+            prog_req_pending <= 1'b1;
+            prog_rom_req     <= ~prog_rom_req;
+        end else if (prog_req_pending && (prog_rom_req == prog_rom_ack)) begin
+            // SDRAM returned data — latch and release pending
+            prog_rom_data_r  <= prog_rom_data;
+            prog_req_pending <= 1'b0;
+        end
+    end
+end
+
+assign prog_rom_addr = prog_req_addr_r;
+
+// prog_dtack_now: combinational — true the exact cycle SDRAM ack arrives.
+// Used to assert cpu_dtack_n without waiting for dtack_r to register.
+// (Pattern from nmk_arcade prog_dtack_now / fx68k_integration_reference §3B)
+logic prog_dtack_now;
+assign prog_dtack_now = prog_rom_cs && prog_req_pending && (prog_rom_req == prog_rom_ack);
 
 // =============================================================================
 // GFX ROM SDRAM Bridge
@@ -763,7 +832,12 @@ end
 // =============================================================================
 // CPU Data Bus Read Mux
 // =============================================================================
-// Priority: VCU > DAR > IOC > SYT > WRAM > default open-bus
+// Priority: ROM > VCU > DAR > IOC > SYT > WRAM > default open-bus
+//
+// ROM data: when prog_dtack_now pulses (SDRAM ack just arrived), forward the
+// live prog_rom_data directly.  Once latched into prog_rom_data_r the next
+// cycle, the bus cycle is already terminating (dtack_r will be high), so only
+// the live-forwarding path is needed for correct data to the CPU.
 //
 // IOC data is byte-wide; expand to 16-bit word on the correct byte lane.
 // SYT data is 4-bit nibble; place on D[4:1] of lower byte.
@@ -774,7 +848,11 @@ assign ioc_dout_word = IOC_UPPER_BYTE ? {ioc_dout, 8'hFF}    : {8'hFF, ioc_dout}
 assign syt_dout_word = {11'b0, syt_mdout, 1'b0};  // nibble in D[4:1], rest open
 
 always_comb begin
-    if (vcu_cs)
+    if (prog_rom_cs)
+        // Forward live data when ack arrives; fall back to latched data while stalling.
+        // prog_dtack_now selects the live word; before ack, prog_rom_data_r holds 0xFFFF.
+        cpu_dout = prog_dtack_now ? prog_rom_data : prog_rom_data_r;
+    else if (vcu_cs)
         cpu_dout = vcu_dout;
     else if (dar_cs)
         cpu_dout = dar_dout;
@@ -792,39 +870,43 @@ end
 // DTACK Generation
 // =============================================================================
 // TC0260DAR has its own DTACKn output (stalls CPU during active display).
+// CPU ROM reads stall until SDRAM ack returns (prog_dtack_now).
 // All other chips are synchronous with 1-cycle latency; DTACK asserted after
 // one clock (2-cycle total: AS_N falls → CS decode → DTACK next cycle).
 //
-// Simple implementation:
-//   - DAR: use dar_dtack_n directly (it handles palette RAM busy stalls)
-//   - VCU: registered 1-cycle DTACK
-//   - IOC/SYT/WRAM: registered 1-cycle DTACK
-//   - Any CS → generate DTACK; active-low AND of all chip DTACKs
+// Implementation:
+//   - ROM:          prog_dtack_now (combinational ack) — no latency after SDRAM
+//   - DAR:          dar_dtack_n directly (handles palette RAM busy stalls)
+//   - VCU/IOC/SYT/WRAM: registered 1-cycle DTACK via dtack_r
 //
-// A 2-cycle pipeline: register the chip-select one cycle after AS_N falls,
-// then assert DTACK.
+// dtack_r latches the OR of all fast chip-selects (including prog_dtack_now so
+// that dtack_r holds DTACK asserted across the remainder of the ROM bus cycle).
+// cpu_dtack_n priority: ROM > DAR > fast DTACK.
 
 logic any_cs;
 logic dtack_r;
 
-assign any_cs = vcu_cs | dar_cs | !ioc_cs_n | !syt_mcs_n | wram_cs;
+// imm_cs: all chip selects except ROM (which has its own slow path) and DAR
+assign any_cs = vcu_cs | !ioc_cs_n | !syt_mcs_n | wram_cs;
 
+// dtack_r: hold DTACK for the duration of fast-device and ROM bus cycles.
+// prog_dtack_now feeds in so that once the ROM ack arrives, dtack_r latches it.
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n)
         dtack_r <= 1'b0;
     else
-        dtack_r <= any_cs;
+        dtack_r <= !cpu_as_n && (dtack_r | any_cs | prog_dtack_now);
 end
 
-// cpu_dtack_n: assert (low) when either registered fast-DTACK or DAR's DTACK
-// DAR DTACKn: 0 = ready (active low), 1 = stalling
-// cpu_dtack_n = 0 means CPU can proceed:
-//   - DAR selected and DAR is ready (!dar_dtack_n)
-//   - OR non-DAR chip selected and one cycle has passed (dtack_r)
-//   - Active while AS is asserted (clear when AS_N rises)
-assign cpu_dtack_n = cpu_as_n ? 1'b1
-                   : dar_cs   ? dar_dtack_n
-                   :            !dtack_r;
+// cpu_dtack_n:
+//   - High (1) while AS is deasserted — no bus cycle in progress
+//   - Low  (0) immediately when prog_dtack_now fires (ROM data ready this cycle)
+//   - Low  (0) via dar_dtack_n when palette DAC is selected
+//   - Low  (0) via dtack_r for all other fast devices (and ROM hold after ack)
+assign cpu_dtack_n = cpu_as_n       ? 1'b1
+                   : prog_dtack_now ? 1'b0
+                   : dar_cs         ? dar_dtack_n
+                   :                  !dtack_r;
 
 // =============================================================================
 // Interrupt (IPL) Generation
