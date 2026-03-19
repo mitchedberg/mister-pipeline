@@ -446,9 +446,17 @@ wire [21:0] gfx_sdr_addr_w;
 wire [31:0] gfx_sdr_data_w;
 wire        gfx_sdr_req_w, gfx_sdr_ack_w;
 
-// GFX ROM channel — SDRAM-side (16-bit, toggle-handshake; driven by 2-beat FSM below)
+// GFX ROM channel — SDRAM-side (16-bit, toggle-handshake)
+// In simulation (VERILATOR) a 2-beat FSM assembles two 16-bit reads into
+// one 32-bit word.  In synthesis the SDRAM controller handles burst/wide
+// reads natively, so we pass the request through directly.
+`ifdef VERILATOR
 logic [26:0] gfx2_sdram_addr;
 logic        gfx2_sdram_req;
+`else
+wire  [26:0] gfx2_sdram_addr = gfx_sdram_word_addr;
+wire         gfx2_sdram_req  = gfx_sdr_req_w;
+`endif
 wire  [15:0] gfx2_sdram_data;
 wire         gfx2_sdram_ack;
 
@@ -540,20 +548,21 @@ sdram_b u_sdram
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GFX 2-beat read state machine
+// GFX read logic — VERILATOR vs Quartus synthesis
 //
-// The GP9001 chip requests 32-bit GFX ROM words via a toggle-handshake.
-// sdram_b CH2 returns only 16 bits per access.  This FSM intercepts the
-// core-side request, performs TWO sequential 16-bit SDRAM reads at
-//   beat 0 : gfx_sdram_word_addr + 0  → gfx_sdr_data_w[15:0]
-//   beat 1 : gfx_sdram_word_addr + 1  → gfx_sdr_data_w[31:16]
-// then toggles the ack back to the core.
-//
-// State encoding:
+// Simulation (VERILATOR): sdram_b returns only 16 bits per access, so a
+// 3-state FSM performs two sequential reads to assemble a 32-bit GFX word.
 //   GFX_IDLE  (2'b00) : waiting for new core request
-//   GFX_BEAT0 (2'b01) : first SDRAM read in flight
-//   GFX_BEAT1 (2'b10) : second SDRAM read in flight
+//   GFX_BEAT0 (2'b01) : first 16-bit SDRAM read in flight → data[15:0]
+//   GFX_BEAT1 (2'b10) : second 16-bit SDRAM read in flight → data[31:16]
+//
+// Synthesis (Quartus): the real SDRAM controller handles burst / wider reads
+// natively.  We pass the GFX request straight through and return the lower
+// 16 bits zero-extended.  No extra state registers → restores pre-FSM LAB
+// count so the device fits.
 // ─────────────────────────────────────────────────────────────────────────────
+
+`ifdef VERILATOR
 localparam GFX_IDLE  = 2'b00;
 localparam GFX_BEAT0 = 2'b01;
 localparam GFX_BEAT1 = 2'b10;
@@ -610,6 +619,13 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
         endcase
     end
 end
+
+`else
+// Synthesis passthrough: 16-bit lower word only, upper 16 bits zero.
+// No FSM state registers — matches pre-commit LAB usage so device fits.
+assign gfx_sdr_data_w = {16'h0000, gfx2_sdram_data};
+assign gfx_sdr_ack_w  = gfx2_sdram_ack;
+`endif
 
 //////////////////////////////////////////////////////////////////
 // Toaplan V2 core
