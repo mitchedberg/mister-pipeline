@@ -32,10 +32,11 @@
 // Output:
 //   frame_NNNN.ppm — one PPM file per vertical frame
 //
-// Video resolution: 256×224 (Berlin Wall native, Kaneko16 standard)
-//   Horizontal: 256 active pixels
-//   Vertical:   224 active lines
+// Video resolution: 320×240 (Kaneko16 standard — kaneko_arcade.sv generates this)
+//   Horizontal: 320 active pixels  (H_TOTAL = 416)
+//   Vertical:   240 active lines   (V_TOTAL = 264)
 //   Pixel clock: ~6.4 MHz (32 MHz / 5)
+//   Iters per frame: 416 × 264 × 5 × 2 = 1,098,240  (budget: 1,200,000)
 // =============================================================================
 
 #include "Vtb_top.h"
@@ -52,9 +53,9 @@
 #include <vector>
 
 // ── Video frame buffer ───────────────────────────────────────────────────────
-// Berlin Wall / Kaneko16 native resolution: 256×224
-static constexpr int VID_H_ACTIVE = 256;
-static constexpr int VID_V_ACTIVE = 224;
+// Kaneko16 native resolution: 320×240 (matches kaneko_arcade.sv H_ACTIVE/V_ACTIVE)
+static constexpr int VID_H_ACTIVE = 320;
+static constexpr int VID_V_ACTIVE = 240;
 
 struct FrameBuffer {
     static constexpr int W = VID_H_ACTIVE;
@@ -215,7 +216,8 @@ int main(int argc, char** argv) {
     // VCD timestamp counter
     uint64_t vcd_ts = 0;
 
-    for (iter = 0; iter < (uint64_t)n_frames * 600000ULL; iter++) {
+    // Budget: 1,200,000 iters/frame = 416×264×5×2 (320×240 @ 32MHz/5 pixel div, +~10% margin)
+    for (iter = 0; iter < (uint64_t)n_frames * 1200000ULL; iter++) {
         // Toggle clock
         top->clk_sys = top->clk_sys ^ 1;
 
