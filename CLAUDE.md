@@ -77,9 +77,10 @@ Append to `.shared/findings.md` with: date, who found it, which cores are affect
 ### Compute resources
 | Machine | SSH | Verilator | Notes |
 |---------|-----|-----------|-------|
-| Mac Mini 3 | local | /opt/homebrew/bin/ | 10-core M4 |
-| iMac-Garage | `ssh imac` | ~/tools/verilator/bin/ | 8-core M4 |
-| GPU PC | `ssh gpu` | No (Windows) | RTX 4070 Super, MAME |
+| Mac Mini 3 | local | /opt/homebrew/bin/ | 10-core M4, orchestrator |
+| iMac-Garage | `ssh imac` | ~/tools/verilator/bin/ | 8-core M4, sim worker |
+| RP's Mac Mini | `ssh rpmini` | needs install | 10-core M4, MAME ROM library |
+| GPU PC | `ssh gpu` | No (Windows) | RTX 4070 Super, MAME reference frames |
 
 ### ROMs
 `/Volumes/2TB_20260220/Projects/ROMs_Claude/Roms/` — tdragon, batsugun, gunbird, crimec, nastar, pbobble, gigandes, superman, twinhawk, daisenpu
