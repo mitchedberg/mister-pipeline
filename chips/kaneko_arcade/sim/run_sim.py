@@ -206,19 +206,49 @@ def extract_berlwall(zip_path, tmpdir):
         zf.extractall(tmpdir)
 
     # Identify ROMs by known filenames (MAME berlwall set)
-    # CPU program ROM: even + odd halves, interleaved
-    PROG_EVEN_CANDIDATES = ['u23.bin', 'berlwall.u23', 'bw_u23.bin', '7.u23']
-    PROG_ODD_CANDIDATES  = ['u24.bin', 'berlwall.u24', 'bw_u24.bin', '8.u24']
+    # Supports two naming conventions found in the wild:
+    #   Old MAME: u23.bin / u24.bin / u1.bin-u4.bin / u7.bin / u13.bin
+    #   New MAME: bw100e_u23-01.u23 / bw101e_u39-01.u39 / bw000.u46–bw00b.u68
+    #
+    # Berlin Wall MAME ROM layout (kaneko16.cpp):
+    #   Program ROM: bw100e_u23-01.u23 (even D15:D8, 128KB) + bw101e_u39-01.u39 (odd D7:D0, 128KB)
+    #                → interleave to 256KB total
+    #   GFX ROM:     bw001.u84 … bw00b.u68  (11 × 512KB = 5.5MB, concatenate in order)
+    #                OR: u1.bin … u4.bin    (4 × 512KB = 2MB, older set)
+    #   ADPCM ROM:   bw000.u46 (256KB OKI M6295 samples) OR u7.bin
+    #   Z80 ROM:     Not present in all sets (sound CPU may be absent)
 
-    # GFX ROM: up to 4 banks concatenated
-    GFX_CANDIDATES = [
-        ['u1.bin', 'berlwall.u1', 'bw_u1.bin'],
-        ['u2.bin', 'berlwall.u2', 'bw_u2.bin'],
-        ['u3.bin', 'berlwall.u3', 'bw_u3.bin'],
-        ['u4.bin', 'berlwall.u4', 'bw_u4.bin'],
+    # CPU program ROM: even + odd halves, interleaved
+    PROG_EVEN_CANDIDATES = [
+        'bw100e_u23-01.u23',           # new MAME naming
+        'u23.bin', 'berlwall.u23', 'bw_u23.bin', '7.u23',
+    ]
+    PROG_ODD_CANDIDATES  = [
+        'bw101e_u39-01.u39',           # new MAME naming (u39 is the odd/low byte)
+        'u24.bin', 'berlwall.u24', 'bw_u24.bin', '8.u24',
     ]
 
-    ADPCM_CANDIDATES = ['u7.bin', 'berlwall.u7', 'bw_u7.bin', 'adpcm.bin']
+    # GFX ROM: concatenate all banks in order
+    # New MAME naming: bw001–bw00b (11 banks × 512KB)
+    # Old MAME naming: u1–u4 (4 banks × 512KB)
+    GFX_CANDIDATES = [
+        ['bw001.u84', 'u1.bin', 'berlwall.u1', 'bw_u1.bin'],
+        ['bw002.u83', 'u2.bin', 'berlwall.u2', 'bw_u2.bin'],
+        ['bw003.u77', 'u3.bin', 'berlwall.u3', 'bw_u3.bin'],
+        ['bw004.u73', 'u4.bin', 'berlwall.u4', 'bw_u4.bin'],
+        ['bw005.u74'],
+        ['bw006.u75'],
+        ['bw007.u76'],
+        ['bw008.u65'],
+        ['bw009.u66'],
+        ['bw00a.u67'],
+        ['bw00b.u68'],
+    ]
+
+    # ADPCM ROM (OKI M6295)
+    ADPCM_CANDIDATES = ['bw000.u46', 'u7.bin', 'berlwall.u7', 'bw_u7.bin', 'adpcm.bin']
+
+    # Z80 sound ROM (optional — may be absent in some sets)
     Z80_CANDIDATES   = ['u13.bin', 'berlwall.u13', 'bw_u13.bin', 'sound.bin']
 
     def find_file(candidates):
@@ -226,7 +256,7 @@ def extract_berlwall(zip_path, tmpdir):
             p = os.path.join(tmpdir, name)
             if os.path.exists(p):
                 return p
-            # Also try base name without path prefix
+            # Also try case-insensitive match
             for extracted in os.listdir(tmpdir):
                 if extracted.lower() == name.lower():
                     return os.path.join(tmpdir, extracted)
@@ -245,7 +275,7 @@ def extract_berlwall(zip_path, tmpdir):
             result['prog'] = fallback
             print(f"  CPU ROM (pre-interleaved): {fallback}")
         else:
-            print("  WARN: CPU program ROM not found (tried u23/u24 even/odd halves)")
+            print(f"  WARN: CPU program ROM not found (even={even_path}, odd={odd_path})")
 
     # GFX ROM: concatenate all banks in order
     gfx_parts = []
@@ -253,7 +283,7 @@ def extract_berlwall(zip_path, tmpdir):
         p = find_file(candidates)
         if p:
             gfx_parts.append(p)
-            print(f"  GFX bank: {p}")
+            print(f"  GFX bank: {os.path.basename(p)}")
     if gfx_parts:
         gfx_out = os.path.join(tmpdir, 'berlwall_gfx.bin')
         with open(gfx_out, 'wb') as fout:
@@ -261,26 +291,26 @@ def extract_berlwall(zip_path, tmpdir):
                 with open(part, 'rb') as fin:
                     fout.write(fin.read())
         total_gfx = sum(os.path.getsize(p) for p in gfx_parts)
-        print(f"  GFX ROM concatenated: {total_gfx} bytes -> {gfx_out}")
+        print(f"  GFX ROM concatenated: {total_gfx:,} bytes ({len(gfx_parts)} banks) -> {gfx_out}")
         result['gfx'] = gfx_out
     else:
-        print("  WARN: GFX ROM not found (tried u1-u4 banks)")
+        print("  WARN: GFX ROM not found (tried bw001-bw00b and u1-u4 banks)")
 
     # ADPCM ROM
     adpcm_path = find_file(ADPCM_CANDIDATES)
     if adpcm_path:
         result['adpcm'] = adpcm_path
-        print(f"  ADPCM ROM: {adpcm_path}")
+        print(f"  ADPCM ROM: {os.path.basename(adpcm_path)} ({os.path.getsize(adpcm_path):,} bytes)")
     else:
         print("  WARN: ADPCM ROM not found")
 
-    # Z80 ROM
+    # Z80 ROM (optional — not present in all ROM sets)
     z80_path = find_file(Z80_CANDIDATES)
     if z80_path:
         result['z80'] = z80_path
-        print(f"  Z80 ROM: {z80_path}")
+        print(f"  Z80 ROM: {os.path.basename(z80_path)} ({os.path.getsize(z80_path):,} bytes)")
     else:
-        print("  WARN: Z80 ROM not found")
+        print("  NOTE: Z80 ROM not found (may be absent in this ROM set — sound will be silent)")
 
     return result
 
