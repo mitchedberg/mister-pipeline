@@ -30,13 +30,14 @@ RTL_JT6295     := $(ROOT)/vendor/audio/jt6295/jt6295.v
 
 # fx68k MC68000 CPU (Jorge Cwik) + adapter
 RTL_FX68K      := $(ROOT)/chips/m68000/hdl/fx68k/fx68kAlu.sv \
+                  $(ROOT)/chips/m68000/hdl/fx68k/uaddrPla.sv \
                   $(ROOT)/chips/m68000/hdl/fx68k/fx68k.sv
 RTL_FX68K_ADPT := $(ROOT)/chips/m68000/rtl/fx68k_adapter.sv
 
 # Simulation top (wraps nmk_arcade + fx68k_adapter)
 RTL_TB_TOP     := ../rtl/tb_top.sv
 
-# All RTL sources: order matters (top last so Verilator can resolve)
+# All RTL sources (full system)
 SRCS = \
     $(RTL_NMK16) \
     $(RTL_T80) \
@@ -61,36 +62,19 @@ INCDIRS = \
     -I$(ROOT)/chips/m68000/hdl/fx68k \
     -I$(ROOT)/chips/m68000/rtl
 
-# Verilator flags
+# Verilator flags — TEST: all original -Wno flags restored
 VLFLAGS = \
     --sv --cc --exe --build --trace \
     --top-module tb_top \
-    -Wno-PINMISSING \
-    -Wno-MODMISSING \
-    -Wno-UNUSED \
-    -Wno-UNDRIVEN \
-    -Wno-SYNCASYNCNET \
-    -Wno-IMPLICIT \
-    -Wno-UNSIGNED \
-    -Wno-CASEINCOMPLETE \
-    -Wno-WIDTHTRUNC \
-    -Wno-WIDTHEXPAND \
-    -Wno-COMBDLY \
-    -Wno-INITIALDLY \
-    -Wno-MULTIDRIVEN \
-    -Wno-BLKANDNBLK \
-    -Wno-UNOPTFLAT \
-    -Wno-DECLFILENAME \
-    -Wno-VARHIDDEN \
-    -Wno-PINCONNECTEMPTY \
-    -Wno-SYMRSVDWORD \
-    -Wno-ALWCOMBORDER \
-    -Wno-TIMESCALEMOD \
-    -O2
+    -Wno-PINMISSING -Wno-MODMISSING -Wno-UNUSED -Wno-UNDRIVEN \
+    -Wno-SYNCASYNCNET -Wno-IMPLICIT -Wno-UNSIGNED -Wno-CASEINCOMPLETE \
+    -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND -Wno-COMBDLY -Wno-INITIALDLY \
+    -Wno-MULTIDRIVEN -Wno-BLKANDNBLK -Wno-UNOPTFLAT -Wno-DECLFILENAME \
+    -Wno-VARHIDDEN -Wno-PINCONNECTEMPTY -Wno-SYMRSVDWORD -Wno-ALWCOMBORDER \
+    -Wno-TIMESCALEMOD -O2
 
-# C++ flags for tb_system.cpp
-# -DVL_USER_STOP: suppress default vl_stop() in verilated.cpp so our override compiles
-CFLAGS = -O2 -std=c++17 -DVL_USER_STOP
+# C++ flags
+CFLAGS = -O2 -std=c++17
 
 SIM_NAME   = sim_nmk_arcade
 # Verilator 5 places the binary in obj_dir/ regardless of -o; we symlink it out.

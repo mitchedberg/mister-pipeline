@@ -655,11 +655,24 @@ end
 // =============================================================================
 // CPU Data Bus Read Mux
 // Priority: prog_rom > NMK16 > work_ram > palette_ram > io > open-bus
+//
+// For the program ROM path we distinguish two cases:
+//   prog_dtack_now  — the SDRAM ack has just arrived THIS cycle; use the LIVE
+//                     prog_rom_data input so the CPU sees data in the same eval
+//                     step that DTACK is asserted (no 1-cycle pipeline delay).
+//   otherwise       — use prog_rom_data_r (the registered latch) to hold data
+//                     stable for the remainder of the bus cycle.
 // =============================================================================
+
+// prog_dtack_now is assigned below (after dtack_r section) but declared here
+// so cpu_dout can reference it.  Both are combinational; no circular dependency.
+logic prog_dtack_now;
+
 always_comb begin
-    if (prog_rom_cs)
-        cpu_dout = prog_rom_data_r;
-    else if (!nmk_cs_n)
+    if (prog_rom_cs) begin
+        // Use LIVE SDRAM data when ack fires this cycle; registered copy otherwise.
+        cpu_dout = prog_dtack_now ? prog_rom_data : prog_rom_data_r;
+    end else if (!nmk_cs_n)
         cpu_dout = nmk_dout;
     else if (wram_cs)
         cpu_dout = wram_dout_r;
@@ -679,6 +692,16 @@ end
 // DTACK uses a hold-until-deassert pattern: once asserted it stays asserted
 // until the CPU ends the bus cycle (AS_n goes high).  This ensures the CPU
 // can sample DTACK at any state of its bus cycle regardless of when it fires.
+//
+// For the ROM SDRAM path we need DTACK to assert COMBINATIONALLY in the same
+// eval step that data arrives, not one cycle later through dtack_r.  We achieve
+// this with two complementary mechanisms:
+//   prog_dtack_now — combinational pulse: true exactly when SDRAM req==ack and
+//                    we were waiting for it.  Used to bypass dtack_r for the
+//                    initial assertion so the CPU sees data + DTACK together.
+//   dtack_r        — registered hold latch: keeps DTACK low across the entire
+//                    bus cycle for ALL sources (including ROM, via prog_dtack_now
+//                    being captured into dtack_r one cycle later as the hold).
 // =============================================================================
 logic dtack_r;
 
@@ -686,10 +709,10 @@ logic dtack_r;
 logic imm_cs;
 assign imm_cs = (!nmk_cs_n | wram_cs | pal_cs | io_cs) && !cpu_as_n;
 
-// Program ROM: one-cycle pulse when SDRAM data arrives
-// prog_req_pending: 0→1 when request issued, 1→0 when req==ack (data ready)
-logic prog_dtack_src;
-assign prog_dtack_src = prog_rom_cs && prog_req_pending && (prog_rom_req == prog_rom_ack);
+// Program ROM: combinational pulse when SDRAM data arrives THIS cycle.
+// prog_req_pending goes 1→0 at the NEXT posedge (registered), so while
+// prog_req_pending==1 and req==ack the data on prog_rom_data is valid NOW.
+assign prog_dtack_now = prog_rom_cs && prog_req_pending && (prog_rom_req == prog_rom_ack);
 
 // DTACK hold latch: set when any source fires; cleared when AS_n deasserts.
 // dtack_r = !cpu_as_n  AND  (already_held  OR  new_source)
@@ -698,10 +721,18 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n)
         dtack_r <= 1'b0;
     else
-        dtack_r <= !cpu_as_n && (dtack_r | imm_cs | prog_dtack_src);
+        dtack_r <= !cpu_as_n && (dtack_r | imm_cs | prog_dtack_now);
 end
 
-assign cpu_dtack_n = cpu_as_n ? 1'b1 : !dtack_r;
+// cpu_dtack_n:
+//   - deasserted (1) whenever AS_n is high (no active bus cycle)
+//   - asserted combinationally (0) when ROM SDRAM ack fires THIS cycle
+//     (prog_dtack_now) — no wait for dtack_r to be clocked
+//   - asserted (0) via dtack_r for all other cases (immediate devices hold,
+//     ROM hold after first assertion)
+assign cpu_dtack_n = cpu_as_n          ? 1'b1 :
+                     prog_dtack_now    ? 1'b0 :
+                                         !dtack_r;
 
 // =============================================================================
 // Interrupt (IPL) Generation — VBLANK at level 4

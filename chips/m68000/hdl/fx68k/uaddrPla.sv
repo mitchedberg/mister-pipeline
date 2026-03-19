@@ -4,12 +4,6 @@
 // Opcode to uaddr entry routines (A2-A2-A3) PLA
 //
 
-// Lint suppression for third-party upstream code (fx68k by Jorge Cwik).
-/* verilator lint_off DECLFILENAME */
-/* verilator lint_off CASEINCOMPLETE */
-/* verilator lint_off WIDTHTRUNC */
-/* verilator lint_off UNUSEDSIGNAL */
-
 `timescale 1 ns / 1 ns
 
 `define NMA_BITS   10
@@ -85,11 +79,8 @@ module pla_lined(
    assign plaA3 = lineBmap[0] ? scA3 : arA23[ line];
    
    
-   // All PLA lines merged into one always_comb to avoid MULTIDRIVEN (Verilator)
-   always_comb begin
-
-      // Simple lines
-
+   // Simple lines
+   always @* begin
       // Line 6: Branch
       arIll[ 'h6] = 1'b0;
       arA23[ 'h6] = 'X;
@@ -97,25 +88,27 @@ module pla_lined(
          arA1[ 'h6] = (| opcode[7:0]) ? `BSRI1 : `BSRW1;
       else
          arA1[ 'h6] = (| opcode[7:0]) ? `BBCI1 : `BBCW1;
-
+                         
       // Line 7: moveq
       arIll[ 'h7] = opcode[ 8];
       arA23[ 'h7] = 'X;
       arA1[ 'h7] = `RLQL1;
 
-      // Line A & F
+      // Line A & F      
       arIll[ 'ha] = 1'b1;       arIll[ 'hf] = 1'b1;
       arA1[ 'ha]  = 'X;         arA1[ 'hf]  = 'X;
       arA23[ 'ha] = 'X;         arA23[ 'hf] = 'X;
+      
+   end   
 
-      // Special lines
+   // Special lines
 
-      // Line e: shifts
-      begin
+   // Line e: shifts
+   always @* begin
       if( ~opcode[11] & opcode[7] & opcode[6])
       begin
          arA23[ 'he] = `SFTM1;
-         unique case( col)
+          case( col)
             2: begin arIll[ 'he] = 1'b0; arA1[ 'he] = `ADRW1; end
             3: begin arIll[ 'he] = 1'b0; arA1[ 'he] = `PINW1; end
             4: begin arIll[ 'he] = 1'b0; arA1[ 'he] = `PDCW1; end
@@ -129,7 +122,7 @@ module pla_lined(
       else
       begin
          arA23[ 'he] = 'X;
-         unique case( opcode[ 7:6])
+          case( opcode[ 7:6])
          2'b00,
          2'b01: begin
                   arIll[ 'he] = 1'b0;
@@ -142,11 +135,11 @@ module pla_lined(
          2'b11: begin arIll[ 'he] = 1'b1; arA1[ 'he]  = 'X; end
          endcase
       end
-      end // end line-e shifts block
+   end
 
-      // Misc. line 4 row (local helpers only)
-      begin
-         illMisc = 1'b0;
+   // Misc. line 4 row
+   always @* begin
+      illMisc = 1'b0;
       case( opcode[ 5:3])
       3'b000,
       3'b001:      a1Misc = `TRAP1;
@@ -169,7 +162,7 @@ module pla_lined(
          
       default:  begin  illMisc = 1'b1; a1Misc = 'X; end
       endcase
-      end // end misc line-4 row block
+   end
 
 //
 // Past here
@@ -179,9 +172,10 @@ module pla_lined(
 //
 // Line: 0
 //
+always @* begin
 
 if( (opcode[11:6] & 'h1F) == 'h8) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h100; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h006; scA3 = 'h299; end
@@ -199,7 +193,7 @@ if( (opcode[11:6] & 'h1F) == 'h8) begin
 end
 
 else if( (opcode[11:6] & 'h37) == 'h0) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h100; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h006; scA3 = 'h299; end
@@ -217,7 +211,7 @@ else if( (opcode[11:6] & 'h37) == 'h0) begin
 end
 
 else if( (opcode[11:6] & 'h1F) == 'h9) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h100; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h006; scA3 = 'h299; end
@@ -235,7 +229,7 @@ else if( (opcode[11:6] & 'h1F) == 'h9) begin
 end
 
 else if( (opcode[11:6] & 'h37) == 'h1) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h100; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h006; scA3 = 'h299; end
@@ -253,7 +247,7 @@ else if( (opcode[11:6] & 'h37) == 'h1) begin
 end
 
 else if( (opcode[11:6] & 'h1F) == 'hA) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h3E0; arA23[ 'h0] = 'h10C; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h3E0; arA23[ 'h0] = 'h00B; scA3 = 'h29D; end
@@ -271,7 +265,7 @@ else if( (opcode[11:6] & 'h1F) == 'hA) begin
 end
 
 else if( (opcode[11:6] & 'h37) == 'h2) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h3E0; arA23[ 'h0] = 'h10C; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h3E0; arA23[ 'h0] = 'h00B; scA3 = 'h29D; end
@@ -289,7 +283,7 @@ else if( (opcode[11:6] & 'h37) == 'h2) begin
 end
 
 else if( (opcode[11:6] & 'h37) == 'h10) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h100; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h006; scA3 = 'h299; end
@@ -307,7 +301,7 @@ else if( (opcode[11:6] & 'h37) == 'h10) begin
 end
 
 else if( (opcode[11:6] & 'h37) == 'h11) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h100; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h006; scA3 = 'h299; end
@@ -325,7 +319,7 @@ else if( (opcode[11:6] & 'h37) == 'h11) begin
 end
 
 else if( (opcode[11:6] & 'h37) == 'h12) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h3E0; arA23[ 'h0] = 'h10C; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h3E0; arA23[ 'h0] = 'h00B; scA3 = 'h29D; end
@@ -343,7 +337,7 @@ else if( (opcode[11:6] & 'h37) == 'h12) begin
 end
 
 else if( (opcode[11:6] & 'h7) == 'h4) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h3E7; arA23[ 'h0] = 'X;  scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h1D2; arA23[ 'h0] = 'X;  scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h006; arA23[ 'h0] = 'X;  scA3 = 'h215; end
@@ -361,7 +355,7 @@ else if( (opcode[11:6] & 'h7) == 'h4) begin
 end
 
 else if( (opcode[11:6] & 'h7) == 'h5) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h3EF; arA23[ 'h0] = 'X;  scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h1D6; arA23[ 'h0] = 'X;  scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h006; arA23[ 'h0] = 'X;  scA3 = 'h081; end
@@ -379,7 +373,7 @@ else if( (opcode[11:6] & 'h7) == 'h5) begin
 end
 
 else if( (opcode[11:6] & 'h7) == 'h7) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h3EF; arA23[ 'h0] = 'X;  scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h1CE; arA23[ 'h0] = 'X;  scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h006; arA23[ 'h0] = 'X;  scA3 = 'h081; end
@@ -397,7 +391,7 @@ else if( (opcode[11:6] & 'h7) == 'h7) begin
 end
 
 else if( (opcode[11:6] & 'h7) == 'h6) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h3EB; arA23[ 'h0] = 'X;  scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h1CA; arA23[ 'h0] = 'X;  scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h006; arA23[ 'h0] = 'X;  scA3 = 'h069; end
@@ -415,7 +409,7 @@ else if( (opcode[11:6] & 'h7) == 'h6) begin
 end
 
 else if( opcode[11:6] == 'h20) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h3E7; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h006; scA3 = 'h215; end
@@ -433,7 +427,7 @@ else if( opcode[11:6] == 'h20) begin
 end
 
 else if( opcode[11:6] == 'h21) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h3EF; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h006; scA3 = 'h081; end
@@ -451,7 +445,7 @@ else if( opcode[11:6] == 'h21) begin
 end
 
 else if( opcode[11:6] == 'h23) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h3EF; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h006; scA3 = 'h081; end
@@ -469,7 +463,7 @@ else if( opcode[11:6] == 'h23) begin
 end
 
 else if( opcode[11:6] == 'h22) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h3EB; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h006; scA3 = 'h069; end
@@ -487,7 +481,7 @@ else if( opcode[11:6] == 'h22) begin
 end
 
 else if( opcode[11:6] == 'h30) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h108; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h006; scA3 = 'h087; end
@@ -505,7 +499,7 @@ else if( opcode[11:6] == 'h30) begin
 end
 
 else if( opcode[11:6] == 'h31) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h108; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h2B9; arA23[ 'h0] = 'h006; scA3 = 'h087; end
@@ -523,7 +517,7 @@ else if( opcode[11:6] == 'h31) begin
 end
 
 else if( opcode[11:6] == 'h32) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h3E0; arA23[ 'h0] = 'h104; scA3 = 'X; end
      1: begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X;    scA3 = 'X; end
      2: begin arIll[ 'h0] = 1'b0; arA1[ 'h0] = 'h3E0; arA23[ 'h0] = 'h00B; scA3 = 'h08F; end
@@ -542,13 +536,16 @@ end
 
 else begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X; scA3 = 'X; end
 
+end
+
 
 //
 // Line: 4
 //
+always @* begin
 
 if( (opcode[11:6] & 'h27) == 'h0) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h133; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h006; arA23[ 'h4] = 'h2B8; end
@@ -566,7 +563,7 @@ if( (opcode[11:6] & 'h27) == 'h0) begin
 end
 
 else if( (opcode[11:6] & 'h27) == 'h1) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h133; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h006; arA23[ 'h4] = 'h2B8; end
@@ -584,7 +581,7 @@ else if( (opcode[11:6] & 'h27) == 'h1) begin
 end
 
 else if( (opcode[11:6] & 'h27) == 'h2) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h137; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h00B; arA23[ 'h4] = 'h2BC; end
@@ -602,7 +599,7 @@ else if( (opcode[11:6] & 'h27) == 'h2) begin
 end
 
 else if( opcode[11:6] == 'h3) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h3A5; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h006; arA23[ 'h4] = 'h3A1; end
@@ -620,7 +617,7 @@ else if( opcode[11:6] == 'h3) begin
 end
 
 else if( opcode[11:6] == 'h13) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h301; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h006; arA23[ 'h4] = 'h159; end
@@ -638,7 +635,7 @@ else if( opcode[11:6] == 'h13) begin
 end
 
 else if( opcode[11:6] == 'h1B) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h301; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h006; arA23[ 'h4] = 'h159; end
@@ -656,7 +653,7 @@ else if( opcode[11:6] == 'h1B) begin
 end
 
 else if( opcode[11:6] == 'h20) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h13B; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h006; arA23[ 'h4] = 'h15C; end
@@ -674,7 +671,7 @@ else if( opcode[11:6] == 'h20) begin
 end
 
 else if( opcode[11:6] == 'h21) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h341; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h17C; arA23[ 'h4] = 'X; end
@@ -692,7 +689,7 @@ else if( opcode[11:6] == 'h21) begin
 end
 
 else if( opcode[11:6] == 'h22) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h133; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h3A0; arA23[ 'h4] = 'X; end
@@ -710,7 +707,7 @@ else if( opcode[11:6] == 'h22) begin
 end
 
 else if( opcode[11:6] == 'h23) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h232; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h3A0; arA23[ 'h4] = 'X; end
@@ -728,7 +725,7 @@ else if( opcode[11:6] == 'h23) begin
 end
 
 else if( opcode[11:6] == 'h28) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h12D; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h006; arA23[ 'h4] = 'h3C3; end
@@ -746,7 +743,7 @@ else if( opcode[11:6] == 'h28) begin
 end
 
 else if( opcode[11:6] == 'h29) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h12D; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h006; arA23[ 'h4] = 'h3C3; end
@@ -764,7 +761,7 @@ else if( opcode[11:6] == 'h29) begin
 end
 
 else if( opcode[11:6] == 'h2A) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h125; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h00B; arA23[ 'h4] = 'h3CB; end
@@ -782,7 +779,7 @@ else if( opcode[11:6] == 'h2A) begin
 end
 
 else if( opcode[11:6] == 'h2B) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h345; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h006; arA23[ 'h4] = 'h343; end
@@ -800,7 +797,7 @@ else if( opcode[11:6] == 'h2B) begin
 end
 
 else if( (opcode[11:6] & 'h3E) == 'h32) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h127; arA23[ 'h4] = 'X; end
@@ -818,7 +815,7 @@ else if( (opcode[11:6] & 'h3E) == 'h32) begin
 end
 
 else if( (opcode[11:6] & 'h7) == 'h6) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h152; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h006; arA23[ 'h4] = 'h151; end
@@ -836,7 +833,7 @@ else if( (opcode[11:6] & 'h7) == 'h6) begin
 end
 
 else if( (opcode[11:6] & 'h7) == 'h7) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h2F1; arA23[ 'h4] = 'X; end
@@ -854,7 +851,7 @@ else if( (opcode[11:6] & 'h7) == 'h7) begin
 end
 
 else if( opcode[11:6] == 'h3A) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h273; arA23[ 'h4] = 'X; end
@@ -872,7 +869,7 @@ else if( opcode[11:6] == 'h3A) begin
 end
 
 else if( opcode[11:6] == 'h3B) begin
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      1: begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
      2: begin arIll[ 'h4] = 1'b0; arA1[ 'h4] = 'h255; arA23[ 'h4] = 'X; end
@@ -895,13 +892,17 @@ end
 
 else begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
 
+end
+
+always @* begin
+
 //
 // Line: 1
 //
-unique case( movEa)
+ case( movEa)
 
 0: // Row: 0
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h121; arA23[ 'h1] = 'X; end
      1: begin arIll[ 'h1] = 1'b1; arA1[ 'h1] = 'X   ; arA23[ 'h1] = 'X; end
      2: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h006; arA23[ 'h1] = 'h29B; end
@@ -918,7 +919,7 @@ unique case( movEa)
     endcase
 
 2: // Row: 2
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h2FA; arA23[ 'h1] = 'X; end
      1: begin arIll[ 'h1] = 1'b1; arA1[ 'h1] = 'X   ; arA23[ 'h1] = 'X; end
      2: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h006; arA23[ 'h1] = 'h3AB; end
@@ -935,7 +936,7 @@ unique case( movEa)
     endcase
 
 3: // Row: 3
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h2FE; arA23[ 'h1] = 'X; end
      1: begin arIll[ 'h1] = 1'b1; arA1[ 'h1] = 'X   ; arA23[ 'h1] = 'X; end
      2: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h006; arA23[ 'h1] = 'h3AF; end
@@ -952,7 +953,7 @@ unique case( movEa)
     endcase
 
 4: // Row: 4
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h2F8; arA23[ 'h1] = 'X; end
      1: begin arIll[ 'h1] = 1'b1; arA1[ 'h1] = 'X   ; arA23[ 'h1] = 'X; end
      2: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h006; arA23[ 'h1] = 'h38B; end
@@ -969,7 +970,7 @@ unique case( movEa)
     endcase
 
 5: // Row: 5
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h2DA; arA23[ 'h1] = 'X; end
      1: begin arIll[ 'h1] = 1'b1; arA1[ 'h1] = 'X   ; arA23[ 'h1] = 'X; end
      2: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h006; arA23[ 'h1] = 'h38A; end
@@ -986,7 +987,7 @@ unique case( movEa)
     endcase
 
 6: // Row: 6
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h1EB; arA23[ 'h1] = 'X; end
      1: begin arIll[ 'h1] = 1'b1; arA1[ 'h1] = 'X   ; arA23[ 'h1] = 'X; end
      2: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h006; arA23[ 'h1] = 'h298; end
@@ -1003,7 +1004,7 @@ unique case( movEa)
     endcase
 
 7: // Row: 7
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h2D9; arA23[ 'h1] = 'X; end
      1: begin arIll[ 'h1] = 1'b1; arA1[ 'h1] = 'X   ; arA23[ 'h1] = 'X; end
      2: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h006; arA23[ 'h1] = 'h388; end
@@ -1020,7 +1021,7 @@ unique case( movEa)
     endcase
 
 8: // Row: 8
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h1EA; arA23[ 'h1] = 'X; end
      1: begin arIll[ 'h1] = 1'b1; arA1[ 'h1] = 'X   ; arA23[ 'h1] = 'X; end
      2: begin arIll[ 'h1] = 1'b0; arA1[ 'h1] = 'h006; arA23[ 'h1] = 'h32B; end
@@ -1041,10 +1042,10 @@ endcase
 //
 // Line: 2
 //
-unique case( movEa)
+ case( movEa)
 
 0: // Row: 0
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h129; arA23[ 'h2] = 'X; end
      1: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h129; arA23[ 'h2] = 'X; end
      2: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h00B; arA23[ 'h2] = 'h29F; end
@@ -1061,7 +1062,7 @@ unique case( movEa)
     endcase
 
 1: // Row: 1
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h129; arA23[ 'h2] = 'X; end
      1: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h129; arA23[ 'h2] = 'X; end
      2: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h00B; arA23[ 'h2] = 'h29F; end
@@ -1078,7 +1079,7 @@ unique case( movEa)
     endcase
 
 2: // Row: 2
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h2F9; arA23[ 'h2] = 'X; end
      1: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h2F9; arA23[ 'h2] = 'X; end
      2: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h00B; arA23[ 'h2] = 'h3A9; end
@@ -1095,7 +1096,7 @@ unique case( movEa)
     endcase
 
 3: // Row: 3
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h2FD; arA23[ 'h2] = 'X; end
      1: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h2FD; arA23[ 'h2] = 'X; end
      2: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h00B; arA23[ 'h2] = 'h3AD; end
@@ -1112,7 +1113,7 @@ unique case( movEa)
     endcase
 
 4: // Row: 4
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h2FC; arA23[ 'h2] = 'X; end
      1: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h2FC; arA23[ 'h2] = 'X; end
      2: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h00B; arA23[ 'h2] = 'h38F; end
@@ -1129,7 +1130,7 @@ unique case( movEa)
     endcase
 
 5: // Row: 5
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h2DE; arA23[ 'h2] = 'X; end
      1: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h2DE; arA23[ 'h2] = 'X; end
      2: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h00B; arA23[ 'h2] = 'h38E; end
@@ -1146,7 +1147,7 @@ unique case( movEa)
     endcase
 
 6: // Row: 6
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h1EF; arA23[ 'h2] = 'X; end
      1: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h1EF; arA23[ 'h2] = 'X; end
      2: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h00B; arA23[ 'h2] = 'h29C; end
@@ -1163,7 +1164,7 @@ unique case( movEa)
     endcase
 
 7: // Row: 7
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h2DD; arA23[ 'h2] = 'X; end
      1: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h2DD; arA23[ 'h2] = 'X; end
      2: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h00B; arA23[ 'h2] = 'h38C; end
@@ -1180,7 +1181,7 @@ unique case( movEa)
     endcase
 
 8: // Row: 8
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h1EE; arA23[ 'h2] = 'X; end
      1: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h1EE; arA23[ 'h2] = 'X; end
      2: begin arIll[ 'h2] = 1'b0; arA1[ 'h2] = 'h00B; arA23[ 'h2] = 'h30F; end
@@ -1201,10 +1202,10 @@ endcase
 //
 // Line: 3
 //
-unique case( movEa)
+ case( movEa)
 
 0: // Row: 0
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h121; arA23[ 'h3] = 'X; end
      1: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h121; arA23[ 'h3] = 'X; end
      2: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h006; arA23[ 'h3] = 'h29B; end
@@ -1221,7 +1222,7 @@ unique case( movEa)
     endcase
 
 1: // Row: 1
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h279; arA23[ 'h3] = 'X; end
      1: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h279; arA23[ 'h3] = 'X; end
      2: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h006; arA23[ 'h3] = 'h158; end
@@ -1238,7 +1239,7 @@ unique case( movEa)
     endcase
 
 2: // Row: 2
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h2FA; arA23[ 'h3] = 'X; end
      1: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h2FA; arA23[ 'h3] = 'X; end
      2: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h006; arA23[ 'h3] = 'h3AB; end
@@ -1255,7 +1256,7 @@ unique case( movEa)
     endcase
 
 3: // Row: 3
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h2FE; arA23[ 'h3] = 'X; end
      1: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h2FE; arA23[ 'h3] = 'X; end
      2: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h006; arA23[ 'h3] = 'h3AF; end
@@ -1272,7 +1273,7 @@ unique case( movEa)
     endcase
 
 4: // Row: 4
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h2F8; arA23[ 'h3] = 'X; end
      1: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h2F8; arA23[ 'h3] = 'X; end
      2: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h006; arA23[ 'h3] = 'h38B; end
@@ -1289,7 +1290,7 @@ unique case( movEa)
     endcase
 
 5: // Row: 5
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h2DA; arA23[ 'h3] = 'X; end
      1: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h2DA; arA23[ 'h3] = 'X; end
      2: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h006; arA23[ 'h3] = 'h38A; end
@@ -1306,7 +1307,7 @@ unique case( movEa)
     endcase
 
 6: // Row: 6
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h1EB; arA23[ 'h3] = 'X; end
      1: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h1EB; arA23[ 'h3] = 'X; end
      2: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h006; arA23[ 'h3] = 'h298; end
@@ -1323,7 +1324,7 @@ unique case( movEa)
     endcase
 
 7: // Row: 7
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h2D9; arA23[ 'h3] = 'X; end
      1: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h2D9; arA23[ 'h3] = 'X; end
      2: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h006; arA23[ 'h3] = 'h388; end
@@ -1340,7 +1341,7 @@ unique case( movEa)
     endcase
 
 8: // Row: 8
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h1EA; arA23[ 'h3] = 'X; end
      1: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h1EA; arA23[ 'h3] = 'X; end
      2: begin arIll[ 'h3] = 1'b0; arA1[ 'h3] = 'h006; arA23[ 'h3] = 'h32B; end
@@ -1361,10 +1362,10 @@ endcase
 //
 // Line: 5
 //
-unique case( row86)
+ case( row86)
 
 3'b000: // Row: 0
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h2D8; arA23[ 'h5] = 'X; end
      1: begin arIll[ 'h5] = 1'b1; arA1[ 'h5] = 'X   ; arA23[ 'h5] = 'X; end
      2: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h006; arA23[ 'h5] = 'h2F3; end
@@ -1378,7 +1379,7 @@ unique case( row86)
     endcase
 
 3'b001: // Row: 1
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h2D8; arA23[ 'h5] = 'X; end
      1: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h2DC; arA23[ 'h5] = 'X; end
      2: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h006; arA23[ 'h5] = 'h2F3; end
@@ -1392,7 +1393,7 @@ unique case( row86)
     endcase
 
 3'b010: // Row: 2
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h2DC; arA23[ 'h5] = 'X; end
      1: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h2DC; arA23[ 'h5] = 'X; end
      2: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h00B; arA23[ 'h5] = 'h2F7; end
@@ -1406,7 +1407,7 @@ unique case( row86)
     endcase
 
 3'b011: // Row: 3
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h384; arA23[ 'h5] = 'X; end
      1: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h06C; arA23[ 'h5] = 'X; end
      2: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h006; arA23[ 'h5] = 'h380; end
@@ -1420,7 +1421,7 @@ unique case( row86)
     endcase
 
 3'b100: // Row: 4
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h2D8; arA23[ 'h5] = 'X; end
      1: begin arIll[ 'h5] = 1'b1; arA1[ 'h5] = 'X   ; arA23[ 'h5] = 'X; end
      2: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h006; arA23[ 'h5] = 'h2F3; end
@@ -1434,7 +1435,7 @@ unique case( row86)
     endcase
 
 3'b101: // Row: 5
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h2D8; arA23[ 'h5] = 'X; end
      1: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h2DC; arA23[ 'h5] = 'X; end
      2: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h006; arA23[ 'h5] = 'h2F3; end
@@ -1448,7 +1449,7 @@ unique case( row86)
     endcase
 
 3'b110: // Row: 6
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h2DC; arA23[ 'h5] = 'X; end
      1: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h2DC; arA23[ 'h5] = 'X; end
      2: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h00B; arA23[ 'h5] = 'h2F7; end
@@ -1462,7 +1463,7 @@ unique case( row86)
     endcase
 
 3'b111: // Row: 7
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h384; arA23[ 'h5] = 'X; end
      1: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h06C; arA23[ 'h5] = 'X; end
      2: begin arIll[ 'h5] = 1'b0; arA1[ 'h5] = 'h006; arA23[ 'h5] = 'h380; end
@@ -1479,10 +1480,10 @@ endcase
 //
 // Line: 8
 //
-unique case( row86)
+ case( row86)
 
 3'b000: // Row: 0
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h1C1; arA23[ 'h8] = 'X; end
      1: begin arIll[ 'h8] = 1'b1; arA1[ 'h8] = 'X   ; arA23[ 'h8] = 'X; end
      2: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h006; arA23[ 'h8] = 'h1C3; end
@@ -1499,7 +1500,7 @@ unique case( row86)
     endcase
 
 3'b001: // Row: 1
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h1C1; arA23[ 'h8] = 'X; end
      1: begin arIll[ 'h8] = 1'b1; arA1[ 'h8] = 'X   ; arA23[ 'h8] = 'X; end
      2: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h006; arA23[ 'h8] = 'h1C3; end
@@ -1516,7 +1517,7 @@ unique case( row86)
     endcase
 
 3'b010: // Row: 2
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h1C5; arA23[ 'h8] = 'X; end
      1: begin arIll[ 'h8] = 1'b1; arA1[ 'h8] = 'X   ; arA23[ 'h8] = 'X; end
      2: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h00B; arA23[ 'h8] = 'h1CB; end
@@ -1533,7 +1534,7 @@ unique case( row86)
     endcase
 
 3'b011: // Row: 3
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h0A6; arA23[ 'h8] = 'X; end
      1: begin arIll[ 'h8] = 1'b1; arA1[ 'h8] = 'X   ; arA23[ 'h8] = 'X; end
      2: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h006; arA23[ 'h8] = 'h0A4; end
@@ -1550,7 +1551,7 @@ unique case( row86)
     endcase
 
 3'b100: // Row: 4
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h1CD; arA23[ 'h8] = 'X; end
      1: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h107; arA23[ 'h8] = 'X; end
      2: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h006; arA23[ 'h8] = 'h299; end
@@ -1567,7 +1568,7 @@ unique case( row86)
     endcase
 
 3'b101: // Row: 5
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h8] = 1'b1; arA1[ 'h8] = 'X   ; arA23[ 'h8] = 'X; end
      1: begin arIll[ 'h8] = 1'b1; arA1[ 'h8] = 'X   ; arA23[ 'h8] = 'X; end
      2: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h006; arA23[ 'h8] = 'h299; end
@@ -1584,7 +1585,7 @@ unique case( row86)
     endcase
 
 3'b110: // Row: 6
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h8] = 1'b1; arA1[ 'h8] = 'X   ; arA23[ 'h8] = 'X; end
      1: begin arIll[ 'h8] = 1'b1; arA1[ 'h8] = 'X   ; arA23[ 'h8] = 'X; end
      2: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h00B; arA23[ 'h8] = 'h29D; end
@@ -1601,7 +1602,7 @@ unique case( row86)
     endcase
 
 3'b111: // Row: 7
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h0AE; arA23[ 'h8] = 'X; end
      1: begin arIll[ 'h8] = 1'b1; arA1[ 'h8] = 'X   ; arA23[ 'h8] = 'X; end
      2: begin arIll[ 'h8] = 1'b0; arA1[ 'h8] = 'h006; arA23[ 'h8] = 'h0AC; end
@@ -1621,10 +1622,10 @@ endcase
 //
 // Line: 9
 //
-unique case( row86)
+ case( row86)
 
 3'b000: // Row: 0
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h1C1; arA23[ 'h9] = 'X; end
      1: begin arIll[ 'h9] = 1'b1; arA1[ 'h9] = 'X   ; arA23[ 'h9] = 'X; end
      2: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h006; arA23[ 'h9] = 'h1C3; end
@@ -1641,7 +1642,7 @@ unique case( row86)
     endcase
 
 3'b001: // Row: 1
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h1C1; arA23[ 'h9] = 'X; end
      1: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h1C1; arA23[ 'h9] = 'X; end
      2: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h006; arA23[ 'h9] = 'h1C3; end
@@ -1658,7 +1659,7 @@ unique case( row86)
     endcase
 
 3'b010: // Row: 2
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h1C5; arA23[ 'h9] = 'X; end
      1: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h1C5; arA23[ 'h9] = 'X; end
      2: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h00B; arA23[ 'h9] = 'h1CB; end
@@ -1675,7 +1676,7 @@ unique case( row86)
     endcase
 
 3'b011: // Row: 3
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h1C9; arA23[ 'h9] = 'X; end
      1: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h1C9; arA23[ 'h9] = 'X; end
      2: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h006; arA23[ 'h9] = 'h1C7; end
@@ -1692,7 +1693,7 @@ unique case( row86)
     endcase
 
 3'b100: // Row: 4
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h1C1; arA23[ 'h9] = 'X; end
      1: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h10F; arA23[ 'h9] = 'X; end
      2: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h006; arA23[ 'h9] = 'h299; end
@@ -1709,7 +1710,7 @@ unique case( row86)
     endcase
 
 3'b101: // Row: 5
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h1C1; arA23[ 'h9] = 'X; end
      1: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h10F; arA23[ 'h9] = 'X; end
      2: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h006; arA23[ 'h9] = 'h299; end
@@ -1726,7 +1727,7 @@ unique case( row86)
     endcase
 
 3'b110: // Row: 6
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h1C5; arA23[ 'h9] = 'X; end
      1: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h10B; arA23[ 'h9] = 'X; end
      2: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h00B; arA23[ 'h9] = 'h29D; end
@@ -1743,7 +1744,7 @@ unique case( row86)
     endcase
 
 3'b111: // Row: 7
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h1C5; arA23[ 'h9] = 'X; end
      1: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h1C5; arA23[ 'h9] = 'X; end
      2: begin arIll[ 'h9] = 1'b0; arA1[ 'h9] = 'h00B; arA23[ 'h9] = 'h1CB; end
@@ -1763,10 +1764,10 @@ endcase
 //
 // Line: B
 //
-unique case( row86)
+ case( row86)
 
 3'b000: // Row: 0
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h1D1; arA23[ 'hb] = 'X; end
      1: begin arIll[ 'hb] = 1'b1; arA1[ 'hb] = 'X   ; arA23[ 'hb] = 'X; end
      2: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h006; arA23[ 'hb] = 'h1D3; end
@@ -1783,7 +1784,7 @@ unique case( row86)
     endcase
 
 3'b001: // Row: 1
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h1D1; arA23[ 'hb] = 'X; end
      1: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h1D1; arA23[ 'hb] = 'X; end
      2: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h006; arA23[ 'hb] = 'h1D3; end
@@ -1800,7 +1801,7 @@ unique case( row86)
     endcase
 
 3'b010: // Row: 2
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h1D5; arA23[ 'hb] = 'X; end
      1: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h1D5; arA23[ 'hb] = 'X; end
      2: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h00B; arA23[ 'hb] = 'h1D7; end
@@ -1817,7 +1818,7 @@ unique case( row86)
     endcase
 
 3'b011: // Row: 3
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h1D9; arA23[ 'hb] = 'X; end
      1: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h1D9; arA23[ 'hb] = 'X; end
      2: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h006; arA23[ 'hb] = 'h1CF; end
@@ -1834,7 +1835,7 @@ unique case( row86)
     endcase
 
 3'b100: // Row: 4
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h100; arA23[ 'hb] = 'X; end
      1: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h06B; arA23[ 'hb] = 'X; end
      2: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h006; arA23[ 'hb] = 'h299; end
@@ -1851,7 +1852,7 @@ unique case( row86)
     endcase
 
 3'b101: // Row: 5
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h100; arA23[ 'hb] = 'X; end
      1: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h06B; arA23[ 'hb] = 'X; end
      2: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h006; arA23[ 'hb] = 'h299; end
@@ -1868,7 +1869,7 @@ unique case( row86)
     endcase
 
 3'b110: // Row: 6
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h10C; arA23[ 'hb] = 'X; end
      1: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h06F; arA23[ 'hb] = 'X; end
      2: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h00B; arA23[ 'hb] = 'h29D; end
@@ -1885,7 +1886,7 @@ unique case( row86)
     endcase
 
 3'b111: // Row: 7
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h1D5; arA23[ 'hb] = 'X; end
      1: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h1D5; arA23[ 'hb] = 'X; end
      2: begin arIll[ 'hb] = 1'b0; arA1[ 'hb] = 'h00B; arA23[ 'hb] = 'h1D7; end
@@ -1905,10 +1906,10 @@ endcase
 //
 // Line: C
 //
-unique case( row86)
+ case( row86)
 
 3'b000: // Row: 0
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h1C1; arA23[ 'hc] = 'X; end
      1: begin arIll[ 'hc] = 1'b1; arA1[ 'hc] = 'X   ; arA23[ 'hc] = 'X; end
      2: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h006; arA23[ 'hc] = 'h1C3; end
@@ -1925,7 +1926,7 @@ unique case( row86)
     endcase
 
 3'b001: // Row: 1
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h1C1; arA23[ 'hc] = 'X; end
      1: begin arIll[ 'hc] = 1'b1; arA1[ 'hc] = 'X   ; arA23[ 'hc] = 'X; end
      2: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h006; arA23[ 'hc] = 'h1C3; end
@@ -1942,7 +1943,7 @@ unique case( row86)
     endcase
 
 3'b010: // Row: 2
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h1C5; arA23[ 'hc] = 'X; end
      1: begin arIll[ 'hc] = 1'b1; arA1[ 'hc] = 'X   ; arA23[ 'hc] = 'X; end
      2: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h00B; arA23[ 'hc] = 'h1CB; end
@@ -1959,7 +1960,7 @@ unique case( row86)
     endcase
 
 3'b011: // Row: 3
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h15B; arA23[ 'hc] = 'X; end
      1: begin arIll[ 'hc] = 1'b1; arA1[ 'hc] = 'X   ; arA23[ 'hc] = 'X; end
      2: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h006; arA23[ 'hc] = 'h15A; end
@@ -1976,7 +1977,7 @@ unique case( row86)
     endcase
 
 3'b100: // Row: 4
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h1CD; arA23[ 'hc] = 'X; end
      1: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h107; arA23[ 'hc] = 'X; end
      2: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h006; arA23[ 'hc] = 'h299; end
@@ -1993,7 +1994,7 @@ unique case( row86)
     endcase
 
 3'b101: // Row: 5
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h3E3; arA23[ 'hc] = 'X; end
      1: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h3E3; arA23[ 'hc] = 'X; end
      2: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h006; arA23[ 'hc] = 'h299; end
@@ -2010,7 +2011,7 @@ unique case( row86)
     endcase
 
 3'b110: // Row: 6
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hc] = 1'b1; arA1[ 'hc] = 'X   ; arA23[ 'hc] = 'X; end
      1: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h3E3; arA23[ 'hc] = 'X; end
      2: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h00B; arA23[ 'hc] = 'h29D; end
@@ -2027,7 +2028,7 @@ unique case( row86)
     endcase
 
 3'b111: // Row: 7
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h15B; arA23[ 'hc] = 'X; end
      1: begin arIll[ 'hc] = 1'b1; arA1[ 'hc] = 'X   ; arA23[ 'hc] = 'X; end
      2: begin arIll[ 'hc] = 1'b0; arA1[ 'hc] = 'h006; arA23[ 'hc] = 'h15A; end
@@ -2047,10 +2048,10 @@ endcase
 //
 // Line: D
 //
-unique case( row86)
+ case( row86)
 
 3'b000: // Row: 0
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h1C1; arA23[ 'hd] = 'X; end
      1: begin arIll[ 'hd] = 1'b1; arA1[ 'hd] = 'X   ; arA23[ 'hd] = 'X; end
      2: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h006; arA23[ 'hd] = 'h1C3; end
@@ -2067,7 +2068,7 @@ unique case( row86)
     endcase
 
 3'b001: // Row: 1
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h1C1; arA23[ 'hd] = 'X; end
      1: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h1C1; arA23[ 'hd] = 'X; end
      2: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h006; arA23[ 'hd] = 'h1C3; end
@@ -2084,7 +2085,7 @@ unique case( row86)
     endcase
 
 3'b010: // Row: 2
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h1C5; arA23[ 'hd] = 'X; end
      1: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h1C5; arA23[ 'hd] = 'X; end
      2: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h00B; arA23[ 'hd] = 'h1CB; end
@@ -2101,7 +2102,7 @@ unique case( row86)
     endcase
 
 3'b011: // Row: 3
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h1C9; arA23[ 'hd] = 'X; end
      1: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h1C9; arA23[ 'hd] = 'X; end
      2: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h006; arA23[ 'hd] = 'h1C7; end
@@ -2118,7 +2119,7 @@ unique case( row86)
     endcase
 
 3'b100: // Row: 4
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h1C1; arA23[ 'hd] = 'X; end
      1: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h10F; arA23[ 'hd] = 'X; end
      2: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h006; arA23[ 'hd] = 'h299; end
@@ -2135,7 +2136,7 @@ unique case( row86)
     endcase
 
 3'b101: // Row: 5
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h1C1; arA23[ 'hd] = 'X; end
      1: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h10F; arA23[ 'hd] = 'X; end
      2: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h006; arA23[ 'hd] = 'h299; end
@@ -2152,7 +2153,7 @@ unique case( row86)
     endcase
 
 3'b110: // Row: 6
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h1C5; arA23[ 'hd] = 'X; end
      1: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h10B; arA23[ 'hd] = 'X; end
      2: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h00B; arA23[ 'hd] = 'h29D; end
@@ -2169,7 +2170,7 @@ unique case( row86)
     endcase
 
 3'b111: // Row: 7
-    unique case ( col)
+     case ( col)
      0: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h1C5; arA23[ 'hd] = 'X; end
      1: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h1C5; arA23[ 'hd] = 'X; end
      2: begin arIll[ 'hd] = 1'b0; arA1[ 'hd] = 'h00B; arA23[ 'hd] = 'h1CB; end

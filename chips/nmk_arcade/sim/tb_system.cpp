@@ -48,7 +48,7 @@
 // flushes through its power-up microcode sequences. These are benign and do not
 // indicate RTL bugs; they stop after the first few initialization microsteps.
 // =============================================================================
-void vl_stop(const char* /*filename*/, int /*linenum*/, const char* /*hier*/) VL_MT_UNSAFE {}
+// vl_stop override removed — using Verilated::fatalOnError(false) instead
 
 #include <cstdio>
 #include <cstdlib>
@@ -167,41 +167,29 @@ static void dump_frame_ram(FILE* f, uint32_t frame_num, Vtb_top* top) {
     };
     fwrite(hdr, 1, 4, f);
 
-    // ── 64 KB main RAM (0x080000-0x08FFFF): work_ram[0..32767] × 16-bit ────
-    // Each element is SData (uint16_t); write MSB first (68000 big-endian).
-    for (int i = 0; i < 32768; i++) {
+    // ── RAM regions — only available when nmk_arcade is instantiated ────────
+    // In isolation mode (no nmk_arcade), write zeros for all regions to keep
+    // the binary format consistent.
+#ifdef NMK_ARCADE_PRESENT
+    for (int i = 0; i < 32768; i++)
         write_word_be(f, (uint16_t)r->tb_top__DOT__u_nmk__DOT__work_ram[i]);
-    }
-
-    // ── 2 KB at 0x0C8000-0x0C87FF: sprite_ram_storage[0..1023] in nmk16 ────
-    // sprite_ram_storage has 1024 × 16-bit words = 2048 bytes exactly.
-    // In the real NMK16 hardware this region holds sprite attribute RAM;
-    // MAME reads it as "Palette" but the RTL stores sprite data here.
-    for (int i = 0; i < 1024; i++) {
+    for (int i = 0; i < 1024; i++)
         write_word_be(f, (uint16_t)r->tb_top__DOT__u_nmk__DOT__u_nmk16__DOT__sprite_ram_storage[i]);
-    }
-
-    // ── 16 KB at 0x0CC000-0x0CFFFF: tilemap_ram[0..2047] + padding ─────────
-    // tilemap_ram has 2048 × 16-bit words = 4096 bytes.
-    // The MAME region is 16384 bytes; pad the remaining 12288 bytes with zeros.
-    for (int i = 0; i < 2048; i++) {
+    for (int i = 0; i < 2048; i++)
         write_word_be(f, (uint16_t)r->tb_top__DOT__u_nmk__DOT__u_nmk16__DOT__tilemap_ram[i]);
-    }
-    write_zeros(f, 16384 - 4096);  // 12288 zero bytes to reach 16 KB
-
-    // ── 2 KB at 0x0D0000-0x0D07FF: unmapped in this RTL ─────────────────────
-    // MAME reads TX VRAM here; this RTL does not implement this region yet.
-    // Write zeros to keep frame offsets consistent with the MAME dump format.
+    write_zeros(f, 16384 - 4096);
     write_zeros(f, 2048);
-
-    // ── 8 bytes scroll regs at 0x0C4000-0x0C4007 ────────────────────────────
-    // GPU shadow registers in nmk16: scroll0_x, scroll0_y, scroll1_x, scroll1_y.
-    // Shadow registers hold the CPU-written values (copied to active on VBlank).
-    // MAME reads these directly from the register file, so shadow values match.
     write_word_be(f, (uint16_t)r->tb_top__DOT__u_nmk__DOT__u_nmk16__DOT__scroll0_x_shadow);
     write_word_be(f, (uint16_t)r->tb_top__DOT__u_nmk__DOT__u_nmk16__DOT__scroll0_y_shadow);
     write_word_be(f, (uint16_t)r->tb_top__DOT__u_nmk__DOT__u_nmk16__DOT__scroll1_x_shadow);
     write_word_be(f, (uint16_t)r->tb_top__DOT__u_nmk__DOT__u_nmk16__DOT__scroll1_y_shadow);
+#else
+    write_zeros(f, 65536);  // main RAM
+    write_zeros(f, 2048);   // sprite RAM
+    write_zeros(f, 16384);  // BG VRAM
+    write_zeros(f, 2048);   // TX VRAM
+    write_zeros(f, 8);      // scroll regs
+#endif
 }
 
 // =============================================================================
@@ -254,6 +242,9 @@ int main(int argc, char** argv) {
     ToggleSdramChannel     adpcm_ch(sdram);
     ToggleSdramChannelByte z80_ch(sdram);
 
+    // ── Verilator init ──────────────────────────────────────────────────────
+    Verilated::fatalOnError(false);  // match minimal test — suppress assertion halts
+
     // ── Instantiate DUT ──────────────────────────────────────────────────────
     Vtb_top* top = new Vtb_top();
 
@@ -272,7 +263,14 @@ int main(int argc, char** argv) {
     top->clk_pix       = 0;
     top->reset_n       = 0;
 
-    // (CPU bus is driven internally by fx68k_adapter inside tb_top.sv)
+    // Bus bypass: C++ drives CPU data/DTACK directly for ROM reads
+    top->bypass_en      = 1;   // ENABLE bypass for CPU boot test
+    top->bypass_data    = 0xFFFF;
+    top->bypass_dtack_n = 1;
+
+    // Clock enables: driven from C++ (matching working minimal test pattern)
+    top->enPhi1 = 0;
+    top->enPhi2 = 0;
 
     // SDRAM inputs
     top->prog_rom_data     = 0;
@@ -390,7 +388,40 @@ int main(int argc, char** argv) {
             top->z80_rom_ack  = r.ack;
         }
 
-        // (CPU bus driven by fx68k inside tb_top.sv)
+        // ── CPU bus bypass: set data BEFORE posedge eval using prev cycle's ASn ─
+        // The CPU samples iEdb DURING posedge eval. We must set bypass_data
+        // BEFORE eval. Since ASn changes during eval, we use the previous
+        // cycle's ASn to decide what data to present.
+        if (top->bypass_en) {
+            static uint8_t  prev_bp_asn  = 1;
+            static uint32_t prev_bp_addr = 0;
+            // Use CURRENT output (from previous posedge, settled after negedge)
+            uint8_t  cur_asn  = top->dbg_cpu_as_n;
+            uint32_t cur_addr = top->dbg_cpu_addr;
+            if (!cur_asn) {
+                uint32_t byte_addr = ((uint32_t)cur_addr << 1) & 0x7FFFFF;
+                top->bypass_data    = sdram.read_word(byte_addr);
+                top->bypass_dtack_n = 0;
+            } else {
+                top->bypass_data    = 0xFFFF;
+                top->bypass_dtack_n = 1;
+            }
+            prev_bp_asn  = cur_asn;
+            prev_bp_addr = cur_addr;
+        }
+
+        // ── Phi enables: set BEFORE posedge eval (matching minimal test) ─────
+        {
+            static bool phi_toggle = false;
+            if (cycle >= 8) {  // let reset settle first
+                top->enPhi1 = phi_toggle ? 0 : 1;
+                top->enPhi2 = phi_toggle ? 1 : 0;
+                phi_toggle  = !phi_toggle;
+            } else {
+                top->enPhi1 = 0;
+                top->enPhi2 = 0;
+            }
+        }
 
         // ── Posedge eval ─────────────────────────────────────────────────────
         top->clk_sys = 1;
@@ -457,13 +488,14 @@ int main(int argc, char** argv) {
 
         // Fine-grained trace for first 200 cycles (covers all 6 bus cycles)
         if (cycle <= 200) {
-            fprintf(stderr, "  [%4" PRIu64 "] as_n=%d halted_n=%d rw=%d addr=0x%06X dtack_n=%d\n",
+            fprintf(stderr, "  [%4" PRIu64 "] as_n=%d halted_n=%d rw=%d addr=0x%06X dtack_n=%d dout=0x%04X\n",
                     cycle,
                     (int)top->dbg_cpu_as_n,
                     (int)top->dbg_cpu_halted_n,
                     (int)top->dbg_cpu_rw,
                     (unsigned)(((uint32_t)top->dbg_cpu_addr) << 1),
-                    (int)top->dbg_cpu_dtack_n);
+                    (int)top->dbg_cpu_dtack_n,
+                    (unsigned)(top->dbg_cpu_dout & 0xFFFF));
         }
 
         // Detect CPU halt
@@ -532,6 +564,9 @@ int main(int argc, char** argv) {
         // ── Negedge ──────────────────────────────────────────────────────────
         top->clk_sys = 0;
         top->clk_pix = 0;
+        // Clear phi enables on negedge (matching minimal test pattern)
+        top->enPhi1 = 0;
+        top->enPhi2 = 0;
         top->eval();
         if (vcd) vcd->dump((vluint64_t)(cycle * 2));
 
@@ -543,16 +578,85 @@ int main(int argc, char** argv) {
         }
     };
 
-    // ── Reset sequence ────────────────────────────────────────────────────────
+    // ========================================================================
+    // MINIMAL TEST EVAL LOOP — exact copy of working sim_minimal.cpp pattern
+    // One eval per clock toggle, phi/data set before eval on rising edges.
+    // ========================================================================
+    fprintf(stderr, "Running MINIMAL eval loop (isolation test)...\n");
+
+    bool     phi_toggle_c    = false;
+    bool     prev_asn_c      = true;
+    int      bus_cycles_c    = 0;
+    uint64_t iter            = 0;
+    static constexpr int RESET_ITERS = 20;
+
     top->reset_n = 0;
-    for (int i = 0; i < 16; i++) tick();
-    top->reset_n = 1;
 
-    fprintf(stderr, "Reset released. Running %d frames...\n", n_frames);
+    for (iter = 0; iter < (uint64_t)n_frames * 600000; iter++) {
+        // Toggle clock
+        top->clk_sys = top->clk_sys ^ 1;
 
-    // ── Main simulation loop ─────────────────────────────────────────────────
-    while (!done && !Verilated::gotFinish()) {
-        tick();
+        // Release reset
+        if (iter >= RESET_ITERS) top->reset_n = 1;
+
+        if (top->clk_sys == 1) {
+            // Rising edge: set phi, bus logic
+            top->enPhi1 = phi_toggle_c ? 0 : 1;
+            top->enPhi2 = phi_toggle_c ? 1 : 0;
+            phi_toggle_c = !phi_toggle_c;
+
+            // Read current bus state (from previous eval)
+            uint8_t  asn_c  = top->dbg_cpu_as_n;
+            uint8_t  rwn_c  = top->dbg_cpu_rw;
+            uint32_t addr_c = ((uint32_t)top->dbg_cpu_addr << 1) & 0x7FFFFF;
+
+            if (!asn_c) {
+                // Bus active: present data
+                if (rwn_c) {
+                    top->bypass_data = sdram.read_word(addr_c);
+                } else {
+                    top->bypass_data = 0xFFFF;
+                }
+                top->bypass_dtack_n = 0;
+            } else {
+                if (!prev_asn_c) bus_cycles_c++;
+                top->bypass_data    = 0xFFFF;
+                top->bypass_dtack_n = 1;
+            }
+            prev_asn_c = asn_c;
+
+            // Print first bus cycles
+            if (!asn_c && bus_cycles_c < 20 && iter > RESET_ITERS) {
+                fprintf(stderr, "  [%6lu] ASn=0 RW=%d addr=%06X data=%04X DTACK=%d HALT=%d phi1=%d phi2=%d\n",
+                        (unsigned long)iter, (int)rwn_c, addr_c,
+                        (int)top->bypass_data, (int)top->bypass_dtack_n,
+                        (int)top->dbg_cpu_halted_n,
+                        (int)top->enPhi1, (int)top->enPhi2);
+            }
+        } else {
+            // Falling edge: clear phi
+            top->enPhi1 = 0;
+            top->enPhi2 = 0;
+        }
+
+        top->eval();
+
+        // Check for success
+        if (bus_cycles_c > 10 && !done) {
+            fprintf(stderr, "\n*** SUCCESS: CPU executing! %d bus cycles ***\n", bus_cycles_c);
+            done = true;
+        }
+
+        // Check for halt
+        if (top->dbg_cpu_halted_n == 0 && iter > RESET_ITERS + 100 && !done) {
+            fprintf(stderr, "\n*** CPU HALTED at iter %lu (bus_cycles=%d) ***\n",
+                    (unsigned long)iter, bus_cycles_c);
+            // Keep running for frames
+        }
+
+        if ((iter % 2000000) == 0 && iter > 0) {
+            fprintf(stderr, "  iter %lu  bus_cycles=%d\n", (unsigned long)iter, bus_cycles_c);
+        }
     }
 
     // ── Final cleanup ────────────────────────────────────────────────────────

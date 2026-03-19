@@ -84,26 +84,21 @@ module tb_top (
     output logic        dbg_cpu_rw,
     output logic [15:0] dbg_cpu_din,
     output logic        dbg_cpu_dtack_n,
-    output logic        dbg_cpu_halted_n    // oHALTEDn from fx68k (low = CPU halted)
+    output logic        dbg_cpu_halted_n,   // oHALTEDn from fx68k (low = CPU halted)
+    output logic [15:0] dbg_cpu_dout,       // read data FROM nmk_arcade TO CPU (iEdb)
+
+    // ── Bus bypass: C++ testbench drives CPU data/DTACK directly ───────────────
+    input  logic        bypass_en,
+    input  logic [15:0] bypass_data,
+    input  logic        bypass_dtack_n,
+
+    // ── Clock enables: driven from C++ testbench ───────────────────────────────
+    input  logic        enPhi1,
+    input  logic        enPhi2
 );
 
 // =============================================================================
-// CPU clock enable: divide clk_sys by 2 → 20 MHz cpu_ce → 10 MHz CPU
-// fx68k_adapter splits each cpu_ce into enPhi1/enPhi2 on alternate pulses,
-// so effective CPU clock = cpu_ce_freq / 2 = 40/2/2 = 10 MHz.
-// =============================================================================
-logic cpu_ce_div;
-logic cpu_ce;
-
-always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n) cpu_ce_div <= 1'b0;
-    else          cpu_ce_div <= ~cpu_ce_div;
-end
-
-assign cpu_ce = cpu_ce_div;
-
-// =============================================================================
-// CPU bus wires (between fx68k_adapter and nmk_arcade)
+// CPU bus wires (between fx68k and nmk_arcade)
 // =============================================================================
 logic [23:1] cpu_addr;
 logic [15:0] cpu_din;    // CPU write data → nmk_arcade
@@ -115,27 +110,79 @@ logic        cpu_as_n;
 logic        cpu_dtack_n;
 logic [2:0]  cpu_ipl_n;
 
-// =============================================================================
-// fx68k_adapter — MC68000 CPU running the game program ROM
-// =============================================================================
-fx68k_adapter u_cpu (
-    .clk            (clk_sys),
-    .cpu_ce         (cpu_ce),
-    .reset_n        (reset_n),
+// enPhi1/enPhi2 driven from C++ testbench (top-level inputs above)
+// This is required because RTL-generated phi causes Verilator scheduling issues.
 
-    .cpu_addr       (cpu_addr),
-    .cpu_din        (cpu_dout),      // data from bus to CPU (nmk_arcade's output)
-    .cpu_dout       (cpu_din),       // data from CPU to bus (goes to nmk_arcade's din)
-    .cpu_rw         (cpu_rw),
-    .cpu_uds_n      (cpu_uds_n),
-    .cpu_lds_n      (cpu_lds_n),
-    .cpu_as_n       (cpu_as_n),
-    .cpu_dtack_n    (cpu_dtack_n),
-    .cpu_ipl_n      (cpu_ipl_n),
+// =============================================================================
+// fx68k — MC68000 CPU (direct instantiation, bypassing fx68k_adapter for
+// tighter control over clock enables via fx68k_dtack_cen)
+// =============================================================================
+// Interrupt acknowledge detection (VPAn for autovector)
+logic fx_FC0, fx_FC1, fx_FC2;
+logic inta_n;
+assign inta_n = ~&{fx_FC2, fx_FC1, fx_FC0, ~cpu_as_n};
 
-    .cpu_reset_n_out (),             // not used in sim
-    .cpu_halted_n   (dbg_cpu_halted_n)
+logic cpu_halted_n_raw;
+logic cpu_reset_n_out;
+
+// =============================================================================
+// Bus bypass: C++ testbench can drive iEdb and DTACKn directly for ROM reads.
+// When bypass_en=1, CPU reads from bypass_data with bypass_dtack_n.
+// When bypass_en=0, CPU reads from nmk_arcade's cpu_dout/cpu_dtack_n.
+// =============================================================================
+logic [15:0] cpu_iEdb_mux;
+logic        cpu_dtack_mux;
+
+assign cpu_iEdb_mux  = bypass_en ? bypass_data    : cpu_dout;
+assign cpu_dtack_mux = bypass_en ? bypass_dtack_n : cpu_dtack_n;
+
+fx68k u_cpu (
+    .clk        (clk_sys),
+    .HALTn      (1'b1),
+    .extReset   (!reset_n),
+    .pwrUp      (!reset_n),
+    .enPhi1     (enPhi1),
+    .enPhi2     (enPhi2),
+
+    // Bus outputs
+    .eRWn       (cpu_rw),
+    .ASn        (cpu_as_n),
+    .LDSn       (cpu_lds_n),
+    .UDSn       (cpu_uds_n),
+    .E          (),
+    .VMAn       (),
+
+    // Function codes — for IACK detection
+    .FC0        (fx_FC0),
+    .FC1        (fx_FC1),
+    .FC2        (fx_FC2),
+
+    // Bus arbitration
+    .BGn        (),
+    .oRESETn    (cpu_reset_n_out),
+    .oHALTEDn   (cpu_halted_n_raw),
+
+    // Bus inputs
+    .DTACKn     (cpu_dtack_mux),
+    .VPAn       (inta_n),
+    .BERRn      (1'b1),
+    .BRn        (1'b1),
+    .BGACKn     (1'b1),
+
+    // Interrupts
+    .IPL0n      (cpu_ipl_n[0]),
+    .IPL1n      (cpu_ipl_n[1]),
+    .IPL2n      (cpu_ipl_n[2]),
+
+    // Data buses
+    .iEdb       (cpu_iEdb_mux), // read data: bypass or nmk_arcade
+    .oEdb       (cpu_din),      // write data from CPU → nmk_arcade
+
+    // Address bus
+    .eab        (cpu_addr)
 );
+
+assign dbg_cpu_halted_n = cpu_halted_n_raw;
 
 // =============================================================================
 // nmk_arcade — full system (GPU, palette, work RAM, Z80, audio, I/O)
@@ -222,6 +269,7 @@ assign dbg_cpu_as_n    = cpu_as_n;
 assign dbg_cpu_rw      = cpu_rw;
 assign dbg_cpu_din     = cpu_din;
 assign dbg_cpu_dtack_n = cpu_dtack_n;
+assign dbg_cpu_dout    = cpu_dout;   // read data path (nmk_arcade → CPU)
 // dbg_cpu_halted_n is wired directly from u_cpu.cpu_halted_n above
 
 endmodule

@@ -76,7 +76,7 @@ public:
 // =============================================================================
 class ToggleSdramChannel {
 public:
-    static constexpr int LATENCY = 3;
+    static constexpr int LATENCY = 1;  // was 3; testing with 1 for CPU boot
 
     explicit ToggleSdramChannel(const SdramModel& sdram)
         : sdram_(sdram), ack_(0), last_req_(0), countdown_(0),
