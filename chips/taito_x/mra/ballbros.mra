@@ -35,7 +35,7 @@
   </rom>
 
   <!-- Sprite/Tile GFX ROM (X1-001A) -->
-  <rom index="1" zip="ballbros.zip" type="merged" md5="00000000000000000000000000000000">
+  <rom index="1" zip="ballbros.zip" type="merged" md5="31a7af5c86e2111156e557dae8612256">
     <part name="e07-01.ic14" crc="92111f96" offset="0x000000" length="0x080000"/>
     <part name="e07-02.ic15" crc="ca0ac419" offset="0x080000" length="0x080000"/>
   </rom>

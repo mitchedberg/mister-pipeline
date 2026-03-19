@@ -10,18 +10,18 @@
   <buttons names="Attack,Jump,Taunt,Start,Coin" default="A,B,C,Start,Select" />
 
   
-  <rom index="0" zip="crimec.zip" type="merged" md5="00000000000000000000000000000000">
+  <rom index="0" zip="crimec.zip" type="merged" md5="e2de0bf0d348b2ea3ea68beef9bad3cd">
     <part name="b99-07.40" crc="26e886e6" offset="0x000000" length="0x080000" />
     <part name="b99-05.29" crc="ff7f9a9d" offset="0x080000" length="0x020000" />
   </rom>
 
   
-  <rom index="1" zip="crimec.zip" type="merged" md5="00000000000000000000000000000000">
+  <rom index="1" zip="crimec.zip" type="merged" md5="92a8527a47377a69dbbd6d32c049fc4f">
     <part name="b99-02.18" crc="2a5d4a26" offset="0x000000" length="0x100000" />
   </rom>
 
   
-  <rom index="2" zip="crimec.zip" type="merged" md5="00000000000000000000000000000000">
+  <rom index="2" zip="crimec.zip" type="merged" md5="8f1a1b2ec3d8958e6b0ef1602b1512b3">
     <part name="crimec.c11" crc="2a5d4a26" offset="0x000000" length="0x080000" />
     <part name="crimec.c12" crc="a19e373a" offset="0x080000" length="0x080000" />
   </rom>

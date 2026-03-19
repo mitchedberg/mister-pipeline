@@ -38,7 +38,7 @@
   </rom>
 
   <!-- Sprite/Tile GFX ROM (X1-001A) -->
-  <rom index="1" zip="twinhawk.zip" type="merged" md5="00000000000000000000000000000000">
+  <rom index="1" zip="twinhawk.zip" type="merged" md5="9067f2dfa73f50b5d2ce79088028588a">
     <part name="c45-02.ic14" crc="89ad43a0" offset="0x000000" length="0x080000"/>
     <part name="c45-03.ic15" crc="81e82ae1" offset="0x080000" length="0x080000"/>
     <part name="c45-04.ic16" crc="958434b6" offset="0x100000" length="0x080000"/>

@@ -10,19 +10,19 @@
   <buttons names="Rotate CW,Rotate CCW,Speed,Start,Coin" default="A,B,C,Start,Select" />
 
   
-  <rom index="0" zip="pbobble.zip" type="merged" md5="00000000000000000000000000000000">
+  <rom index="0" zip="pbobble.zip" type="merged" md5="ebbfe24547a732ee84df8b8f1f8b1746">
     <part name="pb-ic18.ic18" crc="5de14f49" offset="0x000000" length="0x080000" />
     <part name="pb-ic2.ic2" crc="2abe07d1" offset="0x080000" length="0x020000" />
   </rom>
 
   
-  <rom index="1" zip="pbobble.zip" type="merged" md5="00000000000000000000000000000000">
+  <rom index="1" zip="pbobble.zip" type="merged" md5="65c5ddaccd76a18fdc4319b23821a30a">
     <part name="pb-ic14.ic14" crc="55f90ea4" offset="0x000000" length="0x100000" />
     <part name="pb-ic9.ic9" crc="3253aac9" offset="0x100000" length="0x100000" />
   </rom>
 
   
-  <rom index="2" zip="pbobble.zip" type="merged" md5="00000000000000000000000000000000">
+  <rom index="2" zip="pbobble.zip" type="merged" md5="65c5ddaccd76a18fdc4319b23821a30a">
     <part name="pb-05.rom" crc="55f90ea4" offset="0x000000" length="0x080000" />
     <part name="pb-06.rom" crc="3253aac9" offset="0x080000" length="0x080000" />
   </rom>

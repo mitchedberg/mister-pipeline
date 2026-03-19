@@ -11,7 +11,7 @@
   <buttons names="Attack,Jump,Special,Start,Coin" default="A,B,X,Start,Select" />
 
   
-  <rom index="0" zip="supermanu.zip" type="merged" md5="00000000000000000000000000000000">
+  <rom index="0" zip="supermanu.zip" type="merged" md5="e842e29f570a7a2eb8e83473aaf7032e">
     <part name="b61_09.a10" crc="640f1d58" offset="0x000000" length="0x040000" />
     <part name="b61_07.a5" crc="fddb9953" offset="0x040000" length="0x040000" />
     
@@ -19,7 +19,7 @@
   </rom>
 
   
-  <rom index="1" zip="superman.zip" type="merged" md5="00000000000000000000000000000000">
+  <rom index="1" zip="superman.zip" type="merged" md5="92694eacdc97a95bdd34ec706ec6ce1b">
     <part name="a54-04.4d" crc="89368c3e" offset="0x000000" length="0x080000" />
     <part name="a54-05.4f" crc="910cc4f9" offset="0x080000" length="0x080000" />
     <part name="a54-06.4k" crc="3622ed2f" offset="0x100000" length="0x080000" />
