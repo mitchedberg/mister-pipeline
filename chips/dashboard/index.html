@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiSTer FPGA Pipeline — Session Dashboard</title>
+<style>
+  :root {
+    --bg:        #0d1117;
+    --bg2:       #161b22;
+    --bg3:       #21262d;
+    --bg4:       #30363d;
+    --border:    #30363d;
+    --text:      #e6edf3;
+    --muted:     #8b949e;
+    --green:     #3fb950;
+    --green-bg:  #0d2b12;
+    --yellow:    #d29922;
+    --yellow-bg: #2d1b00;
+    --red:       #f85149;
+    --red-bg:    #3b0d0c;
+    --blue:      #58a6ff;
+    --blue-bg:   #0c2135;
+    --purple:    #bc8cff;
+    --orange:    #e3b341;
+    --cyan:      #39d353;
+    --accent:    #1f6feb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ── Layout ── */
+  .page { max-width: 1400px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* ── Header / Banner ── */
+  .banner {
+    background: linear-gradient(135deg, #0c1a2e 0%, #0d1117 60%, #1a0a2e 100%);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .banner::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--purple), var(--accent));
+  }
+  .banner h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .banner .subtitle {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .stat-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 18px;
+    min-width: 140px;
+  }
+  .stat-card .num {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--blue);
+  }
+  .stat-card .num.green { color: var(--green); }
+  .stat-card .num.purple { color: var(--purple); }
+  .stat-card .num.orange { color: var(--orange); }
+  .stat-card .label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Section headers ── */
+  .section { margin-bottom: 36px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.3px;
+  }
+  .section-header .count {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1px 8px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── Status badges ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .badge::before { content: '●'; font-size: 8px; }
+  .badge.green   { background: var(--green-bg);  color: var(--green);  border: 1px solid #0f5323; }
+  .badge.yellow  { background: var(--yellow-bg); color: var(--yellow); border: 1px solid #5a3e00; }
+  .badge.red     { background: var(--red-bg);    color: var(--red);    border: 1px solid #6b1c1a; }
+  .badge.blue    { background: var(--blue-bg);   color: var(--blue);   border: 1px solid #0c3a60; }
+  .badge.purple  { background: #1a0a2e;          color: var(--purple); border: 1px solid #4a1f8c; }
+  .badge.gray    { background: var(--bg3);       color: var(--muted);  border: 1px solid var(--border); }
+
+  /* ── Core cards grid ── */
+  .cores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(640px, 1fr));
+    gap: 20px;
+  }
+  @media (max-width: 700px) {
+    .cores-grid { grid-template-columns: 1fr; }
+  }
+
+  .core-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .core-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+  .core-card-header:hover { background: var(--bg4); }
+  .core-card-header .title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .core-card-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .core-card-header .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .core-card-header .badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .core-card-body { padding: 18px; }
+  .core-card-body.collapsed { display: none; }
+
+  /* ── Sub-sections inside card ── */
+  .card-section { margin-bottom: 18px; }
+  .card-section:last-child { margin-bottom: 0; }
+  .card-section h4 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--bg4);
+  }
+
+  /* ── KV table ── */
+  .kv-table { width: 100%; border-collapse: collapse; }
+  .kv-table td {
+    padding: 3px 0;
+    vertical-align: top;
+  }
+  .kv-table td:first-child {
+    color: var(--muted);
+    width: 140px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding-right: 12px;
+  }
+  .kv-table td:last-child { color: var(--text); }
+
+  /* ── Component list ── */
+  .comp-list { list-style: none; }
+  .comp-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(48,54,61,0.5);
+  }
+  .comp-list li:last-child { border-bottom: none; }
+  .comp-icon {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+  .comp-icon.custom { background: #0a2b1a; color: var(--green); border: 1px solid #0f5323; }
+  .comp-icon.vendor { background: var(--blue-bg); color: var(--blue); border: 1px solid #0c3a60; }
+  .comp-icon.ip     { background: #1a1200; color: var(--yellow); border: 1px solid #5a3e00; }
+  .comp-name { flex: 1; color: var(--text); }
+  .comp-meta { color: var(--muted); font-size: 11px; white-space: nowrap; }
+
+  /* ── Game tags ── */
+  .game-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .game-tag {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: var(--text);
+  }
+
+  /* ── Tables ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .data-table th {
+    background: var(--bg3);
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+  }
+  .data-table th:first-child { border-left: 1px solid var(--border); border-radius: 4px 0 0 0; }
+  .data-table th:last-child  { border-right: 1px solid var(--border); border-radius: 0 4px 0 0; }
+  .data-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid rgba(48,54,61,0.6);
+    vertical-align: middle;
+  }
+  .data-table td:first-child { border-left: 1px solid var(--border); }
+  .data-table td:last-child  { border-right: 1px solid var(--border); }
+  .data-table tr:last-child td { border-bottom: 1px solid var(--border); }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ── Commit log ── */
+  .commit-list { list-style: none; }
+  .commit-item {
+    display: grid;
+    grid-template-columns: 64px 1fr auto;
+    gap: 12px;
+    align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(48,54,61,0.4);
+  }
+  .commit-item:last-child { border-bottom: none; }
+  .commit-hash {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--blue);
+  }
+  .commit-msg { color: var(--text); }
+  .commit-time { color: var(--muted); font-size: 11px; white-space: nowrap; }
+  .commit-scope {
+    display: inline-block;
+    background: var(--bg3);
+    border-radius: 3px;
+    padding: 0 5px;
+    font-size: 11px;
+    color: var(--muted);
+    margin-right: 4px;
+  }
+  .commit-type-fix    { color: var(--red); }
+  .commit-type-feat   { color: var(--green); }
+  .commit-type-docs   { color: var(--muted); }
+  .commit-type-chore  { color: var(--muted); }
+  .commit-type-status { color: var(--yellow); }
+  .commit-type-sim    { color: var(--blue); }
+  .commit-type-sdc    { color: var(--purple); }
+  .commit-type-ci     { color: var(--orange); }
+
+  /* ── Progress bar ── */
+  .progress-bar {
+    height: 6px;
+    background: var(--bg4);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--green);
+  }
+  .progress-fill.yellow { background: var(--yellow); }
+  .progress-fill.red    { background: var(--red); }
+
+  /* ── Misc ── */
+  .mono { font-family: monospace; }
+  .dim  { color: var(--muted); }
+  .note {
+    background: var(--bg3);
+    border-left: 3px solid var(--yellow);
+    border-radius: 0 4px 4px 0;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  .note.info { border-left-color: var(--blue); }
+  .note.warn { border-left-color: var(--red); }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+  .chevron { transition: transform 0.2s; display: inline-block; }
+  .collapsed .chevron { transform: rotate(-90deg); }
+
+  /* ── Footer ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    margin-top: 40px;
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ═══════════════════════════════════════════════════════════ BANNER -->
+<div class="banner">
+  <h1>MiSTer FPGA Pipeline — Session Dashboard</h1>
+  <div class="subtitle">Generated 2026-03-19 &nbsp;·&nbsp; mitchedberg/mister-pipeline &nbsp;·&nbsp; Branch: master</div>
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="num green">6/8</div>
+      <div class="label">Cores Booting</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">3/8</div>
+      <div class="label">Rendering Graphics</div>
+    </div>
+    <div class="stat-card">
+      <div class="num purple">22</div>
+      <div class="label">Session Commits</div>
+    </div>
+    <div class="stat-card">
+      <div class="num orange">4</div>
+      <div class="label">Networked Machines</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">67</div>
+      <div class="label">Local ROMs</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">36</div>
+      <div class="label">Games Supported</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ CORE CARDS -->
+<div class="section">
+  <div class="section-header">
+    <h2>Per-Core Status</h2>
+    <span class="count">8 cores</span>
+  </div>
+
+  <div class="cores-grid">
+
+    <!-- ─────────────────────────────────── NMK16 -->
+    <div class="core-card">
+      <div class="core-card-header" onclick="toggle(this)">
+        <div class="title">
+          <div>
+            <h3>NMK16 Arcade <span class="dim">(nmk_arcade)</span></h3>
+            <div class="subtitle">Thunder Dragon · NMK Technology, 1991</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="badges">
+            <span class="badge green">GREEN RBF</span>
+            <span class="badge green">CPU Boots</span>
+            <span class="badge green">GFX Rendering</span>
+          </div>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="core-card-body">
+
+        <div class="two-col">
+          <div class="card-section">
+            <h4>Hardware Architecture</h4>
+            <table class="kv-table">
+              <tr><td>Main CPU</td><td>MC68000 @ 10 MHz</td></tr>
+              <tr><td>Sound CPU</td><td>Z80 @ 8 MHz (T80s)</td></tr>
+              <tr><td>Graphics</td><td>NMK16 custom VDP</td></tr>
+              <tr><td>Sound chips</td><td>YM2203 (OPN) + OKI M6295</td></tr>
+              <tr><td>Video</td><td>320×240 @ 60 Hz</td></tr>
+              <tr><td>Scroll layers</td><td>4 BG tilemaps</td></tr>
+              <tr><td>Sprites</td><td>256 sprites, 16×16 tiles</td></tr>
+              <tr><td>Palette</td><td>512 × 16-bit RGB555</td></tr>
+              <tr><td>Work RAM</td><td>64 KB (0x0B0000)</td></tr>
+              <tr><td>Prog ROM</td><td>256 KB in SDRAM</td></tr>
+            </table>
+          </div>
+
+          <div class="card-section">
+            <h4>Synthesis &amp; Simulation</h4>
+            <table class="kv-table">
+              <tr><td>Quartus</td><td><span class="badge green">GREEN RBF</span></td></tr>
+              <tr><td>ALM util.</td><td>within budget</td></tr>
+              <tr><td>Timing</td><td>met</td></tr>
+              <tr><td>CPU boot</td><td><span class="badge green">YES</span> — 13 bus cycles</td></tr>
+              <tr><td>Sim frames</td><td>3,000 frames rendered</td></tr>
+              <tr><td>First non-black</td><td>Frame 40 (copyright screen)</td></tr>
+              <tr><td>Sprites</td><td><span class="badge yellow">BLOCKED</span> — NMK004 MCU ROM</td></tr>
+            </table>
+            <div class="note">Frames 40–802: copyright screen (55% non-black, 20 colors). Frames 812+: NMK warning screen (91% non-black, 25 colors). Sprite RAM all zeros — blocked by missing nmk004.bin MCU ROM.</div>
+          </div>
+        </div>
+
+        <div class="card-section">
+          <h4>RTL Component Breakdown</h4>
+          <ul class="comp-list">
+            <li><span class="comp-icon custom">C</span><span class="comp-name">nmk_arcade.sv — top-level integration</span><span class="comp-meta">1,200 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">nmk16.sv — NMK16 graphics VDP (tilemaps + sprites + priority)</span><span class="comp-meta">1,217 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">sdram_b.sv — SDRAM arbiter (banked)</span><span class="comp-meta">604 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">fx68k_adapter.sv — MC68000 bus adapter</span><span class="comp-meta">232 lines · Custom</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">fx68k.sv / fx68kAlu.sv / uaddrPla.sv — cycle-accurate 68000</span><span class="comp-meta">5,790 lines · JTFPGA/fx68k (GPL-3.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">T80s.v — Z80 sound CPU</span><span class="comp-meta">21,311 lines · jtframe/T80 (GPL-2.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">jt03.v + jt12_*.v — YM2203 FM synthesizer (40 files)</span><span class="comp-meta">jotego/jt12 (GPL-3.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">jt6295.v + 9 files — OKI M6295 ADPCM</span><span class="comp-meta">jotego/jt6295 (GPL-3.0)</span></li>
+            <li><span class="comp-icon ip">P</span><span class="comp-name">pll.qip — 40 MHz + 143 MHz PLL</span><span class="comp-meta">Quartus IP (Altera)</span></li>
+          </ul>
+        </div>
+
+        <div class="card-section">
+          <h4>Games Supported</h4>
+          <div class="game-tags">
+            <span class="game-tag">Thunder Dragon</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────── TOAPLAN V2 -->
+    <div class="core-card">
+      <div class="core-card-header" onclick="toggle(this)">
+        <div class="title">
+          <div>
+            <h3>Toaplan V2 <span class="dim">(toaplan_v2)</span></h3>
+            <div class="subtitle">Batsugun · Toaplan, 1993</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="badges">
+            <span class="badge blue">Pending CI</span>
+            <span class="badge green">CPU Boots</span>
+            <span class="badge green">GFX Fixed</span>
+          </div>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="core-card-body">
+
+        <div class="two-col">
+          <div class="card-section">
+            <h4>Hardware Architecture</h4>
+            <table class="kv-table">
+              <tr><td>Main CPU</td><td>MC68000 @ 16 MHz</td></tr>
+              <tr><td>Sound CPU</td><td>Z80 (T80s) — stubbed</td></tr>
+              <tr><td>Graphics</td><td>GP9001 VDP (custom)</td></tr>
+              <tr><td>Sound chips</td><td>YM2151 + OKI M6295 — stubbed</td></tr>
+              <tr><td>Video</td><td>320×240 @ 60 Hz</td></tr>
+              <tr><td>Scroll layers</td><td>4 BG tilemaps</td></tr>
+              <tr><td>Sprites</td><td>256 sprites, 4 sizes (8–64 px)</td></tr>
+              <tr><td>Palette</td><td>512 × 16-bit RGB555</td></tr>
+              <tr><td>Work RAM</td><td>64 KB (0x100000)</td></tr>
+              <tr><td>Prog ROM</td><td>1 MB in SDRAM</td></tr>
+            </table>
+          </div>
+
+          <div class="card-section">
+            <h4>Synthesis &amp; Simulation</h4>
+            <table class="kv-table">
+              <tr><td>Quartus</td><td><span class="badge blue">Pending CI</span></td></tr>
+              <tr><td>ALM util.</td><td>est. within budget</td></tr>
+              <tr><td>CPU boot</td><td><span class="badge green">YES</span> — 13 bus cycles</td></tr>
+              <tr><td>Sim frames</td><td>183 frames rendered</td></tr>
+              <tr><td>First non-black</td><td>Under investigation</td></tr>
+              <tr><td>GFX status</td><td>32-bit SDRAM FSM fixed</td></tr>
+            </table>
+            <div class="note warn">Blocker: SSP wrap exception on unmapped address. IRQ2 (VBLANK, IPL=3'b101) and IRQ1 (GP9001 sprite-scan complete, IPL=3'b110) wired but not yet validated.</div>
+          </div>
+        </div>
+
+        <div class="card-section">
+          <h4>RTL Component Breakdown</h4>
+          <ul class="comp-list">
+            <li><span class="comp-icon custom">C</span><span class="comp-name">toaplan_v2.sv — top-level integration</span><span class="comp-meta">1,135 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">gp9001.sv — Toaplan GP9001 VDP (4 BG + 256 sprites + priority)</span><span class="comp-meta">1,208 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">sdram_b.sv — SDRAM arbiter</span><span class="comp-meta">604 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">fx68k_adapter.sv — MC68000 bus adapter</span><span class="comp-meta">232 lines · Custom</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">fx68k.sv / fx68kAlu.sv / uaddrPla.sv — cycle-accurate 68000</span><span class="comp-meta">5,790 lines · JTFPGA/fx68k (GPL-3.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">T80s.v — Z80 sound CPU (stub)</span><span class="comp-meta">21,311 lines · jtframe/T80 (GPL-2.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">jt51.v + 22 files — YM2151 FM synthesizer (stubbed)</span><span class="comp-meta">jotego/jt51 (GPL-3.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">jt6295.v + 11 files — OKI M6295 ADPCM (stubbed)</span><span class="comp-meta">jotego/jt6295 (GPL-3.0)</span></li>
+            <li><span class="comp-icon ip">P</span><span class="comp-name">pll.qip — 32 MHz + 143 MHz PLL</span><span class="comp-meta">Quartus IP (Altera)</span></li>
+          </ul>
+        </div>
+
+        <div class="card-section">
+          <h4>Games Supported</h4>
+          <div class="game-tags">
+            <span class="game-tag">Batsugun</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────── PSIKYO -->
+    <div class="core-card">
+      <div class="core-card-header" onclick="toggle(this)">
+        <div class="title">
+          <div>
+            <h3>Psikyo Arcade <span class="dim">(psikyo_arcade)</span></h3>
+            <div class="subtitle">Gunbird · Psikyo, 1994</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="badges">
+            <span class="badge red">OVERFLOW</span>
+            <span class="badge gray">Untested</span>
+          </div>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="core-card-body">
+
+        <div class="two-col">
+          <div class="card-section">
+            <h4>Hardware Architecture</h4>
+            <table class="kv-table">
+              <tr><td>Main CPU</td><td>MC68EC020 @ 16 MHz <span class="dim">(fx68k placeholder)</span></td></tr>
+              <tr><td>Sound CPU</td><td>Z80 @ ~6.4 MHz (T80s)</td></tr>
+              <tr><td>Graphics</td><td>Psikyo Gates 1–5 (PS2001B + PS3103)</td></tr>
+              <tr><td>Sound chips</td><td>YM2610B (jt10) — FM + ADPCM-A/B</td></tr>
+              <tr><td>Video</td><td>320×240 @ 60 Hz</td></tr>
+              <tr><td>Scroll layers</td><td>2 BG tilemaps (PS3103)</td></tr>
+              <tr><td>Sprites</td><td>PS2001B scanner, per-scanline rasterizer</td></tr>
+              <tr><td>Palette</td><td>256 × 16-bit RGB555</td></tr>
+              <tr><td>Work RAM</td><td>64 KB (0x000000)</td></tr>
+              <tr><td>Prog ROM</td><td>up to 1.5 MB in SDRAM</td></tr>
+            </table>
+          </div>
+
+          <div class="card-section">
+            <h4>Synthesis &amp; Simulation</h4>
+            <table class="kv-table">
+              <tr><td>Quartus</td><td><span class="badge red">OVERFLOW</span></td></tr>
+              <tr><td>ALM util.</td><td>&gt; 100% (post GFX FSM fix)</td></tr>
+              <tr><td>CPU boot</td><td><span class="badge gray">Untested</span></td></tr>
+              <tr><td>Sim frames</td><td>10 frames (harness initializing)</td></tr>
+            </table>
+            <div class="note warn">Blocker: 2-beat GFX SDRAM FSM pushed over LAB limit. SDC false-path blanket removed (was blocking HDMI routing). Musashi C-model sim harness in progress.</div>
+          </div>
+        </div>
+
+        <div class="card-section">
+          <h4>RTL Component Breakdown</h4>
+          <ul class="comp-list">
+            <li><span class="comp-icon custom">C</span><span class="comp-name">psikyo_arcade.sv — top-level integration</span><span class="comp-meta">1,383 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">psikyo.sv — Gates 1+2: CPU interface + PS2001B sprite scanner</span><span class="comp-meta">546 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">psikyo_gate3.sv — per-scanline sprite rasterizer</span><span class="comp-meta">325 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">psikyo_gate4.sv — BG tilemap renderer (PS3103, 2 layers)</span><span class="comp-meta">260 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">psikyo_gate5.sv — priority mixer / colour compositor</span><span class="comp-meta">100 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">sdram_b.sv — SDRAM arbiter</span><span class="comp-meta">573 lines · Custom</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">fx68k.sv / fx68kAlu.sv / uaddrPla.sv — cycle-accurate 68000</span><span class="comp-meta">5,790 lines · JTFPGA/fx68k (GPL-3.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">T80s.v — Z80 sound CPU</span><span class="comp-meta">21,311 lines · jtframe/T80 (GPL-2.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">jt10.v + jt12_*.v + adpcm/*.v — YM2610B (~60 files)</span><span class="comp-meta">jotego/jt12 (GPL-3.0)</span></li>
+            <li><span class="comp-icon ip">P</span><span class="comp-name">pll.qip — 32 MHz + 143 MHz PLL</span><span class="comp-meta">Quartus IP (Altera)</span></li>
+          </ul>
+        </div>
+
+        <div class="card-section">
+          <h4>Games Supported</h4>
+          <div class="game-tags">
+            <span class="game-tag">Gunbird</span>
+          </div>
+          <div class="note info">Note: Same SH201B/SH403 board supports Strikers 1945 series. Core parameterized for multi-game.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────── KANEKO16 -->
+    <div class="core-card">
+      <div class="core-card-header" onclick="toggle(this)">
+        <div class="title">
+          <div>
+            <h3>Kaneko16 Arcade <span class="dim">(kaneko_arcade)</span></h3>
+            <div class="subtitle">Berlin Wall · Kaneko, 1991</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="badges">
+            <span class="badge red">OVERFLOW</span>
+            <span class="badge yellow">GFX Fixed</span>
+          </div>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="core-card-body">
+
+        <div class="two-col">
+          <div class="card-section">
+            <h4>Hardware Architecture</h4>
+            <table class="kv-table">
+              <tr><td>Main CPU</td><td>MC68000 @ 16 MHz</td></tr>
+              <tr><td>Sound CPU</td><td>Z80 @ 8 MHz (T80s)</td></tr>
+              <tr><td>Graphics</td><td>Kaneko16 (VU-001 + VU-002 + VIEW2-CHIP)</td></tr>
+              <tr><td>Sound chips</td><td>OKI M6295 (jt6295) + YM2149 <span class="dim">(jt49 pending)</span></td></tr>
+              <tr><td>Video</td><td>320×240 @ 60 Hz</td></tr>
+              <tr><td>Scroll layers</td><td>4 BG tilemaps (VIEW2-CHIP)</td></tr>
+              <tr><td>Sprites</td><td>VU-001 scanner + VU-002 renderer</td></tr>
+              <tr><td>Palette</td><td>512 × 16-bit RGB555</td></tr>
+              <tr><td>Work RAM</td><td>64 KB (0x100000)</td></tr>
+              <tr><td>Prog ROM</td><td>1 MB in SDRAM</td></tr>
+            </table>
+          </div>
+
+          <div class="card-section">
+            <h4>Synthesis &amp; Simulation</h4>
+            <table class="kv-table">
+              <tr><td>Quartus</td><td><span class="badge red">OVERFLOW</span></td></tr>
+              <tr><td>ALM util.</td><td>4,406 / 4,191 LABs (105%)</td></tr>
+              <tr><td>CPU boot</td><td><span class="badge gray">Untested</span></td></tr>
+              <tr><td>GFX fix</td><td>32-bit 2-beat SDRAM FSM applied</td></tr>
+              <tr><td>Sim harness</td><td>Verilator harness built (today)</td></tr>
+            </table>
+            <div class="note warn">Blocker: 2-beat GFX FSM pushed over LAB limit (same as Psikyo). Video capture corrected to 320×240, iteration budget increased. berlwall ROM extraction updated to match actual MAME filenames.</div>
+          </div>
+        </div>
+
+        <div class="card-section">
+          <h4>RTL Component Breakdown</h4>
+          <ul class="comp-list">
+            <li><span class="comp-icon custom">C</span><span class="comp-name">kaneko_arcade.sv — top-level integration</span><span class="comp-meta">1,078 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">kaneko16.sv — VU-001 + VU-002 + VIEW2-CHIP (all 5 gates)</span><span class="comp-meta">1,298 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">sdram_b.sv — SDRAM arbiter</span><span class="comp-meta">573 lines · Custom</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">fx68k.sv / fx68kAlu.sv / uaddrPla.sv — cycle-accurate 68000</span><span class="comp-meta">5,790 lines · JTFPGA/fx68k (GPL-3.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">T80s.v — Z80 sound CPU</span><span class="comp-meta">21,311 lines · jtframe/T80 (GPL-2.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">jt6295.v + 10 files — OKI M6295 ADPCM</span><span class="comp-meta">jotego/jt6295 (GPL-3.0)</span></li>
+            <li><span class="comp-icon gray">—</span><span class="comp-name">YM2149 / jt49 — PSG sound <span class="dim">(not yet available in jtcores)</span></span><span class="comp-meta">Pending</span></li>
+            <li><span class="comp-icon ip">P</span><span class="comp-name">pll.qip — 32 MHz + 143 MHz PLL</span><span class="comp-meta">Quartus IP (Altera)</span></li>
+          </ul>
+        </div>
+
+        <div class="card-section">
+          <h4>Games Supported</h4>
+          <div class="game-tags">
+            <span class="game-tag">Berlin Wall</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────── TAITO B -->
+    <div class="core-card">
+      <div class="core-card-header" onclick="toggle(this)">
+        <div class="title">
+          <div>
+            <h3>Taito B <span class="dim">(taito_b)</span></h3>
+            <div class="subtitle">Crime City · Nastar · Puzzle Bobble · Taito, 1987–1994</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="badges">
+            <span class="badge blue">Pending CI</span>
+            <span class="badge yellow">ROM Wired</span>
+          </div>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="core-card-body">
+
+        <div class="two-col">
+          <div class="card-section">
+            <h4>Hardware Architecture</h4>
+            <table class="kv-table">
+              <tr><td>Main CPU</td><td>MC68000 @ 12 MHz</td></tr>
+              <tr><td>Sound CPU</td><td>Z80 via TC0140SYT comm</td></tr>
+              <tr><td>Graphics</td><td>TC0180VCU (tilemap + sprite + framebuffer)</td></tr>
+              <tr><td>I/O</td><td>TC0220IOC (joysticks/coins/DIPs)</td></tr>
+              <tr><td>Sound interface</td><td>TC0140SYT (68000↔Z80 + ADPCM arbiter)</td></tr>
+              <tr><td>Palette</td><td>TC0260DAR (RGB444/RGB555 DAC)</td></tr>
+              <tr><td>Sound chips</td><td>YM2610 (jt10) — FM + ADPCM-A/B</td></tr>
+              <tr><td>Video</td><td>320×240 @ 60 Hz</td></tr>
+              <tr><td>Scroll layers</td><td>TC0180VCU tilemaps + sprites</td></tr>
+              <tr><td>Work RAM</td><td>32 KB (nastar default)</td></tr>
+            </table>
+          </div>
+
+          <div class="card-section">
+            <h4>Synthesis &amp; Simulation</h4>
+            <table class="kv-table">
+              <tr><td>Quartus</td><td><span class="badge blue">Pending CI</span></td></tr>
+              <tr><td>cpu_addr fix</td><td>cpu_addr[22:0] → cpu_addr[23:1] fixed today</td></tr>
+              <tr><td>CPU boot</td><td><span class="badge gray">Untested</span> — harness being built</td></tr>
+              <tr><td>Sim frames</td><td>6 frames (harness initializing)</td></tr>
+            </table>
+            <div class="note">CPU ROM SDRAM bridge wired today (commit 5696c7d). Harness: Verilator sim harness built today. Three games available via MRA: crimec, nastar, pbobble.</div>
+          </div>
+        </div>
+
+        <div class="card-section">
+          <h4>RTL Component Breakdown</h4>
+          <ul class="comp-list">
+            <li><span class="comp-icon custom">C</span><span class="comp-name">taito_b.sv — top-level integration (parameterized, nastar/crimec/pbobble)</span><span class="comp-meta">996 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0180vcu.sv — tilemap + sprite + framebuffer controller</span><span class="comp-meta">838 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0180vcu_bg.sv — BG tilemap renderer</span><span class="comp-meta">445 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0180vcu_sprite.sv — sprite engine</span><span class="comp-meta">662 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0180vcu_tx.sv — text layer</span><span class="comp-meta">227 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0260dar.sv — palette DAC</span><span class="comp-meta">96 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0220ioc.sv — I/O controller</span><span class="comp-meta">93 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0140syt.sv — sound communication + ADPCM arbiter</span><span class="comp-meta">298 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">sdram_b.sv — SDRAM arbiter</span><span class="comp-meta">604 lines · Custom</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">fx68k.sv / fx68kAlu.sv / uaddrPla.sv — cycle-accurate 68000</span><span class="comp-meta">5,790 lines · JTFPGA/fx68k (GPL-3.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">T80s.v — Z80 sound CPU</span><span class="comp-meta">21,311 lines · vendor/t80 (GPL-2.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">jt10.v + jt12_*.v + adpcm/*.v — YM2610 (~60 files)</span><span class="comp-meta">jotego/jt12 (GPL-3.0)</span></li>
+            <li><span class="comp-icon ip">P</span><span class="comp-name">pll.qip — 3-file canonical IP</span><span class="comp-meta">Quartus IP (Altera)</span></li>
+          </ul>
+        </div>
+
+        <div class="card-section">
+          <h4>Games Supported</h4>
+          <div class="game-tags">
+            <span class="game-tag">Crime City</span>
+            <span class="game-tag">Nastar / Rastan Saga II</span>
+            <span class="game-tag">Puzzle Bobble</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────── TAITO X -->
+    <div class="core-card">
+      <div class="core-card-header" onclick="toggle(this)">
+        <div class="title">
+          <div>
+            <h3>Taito X <span class="dim">(taito_x)</span></h3>
+            <div class="subtitle">Superman · Twin Hawk · Gigandes · Taito, 1988–1990</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="badges">
+            <span class="badge green">GREEN RBF</span>
+            <span class="badge yellow">Untested Boot</span>
+          </div>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="core-card-body">
+
+        <div class="two-col">
+          <div class="card-section">
+            <h4>Hardware Architecture</h4>
+            <table class="kv-table">
+              <tr><td>Main CPU</td><td>MC68000 @ 12 MHz</td></tr>
+              <tr><td>Sound CPU</td><td>Z80 (T80s) — WAIT_n fixed today</td></tr>
+              <tr><td>Graphics</td><td>X1-001A sprite generator + BG tilemap</td></tr>
+              <tr><td>Sound chips</td><td>YM2610 (jt10) — full FM + ADPCM</td></tr>
+              <tr><td>Video</td><td>384×240 @ 60 Hz</td></tr>
+              <tr><td>Scroll layers</td><td>X1-001A BG + FG sprites</td></tr>
+              <tr><td>Sprites</td><td>512 sprites (SPRITE_LIMIT param)</td></tr>
+              <tr><td>Palette</td><td>2,048 × 16-bit xRGB555</td></tr>
+              <tr><td>Work RAM</td><td>64 KB (0x100000)</td></tr>
+              <tr><td>Prog ROM</td><td>512 KB in SDRAM</td></tr>
+            </table>
+          </div>
+
+          <div class="card-section">
+            <h4>Synthesis &amp; Simulation</h4>
+            <table class="kv-table">
+              <tr><td>Quartus</td><td><span class="badge green">GREEN RBF</span></td></tr>
+              <tr><td>Timing</td><td>met</td></tr>
+              <tr><td>CPU boot</td><td><span class="badge gray">Untested</span> — harness needed</td></tr>
+              <tr><td>Z80 fix</td><td>WAIT_n stall wired today</td></tr>
+              <tr><td>Sim frames</td><td>6 frames (harness initializing)</td></tr>
+            </table>
+            <div class="note">CPU ROM SDRAM bridge + Z80 WAIT_n both wired in commit 64c35a4. GREEN RBF achieved. jt10/jt12 full ADPCM engine included. Needs sim harness run.</div>
+          </div>
+        </div>
+
+        <div class="card-section">
+          <h4>RTL Component Breakdown</h4>
+          <ul class="comp-list">
+            <li><span class="comp-icon custom">C</span><span class="comp-name">taito_x.sv — top-level integration</span><span class="comp-meta">704 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">x1_001a.sv — X1-001A sprite generator</span><span class="comp-meta">655 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">taito_x_colmix.sv — priority compositor + palette BRAM</span><span class="comp-meta">298 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">sdram_x.sv — SDRAM arbiter (X variant)</span><span class="comp-meta">143 lines · Custom</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">fx68k.sv / fx68kAlu.sv / uaddrPla.sv — cycle-accurate 68000</span><span class="comp-meta">5,790 lines · JTFPGA/fx68k (GPL-3.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">T80s.v — Z80 sound CPU</span><span class="comp-meta">vendor/t80 (GPL-2.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">jt10.v + jt12.v + jt03.v + jt12_*.v + adpcm/*.v (~80 files)</span><span class="comp-meta">jotego/jt12 (GPL-3.0)</span></li>
+            <li><span class="comp-icon ip">P</span><span class="comp-name">pll.qip — 32 MHz + 143 MHz PLL</span><span class="comp-meta">Quartus IP (Altera)</span></li>
+          </ul>
+        </div>
+
+        <div class="card-section">
+          <h4>Games Supported</h4>
+          <div class="game-tags">
+            <span class="game-tag">Superman</span>
+            <span class="game-tag">Superman (US)</span>
+            <span class="game-tag">Daisenpu / Twin Hawk</span>
+            <span class="game-tag">Gigandes</span>
+            <span class="game-tag">Balloon Brothers</span>
+            <span class="game-tag">Kageki</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────── TAITO F3 -->
+    <div class="core-card">
+      <div class="core-card-header" onclick="toggle(this)">
+        <div class="title">
+          <div>
+            <h3>Taito F3 <span class="dim">(taito_f3)</span></h3>
+            <div class="subtitle">Bubble Memories · Darius Gaiden · 18 games · Taito, 1993–1996</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="badges">
+            <span class="badge red">FROZEN</span>
+            <span class="badge red">461% ALM</span>
+          </div>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="core-card-body">
+
+        <div class="two-col">
+          <div class="card-section">
+            <h4>Hardware Architecture</h4>
+            <table class="kv-table">
+              <tr><td>Main CPU</td><td>MC68EC020 @ ~26.7 MHz (TG68K)</td></tr>
+              <tr><td>Sound system</td><td>Taito EN module (ES5505 + 68000) — deferred</td></tr>
+              <tr><td>Graphics</td><td>TC0630FDP display processor (custom F3 chip)</td></tr>
+              <tr><td>Palette DAC</td><td>TC0650FDA — final color output + priority</td></tr>
+              <tr><td>I/O</td><td>TC0640FIO (joysticks, coins, EEPROM)</td></tr>
+              <tr><td>Video</td><td>320×240 @ 60 Hz</td></tr>
+              <tr><td>Scroll layers</td><td>BG0 + BG1 tilemaps + text layer + pivot</td></tr>
+              <tr><td>Sprites</td><td>TC0630FDP scanline sprite engine</td></tr>
+              <tr><td>Sys clock</td><td>26.686 MHz (÷4 = 6.67 MHz pixel clock)</td></tr>
+              <tr><td>Work RAM</td><td>128 KB (0x400000)</td></tr>
+            </table>
+          </div>
+
+          <div class="card-section">
+            <h4>Synthesis &amp; Simulation</h4>
+            <table class="kv-table">
+              <tr><td>Quartus</td><td><span class="badge red">FROZEN — 461% ALM</span></td></tr>
+              <tr><td>ALM util.</td><td>~4.6× over DE-10 Nano budget</td></tr>
+              <tr><td>CPU</td><td>TG68K VHDL — 68EC020 (5,944 lines VHDL)</td></tr>
+              <tr><td>CPU boot</td><td>— (synthesis never completes)</td></tr>
+              <tr><td>Ship-ready</td><td>No — won't fit DE-10 Nano</td></tr>
+            </table>
+            <div class="note warn">TC0630FDP alone is 5,547 lines. Full TC0650FDA pipeline + TG68K 68EC020 core exceeds Cyclone V resources by 4.6×. Optimization audit committed today (docs a6f6fc7). Options: resource-share sprite engine, abandon pivot layer, or target larger FPGA.</div>
+          </div>
+        </div>
+
+        <div class="card-section">
+          <h4>RTL Component Breakdown</h4>
+          <ul class="comp-list">
+            <li><span class="comp-icon custom">C</span><span class="comp-name">taito_f3.sv — top-level integration</span><span class="comp-meta">865 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">taito_f3_gfx_arbiter.sv — GFX SDRAM arbiter</span><span class="comp-meta">316 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0630fdp.sv — F3 display processor (top)</span><span class="comp-meta">1,456 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0630fdp_bg.sv / _text.sv / _sprite_scan.sv / _sprite_render.sv / _lineram.sv / _pivot.sv / _colmix.sv</span><span class="comp-meta">4,091 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0650fda.sv — palette DAC + final output</span><span class="comp-meta">390 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0640fio.sv — I/O controller</span><span class="comp-meta">143 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">mb8421.sv — dual-port SRAM (main↔sound comm)</span><span class="comp-meta">169 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">sdram_f3.sv — SDRAM arbiter (F3 variant)</span><span class="comp-meta">583 lines · Custom</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">TG68K.vhd / TG68K_ALU.vhd / TG68KdotC_Kernel.vhd — MC68EC020</span><span class="comp-meta">5,944 lines VHDL · TG68K project (LGPL)</span></li>
+            <li><span class="comp-icon ip">P</span><span class="comp-name">pll.qip — 53.372 MHz + 143 MHz PLL</span><span class="comp-meta">Quartus IP (Altera)</span></li>
+          </ul>
+        </div>
+
+        <div class="card-section">
+          <h4>Games Supported <span class="dim">(18 MRA files)</span></h4>
+          <div class="game-tags">
+            <span class="game-tag">Arabian Magic</span>
+            <span class="game-tag">Bubble Memories</span>
+            <span class="game-tag">Bubble Sympathy</span>
+            <span class="game-tag">Cleopatra Fortune</span>
+            <span class="game-tag">Commander</span>
+            <span class="game-tag">Darius Gaiden</span>
+            <span class="game-tag">Elevator Action Returns</span>
+            <span class="game-tag">Grid Seeker</span>
+            <span class="game-tag">Gunlock</span>
+            <span class="game-tag">Kaiser Knuckle</span>
+            <span class="game-tag">Land Maker</span>
+            <span class="game-tag">Light Bringer</span>
+            <span class="game-tag">Puzzle Bobble 2</span>
+            <span class="game-tag">Pop'n Pop</span>
+            <span class="game-tag">Quiz Huuhu</span>
+            <span class="game-tag">Riding Fight</span>
+            <span class="game-tag">Ring Rage</span>
+            <span class="game-tag">Three Stars</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────── TAITO Z -->
+    <div class="core-card">
+      <div class="core-card-header" onclick="toggle(this)">
+        <div class="title">
+          <div>
+            <h3>Taito Z <span class="dim">(taito_z)</span></h3>
+            <div class="subtitle">Double Axle · Chase HQ · Continental Circus · Taito, 1988–1992</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="badges">
+            <span class="badge red">FROZEN</span>
+            <span class="badge red">Dual 68K</span>
+          </div>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="core-card-body">
+
+        <div class="two-col">
+          <div class="card-section">
+            <h4>Hardware Architecture</h4>
+            <table class="kv-table">
+              <tr><td>CPU A</td><td>MC68000 @ 16 MHz (game logic)</td></tr>
+              <tr><td>CPU B</td><td>MC68000 @ 16 MHz (road/physics)</td></tr>
+              <tr><td>Sound CPU</td><td>Z80 (T80s) + TC0140SYT</td></tr>
+              <tr><td>Graphics</td><td>TC0480SCP (4-layer tilemap)</td></tr>
+              <tr><td>Road gen</td><td>TC0150ROD (road perspective)</td></tr>
+              <tr><td>Sprites</td><td>TC0370MSO + TC0300FLA line buffer</td></tr>
+              <tr><td>Sound chips</td><td>YM2610 (jt10) — FM + ADPCM-A/B</td></tr>
+              <tr><td>Video</td><td>320×240 @ 60 Hz</td></tr>
+              <tr><td>Scroll layers</td><td>BG0–BG3 + FG text (TC0480SCP)</td></tr>
+              <tr><td>Shared RAM</td><td>64 KB dual-port (CPU A ↔ CPU B)</td></tr>
+            </table>
+          </div>
+
+          <div class="card-section">
+            <h4>Synthesis &amp; Simulation</h4>
+            <table class="kv-table">
+              <tr><td>Quartus</td><td><span class="badge red">FROZEN</span></td></tr>
+              <tr><td>Reason</td><td>2× fx68k instances exceed Cyclone V</td></tr>
+              <tr><td>CPU A boot</td><td>— (synthesis frozen)</td></tr>
+              <tr><td>Ship-ready</td><td>No — dual-CPU won't fit</td></tr>
+            </table>
+            <div class="note warn">Two independent MC68000 instances (CPU A + CPU B) combined with TC0480SCP (2,145 lines), TC0370MSO (893 lines), TC0150ROD (752 lines) push well past DE-10 Nano limits. Would need significant resource sharing or a larger target FPGA.</div>
+          </div>
+        </div>
+
+        <div class="card-section">
+          <h4>RTL Component Breakdown</h4>
+          <ul class="comp-list">
+            <li><span class="comp-icon custom">C</span><span class="comp-name">taito_z.sv — top-level integration (dual CPU)</span><span class="comp-meta">1,188 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0480scp.sv + _vram.sv + _bg.sv + _textlayer.sv + _colmix.sv — 4-layer tilemap</span><span class="comp-meta">2,145 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0370mso.sv — sprite scanner + line buffer</span><span class="comp-meta">893 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0150rod.sv — road generator</span><span class="comp-meta">752 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">taito_z_compositor.sv — priority compositor (SCP + ROD + MSO)</span><span class="comp-meta">120 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">taito_z_palette.sv — xBGR_555 palette BRAM</span><span class="comp-meta">165 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0510nio.sv — I/O controller (wheel/pedal/coins)</span><span class="comp-meta">118 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">tc0140syt.sv — 68000↔Z80 sound comm</span><span class="comp-meta">298 lines · Custom</span></li>
+            <li><span class="comp-icon custom">C</span><span class="comp-name">sdram_z.sv — SDRAM arbiter (Z variant)</span><span class="comp-meta">545 lines · Custom</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">fx68k.sv × 2 instances — dual cycle-accurate 68000</span><span class="comp-meta">2× 5,790 lines · JTFPGA/fx68k (GPL-3.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">T80s.v — Z80 sound CPU</span><span class="comp-meta">jtframe/T80 (GPL-2.0)</span></li>
+            <li><span class="comp-icon vendor">V</span><span class="comp-name">jt10.v + jt12_*.v + adpcm/*.v — YM2610 (~55 files)</span><span class="comp-meta">jotego/jt12 (GPL-3.0)</span></li>
+            <li><span class="comp-icon ip">P</span><span class="comp-name">pll.qip — 32 MHz + 143 MHz PLL</span><span class="comp-meta">Quartus IP (Altera)</span></li>
+          </ul>
+        </div>
+
+        <div class="card-section">
+          <h4>Games Supported</h4>
+          <div class="game-tags">
+            <span class="game-tag">Double Axle</span>
+            <span class="game-tag">Racing Beat</span>
+            <span class="game-tag">Chase HQ</span>
+            <span class="game-tag">Continental Circus</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /cores-grid -->
+</div><!-- /section -->
+
+<!-- ═══════════════════════════════════════════ COMPONENT INVENTORY -->
+<div class="section">
+  <div class="section-header">
+    <h2>Component Inventory</h2>
+    <span class="count">borrowed + vendor IP</span>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>Source / Project</th>
+        <th>License</th>
+        <th>Used By</th>
+        <th>Files</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="mono">fx68k</span> — MC68000 (cycle-accurate)</td>
+        <td><a href="https://github.com/ijor/fx68k">JTFPGA/fx68k</a> (Jorge Cwik)</td>
+        <td><span class="badge blue">GPL-3.0</span></td>
+        <td>All 8 cores</td>
+        <td>3 .sv — 5,790 lines</td>
+      </tr>
+      <tr>
+        <td><span class="mono">TG68K</span> — MC68EC020 (VHDL)</td>
+        <td><a href="https://github.com/TobiFlex/TG68KdotC">TG68K project</a> (Tobias Gubener)</td>
+        <td><span class="badge blue">LGPL-2.1</span></td>
+        <td>Taito F3</td>
+        <td>4 .vhd — 5,944 lines</td>
+      </tr>
+      <tr>
+        <td><span class="mono">T80s</span> — Z80 (cycle-accurate)</td>
+        <td><a href="https://github.com/jotego/jtcores">jtframe / T80 project</a></td>
+        <td><span class="badge blue">GPL-2.0</span></td>
+        <td>NMK16, Toaplan V2, Psikyo, Kaneko16, Taito B, Taito X, Taito Z</td>
+        <td>1 .v — 21,311 lines (all-in-one)</td>
+      </tr>
+      <tr>
+        <td><span class="mono">jt51</span> — YM2151 FM synthesizer</td>
+        <td><a href="https://github.com/jotego/jt51">jotego/jt51</a></td>
+        <td><span class="badge blue">GPL-3.0</span></td>
+        <td>Toaplan V2</td>
+        <td>24 .v files</td>
+      </tr>
+      <tr>
+        <td><span class="mono">jt10</span> — YM2610 / YM2610B (via jt12)</td>
+        <td><a href="https://github.com/jotego/jt12">jotego/jt12</a></td>
+        <td><span class="badge blue">GPL-3.0</span></td>
+        <td>Psikyo, Taito B, Taito X, Taito Z</td>
+        <td>~60 .v files (jt12 + adpcm + mixer)</td>
+      </tr>
+      <tr>
+        <td><span class="mono">jt03</span> — YM2203 OPN (via jt12)</td>
+        <td><a href="https://github.com/jotego/jt12">jotego/jt12</a></td>
+        <td><span class="badge blue">GPL-3.0</span></td>
+        <td>NMK16</td>
+        <td>~40 .v files (shared with jt12)</td>
+      </tr>
+      <tr>
+        <td><span class="mono">jt6295</span> — OKI M6295 ADPCM</td>
+        <td><a href="https://github.com/jotego/jtcores">jotego/jtcores</a></td>
+        <td><span class="badge blue">GPL-3.0</span></td>
+        <td>NMK16, Toaplan V2, Kaneko16</td>
+        <td>11 .v files</td>
+      </tr>
+      <tr>
+        <td>Quartus altsyncram</td>
+        <td>Intel Quartus IP Catalog</td>
+        <td><span class="badge yellow">Altera IP</span></td>
+        <td>All cores (work RAM, palette RAM, video RAM)</td>
+        <td>Parameterized instantiation</td>
+      </tr>
+      <tr>
+        <td>Quartus PLL (altpll / altera_pll)</td>
+        <td>Intel Quartus IP Catalog</td>
+        <td><span class="badge yellow">Altera IP</span></td>
+        <td>All 8 cores</td>
+        <td>1 .qip + generated .v per core</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════ INFRASTRUCTURE -->
+<div class="section">
+  <div class="section-header">
+    <h2>Infrastructure</h2>
+    <span class="count">machines, ROMs, agents</span>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h4 style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px;">Machine Fleet</h4>
+      <table class="data-table">
+        <thead>
+          <tr><th>Machine</th><th>Role</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Mac Mini 3 (local)</td>
+            <td>Primary dev + Agent 1</td>
+            <td>Verilator sims, RTL edits, CI pushes</td>
+          </tr>
+          <tr>
+            <td>iMac (local)</td>
+            <td>Agent (secondary)</td>
+            <td>Parallel worktree, batch sim runs</td>
+          </tr>
+          <tr>
+            <td>RP's Mac Mini</td>
+            <td>ROM archive server</td>
+            <td>13,954 ROMs on local NAS</td>
+          </tr>
+          <tr>
+            <td>GPU PC (network)</td>
+            <td>Compute / MAME capture</td>
+            <td>RTX 47-series, parallel MAME runs</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4 style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-top:18px;margin-bottom:10px;">ROM Library</h4>
+      <table class="data-table">
+        <thead>
+          <tr><th>Location</th><th>Count</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Local (Everdrive_n8/)</td>
+            <td>67</td>
+            <td>Directly accessible, used in sim</td>
+          </tr>
+          <tr>
+            <td>RP's Mac Mini NAS</td>
+            <td>13,954</td>
+            <td>Full MAME library, network access</td>
+          </tr>
+          <tr>
+            <td>MRA targets (this session)</td>
+            <td>36</td>
+            <td>Across all 8 cores</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <h4 style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px;">CI Pipeline (GitHub Actions)</h4>
+      <table class="data-table">
+        <thead>
+          <tr><th>Core</th><th>Verilator Gate</th><th>Quartus Synthesis</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>NMK16</td>
+            <td><span class="badge green">PASS</span></td>
+            <td><span class="badge green">GREEN RBF</span></td>
+          </tr>
+          <tr>
+            <td>Toaplan V2</td>
+            <td><span class="badge green">PASS</span></td>
+            <td><span class="badge blue">Pending</span></td>
+          </tr>
+          <tr>
+            <td>Psikyo</td>
+            <td><span class="badge green">PASS</span></td>
+            <td><span class="badge red">OVERFLOW</span></td>
+          </tr>
+          <tr>
+            <td>Kaneko16</td>
+            <td><span class="badge green">PASS</span></td>
+            <td><span class="badge red">OVERFLOW</span></td>
+          </tr>
+          <tr>
+            <td>Taito B</td>
+            <td><span class="badge green">PASS</span></td>
+            <td><span class="badge blue">Pending</span></td>
+          </tr>
+          <tr>
+            <td>Taito X</td>
+            <td><span class="badge green">PASS</span></td>
+            <td><span class="badge green">GREEN RBF</span></td>
+          </tr>
+          <tr>
+            <td>Taito F3</td>
+            <td><span class="badge green">PASS</span></td>
+            <td><span class="badge red">FROZEN (461%)</span></td>
+          </tr>
+          <tr>
+            <td>Taito Z</td>
+            <td><span class="badge green">PASS</span></td>
+            <td><span class="badge red">FROZEN (dual CPU)</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4 style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-top:18px;margin-bottom:10px;">Multi-Agent Coordination</h4>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px;">
+        <div style="margin-bottom:8px"><span class="badge green">Agent 1</span> <span style="margin-left:8px;color:var(--text)">Mac Mini 3 — master branch</span></div>
+        <div style="color:var(--muted);font-size:11px;margin-left:0;padding-left:8px;border-left:2px solid var(--border)">
+          NMK16 sim harness DONE<br>
+          Toaplan V2 sim harness IN PROGRESS<br>
+          Psikyo sim harness IN PROGRESS
+        </div>
+        <div style="margin-top:10px;margin-bottom:8px"><span class="badge gray">Agent 2</span> <span style="margin-left:8px;color:var(--muted)">worktree: sim-batch2 — unclaimed</span></div>
+        <div class="note info">Shared TASK_BOARD.md coordinates worktree claims. Kaneko, Taito B, and Taito X sim harnesses available to claim.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ SESSION TIMELINE -->
+<div class="section">
+  <div class="section-header">
+    <h2>Session Timeline</h2>
+    <span class="count">22 commits today · 8 previous session</span>
+  </div>
+
+  <ul class="commit-list">
+    <li class="commit-item">
+      <span class="commit-hash">a5366f4</span>
+      <span class="commit-msg"><span class="commit-type-fix">fix</span><span class="commit-scope">kaneko</span>update berlwall ROM extraction to match actual MAME filename scheme</span>
+      <span class="commit-time">11:00 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">e0c54eb</span>
+      <span class="commit-msg"><span class="commit-type-chore">chore</span>add microrom/nanorom.mem for toaplan_v2 and taito_x sims</span>
+      <span class="commit-time">10:57 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">6406104</span>
+      <span class="commit-msg"><span class="commit-type-fix">fix</span><span class="commit-scope">kaneko</span>correct video capture to 320×240 and increase iter budget</span>
+      <span class="commit-time">10:56 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">3a79830</span>
+      <span class="commit-msg"><span class="commit-type-fix">fix</span><span class="commit-scope">psikyo</span>remove blanket SDC false paths — was blocking HDMI routing</span>
+      <span class="commit-time">8:49 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">a6f6fc7</span>
+      <span class="commit-msg"><span class="commit-type-docs">docs</span><span class="commit-scope">taito_f3</span>ALM optimization audit — 461% over budget analysis</span>
+      <span class="commit-time">8:29 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">2c04ded</span>
+      <span class="commit-msg"><span class="commit-type-feat">feat</span>Verilator sim harnesses for Kaneko, Taito B, Taito X</span>
+      <span class="commit-time">8:28 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">39c143a</span>
+      <span class="commit-msg"><span class="commit-type-status">status</span>Psikyo+Kaneko overflow after GFX FSM, Toaplan V2 CPU boots</span>
+      <span class="commit-time">8:19 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">28621c7</span>
+      <span class="commit-msg"><span class="commit-type-feat">feat</span><span class="commit-scope">toaplan_v2</span>Verilator sim harness — CPU boots from Batsugun ROM</span>
+      <span class="commit-time">8:07 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">9f296ab</span>
+      <span class="commit-msg"><span class="commit-type-docs">docs</span>shared task queue outside git for multi-agent coordination</span>
+      <span class="commit-time">8:04 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">e2d3f5d</span>
+      <span class="commit-msg"><span class="commit-type-docs">docs</span>split CLAUDE.md — stable rules vs living status + task board</span>
+      <span class="commit-time">8:02 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">59f3b36</span>
+      <span class="commit-msg"><span class="commit-type-docs">docs</span>add sim harness rules + multi-agent coordination to CLAUDE.md</span>
+      <span class="commit-time">7:58 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">4dbe98a</span>
+      <span class="commit-msg"><span class="commit-type-chore">chore</span><span class="commit-scope">mra</span>fill real ROM CRC/MD5 values for taito_b, taito_x, psikyo</span>
+      <span class="commit-time">6:53 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">432591f</span>
+      <span class="commit-msg"><span class="commit-type-fix">fix</span><span class="commit-scope">toaplan_v2, kaneko</span>32-bit GFX SDRAM via 2-beat read FSM</span>
+      <span class="commit-time">6:50 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">d61b344</span>
+      <span class="commit-msg"><span class="commit-type-docs">docs</span><span class="commit-scope">GUARDRAILS</span>add Rules 13-14 (Verilator phi, JTFPGA fx68k), mark bugs fixed</span>
+      <span class="commit-time">6:46 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">0bd1a86</span>
+      <span class="commit-msg"><span class="commit-type-fix">fix</span><span class="commit-scope">taito_b</span>cpu_addr[22:0] → cpu_addr[23:1] — bit 0 doesn't exist on word bus</span>
+      <span class="commit-time">6:44 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">64c35a4</span>
+      <span class="commit-msg"><span class="commit-type-fix">fix</span><span class="commit-scope">taito_x</span>wire CPU ROM SDRAM bridge + Z80 WAIT_n stall</span>
+      <span class="commit-time">1:01 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">5696c7d</span>
+      <span class="commit-msg"><span class="commit-type-fix">fix</span><span class="commit-scope">taito_b</span>wire CPU ROM SDRAM bridge — CPU can now execute game code</span>
+      <span class="commit-time">1:00 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">d329383</span>
+      <span class="commit-msg"><span class="commit-type-fix">fix</span><span class="commit-scope">nmk_arcade</span>sprite ROM bridge pixel-rate fix + tooling improvements</span>
+      <span class="commit-time">12:54 AM</span>
+    </li>
+    <li class="commit-item">
+      <span class="commit-hash">7118ec0</span>
+      <span class="commit-msg"><span class="commit-type-fix">fix</span><span class="commit-scope">nmk_arcade</span>BG tile ROM pixel-rate delivery + full RAM dump harness</span>
+      <span class="commit-time">12:31 AM</span>
+    </li>
+  </ul>
+
+  <div style="margin-top:12px;padding-top:8px;border-top:1px solid var(--border)">
+    <div style="color:var(--muted);font-size:11px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.6px">Previous session (2026-03-18)</div>
+    <ul class="commit-list">
+      <li class="commit-item">
+        <span class="commit-hash">2253262</span>
+        <span class="commit-msg"><span class="commit-type-fix">fix</span><span class="commit-scope">sim</span>CPU boots — JTFPGA fx68k + C++-driven phi enables + bus bypass</span>
+        <span class="commit-time">10:19 PM</span>
+      </li>
+      <li class="commit-item">
+        <span class="commit-hash">e6c8c64</span>
+        <span class="commit-msg"><span class="commit-type-feat">feat</span><span class="commit-scope">fx68k</span>integration audit — VPAn autovector fix, reference doc, MAME validation pipeline</span>
+        <span class="commit-time">8:44 PM</span>
+      </li>
+      <li class="commit-item">
+        <span class="commit-hash">a7a8243</span>
+        <span class="commit-msg"><span class="commit-type-fix">fix</span><span class="commit-scope">fx68k</span>Verilator compat — priority case, MULTIDRIVEN PLA merge, sim harness</span>
+        <span class="commit-time">8:44 PM</span>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ RTL SIZE SUMMARY -->
+<div class="section">
+  <div class="section-header">
+    <h2>Custom RTL Size Summary</h2>
+    <span class="count">lines we wrote</span>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Module / Group</th>
+        <th>File(s)</th>
+        <th>Lines</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>GP9001 VDP</td><td>gp9001.sv</td><td>1,208</td><td>Toaplan V2 custom graphics processor</td></tr>
+      <tr><td>NMK16 VDP</td><td>nmk16.sv</td><td>1,217</td><td>NMK16 tilemaps + sprites + priority mixer</td></tr>
+      <tr><td>Psikyo Gates 1–5</td><td>psikyo.sv + 3 files</td><td>1,231</td><td>PS2001B sprite scanner + PS3103 BG + compositor</td></tr>
+      <tr><td>Kaneko16 VDP</td><td>kaneko16.sv</td><td>1,298</td><td>VU-001 + VU-002 + VIEW2-CHIP all-in-one</td></tr>
+      <tr><td>TC0180VCU</td><td>tc0180vcu.sv + 3 files</td><td>2,172</td><td>Taito B tilemap + sprite + framebuffer</td></tr>
+      <tr><td>TC0480SCP</td><td>tc0480scp.sv + 4 files</td><td>2,145</td><td>Taito Z 4-layer tilemap engine</td></tr>
+      <tr><td>TC0630FDP</td><td>tc0630fdp.sv + 7 files</td><td>5,547</td><td>Taito F3 display processor (largest module)</td></tr>
+      <tr><td>TC0650FDA</td><td>tc0650fda.sv</td><td>390</td><td>Taito F3 color mixer + palette DAC</td></tr>
+      <tr><td>TC0150ROD</td><td>tc0150rod.sv</td><td>752</td><td>Taito Z road generator</td></tr>
+      <tr><td>TC0370MSO</td><td>tc0370mso.sv</td><td>893</td><td>Taito Z sprite scanner + line buffer</td></tr>
+      <tr><td>Taito support chips</td><td>tc0140syt.sv + tc0220ioc.sv + tc0260dar.sv</td><td>487</td><td>Sound comm, I/O, palette DAC</td></tr>
+      <tr><td>fx68k_adapter.sv</td><td>fx68k_adapter.sv + fx68k_dtack_cen.sv</td><td>329</td><td>MC68000 bus interface wrapper</td></tr>
+      <tr><td>tg68k_adapter.sv</td><td>tg68k_adapter.sv</td><td>439</td><td>MC68EC020 bus interface wrapper</td></tr>
+      <tr><td>Core top-levels</td><td>nmk_arcade.sv + toaplan_v2.sv + psikyo_arcade.sv + kaneko_arcade.sv + taito_b.sv + taito_x.sv + taito_f3.sv + taito_z.sv</td><td>8,491</td><td>Per-board integration + address decode</td></tr>
+      <tr><td>X1-001A</td><td>x1_001a.sv</td><td>655</td><td>Taito X sprite generator</td></tr>
+      <tr><td>SDRAM arbiters</td><td>sdram_b.sv × 5 + sdram_f3.sv + sdram_z.sv + sdram_x.sv</td><td>~3,400</td><td>Per-board SDRAM controllers</td></tr>
+      <tr style="background:rgba(255,255,255,0.03)"><td><strong>Total custom RTL</strong></td><td colspan="2"><strong>~32,000+ lines</strong></td><td>Excludes vendor files, testbenches, generated IP</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════ BUGS FIXED -->
+<div class="section">
+  <div class="section-header">
+    <h2>Bugs Fixed This Session</h2>
+    <span class="count">8 confirmed bugs</span>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr><th>Bug</th><th>Commit</th><th>Impact</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>VPAn = 1'b1</code> across all cores</td>
+        <td><span class="mono">e6c8c64</span></td>
+        <td>CPU hangs on interrupt acknowledge cycle — all cores affected</td>
+      </tr>
+      <tr>
+        <td>CPU boot double-fault (Verilator phi race)</td>
+        <td><span class="mono">2253262</span></td>
+        <td>No core could sim-boot — root cause: C++-driven phi enables needed</td>
+      </tr>
+      <tr>
+        <td>BG tile ROM stale data (NMK)</td>
+        <td><span class="mono">7118ec0</span></td>
+        <td>Black / wrong BG tiles in NMK16 sim output</td>
+      </tr>
+      <tr>
+        <td>Sprite ROM stale data (NMK)</td>
+        <td><span class="mono">d329383</span></td>
+        <td>No sprite data delivered to NMK16 rasterizer</td>
+      </tr>
+      <tr>
+        <td>Taito B CPU ROM unwired</td>
+        <td><span class="mono">5696c7d</span></td>
+        <td>68000 couldn't fetch any instructions — instant triple-fault</td>
+      </tr>
+      <tr>
+        <td>Taito X CPU ROM unwired + Z80 WAIT_n</td>
+        <td><span class="mono">64c35a4</span></td>
+        <td>Both CPUs non-functional; Z80 stall loop without WAIT_n</td>
+      </tr>
+      <tr>
+        <td>Toaplan V2 + Kaneko GFX 32-bit read</td>
+        <td><span class="mono">432591f</span></td>
+        <td>Half of tile/sprite bytes zero — 2-beat SDRAM FSM needed</td>
+      </tr>
+      <tr>
+        <td><code>taito_b cpu_addr[0]</code> synthesis error</td>
+        <td><span class="mono">0bd1a86</span></td>
+        <td>Quartus rejected bit 0 of 68000 word-addressed bus — build failure</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="footer">
+  MiSTer FPGA Pipeline &nbsp;·&nbsp; mitchedberg/mister-pipeline (PRIVATE) &nbsp;·&nbsp; Dashboard generated 2026-03-19
+</div>
+
+</div><!-- /page -->
+
+<script>
+function toggle(header) {
+  const card = header.parentElement;
+  const body = card.querySelector('.core-card-body');
+  const chevron = header.querySelector('.chevron');
+  if (body.classList.contains('collapsed')) {
+    body.classList.remove('collapsed');
+    chevron.style.transform = 'rotate(0deg)';
+  } else {
+    body.classList.add('collapsed');
+    chevron.style.transform = 'rotate(-90deg)';
+  }
+}
+</script>
+</body>
+</html>
