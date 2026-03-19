@@ -7,8 +7,8 @@
 // Instantiates and wires:
 //   GP9001    — graphics processor (tilemaps + sprites + priority mixer)
 //   Work RAM  — 64KB at 0x100000–0x10FFFF
-//   Palette RAM — 512 × 16-bit at 0x500000–0x5003FF (RGB555 format)
-//   I/O regs  — joysticks, coins, DIP switches at 0x700000–0x700FFF
+//   Palette RAM — 4KB at 0x400000–0x400FFF (512 × 16-bit, RGB555 format)
+//   I/O regs  — joysticks, coins, DIP switches at 0x200010–0x200019
 //
 // Stubs (silence output, no logic):
 //   Z80 sound CPU
@@ -17,17 +17,12 @@
 // Address map (byte addresses, from MAME batsugun.cpp batsugun_68k_mem):
 //   0x000000–0x07FFFF   512KB   Program ROM (from SDRAM)
 //   0x100000–0x10FFFF   64KB    Work RAM
-//   0x200010–0x200019           I/O ports (IN1/IN2/SYS)
+//   0x200010–0x200019           I/O ports (IN1/IN2/SYS/DSWA/DSWB)
 //   0x210000–0x21FFFF   64KB    Shared RAM (68K/V25 shared, byte-wide via V25)
 //   0x300000–0x30000D           GP9001 VDP[0] (tile + sprite processor)
 //   0x400000–0x400FFF   4KB     Palette RAM (512 × 16-bit, R5G5B5)
-//   0x500000–0x50000D           GP9001 VDP[1] (second tile/sprite processor)
+//   0x500000–0x50000D           GP9001 VDP[1] (second tile/sprite processor, stub)
 //   0x700000–0x700001           VDP[0] video count (vblank/scanline status)
-//
-// NOTE: This RTL currently maps GP9001 at 0x400000 and palette at 0x500000,
-// which differs from the actual MAME map above. These addresses need to be
-// corrected to match the real hardware (GP9001 VDP[0] at 0x300000, palette
-// at 0x400000, VDP[1] at 0x500000).
 //
 // IRQ assignment (from MAME batsugun.cpp):
 //   IRQ4 (M68K_IRQ_4) — GP9001 VDP[0] vblank interrupt
@@ -53,15 +48,15 @@
 /* verilator lint_off SYNCASYNCNET */
 module toaplan_v2 #(
     // ── Address decode parameters (WORD addresses = byte_addr >> 1) ────────────
-    // GP9001 chip select: byte 0x400000–0x40FFFF → word base 0x200000
+    // GP9001 chip select: byte 0x300000–0x30000D → word base 0x180000
     //   11-bit window: addr[10:0] are chip-relative (gp9001 addr input)
-    parameter logic [23:1] GP9001_BASE = 23'h200000,  // byte 0x400000 >> 1
-    // Palette RAM: byte 0x500000–0x5003FF → word base 0x280000
-    //   9-bit window (512 words = 1KB)
-    parameter logic [23:1] PALRAM_BASE = 23'h280000,  // byte 0x500000 >> 1
-    // I/O: byte 0x700000–0x700FFF → word base 0x380000
-    //   11-bit window
-    parameter logic [23:1] IO_BASE     = 23'h380000,  // byte 0x700000 >> 1
+    parameter logic [23:1] GP9001_BASE = 23'h180000,  // byte 0x300000 >> 1
+    // Palette RAM: byte 0x400000–0x400FFF → word base 0x200000
+    //   11-bit window (2KB words covers 4KB byte range; only 512 words used)
+    parameter logic [23:1] PALRAM_BASE = 23'h200000,  // byte 0x400000 >> 1
+    // I/O: byte 0x200010–0x200019 → word base 0x100008
+    //   5-bit window (covers 0x200010–0x20001F)
+    parameter logic [23:1] IO_BASE     = 23'h100008,  // byte 0x200010 >> 1
     // Work RAM: byte 0x100000–0x10FFFF → word base 0x080000
     //   15-bit window (32K words = 64KB)
     parameter logic [23:1] WRAM_BASE   = 23'h080000,  // byte 0x100000 >> 1
@@ -238,18 +233,21 @@ assign prog_rom_cs = (cpu_addr[23:20] == 4'b0000) && !cpu_as_n;
 logic wram_cs;
 assign wram_cs = (cpu_addr[23:WRAM_ABITS] == WRAM_BASE[23:WRAM_ABITS]) && !cpu_as_n;
 
-// GP9001: byte 0x400000–0x40FFFF → word 0x200000–0x2007FF
-//   11-bit chip-relative window (gp9001 addr[10:0])
+// GP9001 VDP[0]: byte 0x300000–0x30000D → word 0x180000–0x180006
+//   Match top 12 bits (23:12) to window the 4KB block; gp9001 uses addr[10:0]
 logic gp9001_cs_n;
-assign gp9001_cs_n = !((cpu_addr[23:11] == GP9001_BASE[23:11]) && !cpu_as_n);
+assign gp9001_cs_n = !((cpu_addr[23:12] == GP9001_BASE[23:12]) && !cpu_as_n);
 
-// Palette RAM: byte 0x500000–0x5003FF → word 0x280000–0x2801FF (9-bit window)
+// Palette RAM: byte 0x400000–0x400FFF → word 0x200000–0x2007FF (11-bit window)
+//   512 entries (9 addr bits); match top 12 bits (23:12)
 logic palram_cs;
-assign palram_cs = (cpu_addr[23:9] == PALRAM_BASE[23:9]) && !cpu_as_n;
+assign palram_cs = (cpu_addr[23:12] == PALRAM_BASE[23:12]) && !cpu_as_n;
 
-// I/O: byte 0x700000–0x700FFF → word 0x380000–0x3807FF (11-bit window)
+// I/O: byte 0x200010–0x200019 → word 0x100008–0x10000C
+//   Match top 19 bits (23:5) to cover 0x200000–0x20001F region
+//   IO_BASE[23:5] = 0x100008[23:5] = 0x08000 (bits[23:5] of 0x100008)
 logic io_cs;
-assign io_cs = (cpu_addr[23:11] == IO_BASE[23:11]) && !cpu_as_n;
+assign io_cs = (cpu_addr[23:5] == IO_BASE[23:5]) && !cpu_as_n;
 
 // =============================================================================
 // GP9001 — Graphics Processor
@@ -629,43 +627,48 @@ assign rgb_b = {pal_entry_r[4:0],   pal_entry_r[4:2]};
 // =============================================================================
 // Sound Command Latch
 // =============================================================================
-// M68000 writes sound commands to 0x70000E (word address 0x380007 = A[3:1]=3'h7).
-// Z80 reads this latch on its bus.  We capture it here in the M68K domain.
+// M68000 writes sound commands via the 68K/V25 shared RAM at 0x210000.
+// For now this is a stub — Z80 sound is not fully implemented.
+// The latch is kept to avoid changes to z80_din_mux downstream.
 
-logic [7:0] sound_cmd;   // latched command byte for Z80
+logic [7:0] sound_cmd;   // latched command byte for Z80 (stub)
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n)
         sound_cmd <= 8'h00;
-    else if (io_cs && !cpu_rw && (cpu_addr[3:1] == 3'h7) && !cpu_lds_n)
-        sound_cmd <= cpu_dout[7:0];   // latch lower byte on 68K write to 0x70000E
+    // Sound command write: stub — shared RAM (0x210000) not yet decoded
 end
 
 // =============================================================================
 // I/O Registers
 // =============================================================================
-// Batsugun I/O map (byte addresses within 0x700000 window, from MAME):
-//   0x700000 — Player 1 joystick + buttons (read)
-//   0x700002 — Player 2 joystick + buttons (read)
-//   0x700004 — Coins + service (read)
-//   0x700006 — DIP switch bank 1 (read)
-//   0x700008 — DIP switch bank 2 (read)
-//   0x70000E — Z80 sound command (write only, captured in sound_cmd above)
+// Batsugun I/O map (byte addresses, from MAME batsugun_68k_mem):
+//   0x200010–0x200011 — IN1:  Player 1 joystick + buttons (read)
+//   0x200012–0x200013 — IN2:  Player 2 joystick + buttons (read)
+//   0x200014–0x200015 — SYS:  Coins + service (read)
+//   0x200016–0x200017 — DSWA: DIP switch bank 1 (read)
+//   0x200018–0x200019 — DSWB: DIP switch bank 2 (read)
 //
-// All registers are byte-wide on the lower byte (D[7:0]).
-// Word reads return the active byte in [7:0], [15:8] = 0xFF.
+// Word addresses relative to IO_BASE (0x100008):
+//   +0 = 0x100008 → cpu_addr[3:1]=4: IN1/IN2 word (P1 upper, P2 lower)
+//   +2 = 0x10000A → cpu_addr[3:1]=5: SYS/DSWA word
+//   +4 = 0x10000C → cpu_addr[3:1]=6: DSWB word
+//
+// All registers are byte-wide; game selects byte via UDS_n/LDS_n.
+// Word reads return valid data in [15:8] (upper) and [7:0] (lower).
 
-logic [7:0] io_dout_byte;
+logic [15:0] io_dout_word;
 
 always_comb begin
-    io_dout_byte = 8'hFF;   // default: open bus
-    case (cpu_addr[3:1])   // A[3:1] selects register
-        3'h0: io_dout_byte = joystick_p1;
-        3'h1: io_dout_byte = joystick_p2;
-        3'h2: io_dout_byte = {2'b11, service, 1'b1, coin[1], coin[0], 2'b11};
-        3'h3: io_dout_byte = dipsw1;
-        3'h4: io_dout_byte = dipsw2;
-        default: io_dout_byte = 8'hFF;
+    io_dout_word = 16'hFFFF;   // default: open bus
+    case (cpu_addr[3:1])
+        // 0x200010/0x200011: P1 upper byte, P2 lower byte
+        3'h4: io_dout_word = {joystick_p1, joystick_p2};
+        // 0x200014/0x200015: SYS upper byte (coins/service), DSWA lower byte
+        3'h5: io_dout_word = {{2'b11, service, 1'b1, coin[1], coin[0], 2'b11}, dipsw1};
+        // 0x200018/0x200019: DSWB upper byte
+        3'h6: io_dout_word = {dipsw2, 8'hFF};
+        default: io_dout_word = 16'hFFFF;
     endcase
 end
 
@@ -707,7 +710,7 @@ always_comb begin
     else if (palram_cs)
         cpu_din = palram_cpu_dout;
     else if (io_cs)
-        cpu_din = {8'hFF, io_dout_byte};
+        cpu_din = io_dout_word;
     else if (wram_cs)
         cpu_din = wram_dout_r;
     else if (prog_rom_cs)

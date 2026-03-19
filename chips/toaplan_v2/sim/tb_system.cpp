@@ -335,7 +335,7 @@ int main(int argc, char** argv) {
 
                     // Track palette and work RAM writes
                     if (!rwn_c) {
-                        if (addr_c >= 0x500000 && addr_c <= 0x5003FF) {
+                        if (addr_c >= 0x400000 && addr_c <= 0x400FFF) {
                             ++pal_wr_count;
                             if (pal_wr_count <= 5)
                                 fprintf(stderr, "  PAL WR #%d addr=%06X data=%04X\n",
