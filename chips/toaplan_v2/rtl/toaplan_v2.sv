@@ -37,7 +37,11 @@
 
 // ============================================================================
 // Typedef: GP9001 Sprite Display List Entry
+// Guard against redefinition when compiled alongside gp9001.sv
+// (Verilator sees both files in a single compilation unit).
 // ============================================================================
+`ifndef SPRITE_ENTRY_T_DEFINED
+`define SPRITE_ENTRY_T_DEFINED
 typedef struct packed {
     logic [8:0]  x;         // X position (9-bit)
     logic [8:0]  y;         // Y position (9-bit)
@@ -49,6 +53,7 @@ typedef struct packed {
     logic [1:0]  size;      // 0=8×8, 1=16×16, 2=32×32, 3=64×64
     logic        valid;
 } sprite_entry_t;
+`endif
 
 /* verilator lint_off SYNCASYNCNET */
 module toaplan_v2 #(
@@ -720,16 +725,26 @@ end
 // DTACK Generation
 // =============================================================================
 // Prog ROM: stall until SDRAM ack (prog_req_pending goes low)
-// All other devices: 1-cycle DTACK
+// Known fast devices (GP9001, palette, I/O, WRAM): 1-cycle DTACK
+// Open bus (unrecognized address): 2-cycle fallback DTACK
+//   Without this, unmapped writes (e.g. to 0xFFFFFE from 68K bus error
+//   handler or Z80 sound bus) would stall the CPU indefinitely.
 
 logic any_fast_cs;
 logic dtack_r;
+// Fallback: 2-cycle counter for open-bus cycles
+logic dtack_fallback_r;
 
 assign any_fast_cs = !gp9001_cs_n | palram_cs | io_cs | wram_cs;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n) dtack_r <= 1'b0;
-    else          dtack_r <= any_fast_cs;
+    if (!reset_n) begin
+        dtack_r          <= 1'b0;
+        dtack_fallback_r <= 1'b0;
+    end else begin
+        dtack_r          <= any_fast_cs;
+        dtack_fallback_r <= !cpu_as_n;   // 1 cycle after AS goes low
+    end
 end
 
 always_comb begin
@@ -737,8 +752,10 @@ always_comb begin
         cpu_dtack_n = 1'b1;
     else if (prog_rom_cs)
         cpu_dtack_n = prog_req_pending;   // 0 when SDRAM returns data
+    else if (any_fast_cs)
+        cpu_dtack_n = !dtack_r;           // fast device: 1-cycle DTACK
     else
-        cpu_dtack_n = !dtack_r;
+        cpu_dtack_n = !dtack_fallback_r;  // open bus: 2-cycle fallback DTACK
 end
 
 // =============================================================================
