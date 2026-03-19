@@ -1,0 +1,455 @@
+name: Chip Standalone Synthesis
+
+# Per-chip synthesis jobs — fast validation (5–15 min each) before
+# running the 30–90 min full system synthesis. Triggered when chip RTL changes.
+# All chips pass check_rtl.sh before synthesis is attempted.
+
+on:
+  push:
+    paths:
+      - 'chips/**'
+      - '.github/workflows/chip_synthesis.yml'
+    branches:
+      - master
+      - main
+  pull_request:
+    paths:
+      - 'chips/**'
+  workflow_dispatch:
+
+# Helper macro: each job follows this pattern:
+#   1. checkout
+#   2. run check_rtl.sh on the chip's rtl/ dir
+#   3. run Quartus standalone synthesis
+#   4. report ALMs/M10K/timing from fit.rpt
+#   5. upload log as artifact
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  tc0630fdp:
+    name: TC0630FDP (Taito F3 GPU)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static check
+        run: bash chips/check_rtl.sh tc0630fdp
+      - name: Synthesize
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/tc0630fdp/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/tc0630fdp_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/tc0630fdp/standalone_synth/output_files/tc0630fdp_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax" "$RPT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tc0630fdp_synth_log
+          path: |
+            tc0630fdp_synth.log
+            chips/tc0630fdp/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  tc0480scp:
+    name: TC0480SCP (Taito Z Tilemap)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static check
+        run: bash chips/check_rtl.sh tc0480scp
+      - name: Synthesize
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/tc0480scp/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/tc0480scp_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/tc0480scp/standalone_synth/output_files/tc0480scp_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax" "$RPT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tc0480scp_synth_log
+          path: |
+            tc0480scp_synth.log
+            chips/tc0480scp/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  tc0370mso:
+    name: TC0370MSO (Taito Z Road Sprites)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static check
+        run: bash chips/check_rtl.sh tc0370mso
+      - name: Synthesize
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/tc0370mso/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/tc0370mso_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/tc0370mso/standalone_synth/output_files/tc0370mso_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax" "$RPT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tc0370mso_synth_log
+          path: |
+            tc0370mso_synth.log
+            chips/tc0370mso/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  tc0150rod:
+    name: TC0150ROD (Taito Z Road Chip)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static check
+        run: bash chips/check_rtl.sh tc0150rod
+      - name: Synthesize
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/tc0150rod/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/tc0150rod_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/tc0150rod/standalone_synth/output_files/tc0150rod_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax" "$RPT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tc0150rod_synth_log
+          path: |
+            tc0150rod_synth.log
+            chips/tc0150rod/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  tc0180vcu:
+    name: TC0180VCU (Taito B GPU)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static check
+        run: bash chips/check_rtl.sh tc0180vcu
+      - name: Synthesize
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/tc0180vcu/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/tc0180vcu_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/tc0180vcu/standalone_synth/output_files/tc0180vcu_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax" "$RPT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tc0180vcu_synth_log
+          path: |
+            tc0180vcu_synth.log
+            chips/tc0180vcu/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  tc0650fda:
+    name: TC0650FDA (Taito F3 Palette DAC)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static check
+        run: bash chips/check_rtl.sh tc0650fda
+      - name: Synthesize
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/tc0650fda/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/tc0650fda_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/tc0650fda/standalone_synth/output_files/tc0650fda_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax" "$RPT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tc0650fda_synth_log
+          path: |
+            tc0650fda_synth.log
+            chips/tc0650fda/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  nmk_arcade:
+    name: NMK Arcade (Thunder Dragon etc.)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Static check
+        run: bash chips/check_rtl.sh nmk_arcade
+      - name: Synthesize
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/nmk_arcade/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/nmk_arcade_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/nmk_arcade/standalone_synth/output_files/nmk_arcade_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax|Timing" "$RPT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nmk_arcade_synth_log
+          path: |
+            nmk_arcade_synth.log
+            chips/nmk_arcade/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  psikyo_arcade:
+    name: Psikyo Arcade (Gunbird etc.)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Static check
+        run: bash chips/check_rtl.sh psikyo_arcade
+      - name: Synthesize
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/psikyo_arcade/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/psikyo_arcade_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/psikyo_arcade/standalone_synth/output_files/psikyo_arcade_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax|Timing" "$RPT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: psikyo_arcade_synth_log
+          path: |
+            psikyo_arcade_synth.log
+            chips/psikyo_arcade/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  kaneko_arcade:
+    name: Kaneko Arcade (Blood Warrior etc.)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Static check
+        run: bash chips/check_rtl.sh kaneko_arcade
+      - name: Synthesize
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/kaneko_arcade/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/kaneko_arcade_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/kaneko_arcade/standalone_synth/output_files/kaneko_arcade_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax" "$RPT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kaneko_arcade_synth_log
+          path: |
+            kaneko_arcade_synth.log
+            chips/kaneko_arcade/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  toaplan_v2:
+    name: Toaplan V2 / GP9001 (Batsugun etc.)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Static check
+        run: bash chips/check_rtl.sh toaplan_v2
+      - name: Synthesize
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/toaplan_v2/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/toaplan_v2_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/toaplan_v2/standalone_synth/output_files/toaplan_v2_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax" "$RPT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: toaplan_v2_synth_log
+          path: |
+            toaplan_v2_synth.log
+            chips/toaplan_v2/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  taito_x:
+    name: Taito X (Crime City etc.)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Static check
+        run: bash chips/check_rtl.sh taito_x
+      - name: Synthesize
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/taito_x/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/taito_x_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/taito_x/standalone_synth/output_files/taito_x_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax" "$RPT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: taito_x_synth_log
+          path: |
+            taito_x_synth.log
+            chips/taito_x/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  taito_b:
+    name: Taito B (Puzzle Bobble etc.)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Static check
+        run: bash chips/check_rtl.sh taito_b
+      - name: Synthesize
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/taito_b/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/taito_b_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/taito_b/standalone_synth/output_files/taito_b_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax" "$RPT" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: taito_b_synth_log
+          path: |
+            taito_b_synth.log
+            chips/taito_b/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  taito_f3:
+    name: Taito F3 (Puzzle Bobble 2 etc.) — expect ALM overflow
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Static check
+        run: bash chips/check_rtl.sh taito_f3
+      - name: Synthesize
+        # continue-on-error: ALM overflow expected until architecture is reduced
+        continue-on-error: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/taito_f3/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/taito_f3_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/taito_f3/standalone_synth/output_files/taito_f3_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax|exceed" "$RPT" || true
+          grep -E "exceed|overflow|Error" taito_f3_synth.log | head -10 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: taito_f3_synth_log
+          path: |
+            taito_f3_synth.log
+            chips/taito_f3/standalone_synth/output_files/*.rpt
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  taito_z:
+    name: Taito Z (Chase HQ etc.) — expect ALM overflow
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Static check
+        run: bash chips/check_rtl.sh taito_z
+      - name: Synthesize
+        # continue-on-error: 2x fx68k ALM overflow expected
+        continue-on-error: true
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" raetro/quartus:17.0 \
+            sh -c "cd /workspace/chips/taito_z/standalone_synth && \
+                   /opt/intelFPGA/quartus/bin/quartus_sh --flow compile standalone 2>&1 | \
+                   tee /workspace/taito_z_synth.log; exit \${PIPESTATUS[0]}"
+      - name: Report resources
+        if: always()
+        run: |
+          RPT=chips/taito_z/standalone_synth/output_files/taito_z_top.fit.rpt
+          [ -f "$RPT" ] && grep -E "ALMs needed|Total block memory|Fmax|exceed" "$RPT" || true
+          grep -E "exceed|overflow|Error" taito_z_synth.log | head -10 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: taito_z_synth_log
+          path: |
+            taito_z_synth.log
+            chips/taito_z/standalone_synth/output_files/*.rpt
+          retention-days: 7
