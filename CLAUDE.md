@@ -61,11 +61,15 @@ Every Verilator sim harness MUST follow `chips/nmk_arcade/sim/`:
 Use **git worktrees** (`claude --worktree <name>`) for file isolation between sessions.
 
 ### Before starting work
-1. Read `.shared/task_queue.md` — this is OUTSIDE git, shared instantly across all worktrees
-2. Find a task with status AVAILABLE, change it to CLAIMED:<your-worktree>
-3. Do the work following the checklist in task_queue.md
-4. When done, change status to DONE, pick next AVAILABLE task
-5. Never edit files in a directory another agent has claimed
+1. Read `.shared/task_queue.md` — task claiming (OUTSIDE git, instant visibility)
+2. Read `.shared/findings.md` — bugs found by OTHER agents that affect YOUR cores
+3. Find a task with status AVAILABLE, change it to CLAIMED:<your-worktree>
+4. Do the work following the checklist in task_queue.md
+5. When done, change status to DONE, pick next AVAILABLE task
+6. Never edit files in a directory another agent has claimed
+
+### When you find a cross-cutting bug
+Append to `.shared/findings.md` with: date, who found it, which cores are affected, the fix, and what action other agents should take. This is the broadcast channel.
 
 ### Shared (read-only)
 `chips/m68000/`, `chips/GUARDRAILS.md`, `chips/fx68k_integration_reference.md`, `chips/nmk_arcade/sim/`
