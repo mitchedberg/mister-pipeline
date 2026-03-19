@@ -297,7 +297,7 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
             // New CPU ROM read — issue SDRAM request
             // Word address: cpu_addr[23:1] is already a word address;
             // SDRAM expects a 27-bit word address (base 0 for CPU ROM).
-            prog_req_addr_r  <= {4'b0, cpu_addr[22:0]};  // 27-bit word addr
+            prog_req_addr_r  <= {3'b0, cpu_addr[23:1], 1'b0};  // 27-bit byte addr
             prog_req_pending <= 1'b1;
             prog_rom_req     <= ~prog_rom_req;
         end else if (prog_req_pending && (prog_rom_req == prog_rom_ack)) begin
