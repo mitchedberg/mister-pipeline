@@ -11,7 +11,7 @@
 //   I/O regs  — joysticks, coins, DIP switches at 0x200010–0x200019
 //
 // Stubs (silence output, no logic):
-//   Z80 sound CPU
+//   NEC V25 sound CPU (shared RAM is present; V25 side not wired)
 //   YM2151 + OKI M6295 audio
 //
 // Address map (byte addresses, from MAME batsugun.cpp batsugun_68k_mem):
@@ -60,7 +60,11 @@ module toaplan_v2 #(
     // Work RAM: byte 0x100000–0x10FFFF → word base 0x080000
     //   15-bit window (32K words = 64KB)
     parameter logic [23:1] WRAM_BASE   = 23'h080000,  // byte 0x100000 >> 1
-    parameter int WRAM_WORDS = 32768                    // 64KB / 2 = 32K words
+    parameter int WRAM_WORDS = 32768,                   // 64KB / 2 = 32K words
+    // Shared RAM (68K/V25): byte 0x210000–0x21FFFF → word base 0x108000
+    //   15-bit window (32K words = 64KB)
+    parameter logic [23:1] SHRAM_BASE  = 23'h108000,  // byte 0x210000 >> 1
+    parameter int SHRAM_WORDS = 32768                   // 64KB / 2 = 32K words
 
 ) (
     input  logic        clk_sys,
@@ -138,7 +142,8 @@ module toaplan_v2 #(
 // Local parameters
 // =============================================================================
 
-localparam int WRAM_ABITS = $clog2(WRAM_WORDS);   // 15
+localparam int WRAM_ABITS  = $clog2(WRAM_WORDS);   // 15
+localparam int SHRAM_ABITS = $clog2(SHRAM_WORDS);  // 15
 
 // =============================================================================
 // Video Timing Generator — 320×240 standard arcade
@@ -229,9 +234,12 @@ assign vblank_rising = vblank_r & ~vblank_prev;
 logic prog_rom_cs;
 assign prog_rom_cs = (cpu_addr[23:20] == 4'b0000) && !cpu_as_n;
 
-// Work RAM: byte 0x100000–0x10FFFF → word 0x080000–0x087FFF (15-bit)
+// Work RAM: byte 0x100000–0x10FFFF → word 0x080000–0x087FFF (15-bit index)
+//   Decode uses [23:16] (8 bits) — the upper 8 bits above the 15-bit index.
+//   Using [23:WRAM_ABITS] would be [23:15] (9 bits), which includes bit 15
+//   (the MSB of the index) in the compare and breaks the upper half of WRAM.
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:WRAM_ABITS] == WRAM_BASE[23:WRAM_ABITS]) && !cpu_as_n;
+assign wram_cs = (cpu_addr[23:WRAM_ABITS+1] == WRAM_BASE[23:WRAM_ABITS+1]) && !cpu_as_n;
 
 // GP9001 VDP[0]: byte 0x300000–0x30000D → word 0x180000–0x180006
 //   Match top 12 bits (23:12) to window the 4KB block; gp9001 uses addr[10:0]
@@ -248,6 +256,18 @@ assign palram_cs = (cpu_addr[23:12] == PALRAM_BASE[23:12]) && !cpu_as_n;
 //   IO_BASE[23:5] = 0x100008[23:5] = 0x08000 (bits[23:5] of 0x100008)
 logic io_cs;
 assign io_cs = (cpu_addr[23:5] == IO_BASE[23:5]) && !cpu_as_n;
+
+// Shared RAM (68K/V25): byte 0x210000–0x21FFFF → word 0x108000–0x10FFFF (15-bit index)
+//   Decode uses [23:16] (8 bits). See WRAM note above.
+logic shared_ram_cs;
+assign shared_ram_cs = (cpu_addr[23:SHRAM_ABITS+1] == SHRAM_BASE[23:SHRAM_ABITS+1]) && !cpu_as_n;
+
+// VDP video count register: byte 0x700000–0x700001 → word 0x380000
+//   Returns current scan position: bit[8]=vblank, bits[7:0]=vpos_r[7:0]
+//   The 68K memory test busy-waits on bit 8 (vblank) before writing test patterns.
+//   cpu_addr[23:16] for word 0x380000: 0x380000>>15 = 0x70 (112).
+logic vcount_cs;
+assign vcount_cs = (cpu_addr[23:16] == 8'h70) && !cpu_as_n;
 
 // =============================================================================
 // GP9001 — Graphics Processor
@@ -530,6 +550,57 @@ end
 `endif
 
 // =============================================================================
+// Shared RAM — 64KB synchronous block RAM (68K/V25 communication)
+// =============================================================================
+// Mapped at byte 0x210000–0x21FFFF (word 0x108000–0x10FFFF).
+// The real hardware has the V25 sound CPU on the other side; here it is a
+// simple stub so the 68K can write values and read them back, satisfying the
+// boot-time handshake that polls this region.
+
+`ifdef QUARTUS
+logic [15:0] shram_dout_r;
+altsyncram #(
+    .operation_mode         ("SINGLE_PORT"),
+    .width_a                (16),
+    .widthad_a              (SHRAM_ABITS),
+    .numwords_a             (SHRAM_WORDS),
+    .outdata_reg_a          ("CLOCK0"),
+    .clock_enable_input_a   ("BYPASS"),
+    .clock_enable_output_a  ("BYPASS"),
+    .intended_device_family ("Cyclone V"),
+    .lpm_type               ("altsyncram"),
+    .ram_block_type         ("M10K"),
+    .width_byteena_a        (2),
+    .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_a ("NEW_DATA_NO_NBE_READ")
+) shared_ram_inst (
+    .clock0     (clk_sys),
+    .address_a  (cpu_addr[SHRAM_ABITS:1]),
+    .data_a     (cpu_dout),
+    .wren_a     (shared_ram_cs && !cpu_rw),
+    .byteena_a  ({~cpu_uds_n, ~cpu_lds_n}),
+    .q_a        (shram_dout_r),
+    .aclr0(1'b0), .addressstall_a(1'b0), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(1'b1)
+);
+`else
+logic [15:0] shared_ram [0:SHRAM_WORDS-1];
+logic [15:0] shram_dout_r;
+always_ff @(posedge clk_sys) begin
+    if (shared_ram_cs && !cpu_rw) begin
+        if (!cpu_uds_n) shared_ram[cpu_addr[SHRAM_ABITS:1]][15:8] <= cpu_dout[15:8];
+        if (!cpu_lds_n) shared_ram[cpu_addr[SHRAM_ABITS:1]][ 7:0] <= cpu_dout[ 7:0];
+    end
+end
+`endif
+
+`ifndef QUARTUS
+always_ff @(posedge clk_sys) begin
+    if (shared_ram_cs) shram_dout_r <= shared_ram[cpu_addr[SHRAM_ABITS:1]];
+end
+`endif
+
+// =============================================================================
 // Palette RAM — 512 × 16-bit synchronous block RAM
 // =============================================================================
 // Format: 0bRRRRRGGGGGBBBBB (bit 15 unused / transparent flag)
@@ -628,15 +699,17 @@ assign rgb_b = {pal_entry_r[4:0],   pal_entry_r[4:2]};
 // Sound Command Latch
 // =============================================================================
 // M68000 writes sound commands via the 68K/V25 shared RAM at 0x210000.
-// For now this is a stub — Z80 sound is not fully implemented.
-// The latch is kept to avoid changes to z80_din_mux downstream.
+// The shared RAM is now fully decoded above; this latch mirrors the command
+// byte for use by the Z80 sound CPU read port (z80_cmd_cs at 0x6000).
 
-logic [7:0] sound_cmd;   // latched command byte for Z80 (stub)
+logic [7:0] sound_cmd;   // latched command byte for Z80
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n)
         sound_cmd <= 8'h00;
-    // Sound command write: stub — shared RAM (0x210000) not yet decoded
+    // Latch lower byte when 68K writes to shared RAM word at 0x210000
+    else if (shared_ram_cs && !cpu_rw && (cpu_addr[SHRAM_ABITS:1] == 15'h0))
+        sound_cmd <= cpu_dout[7:0];
 end
 
 // =============================================================================
@@ -700,17 +773,51 @@ end
 assign prog_rom_addr = prog_req_addr_r;
 
 // =============================================================================
+// Shared RAM read-select hold register
+// =============================================================================
+// shared_ram_cs is combinatorially gated by !cpu_as_n, so it deasserts the
+// moment AS goes high.  The registered BRAM output (shram_dout_r) is valid one
+// cycle *after* shared_ram_cs first fires — i.e. exactly when DTACK fires for
+// a 1-cycle path.  But by that point AS may already be deasserted, killing
+// shared_ram_cs and routing the mux to open-bus (0xFFFF).
+//
+// Fix: capture shared_ram_cs into shram_sel_r on the cycle it fires and clear
+// it when AS deasserts.  Use shram_sel_r in the read mux (not shared_ram_cs),
+// and give SHRAM a 2-cycle DTACK so AS is guaranteed still low when the CPU
+// samples data.
+logic shram_sel_r;   // sticky: 1 once shared_ram_cs fires; clears on AS high
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n)
+        shram_sel_r <= 1'b0;
+    else if (cpu_as_n)
+        shram_sel_r <= 1'b0;
+    else if (shared_ram_cs)
+        shram_sel_r <= 1'b1;
+end
+
+// =============================================================================
 // CPU Data Bus Read Mux
 // =============================================================================
-// Priority: GP9001 > palette RAM > I/O > WRAM > prog ROM > open bus
+// Priority: GP9001 > palette RAM > I/O > shared RAM > WRAM > prog ROM > open bus
+// Note: shared RAM uses shram_sel_r (not shared_ram_cs) so the mux stays valid
+// through the 2-cycle DTACK window even after AS deasserts.
+
+// VDP video count output: bit[8]=vblank, bits[7:0]=vertical scan position
+// This register is polled by the 68K boot ROM memory test to sync with vblank.
+wire [15:0] vcount_dout = {7'b0, vblank_r, vpos_r[7:0]};
 
 always_comb begin
     if (!gp9001_cs_n)
         cpu_din = gp9001_dout;
     else if (palram_cs)
         cpu_din = palram_cpu_dout;
+    else if (vcount_cs)
+        cpu_din = vcount_dout;
     else if (io_cs)
         cpu_din = io_dout_word;
+    else if (shram_sel_r)
+        cpu_din = shram_dout_r;
     else if (wram_cs)
         cpu_din = wram_dout_r;
     else if (prog_rom_cs)
@@ -724,24 +831,35 @@ end
 // =============================================================================
 // Prog ROM: stall until SDRAM ack (prog_req_pending goes low)
 // Known fast devices (GP9001, palette, I/O, WRAM): 1-cycle DTACK
+// Shared RAM: 2-cycle DTACK — BRAM output is registered, needs one extra cycle
+//   so data is stable before the CPU samples iEdb.  shram_sel_r persists
+//   after AS may deassert, keeping the mux output valid.
 // Open bus (unrecognized address): 2-cycle fallback DTACK
 //   Without this, unmapped writes (e.g. to 0xFFFFFE from 68K bus error
 //   handler or Z80 sound bus) would stall the CPU indefinitely.
 
 logic any_fast_cs;
 logic dtack_r;
+// SHRAM 2-cycle DTACK: pipeline
+logic shram_dtack_r1;  // 1 cycle after shared_ram_cs
+logic shram_dtack_r2;  // 2 cycles after shared_ram_cs — DTACK fires here
 // Fallback: 2-cycle counter for open-bus cycles
 logic dtack_fallback_r;
 
-assign any_fast_cs = !gp9001_cs_n | palram_cs | io_cs | wram_cs;
+// any_fast_cs excludes shared_ram_cs — SHRAM gets its own 2-cycle path
+assign any_fast_cs = !gp9001_cs_n | palram_cs | vcount_cs | io_cs | wram_cs;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         dtack_r          <= 1'b0;
+        shram_dtack_r1   <= 1'b0;
+        shram_dtack_r2   <= 1'b0;
         dtack_fallback_r <= 1'b0;
     end else begin
         dtack_r          <= any_fast_cs;
-        dtack_fallback_r <= !cpu_as_n;   // 1 cycle after AS goes low
+        shram_dtack_r1   <= shared_ram_cs;          // 1 cycle after AS+addr
+        shram_dtack_r2   <= shram_dtack_r1;         // 2 cycles — data ready
+        dtack_fallback_r <= !cpu_as_n;              // 1 cycle after AS goes low
     end
 end
 
@@ -749,11 +867,13 @@ always_comb begin
     if (cpu_as_n)
         cpu_dtack_n = 1'b1;
     else if (prog_rom_cs)
-        cpu_dtack_n = prog_req_pending;   // 0 when SDRAM returns data
+        cpu_dtack_n = prog_req_pending;     // 0 when SDRAM returns data
     else if (any_fast_cs)
-        cpu_dtack_n = !dtack_r;           // fast device: 1-cycle DTACK
+        cpu_dtack_n = !dtack_r;            // fast device: 1-cycle DTACK
+    else if (shram_sel_r)
+        cpu_dtack_n = !shram_dtack_r2;     // shared RAM: 2-cycle DTACK
     else
-        cpu_dtack_n = !dtack_fallback_r;  // open bus: 2-cycle fallback DTACK
+        cpu_dtack_n = !dtack_fallback_r;   // open bus: 2-cycle fallback DTACK
 end
 
 // =============================================================================

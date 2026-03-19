@@ -216,6 +216,14 @@ int main(int argc, char** argv) {
     bool     halted_reported   = false;
     int      pal_wr_count      = 0;
     int      wram_wr_count     = 0;
+    int      shram_wr_count    = 0;
+    int      shram_rd_count    = 0;
+
+    // V25 ready signal injection:
+    // After the 68K loads the V25 program (24576 SHRAM writes), inject 0xFF
+    // into shared_ram[0x7800][7:0] = byte address 0x21F001.  This simulates
+    // the V25 coming alive and letting the 68K boot proceed.
+    bool     v25_ready_injected = false;
 
     // Reset duration
     static constexpr int RESET_ITERS = 20;
@@ -333,7 +341,7 @@ int main(int argc, char** argv) {
                                 (unsigned)(top->dbg_cpu_dout & 0xFFFF));
                     }
 
-                    // Track palette and work RAM writes
+                    // Track palette, work RAM, and shared RAM accesses
                     if (!rwn_c) {
                         if (addr_c >= 0x400000 && addr_c <= 0x400FFF) {
                             ++pal_wr_count;
@@ -348,15 +356,35 @@ int main(int argc, char** argv) {
                                 fprintf(stderr, "  WRAM WR #%d addr=%06X\n",
                                         wram_wr_count, addr_c);
                         }
+                        if (addr_c >= 0x210000 && addr_c <= 0x21FFFF) {
+                            ++shram_wr_count;
+                            if (shram_wr_count <= 5)
+                                fprintf(stderr, "  SHRAM WR #%d addr=%06X wdata=%04X\n",
+                                        shram_wr_count, addr_c,
+                                        (unsigned)(top->dbg_cpu_din & 0xFFFF));
+                        }
+                    } else {
+                        if (addr_c >= 0x210000 && addr_c <= 0x21FFFF) {
+                            ++shram_rd_count;
+                            if (shram_rd_count <= 5)
+                                fprintf(stderr, "  SHRAM RD #%d addr=%06X rdata_at_as=%04X\n",
+                                        shram_rd_count, addr_c,
+                                        (unsigned)(top->dbg_cpu_dout & 0xFFFF));
+                            // Log first 5 SHRAM reads after write phase ends (wr count stops)
+                            if (shram_wr_count >= 24576 && shram_rd_count <= 24590)
+                                fprintf(stderr, "  SHRAM POLL #%d addr=%06X rdata=%04X\n",
+                                        shram_rd_count - 24575, addr_c,
+                                        (unsigned)(top->dbg_cpu_dout & 0xFFFF));
+                        }
                     }
                 }
 
                 // Periodic status summary
                 if (bus_cycles_c > 0 && (bus_cycles_c % 10000) == 0 &&
                     !prev_asn_c && asn_c) {
-                    fprintf(stderr, "  [%dK bus] pal_wr=%d wram_wr=%d frame=%d\n",
+                    fprintf(stderr, "  [%dK bus] pal_wr=%d wram_wr=%d shram_wr=%d shram_rd=%d frame=%d\n",
                             bus_cycles_c / 1000, pal_wr_count, wram_wr_count,
-                            frame_num);
+                            shram_wr_count, shram_rd_count, frame_num);
                 }
 
                 // Detect CPU halt
@@ -369,7 +397,58 @@ int main(int argc, char** argv) {
                             iter, bus_cycles_c);
                 }
 
+                // Log SHRAM read data when DTACK falls (data is valid at this point)
+                static uint8_t prev_dtack_c = 1;
+                static bool shram_read_pending = false;
+                static uint32_t shram_read_addr_c = 0;
+                static int shram_dtack_count = 0;
+                if (!asn_c && rwn_c &&
+                    addr_c >= 0x210000 && addr_c <= 0x21FFFF) {
+                    shram_read_pending = true;
+                    shram_read_addr_c = addr_c;
+                }
+                if (shram_read_pending && !top->dbg_cpu_dtack_n && prev_dtack_c) {
+                    // DTACK just fell: data is now valid
+                    if (shram_dtack_count < 5)
+                        fprintf(stderr, "  SHRAM DTACK addr=%06X rdata=%04X\n",
+                                shram_read_addr_c,
+                                (unsigned)(top->dbg_cpu_dout & 0xFFFF));
+                    // Also log first 5 phase-2 reads (after writes complete)
+                    if (shram_wr_count >= 24576 &&
+                        shram_dtack_count >= 512 && shram_dtack_count < 517)
+                        fprintf(stderr, "  SHRAM2 DTACK #%d addr=%06X rdata=%04X\n",
+                                shram_dtack_count - 511,
+                                shram_read_addr_c,
+                                (unsigned)(top->dbg_cpu_dout & 0xFFFF));
+                    // Log first 3 reads of the V25 poll address (0x21F000)
+                    static int v25_poll_log = 0;
+                    if (shram_read_addr_c == 0x21F000 && v25_poll_log < 3) {
+                        ++v25_poll_log;
+                        fprintf(stderr, "  V25 POLL RD #%d addr=%06X rdata=%04X\n",
+                                v25_poll_log, shram_read_addr_c,
+                                (unsigned)(top->dbg_cpu_dout & 0xFFFF));
+                    }
+                    ++shram_dtack_count;
+                    shram_read_pending = false;
+                }
+                if (asn_c) shram_read_pending = false;  // AS deasserted
+                prev_dtack_c = top->dbg_cpu_dtack_n;
+
                 prev_asn_c = asn_c;
+            }
+
+            // ── V25 ready injection ───────────────────────────────────────────
+            // After the 68K has written all 24576 SHRAM words (both tables),
+            // assert the V25 "alive" signal at SHRAM byte 0x21F001.
+            // Word index 0x7800 = (0x21F001 >> 1) & 0x7FFF.
+            // Lower byte (bits 7:0) = 0xFF.
+            if (!v25_ready_injected && shram_wr_count >= 24576) {
+                v25_ready_injected = true;
+                top->rootp->tb_top__DOT__u_toaplan__DOT__shared_ram[0x7800] =
+                    (top->rootp->tb_top__DOT__u_toaplan__DOT__shared_ram[0x7800] & 0xFF00u)
+                    | 0x00FFu;
+                fprintf(stderr, "  [V25 inject] SHRAM[0x7800] <- 0x%04X (V25 ready at 0x21F001)\n",
+                        (unsigned)top->rootp->tb_top__DOT__u_toaplan__DOT__shared_ram[0x7800]);
             }
 
         } else {
