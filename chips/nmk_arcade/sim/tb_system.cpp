@@ -253,8 +253,7 @@ int main(int argc, char** argv) {
 
     // ── SDRAM channels ───────────────────────────────────────────────────────
     ToggleSdramChannel     prog_ch(sdram);
-    ToggleSdramChannel     spr_ch(sdram);
-    ToggleSdramChannel     bg_ch(sdram);
+    // spr_ch and bg_ch removed: both use combinational direct-read (zero-latency)
     ToggleSdramChannel     adpcm_ch(sdram);
     ToggleSdramChannelByte z80_ch(sdram);
 
@@ -382,14 +381,18 @@ int main(int argc, char** argv) {
             top->prog_rom_ack  = r.ack;
         }
         {
-            auto r = spr_ch.tick(top->spr_rom_sdram_req, top->spr_rom_sdram_addr);
-            top->spr_rom_sdram_data = r.data;
-            top->spr_rom_sdram_ack  = r.ack;
+            // Sprite ROM: pixel-rate access, bypass toggle-handshake.
+            // nmk16 G3_FETCH reads spr_rom_data combinationally the same cycle
+            // spr_rom_addr is valid ("combinational zero-latency" interface).
+            uint32_t spr_addr = (uint32_t)top->spr_rom_sdram_addr;
+            top->spr_rom_sdram_data = sdram.read_word(spr_addr & ~1u);
+            top->spr_rom_sdram_ack  = top->spr_rom_sdram_req;  // always ack immediately
         }
         {
-            auto r = bg_ch.tick(top->bg_rom_sdram_req, top->bg_rom_sdram_addr);
-            top->bg_rom_sdram_data = r.data;
-            top->bg_rom_sdram_ack  = r.ack;
+            // BG tile ROM: pixel-rate combinational access (same as main loop).
+            uint32_t bg_addr = (uint32_t)top->bg_rom_sdram_addr;
+            top->bg_rom_sdram_data = sdram.read_word(bg_addr & ~1u);
+            top->bg_rom_sdram_ack  = top->bg_rom_sdram_req;
         }
         {
             auto r = adpcm_ch.tick(top->adpcm_rom_req, (uint32_t)top->adpcm_rom_addr);
@@ -672,9 +675,12 @@ int main(int argc, char** argv) {
                 top->prog_rom_ack  = r.ack;
             }
             {
-                auto r = spr_ch.tick(top->spr_rom_sdram_req, top->spr_rom_sdram_addr);
-                top->spr_rom_sdram_data = r.data;
-                top->spr_rom_sdram_ack  = r.ack;
+                // Sprite ROM: pixel-rate access, bypass toggle-handshake.
+                // nmk16 G3_FETCH reads spr_rom_data combinationally the same cycle
+                // spr_rom_addr is valid ("combinational zero-latency" interface).
+                uint32_t spr_addr = (uint32_t)top->spr_rom_sdram_addr;
+                top->spr_rom_sdram_data = sdram.read_word(spr_addr & ~1u);
+                top->spr_rom_sdram_ack  = top->spr_rom_sdram_req;  // always ack immediately
             }
             {
                 // BG tile ROM: pixel-rate access, bypass toggle-handshake.

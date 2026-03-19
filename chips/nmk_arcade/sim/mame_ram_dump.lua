@@ -92,6 +92,7 @@ local function on_frame()
     outfile:write(pack_u32_le(frame_count))
 
     -- Write each region as a raw binary blob.
+    local any_nil = false
     for _, region in ipairs(REGIONS) do
         local data = space:read_range(region[2], region[3], 8)
         if data then
@@ -100,13 +101,19 @@ local function on_frame()
             -- Fallback: write zeros for the region so frame offsets stay consistent.
             local region_len = region[3] - region[2] + 1
             outfile:write(string.rep("\0", region_len))
-            print("[mame_ram_dump] WARNING: read_range returned nil for " .. region[1]
-                  .. " on frame " .. frame_count)
+            if not any_nil then
+                print("[mame_ram_dump] WARNING: read_range returned nil for " .. region[1]
+                      .. " on frame " .. frame_count)
+                any_nil = true
+            end
         end
     end
 
     frame_count = frame_count + 1
 
+    if frame_count == 1 then
+        print("[mame_ram_dump] First frame dumped OK")
+    end
     if frame_count % 100 == 0 then
         print("[mame_ram_dump] Dumped " .. frame_count .. " frames")
         outfile:flush()
@@ -114,8 +121,12 @@ local function on_frame()
 end
 
 -- Register notifiers.
+-- NOTE: In MAME 0.280+, autoboot scripts run AFTER the machine is already
+-- running. The reset notifier may never fire for the initial boot.
+-- Open output immediately on script load as a fallback.
 reset_notifier = emu.add_machine_reset_notifier(function()
-    print("[mame_ram_dump] Machine reset — opening output file")
+    print("[mame_ram_dump] Machine reset — reopening output file")
+    close_output()
     open_output()
 end)
 
@@ -128,7 +139,9 @@ frame_notifier = emu.add_machine_frame_notifier(function()
     on_frame()
 end)
 
-print("[mame_ram_dump] Script loaded. Waiting for machine reset to begin dumping.")
+-- Open output immediately (machine is already running when script loads).
+print("[mame_ram_dump] Script loaded — opening output immediately.")
+open_output()
 print("[mame_ram_dump] Output: " .. OUTPUT_FILE)
 print("[mame_ram_dump] Max frames: " .. MAX_FRAMES)
 print("[mame_ram_dump] Bytes per frame: " .. (4 + 65536 + 2048 + 16384 + 2048 + 8) .. " (~84 KB)")

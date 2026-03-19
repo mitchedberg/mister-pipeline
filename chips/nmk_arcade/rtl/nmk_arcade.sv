@@ -351,36 +351,25 @@ nmk16 #(
 /* verilator lint_on PINCONNECTEMPTY */
 
 // =============================================================================
-// Sprite ROM SDRAM Bridge
-// spr_rom_addr_w is a 21-bit BYTE address into sprite ROM.
-// SDRAM uses 16-bit word access: SDRAM_word_addr = SPR_ROM_BASE + byte_addr[20:1]
+// Sprite ROM SDRAM Bridge — combinational pixel-rate fetch
+//
+// nmk16 Gate 3 (G3_FETCH) reads spr_rom_data combinationally in the SAME
+// clock cycle that spr_rom_addr is valid ("combinational zero-latency" per
+// nmk16.sv interface comment). The toggle-handshake approach introduced
+// multi-cycle latency, causing incorrect pixel data.
+//
+// Fix: drive spr_rom_sdram_addr directly from spr_rom_addr_w (combinational).
+// The testbench does a direct SDRAM lookup every cycle and drives
+// spr_rom_sdram_data with zero latency (same fix as BG tile ROM bridge).
+// spr_rom_sdram_req is held constant (req=0) since no toggle-handshake needed.
+//
+// For FPGA synthesis a proper SDRAM burst or BRAM cache bridge replaces this.
 // =============================================================================
-logic        spr_req_pending;
-logic        spr_byte_sel;
-logic [26:0] spr_req_addr;
-
-always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n) begin
-        spr_rom_sdram_req <= 1'b0;
-        spr_req_pending   <= 1'b0;
-        spr_byte_sel      <= 1'b0;
-        spr_req_addr      <= 27'b0;
-    end else begin
-        if (spr_rom_rd_w && !spr_req_pending) begin
-            spr_req_addr      <= SPR_ROM_BASE + {6'b0, spr_rom_addr_w[20:0]};
-            spr_byte_sel      <= spr_rom_addr_w[0];
-            spr_req_pending   <= 1'b1;
-            spr_rom_sdram_req <= ~spr_rom_sdram_req;
-        end else if (spr_req_pending && (spr_rom_sdram_req == spr_rom_sdram_ack)) begin
-            spr_req_pending <= 1'b0;
-        end
-    end
-end
-
-assign spr_rom_sdram_addr = spr_req_addr;
-// Big-endian: even byte → data[15:8], odd → data[7:0]
-assign spr_rom_data_w = spr_byte_sel ? spr_rom_sdram_data[7:0]
-                                     : spr_rom_sdram_data[15:8];
+assign spr_rom_sdram_addr = SPR_ROM_BASE + {6'b0, spr_rom_addr_w[20:0]};
+assign spr_rom_sdram_req  = 1'b0;  // not used; testbench drives data directly
+// Big-endian byte select: odd byte (addr[0]=1) → data[7:0], even → data[15:8]
+assign spr_rom_data_w = spr_rom_addr_w[0] ? spr_rom_sdram_data[7:0]
+                                           : spr_rom_sdram_data[15:8];
 
 // =============================================================================
 // BG Tile ROM SDRAM Bridge — combinational pixel-rate fetch

@@ -170,6 +170,8 @@ def main():
                         help='Skip build step')
     parser.add_argument('--tdragon-zip', default=None, metavar='ZIP',
                         help='Auto-extract Thunder Dragon ROMs from tdragon.zip and run')
+    parser.add_argument('--ram-dump', default=None, metavar='FILE',
+                        help='Write per-frame RAM dump binary (for MAME comparison)')
 
     args = parser.parse_args()
 
@@ -273,7 +275,8 @@ def main():
     if args.bg:    env['ROM_BG']    = os.path.abspath(args.bg)
     if args.adpcm: env['ROM_ADPCM'] = os.path.abspath(args.adpcm)
     if args.z80:   env['ROM_Z80']   = os.path.abspath(args.z80)
-    if args.vcd:   env['DUMP_VCD']  = '1'
+    if args.vcd:      env['DUMP_VCD']  = '1'
+    if args.ram_dump: env['RAM_DUMP']  = os.path.abspath(args.ram_dump)
 
     # Output directory
     out_dir = os.path.abspath(args.out_dir)
