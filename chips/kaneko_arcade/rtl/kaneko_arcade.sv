@@ -36,20 +36,8 @@
 // =============================================================================
 `default_nettype none
 
-// ============================================================================
-// Typedef: Kaneko16 Sprite Descriptor
-// ============================================================================
-typedef struct packed {
-    logic [8:0]  y;
-    logic [15:0] tile_num;
-    logic [8:0]  x;
-    logic [3:0]  palette;
-    logic        flip_x;
-    logic        flip_y;
-    logic [3:0]  prio;
-    logic [3:0]  size;
-    logic        valid;
-} kaneko16_sprite_t;
+// Typedef kaneko16_sprite_t is defined in kaneko16.sv (chips/kaneko/rtl/).
+// Do NOT duplicate it here — Verilator treats it as a redefinition error.
 
 /* verilator lint_off SYNCASYNCNET */
 module kaneko_arcade #(
