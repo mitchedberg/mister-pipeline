@@ -214,6 +214,11 @@ assign vblank_rise = vblank & ~vblank_r;
 // Chip-Select Decode (all comparisons on cpu_addr[23:1], qualified by !cpu_as_n)
 // =============================================================================
 
+// Program ROM: 0x000000–0x07FFFF  (512KB = 256K words, 18-bit index)
+//   word addr [23:18] == 6'b0 covers 0x000000–0x07FFFF
+logic prog_rom_cs;
+assign prog_rom_cs = (cpu_addr[23:18] == 6'b0) && !cpu_as_n;
+
 // Work RAM: 0x100000–0x10FFFF  (64KB = 32K words, 15-bit index)
 //   word base 0x080000; top 8 bits from [23:15] == 8'h10
 logic wram_cs;
@@ -539,11 +544,21 @@ end
 
 // =============================================================================
 // CPU Data Bus Read Mux
-// Priority: CRAM > YRAM > CTRL > PAL > WRAM > IO > SND_ACK > open-bus
+// Priority: PROG_ROM > CRAM > YRAM > CTRL > PAL > WRAM > IO > SND_ACK > open-bus
+//
+// For program ROM: use live sdr_data when prog_dtack_now fires (ack arrives this
+// cycle); use the registered latch prog_rom_data_r otherwise.  This matches the
+// nmk_arcade pattern so the CPU sees data and DTACK in the same evaluation step.
+// prog_dtack_now is declared before the DTACK section below; forward reference is
+// fine since both are purely combinational.
 // =============================================================================
 
+logic prog_dtack_now;   // forward declaration — assigned in DTACK section below
+
 always_comb begin
-    if (cram_cs)
+    if (prog_rom_cs)
+        cpu_dout = prog_dtack_now ? sdr_data : prog_rom_data_r;
+    else if (cram_cs)
         cpu_dout = cram_dout_raw;
     else if (yram_cs)
         cpu_dout = yram_dout_raw;
@@ -565,22 +580,42 @@ end
 // DTACK Generation
 // =============================================================================
 //
-// Local BRAM regions: 1-cycle registered DTACK.
-// SDRAM-backed regions (prog ROM 0x000000–0x07FFFF): DTACK from emu.sv
-// SDRAM arbiter (falls through to open-bus here, no local CS).
+// Immediate regions (all BRAM / registers): assert DTACK one cycle after CS.
+// Program ROM (SDRAM): defer until SDRAM handshake completes.
+//
+// Hold-until-deassert pattern (same as nmk_arcade):
+//   dtack_r  — registered latch; set by any firing source, cleared when AS_n
+//              goes high (CPU ends bus cycle).
+//   prog_dtack_now — combinational: true exactly when SDRAM req==ack and the
+//              request was still pending.  Bypasses dtack_r for the initial
+//              assertion so CPU sees data + DTACK together in the same cycle.
+//
+// cpu_dtack_n priority:
+//   1. AS_n high  → deassert (1)
+//   2. prog_dtack_now → assert (0), combinational, bypasses pipeline stage
+//   3. dtack_r held  → assert (0)
 
-logic any_local_cs;
 logic dtack_r;
 
-assign any_local_cs = wram_cs | pal_cs | yram_cs | ctrl_cs | cram_cs
-                    | io_cs | snd_cmd_cs | snd_ack_cs;
+// Immediate chip-selects: BRAM/registers that respond in 1 pipeline cycle.
+logic imm_cs;
+assign imm_cs = wram_cs | pal_cs | yram_cs | ctrl_cs | cram_cs
+              | io_cs | snd_cmd_cs | snd_ack_cs;
 
+// Combinational pulse: SDRAM ack arrives this cycle while request is pending.
+assign prog_dtack_now = prog_rom_cs && prog_req_pending && (sdr_req == sdr_ack);
+
+// Hold latch: set by any source firing, cleared when AS_n deasserts.
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n) dtack_r <= 1'b0;
-    else          dtack_r <= any_local_cs;
+    if (!reset_n)
+        dtack_r <= 1'b0;
+    else
+        dtack_r <= !cpu_as_n && (dtack_r | imm_cs | prog_dtack_now);
 end
 
-assign cpu_dtack_n = cpu_as_n ? 1'b1 : !dtack_r;
+assign cpu_dtack_n = cpu_as_n       ? 1'b1 :
+                     prog_dtack_now ? 1'b0 :
+                                      !dtack_r;
 
 // =============================================================================
 // Interrupt Controller
@@ -612,21 +647,50 @@ end
 assign cpu_ipl_n = ipl_active ? ~3'd5 : 3'b111;
 
 // =============================================================================
-// SDRAM stub (prog ROM pass-through)
+// Program ROM SDRAM Bridge
+// Toggle-handshake: CPU reads from 0x000000–0x07FFFF trigger an SDRAM fetch.
+//
+// Pattern mirrors nmk_arcade.sv prog ROM bridge:
+//   1. On new ROM read (prog_rom_cs, cpu_rw, not already pending):
+//      - latch the SDRAM word address
+//      - toggle sdr_req to issue the request
+//      - set prog_req_pending
+//   2. When sdr_ack catches up to sdr_req (data is ready):
+//      - latch sdr_data into prog_rom_data_r
+//      - clear prog_req_pending
+//   3. prog_dtack_now: combinational pulse when ack fires (drives DTACK, see below)
+//
+// SDRAM word address:  sdr_addr[26:0] = {3'b0, cpu_addr[23:1], 1'b0}
+//   cpu_addr is the 68000 word address (A[23:1]); byte address = cpu_addr << 1.
+//   SDRAM CH1 base for prog ROM is 0x000000 so no offset needed.
 // =============================================================================
-//
-// The emu.sv wrapper drives sdr_req/sdr_addr for CPU program ROM reads.
-// This module simply exposes those ports upward. The SDRAM arbiter in emu.sv
-// handles the actual SDRAM interface.
-//
-// When a CPU access targets 0x000000–0x07FFFF (program ROM window), the
-// emu.sv wrapper must intercept the bus cycle, issue an SDRAM read, and
-// provide DTACK + data externally. This module does not generate DTACK for
-// program ROM accesses (no local CS for that range).
-//
-// Tie off sdr_* (emu.sv drives them through the cpu_sdr_* wires).
-assign sdr_addr = 27'b0;
-assign sdr_req  = 1'b0;
+
+logic        prog_req_pending;
+logic [26:0] prog_req_addr_r;
+logic [15:0] prog_rom_data_r;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        sdr_req          <= 1'b0;
+        prog_req_pending <= 1'b0;
+        prog_req_addr_r  <= 27'b0;
+        prog_rom_data_r  <= 16'hFFFF;
+    end else begin
+        if (prog_rom_cs && cpu_rw && !prog_req_pending) begin
+            // New ROM read — issue SDRAM request
+            // byte address: {cpu_addr[23:1], 1'b0} zero-extended to 27 bits
+            prog_req_addr_r  <= {3'b0, cpu_addr[23:1], 1'b0};
+            prog_req_pending <= 1'b1;
+            sdr_req          <= ~sdr_req;
+        end else if (prog_req_pending && (sdr_req == sdr_ack)) begin
+            // SDRAM ack received — latch data, clear pending
+            prog_rom_data_r  <= sdr_data;
+            prog_req_pending <= 1'b0;
+        end
+    end
+end
+
+assign sdr_addr = prog_req_addr_r;
 
 // =============================================================================
 // Unused signal suppression
@@ -634,8 +698,7 @@ assign sdr_req  = 1'b0;
 /* verilator lint_off UNUSED */
 logic _unused;
 assign _unused = ^{spr_pix_x,      // pix_x not needed (colmix reads from timing)
-                   spr_pix_color,  // 5-bit selector; full index via spr_pix_pal_index
-                   sdr_data};
+                   spr_pix_color}; // 5-bit selector; full index via spr_pix_pal_index
 /* verilator lint_on UNUSED */
 
 endmodule

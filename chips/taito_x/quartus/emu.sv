@@ -392,8 +392,8 @@ wire       service = ~joystick_0[9];
 // CH3: Z80 audio ROM reads
 //////////////////////////////////////////////////////////////////
 
-// cpu_sdr_* are driven by taito_x.sdr_addr/sdr_req; taito_x drives them as assign 0.
-// emu.sv will extend taito_x to properly proxy CPU ROM reads (future work).
+// cpu_sdr_* connect taito_x.sdr_addr/sdr_req to SDRAM CH1.
+// taito_x generates the toggle-handshake requests for 68000 program ROM reads.
 wire  [26:0] cpu_sdr_addr;
 wire  [15:0] cpu_sdr_data;
 wire         cpu_sdr_req, cpu_sdr_ack;
@@ -544,27 +544,39 @@ always_ff @(posedge clk_sys)
 
 // Z80 ROM: fetch from SDRAM CH3
 // Z80 ROM address = SDRAM 0x080000 + z80_addr (byte address → SDRAM word)
-// Toggle-req handshake: assert when Z80 does a ROM read cycle
-logic z80_rom_req_r;
+// Toggle-req / WAIT_n handshake (same pattern as nmk_arcade.sv):
+//   1. On new ROM read: toggle z80_sdr_req, assert z80_wait_n low (stall Z80)
+//   2. When z80_sdr_ack == z80_sdr_req: latch byte, release WAIT_n
+logic z80_rom_pending;
+logic [7:0] z80_rom_latch;
+logic z80_wait_n;
+
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         z80_sdr_req    <= 1'b0;
-        z80_rom_req_r  <= 1'b0;
+        z80_sdr_addr   <= 27'b0;
+        z80_rom_pending <= 1'b0;
+        z80_rom_latch  <= 8'hFF;
+        z80_wait_n     <= 1'b1;
     end else begin
-        // Issue SDRAM request on falling edge of z80_rom_cs_n (ROM active)
-        if (!z80_rom_cs_n && !z80_rd_n && !z80_mreq_n && !z80_rom_req_r) begin
-            // SDRAM byte address for Z80 ROM (base 0x080000, word-addressed)
-            z80_sdr_addr  <= 27'h040000 + {12'b0, z80_addr[15:1]};
-            z80_sdr_req   <= ~z80_sdr_req;
-            z80_rom_req_r <= 1'b1;
-        end else if (z80_rom_cs_n) begin
-            z80_rom_req_r <= 1'b0;
+        if (!z80_rom_cs_n && !z80_rd_n && !z80_rom_pending) begin
+            // New ROM read — issue SDRAM request and stall the Z80
+            // SDRAM word address: base 0x080000 (word addr 0x040000) + z80_addr[15:1]
+            z80_sdr_addr    <= 27'h040000 + {12'b0, z80_addr[15:1]};
+            z80_sdr_req     <= ~z80_sdr_req;
+            z80_rom_pending <= 1'b1;
+            z80_wait_n      <= 1'b0;   // stall Z80
+        end else if (z80_rom_pending && (z80_sdr_req == z80_sdr_ack)) begin
+            // SDRAM ack — latch the correct byte and release the Z80
+            z80_rom_latch   <= z80_addr[0] ? z80_sdr_data[7:0] : z80_sdr_data[15:8];
+            z80_rom_pending <= 1'b0;
+            z80_wait_n      <= 1'b1;   // release Z80
         end
     end
 end
 
-// Z80 data mux: select ROM, RAM, or I/O
-wire [7:0] z80_rom_byte = z80_addr[0] ? z80_sdr_data[7:0] : z80_sdr_data[15:8];
+// Z80 data mux: select ROM latch, RAM, or I/O
+// z80_rom_latch is latched by the ROM bridge above when SDRAM ack arrives.
 wire [7:0] z80_core_din;
 
 // z80_din comes from taito_x core (which handles I/O decoding)
@@ -588,7 +600,7 @@ wire [1:0] ym_addr = z80_addr[1:0] - 2'b01;  // 0x01→00, 0x02→01, 0x03→10,
 wire [7:0] ym_dout;     // YM2610 → Z80 data bus
 
 // z80_din fed to Z80 core: priority ROM > RAM > YM I/O > sound-cmd I/O
-assign z80_core_din = !z80_rom_cs_n ? z80_rom_byte
+assign z80_core_din = !z80_rom_cs_n ? z80_rom_latch
                     : !z80_ram_cs_n  ? z80_ram_dout
                     : !ym_cs_n       ? ym_dout
                     :                  z80_io_dout;
@@ -602,7 +614,7 @@ T80s u_z80
     .CEN     (ce_z80),
     .OUT0    (1'b0),           // legacy output mode pin — tie low
 
-    .WAIT_n  (1'b1),           // no WAIT state
+    .WAIT_n  (z80_wait_n),     // stall during SDRAM ROM fetch
     .INT_n   (z80_int_n),
     .NMI_n   (1'b1),           // no NMI
     .BUSRQ_n (1'b1),           // no bus request
@@ -740,7 +752,7 @@ taito_x #(
     .gfx_req         (gfx_req_core),
     .gfx_ack         (gfx_ack_core),
 
-    // SDRAM (program ROM — via cpu_sdr_* pass-through, not used inside core)
+    // SDRAM (program ROM — taito_x generates requests; emu.sv routes to CH1)
     .sdr_addr        (cpu_sdr_addr),
     .sdr_data        (cpu_sdr_data),
     .sdr_req         (cpu_sdr_req),
