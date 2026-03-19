@@ -268,6 +268,15 @@ static void rtl_ticks(int n)
 // =============================================================================
 static constexpr int MAX_DTACK_CYCLES = 64;  // safety limit
 
+// Diagnostics: log first N hardware register accesses (addr >= 0x400000)
+// Set HW_LOG_MAX > 0 to enable; 0 = disabled (normal operation)
+static int g_hw_log_count = 0;
+static constexpr int HW_LOG_MAX = 0;
+
+// DTACK timeout counter
+static int g_dtack_timeouts = 0;
+static constexpr int DTACK_TIMEOUT_MAX = 20;  // halt after this many timeouts
+
 static uint16_t bus_read16(uint32_t addr, uint8_t uds_n, uint8_t lds_n)
 {
     // Drive bus signals
@@ -284,12 +293,22 @@ static uint16_t bus_read16(uint32_t addr, uint8_t uds_n, uint8_t lds_n)
         rtl_tick_rising();
         ++wait;
         if (wait > MAX_DTACK_CYCLES) {
-            fprintf(stderr, "WARNING: bus_read16 DTACK timeout @ addr=%06X\n", addr);
+            ++g_dtack_timeouts;
+            if (g_dtack_timeouts <= DTACK_TIMEOUT_MAX)
+                fprintf(stderr, "WARNING: bus_read16 DTACK timeout @ addr=%06X iter=%" PRIu64 "\n",
+                        addr, g_iter);
             break;
         }
     } while (g_top->cpu_dtack_n);
 
     uint16_t data = (uint16_t)g_top->cpu_din;
+
+    // Log non-ROM hardware reads
+    if (addr >= 0x400000u && g_hw_log_count < HW_LOG_MAX) {
+        fprintf(stderr, "  HW RD  addr=%06X data=%04X uds=%d lds=%d wait=%d iter=%" PRIu64 "\n",
+                addr, data, uds_n, lds_n, wait, g_iter);
+        ++g_hw_log_count;
+    }
 
     // Deassert bus
     g_top->cpu_as_n  = 1;
@@ -312,12 +331,28 @@ static void bus_write16(uint32_t addr, uint16_t data, uint8_t uds_n, uint8_t lds
     g_top->cpu_as_n  = 0;
     g_top->cpu_dout  = data;
 
+    // Log non-ROM hardware writes
+    if (addr >= 0x400000u && g_hw_log_count < HW_LOG_MAX) {
+        const char* region = "?";
+        if      (addr < 0x402000u) region = "SprRAM";
+        else if (addr < 0x602000u && addr >= 0x600000u) region = "PalRAM";
+        else if (addr < 0x808000u && addr >= 0x800000u) region = "VRAM";
+        else if (addr < 0xC00020u && addr >= 0xC00000u) region = "IO";
+        else if (addr >= 0xFE0000u) region = "WRAM";
+        fprintf(stderr, "  HW WR  addr=%06X data=%04X uds=%d lds=%d [%s] iter=%" PRIu64 "\n",
+                addr, data, uds_n, lds_n, region, g_iter);
+        ++g_hw_log_count;
+    }
+
     int wait = 0;
     do {
         rtl_tick_rising();
         ++wait;
         if (wait > MAX_DTACK_CYCLES) {
-            fprintf(stderr, "WARNING: bus_write16 DTACK timeout @ addr=%06X\n", addr);
+            ++g_dtack_timeouts;
+            if (g_dtack_timeouts <= DTACK_TIMEOUT_MAX)
+                fprintf(stderr, "WARNING: bus_write16 DTACK timeout @ addr=%06X iter=%" PRIu64 "\n",
+                        addr, g_iter);
             break;
         }
     } while (g_top->cpu_dtack_n);

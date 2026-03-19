@@ -22,8 +22,8 @@ Options:
   --gunbird-zip ZIP   Auto-extract Gunbird ROMs from gunbird.zip
 
 Gunbird ROM layout (from Gunbird.mra / MAME gunbird driver):
-  4.u46 (262144) — program ROM even bytes  (D15:D8)
-  5.u39 (262144) — program ROM odd bytes   (D7:D0)
+  4.u46 (262144) — program ROM high word  (D31:D16, ROM_LOAD32_WORD)
+  5.u39 (262144) — program ROM low word   (D15:D0,  ROM_LOAD32_WORD)
   u14.bin (2 MB) — sprite ROM part 1  @ sprite offset 0x000000
   u24.bin (2 MB) — sprite ROM part 2  @ sprite offset 0x200000
   u15.bin (2 MB) — sprite ROM part 3  @ sprite offset 0x400000
@@ -56,23 +56,41 @@ import struct
 import shutil
 
 
-def interleave_68k_roms(even_path, odd_path, out_path):
+def interleave_68k_roms_32bit(u46_path, u39_path, out_path):
     """
-    Interleave two 68000 ROM halves into a single word-stream binary.
-    even_path: D15:D8 (upper byte, first chip)
-    odd_path:  D7:D0  (lower byte, second chip)
-    68000 big-endian: word[15:8] first, word[7:0] second.
+    Interleave Psikyo program ROMs using MAME ROM_LOAD32_WORD format.
+
+    MAME psikyo.cpp uses:
+      ROM_LOAD32_WORD( "4.u46", 0x000000, 0x040000, ... )  -- D31:D16 (high 16-bit word)
+      ROM_LOAD32_WORD( "5.u39", 0x000002, 0x040000, ... )  -- D15:D0  (low 16-bit word)
+
+    Each ROM provides one 16-bit word per 32-bit longword, interleaved at the
+    longword (4-byte) level.  MAME then byteswaps each 16-bit word internally
+    for its big-endian 68k memory model.
+
+    Net result stored in the output file:
+      out[0:2]  = byteswap(u46[0:2])   (high word of first longword)
+      out[2:4]  = byteswap(u39[0:2])   (low  word of first longword)
+      out[4:6]  = byteswap(u46[2:4])   (high word of second longword)
+      out[6:8]  = byteswap(u39[2:4])   (low  word of second longword)
+      ...
     """
-    with open(even_path, 'rb') as fe, open(odd_path, 'rb') as fo:
-        even = fe.read()
-        odd  = fo.read()
-    interleaved = bytearray()
-    for i in range(min(len(even), len(odd))):
-        interleaved.append(even[i])   # D15:D8 (high byte)
-        interleaved.append(odd[i])    # D7:D0  (low byte)
+    with open(u46_path, 'rb') as f46, open(u39_path, 'rb') as f39:
+        u46 = f46.read()
+        u39 = f39.read()
+    n_words = min(len(u46), len(u39)) // 2
+    out = bytearray(n_words * 4)
+    for i in range(n_words):
+        dst = i * 4
+        # u46 provides D31:D16; byteswap each 16-bit word
+        out[dst+0] = u46[i*2+1]
+        out[dst+1] = u46[i*2+0]
+        # u39 provides D15:D0; byteswap each 16-bit word
+        out[dst+2] = u39[i*2+1]
+        out[dst+3] = u39[i*2+0]
     with open(out_path, 'wb') as fp:
-        fp.write(interleaved)
-    print(f"  CPU ROM interleaved: {len(interleaved)} bytes → {out_path}")
+        fp.write(out)
+    print(f"  CPU ROM (ROM_LOAD32_WORD+byteswap): {len(out)} bytes → {out_path}")
     return out_path
 
 
@@ -113,7 +131,7 @@ def extract_gunbird(zip_path, tmpdir):
     odd  = os.path.join(tmpdir, '5.u39')
     if os.path.exists(even) and os.path.exists(odd):
         prog_path = os.path.join(tmpdir, 'gunbird_prog.bin')
-        interleave_68k_roms(even, odd, prog_path)
+        interleave_68k_roms_32bit(even, odd, prog_path)
     else:
         print(f"  WARN: Program ROM files not found (4.u46={os.path.exists(even)}, 5.u39={os.path.exists(odd)})")
 
