@@ -7,9 +7,9 @@ Last updated: 2026-03-19 07:30 UTC
 | Core | Synthesis | CPU Boot | GFX Rendering | Audio | Ship-Ready | Blocker |
 |------|-----------|----------|---------------|-------|------------|---------|
 | NMK16 | GREEN RBF | YES | BG tiles + palette | Untested | No | Sprites need NMK004 MCU ROM |
-| Toaplan V2 | GREEN RBF | Untested | GFX 32-bit fixed | Untested | No | Needs sim harness |
-| Psikyo | GREEN RBF | Untested | Untested | Untested | No | Needs sim harness |
-| Kaneko | GREEN RBF | Untested | GFX 32-bit fixed | Untested | No | Needs sim harness |
+| Toaplan V2 | Pending CI | CPU boots (13 bus cycles) | GFX 32-bit fixed | Untested | No | SSP wrap → exception on unmapped addr |
+| Psikyo | OVERFLOW (post GFX fix) | Untested | Untested | Untested | No | 2-beat GFX FSM pushed over LAB limit |
+| Kaneko | OVERFLOW (4406/4191 LABs) | Untested | GFX 32-bit fixed | Untested | No | 2-beat GFX FSM pushed over LAB limit |
 | Taito B | Pending CI | Untested | Untested | Untested | No | Needs sim harness; CPU ROM just wired |
 | Taito X | GREEN RBF | Untested | Untested | Untested | No | Needs sim harness; CPU ROM + Z80 just fixed |
 | Taito F3 | FROZEN | — | — | — | Dead | 461% ALM, won't fit DE-10 Nano |
