@@ -195,11 +195,12 @@ assign prog_rom_cs = (cpu_addr[23:18] == 6'b000000) && !cpu_as_n;
 logic vcu_cs;
 assign vcu_cs = (cpu_addr[23:19] == VCU_BASE[23:19]) && !cpu_as_n;
 
-// TC0260DAR: 8KB window (8K × 16-bit words = palette RAM)
+// TC0260DAR: 8KB byte window (4096 words, 12-bit word address A[12:1] free)
 //   nastar byte 0x200000–0x201FFF → word 0x100000–0x100FFF
-//   Top 12 bits: cpu_addr[23:12] == DAR_BASE[23:12]
+//   CS compares top 11 bits [23:13] so A[12:1] (12 bits) are free to index 4K words.
+//   Bug fix: was [23:12] which included A12 in comparison → addr 0x201000+ missed CS.
 logic dar_cs;
-assign dar_cs = (cpu_addr[23:12] == DAR_BASE[23:12]) && !cpu_as_n;
+assign dar_cs = (cpu_addr[23:13] == DAR_BASE[23:13]) && !cpu_as_n;
 
 // TC0220IOC: 16 registers max (4-bit word offset → cpu_addr[4:1])
 //   nastar byte 0xA00000–0xA0001F → word 0x500000–0x50000F
@@ -218,8 +219,11 @@ assign syt_mcs_n = !((cpu_addr[23:2] == SYT_BASE[23:2]) && !cpu_as_n);
 
 // Work RAM: parameterized window
 //   nastar byte 0x600000–0x607FFF → word 0x300000–0x303FFF (14-bit word addr)
+//   CS compare uses bits above the RAM index: [23:WRAM_ABITS+1] so that all
+//   WRAM_ABITS address bits (the RAM index) are free to vary.
+//   WRAM_ABITS=14 → compare cpu_addr[23:15] vs WRAM_BASE[23:15] (9 bits).
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:WRAM_ABITS] == WRAM_BASE[23:WRAM_ABITS]) && !cpu_as_n;
+assign wram_cs = (cpu_addr[23:WRAM_ABITS+1] == WRAM_BASE[23:WRAM_ABITS+1]) && !cpu_as_n;
 
 // =============================================================================
 // TC0180VCU
@@ -898,14 +902,42 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
         dtack_r <= !cpu_as_n && (dtack_r | any_cs | prog_dtack_now);
 end
 
+// ── Open-bus fallback DTACK ────────────────────────────────────────────────
+// On real hardware, unmapped addresses get DTACK from a system bus timer
+// (typically a 1-shot or the bus-cycle watchdog). Without this, unselected
+// addresses cause the CPU to stall forever in simulation.
+//
+// Implementation: 2-stage shift register; dtack fires 2 cycles after AS_N
+// goes low when no device is selected. Cleared immediately on AS_N deassert.
+//
+// "No device" covers:
+//   - Truly unmapped addresses (!any_cs && !dar_cs && !prog_rom_cs)
+//   - Writes to ROM space (prog_rom_cs=1 but cpu_rw=0 → ROM write, no DTACK normally)
+logic open_bus;
+assign open_bus = !cpu_as_n && !any_cs && !dar_cs &&
+                  (!prog_rom_cs || !cpu_rw);  // !prog_rom_cs = unmapped, !cpu_rw = ROM write
+
+logic open_dtack_1, open_dtack_2;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        open_dtack_1 <= 1'b0;
+        open_dtack_2 <= 1'b0;
+    end else begin
+        open_dtack_1 <= open_bus;
+        open_dtack_2 <= open_dtack_1 & open_bus;  // 2 cycles = bus hold
+    end
+end
+
 // cpu_dtack_n:
 //   - High (1) while AS is deasserted — no bus cycle in progress
 //   - Low  (0) immediately when prog_dtack_now fires (ROM data ready this cycle)
 //   - Low  (0) via dar_dtack_n when palette DAC is selected
 //   - Low  (0) via dtack_r for all other fast devices (and ROM hold after ack)
+//   - Low  (0) via open_dtack_2 for unmapped/open-bus addresses (fallback)
 assign cpu_dtack_n = cpu_as_n       ? 1'b1
                    : prog_dtack_now ? 1'b0
                    : dar_cs         ? dar_dtack_n
+                   : open_dtack_2   ? 1'b0
                    :                  !dtack_r;
 
 // =============================================================================
