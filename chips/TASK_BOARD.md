@@ -1,40 +1,37 @@
-# Simulation Harness Build — Task Board
+# Task Board — Multi-Agent Coordination
 
-Two Claude Code agents are working in parallel. Check this file before starting work.
-Update your task status as you go. Never touch directories owned by the other agent.
+## How This Works
+1. **Before starting**: pull master, read this file, claim tasks in your section
+2. **Commit your claims to master** before creating your worktree
+3. Work in your worktree, commit there
+4. When done: update PROJECT_STATUS.md, merge worktree branch to master
+5. Check this file again for next available tasks
 
-## Agent 1 (Opus, master branch)
-| Core | Status | Directory | Machine |
-|------|--------|-----------|---------|
-| NMK16 / Thunder Dragon | DONE | chips/nmk_arcade/ | Mac Mini 3 |
-| Toaplan V2 / Batsugun | IN PROGRESS | chips/toaplan_v2/ | Mac Mini 3 |
-| Psikyo / Gunbird | IN PROGRESS | chips/psikyo_arcade/ + chips/psikyo/ | iMac |
+## Active Agents
 
-## Agent 2 (branch: sim-batch2)
-| Core | Status | Directory | Machine |
-|------|--------|-----------|---------|
-| Kaneko / Blood Warrior | AVAILABLE | chips/kaneko_arcade/ + chips/kaneko/ | — |
-| Taito B / Nastar | AVAILABLE | chips/taito_b/ | — |
-| Taito X / Gigandes | AVAILABLE | chips/taito_x/ | — |
+### Agent 1 (master branch, Mac Mini 3)
+| Task | Status | Directory |
+|------|--------|-----------|
+| NMK16 sim harness | DONE | chips/nmk_arcade/ |
+| Toaplan V2 sim harness | IN PROGRESS | chips/toaplan_v2/ |
+| Psikyo sim harness | IN PROGRESS | chips/psikyo_arcade/ + chips/psikyo/ |
 
-## Shared (DO NOT EDIT without checking with other agent)
-- chips/m68000/ — fx68k CPU files (read-only, both agents use)
-- chips/GUARDRAILS.md — integration rules (Agent 1 owns edits)
-- chips/fx68k_integration_reference.md — reference doc (read-only)
-- chips/TASK_BOARD.md — this file (both agents read/write their own section)
+### Agent 2 (worktree: sim-batch2)
+| Task | Status | Directory |
+|------|--------|-----------|
+| (unclaimed) | | |
 
-## Rules
-1. Read GUARDRAILS.md Rules 13-14 before building any sim harness
-2. Use JTFPGA fx68k at chips/m68000/hdl/fx68k/
-3. enPhi1/enPhi2 MUST be C++-driven inputs, not RTL-generated
-4. Copy NMK sim pattern: chips/nmk_arcade/sim/ is the reference
-5. ROMs at /Volumes/2TB_20260220/Projects/ROMs_Claude/Roms/
-6. iMac worker: ssh imac (Verilator at ~/tools/verilator/bin/)
-7. Commit to YOUR branch only — never force-push master
+## Available Tasks
+Claim by moving to your agent section above.
 
-## Available ROMs
-- batsugun.zip (Toaplan V2) — Agent 1
-- gunbird.zip (Psikyo) — Agent 1
-- crimec.zip, nastar.zip, pbobble.zip (Taito B)
-- gigandes.zip, superman.zip, twinhawk.zip (Taito X)
-- No bloodwar.zip (Kaneko) — check Roms/ for alternatives
+| Task | Directory | ROM Available | Notes |
+|------|-----------|---------------|-------|
+| Kaneko sim harness | chips/kaneko_arcade/ + chips/kaneko/ | No bloodwar.zip — check for alternatives | GFX 32-bit just fixed |
+| Taito B sim harness | chips/taito_b/ | crimec.zip, nastar.zip, pbobble.zip | CPU ROM just wired |
+| Taito X sim harness | chips/taito_x/ | gigandes.zip, superman.zip, twinhawk.zip | CPU ROM + Z80 just fixed |
+| NMK sprite investigation | chips/nmk_arcade/ | tdragon.zip | Blocked by nmk004.bin MCU ROM |
+
+## Shared Resources (read-only, do not claim)
+- chips/m68000/ — fx68k CPU files
+- chips/nmk_arcade/sim/ — reference harness (copy, don't modify)
+- chips/GUARDRAILS.md, chips/fx68k_integration_reference.md
