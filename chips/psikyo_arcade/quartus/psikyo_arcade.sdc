@@ -198,13 +198,12 @@ set_false_path -from [get_ports {reset}]
 set_false_path -from [get_ports {rst}]
 
 # =============================================================================
-# FALSE PATHS — I/O TIMING (not timing-critical for arcade cores)
+# FALSE PATHS — I/O TIMING
 # =============================================================================
-# All real I/O goes through the MiSTer framework's dedicated sys/ I/O paths.
-# Internal module I/O delays are safely ignored per jotego practice.
-#
-set_false_path -from [get_ports *] -to [get_registers *]
-set_false_path -from [get_registers *] -to [get_ports *]
+# REMOVED: blanket false paths on ALL ports were blocking HDMI data routing,
+# causing fitter failure at only 30% ALM utilization (routing deadlock).
+# HDMI output is driven directly by arcade logic, not through sys/ framework.
+# Only mark truly async paths (reset) as false.
 
 # =============================================================================
 # END OF TIMING CONSTRAINTS
