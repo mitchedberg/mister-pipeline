@@ -27,8 +27,9 @@
 //              extReset here; a separate power-up pin is not exposed.
 //
 // 6800-peripheral signals (E, VMAn):
-//   Not required by Taito Z.  E output is left open and VPAn is tied high
-//   (no 6800-compatible peripherals on the bus).
+//   E output is left open.  VPAn is driven by interrupt-acknowledge detection
+//   (FC=111 + !ASn) to enable autovectored interrupts — required by all 68000
+//   arcade hardware.  Without this, the CPU hangs indefinitely on IACK cycles.
 //
 // Bus arbitration (BR/BG/BGACK):
 //   Taito Z does not implement DMA bus arbitration.
@@ -74,7 +75,12 @@ module fx68k_adapter (
     // ── CPU reset output ─────────────────────────────────────────────────────
     // oRESETn from fx68k — can drive other CPU's reset_n input (CPU A drives CPU B
     // reset via a register in taito_z; this output is available but optional).
-    output logic        cpu_reset_n_out
+    output logic        cpu_reset_n_out,
+
+    // ── CPU halted output ─────────────────────────────────────────────────────
+    // oHALTEDn from fx68k — asserted (low) when the CPU enters the halted state
+    // (double bus fault). Exposed for testbench diagnostics.
+    output logic        cpu_halted_n
 );
 
 // =============================================================================
@@ -136,12 +142,23 @@ logic        fx_LDSn;     // lower data strobe (active-low)
 logic        fx_UDSn;     // upper data strobe (active-low)
 logic        fx_E;        // 6800 E clock (not used)
 logic        fx_VMAn;     // valid memory address (not used)
-logic        fx_FC0, fx_FC1, fx_FC2;  // function codes (not used at integration level)
+logic        fx_FC0, fx_FC1, fx_FC2;  // function codes — for IACK detection
 logic        fx_BGn;      // bus grant (not used — no DMA)
 logic        fx_oRESETn;  // CPU reset instruction output
 logic        fx_oHALTEDn; // CPU halted output (not used)
 logic [15:0] fx_oEdb;     // write data bus
 logic [23:1] fx_eab;      // word address
+
+// =============================================================================
+// Interrupt acknowledge detection
+// =============================================================================
+// When FC[2:0] = 3'b111 and ASn is low, the 68000 is in an interrupt
+// acknowledge cycle.  VPAn must be asserted (low) during this cycle to
+// tell the CPU to use autovectored interrupts.  Without this, the CPU
+// hangs indefinitely waiting for either DTACKn or VPAn during IACK.
+// Pattern confirmed across all community MiSTer cores (jotego, va7deo, Cave).
+logic inta_n;
+assign inta_n = ~&{fx_FC2, fx_FC1, fx_FC0, ~fx_ASn};
 
 fx68k u_fx68k (
     .clk        (clk),
@@ -159,7 +176,7 @@ fx68k u_fx68k (
     .E          (fx_E),
     .VMAn       (fx_VMAn),
 
-    // Function codes (not used at integration level)
+    // Function codes — used for interrupt acknowledge detection
     .FC0        (fx_FC0),
     .FC1        (fx_FC1),
     .FC2        (fx_FC2),
@@ -173,7 +190,7 @@ fx68k u_fx68k (
 
     // Bus inputs
     .DTACKn     (cpu_dtack_n),  // from taito_z decode logic
-    .VPAn       (1'b1),         // no 6800-compatible peripherals
+    .VPAn       (inta_n),       // autovector on interrupt acknowledge (FC=111 + !ASn)
     .BERRn      (1'b1),         // no bus error injection
     .BRn        (1'b1),         // no external DMA requests
     .BGACKn     (1'b1),         // no bus grant acknowledge
@@ -202,13 +219,14 @@ assign cpu_uds_n     = fx_UDSn;
 assign cpu_lds_n     = fx_LDSn;
 assign cpu_as_n      = fx_ASn;
 assign cpu_reset_n_out = fx_oRESETn;
+assign cpu_halted_n    = fx_oHALTEDn;
 
 // =============================================================================
 // Unused signal suppression (prevent lint warnings)
 // =============================================================================
 /* verilator lint_off UNUSED */
 logic _unused;
-assign _unused = ^{fx_E, fx_VMAn, fx_FC0, fx_FC1, fx_FC2, fx_BGn, fx_oHALTEDn};
+assign _unused = ^{fx_E, fx_VMAn, fx_BGn};
 /* verilator lint_on UNUSED */
 
 endmodule

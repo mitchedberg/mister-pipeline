@@ -96,10 +96,10 @@ From `pattern-ledger.md` Pattern 9.
 
 | Position | Chip | CI Status | Next Action |
 |----------|------|-----------|-------------|
-| **DONE** | nmk_arcade | ✅ GREEN (run #23260684835, exit 0) | — |
+| **DONE** | nmk_arcade | ✅ GREEN (run #23269331071, exit 0, setup -17.859ns, 10,937/41,910 ALMs 26%) | SDC timing work; improvement from baseline -18ns (stable) |
 | **DONE** | psikyo_arcade | ✅ GREEN (run #23260684856, exit 0) | — |
-| **DONE** | taito_b | ✅ GREEN (run #23260684817, exit 0, RBF 3.0M) | SDC timing work (setup -59.685ns) |
-| **DONE** | toaplan_v2 | ✅ GREEN (run #23260684816, exit 0, RBF 3.1M) | SDC timing work (setup -56.398ns); gp9001 MLAB warning (see below) |
+| **DONE** | taito_b | ✅ GREEN (run #23263937572, exit 0, setup -56.224ns, 11,460/41,910 ALMs 27%) | SDC timing work (regression from baseline -59.685ns → -56.224ns, slight improvement) |
+| **DONE** | toaplan_v2 | ❌ FAIL (run #23267780482, exit 1) — Fitter: Can't fit device (27,542/41,910 ALMs 66% — routing/placement congestion; SDC `// retrigger` is a Quartus-internal artifact, not a user file issue) | Investigate placement constraints or reduce routing pressure; SDC file is clean |
 | **DONE** | taito_x | ✅ GREEN (run #23260684796, exit 0, RBF 2.9M) | SDC timing work (setup -47.934ns) |
 | **DONE** | kaneko_arcade | ✅ GREEN (run #23260684782, exit 0, RBF 3.4M) | SDC timing work (setup -42.461ns) |
 | **FROZEN** | taito_f3 | ❌ 53% over budget (TC0630FDP) | Architecture decision |
@@ -107,8 +107,8 @@ From `pattern-ledger.md` Pattern 9.
 
 **Do not touch FROZEN chips.**
 
-**6/8 chips GREEN with RBF bitstreams as of 2026-03-18. All non-frozen systems produce flashable cores.**
-**Next priority: SDC timing closure for all 6 GREEN chips, then Taito Z standalone profiling.**
+**5/8 chips GREEN with RBF bitstreams as of 2026-03-18. toaplan_v2 regressed: Fitter Can't fit (66% ALMs, routing/placement congestion). Quartus Gates CI also shows nmk16.sv WIDTHEXPAND lint warnings (non-blocking, Quartus still fits clean).**
+**Next priority: Debug toaplan_v2 fitter failure (was green at run #23260684816 — identify RTL change that caused regression). Then SDC timing closure for all 5 green chips.**
 
 ## Chip Status (component chips — run standalone after system chips pass)
 
@@ -169,3 +169,264 @@ integration synthesis             ← only after ALL chips pass standalone
 ```
 
 Never skip steps. Never run integration synthesis to find bugs that standalone would catch.
+
+---
+
+## Assembly Line Reset (established after nmk_arcade debug debt)
+
+### Freeze rule
+No new cores advance to CI until the current ACTIVE core simulation is green.
+Current gate: nmk_arcade simulation must produce non-black frames before kaneko_arcade
+or taito_x synthesis work resumes.
+
+### Sim-before-CI rule
+For every new core: verify simulation (Verilator testbench) with a NOP ROM before
+committing RTL to the synthesis CI queue. A CPU that executes 6 bus cycles and halts
+gives no signal in synthesis — only in simulation.
+
+### Opus-first rule
+For each new chip FAMILY (new CPU or GPU not yet seen), one Opus session writes:
+- Integration spec (clocks, resets, memory map, interrupt wiring from MAME driver)
+- Testbench structure and first assertions
+- Known gotchas GUARDRAILS entry
+Then Sonnet/Haiku execute.
+
+### One-core-at-a-time rule
+Never load more than one core's simulation context simultaneously. Each sim debug
+session starts with: read this GUARDRAILS.md, read the chip-specific sim/GUARDRAILS.md,
+then dispatch agents. Do not read RTL files inline — delegate to Explore agents.
+
+### VCD script rule
+Each chip family gets one reusable VCD extraction script in sim/vcd_extract.py.
+Write it once with all relevant signal paths. Reuse across sessions. Never write
+throwaway VCD parsing scripts inline.
+
+---
+
+## fx68k Integration Rules (from audit of 10+ production MiSTer cores — jotego, va7deo, Cave, Raizing)
+
+These rules apply to every core that instantiates fx68k. Violating any of them produces silent
+CPU failures (hang, wrong data, unstable ISR entry) that do not surface until simulation.
+
+### Rule 1 — VPAn: NEVER tie to 1'b1
+
+```verilog
+// WRONG — CPU hangs on every interrupt acknowledge cycle
+assign VPAn = 1'b1;
+
+// CORRECT — IACK detection
+assign inta_n = ~&{FC2, FC1, FC0, ~ASn};
+assign VPAn   = inta_n;
+```
+
+**Why:** VPA (Valid Peripheral Address) signals the CPU to use auto-vectored interrupt
+acknowledgement. When VPAn is permanently deasserted (1'b1 = inactive), the CPU stalls
+indefinitely waiting for DTACK during every IACK cycle. The interrupt is never acknowledged,
+IPL remains asserted, and the CPU is permanently wedged. Fixed in `fx68k_adapter.sv`.
+
+### Rule 2 — DTACKn: drive between enPhi1 and enPhi2
+
+fx68k samples DTACKn on the enPhi2 (falling edge phase). DTACK must be stable by that
+edge. Drive DTACK combinatorially from CS/ROM-ok signals between enPhi1 and enPhi2, or
+register it one enPhi1 before the enPhi2 it must appear on.
+
+**Why:** fx68k's internal pipeline reads the bus on enPhi2. A DTACK that arrives after enPhi2
+is invisible for that cycle; the state machine waits one extra E-clock phase, corrupting
+bus timing and potentially dropping the transfer entirely.
+
+### Rule 3 — IPLn[2:0]: must be stable at enPhi2
+
+Sample the raw interrupt request into a registered IPLn synchronized to enPhi2. Do NOT drive
+IPLn directly from asynchronous VBlank or other raw signals.
+
+**Why:** fx68k samples IPLn on enPhi2. A glitch or late-arriving edge between enPhi2 samples
+causes phantom interrupt detection or missed interrupt detection. IPL changes must be committed
+before enPhi2 arrives.
+
+### Rule 4 — Address bus eab is [23:1] (word address only)
+
+```verilog
+// fx68k output
+output [23:1] eab,   // word address — A[0] does not exist
+
+// Convert to byte address for memory decode
+wire [23:0] cpu_addr = {eab, 1'b0};
+```
+
+**Why:** The 68000 address bus is byte-addressed but pin A1 is the LSB output. A[0] is encoded
+in UDS/LDS strobe pairs, not the address bus. fx68k follows this convention exactly. Any memory
+decoder that treats eab as a 23-bit quantity without appending `1'b0` accesses even addresses
+correctly but silently doubles all odd-byte offsets.
+
+### Rule 5 — enPhi1 and enPhi2 must never both be high in the same cycle
+
+The clock enable generator must be mutually exclusive:
+
+```verilog
+// Correct two-phase enable generation (example)
+always @(posedge clk) begin
+    enPhi1 <= phase;
+    enPhi2 <= ~phase;
+    phase  <= ~phase;
+end
+// enPhi1 and enPhi2 are always complementary — never simultaneously high
+```
+
+The first enable after reset must be enPhi1 (rising phase), not enPhi2.
+
+**Why:** fx68k's internal state machine expects strict two-phase clocking. Simultaneous enPhi1
++ enPhi2 is undefined and causes the CPU FSM to advance two states in one clock, producing
+bus glitches and incorrect instruction timing.
+
+### Rule 6 — CS signals must be registered and gated with BGACKn
+
+```verilog
+// Combinatorial CS — WRONG
+assign rom_cs = (cpu_addr[23:16] == 8'h00) & ~ASn & BGACKn;
+
+// Registered CS — CORRECT
+always @(posedge clk) begin
+    rom_cs <= (cpu_addr[23:16] == 8'h00) & ~ASn & BGACKn;
+end
+```
+
+`jtframe_68kdtack`'s `wait1` state compensates for the 1-cycle pipeline delay introduced by
+registering CS. All jtframe-based designs assume this 1-cycle delay. Combinatorial CS will
+fire one cycle early and race SDRAM requests.
+
+**Why:** BGACKn (Bus Grant Acknowledge) signals that the DMA device has released the bus.
+Without gating, CS can assert while DMA still owns the bus, causing two bus masters to drive
+simultaneously. The registered pattern also eliminates glitches from address bus settling after
+ASn falls.
+
+### Rule 7 — Open bus must return 16'hFFFF, not 16'h0000
+
+```verilog
+// Data bus mux — open bus default
+assign cpu_din =
+    rom_cs  ? rom_data  :
+    ram_cs  ? ram_data  :
+    io_cs   ? io_data   :
+    16'hFFFF;            // open bus — 68k sees pulled-up data lines
+```
+
+**Why:** Real 68000 hardware has pull-ups on the data bus. Unselected addresses read 0xFFFF.
+Many game ROMs probe hardware presence by reading an unmapped address and checking for the
+pull-up pattern. Returning 0x0000 causes detection logic to report wrong hardware version or
+trigger spurious soft-reset paths.
+
+### Rule 8 — dsn_dly pattern for DS-qualified CS signals
+
+When CS decoding uses DS (data strobe) in addition to AS, add a one-cycle delay:
+
+```verilog
+reg dsn_dly;
+always @(posedge clk) dsn_dly <= &{UDSn, LDSn};  // 1 when both inactive
+
+// Gate SDRAM request with dsn_dly, not raw DS
+assign sdram_req = rom_cs & ~dsn_dly;
+```
+
+**Why:** At the end of a write cycle, AS falls before DS. Without `dsn_dly`, the CS re-asserts
+for one spurious cycle as DS deasserts, triggering a phantom SDRAM read or write. The delay
+masks this glitch window.
+
+### Rule 9 — Verilator MULTIDRIVEN: merge uaddrPla always_comb blocks
+
+`fx68k/uaddrPla.sv` contains multiple `always_comb` blocks that drive overlapping signal ranges.
+Verilator (≥4.x) reports `MULTIDRIVEN` and generates a scheduling graph where some signals are
+never updated.
+
+```bash
+# -Wno-MULTIDRIVEN does NOT fix this — it only suppresses the warning while the bug remains
+# CORRECT FIX: merge all always_comb blocks into a single block in uaddrPla.sv
+```
+
+**Why:** Verilator's static scheduling pass assigns each signal to exactly one always block
+for update ordering. When a signal is driven by two blocks, Verilator picks one and silently
+ignores the other. The PLA output is then stuck at reset value regardless of input, causing
+completely wrong 68k microcode dispatch. Suppressing the warning leaves the scheduling bug
+in place.
+
+### Rule 10 — SDRAM toggle handshake protocol
+
+```verilog
+// Issue a request: toggle req
+always @(posedge clk)
+    if (new_request) req <= ~req;
+
+// rom_ok: request has been served
+assign rom_ok   = (req == ack);     // ack mirrors req when done
+assign bus_busy = rom_cs & ~rom_ok; // stall the CPU while waiting
+```
+
+**Why:** Level-based req/ack would require the SDRAM controller to deassert ack before the
+next request, introducing a mandatory dead cycle. Toggle handshake allows back-to-back requests
+without a dead cycle between them, and is immune to reset-state ambiguity (req==ack==0 at
+power-on means "idle," which is correct).
+
+### Rule 11 — VBlank interrupt: clear on IACK, not on timer
+
+```verilog
+// CORRECT pattern — clear IPL on IACK cycle
+always @(posedge clk) begin
+    if (LVBL_falling)   ipl_n <= 3'b110;  // assert IPL1 (level 2 interrupt)
+    else if (~inta_n)   ipl_n <= 3'b111;  // deassert on IACK
+end
+```
+
+Do NOT hold IPL low for a fixed number of cycles via a counter. Do NOT clear on the next
+VBlank edge.
+
+**Why:** Real 68000 hardware clears IPL when the CPU executes the IACK bus cycle. Holding IPL
+low beyond that point causes the CPU to re-enter the ISR immediately after RTI (double-interrupt
+storm). Clearing early (before IACK) causes a spurious auto-vector and ISR entry corruption.
+The IACK-based clear is the only correct mechanism.
+
+### Rule 12 — Write byte-mask: derive from RnW + UDS/LDS
+
+```verilog
+// SDRAM byte enables for writes
+assign UDSWn = RnW | UDSn;   // write upper byte only when RnW=0 AND UDSn=0
+assign LDSWn = RnW | LDSn;   // write lower byte only when RnW=0 AND LDSn=0
+```
+
+Pass `{~UDSWn, ~LDSWn}` as the SDRAM byte-enable for write operations, not raw `{~UDSn, ~LDSn}`.
+
+**Why:** UDSn and LDSn are active during reads as well as writes (they qualify which bytes are
+driven on the bus). Using raw UDSn/LDSn for SDRAM byte-enable causes spurious byte writes on
+every read cycle. The RnW gate ensures byte-enables are only active during actual write cycles.
+
+---
+
+## Known Bugs Found in Audit (2026-03-18)
+
+These bugs were identified during the community-core audit pass. Each represents a core that
+synthesizes clean but cannot execute game code at runtime.
+
+### taito_b — CPU ROM SDRAM channel wired but unused
+
+`chips/taito_b/taito_b.sv`: The SDRAM channel allocated for CPU ROM is connected with a TODO
+comment. The channel req/ack signals are never driven, so the CPU ROM fetch state machine
+stalls indefinitely at startup. **The CPU cannot execute game code.** Required fix: implement
+the CPU ROM SDRAM fetch and toggle-handshake, mirroring the GFX ROM channel pattern.
+
+### taito_x — CPU ROM SDRAM channel driven as zero
+
+`chips/taito_x/taito_x.sv`: The CPU ROM SDRAM channel outputs are hardwired to 0 (TODO
+comment). Same consequence as taito_b: CPU ROM never loads, CPU cannot execute game code.
+Required fix: implement CPU ROM SDRAM fetch with toggle handshake.
+
+### taito_x — Z80 WAIT_n permanently asserted
+
+`chips/taito_x/taito_x.sv`: Z80 `WAIT_n = 1'b1` always. The Z80 never waits for SDRAM.
+Every Z80 memory read returns stale/uninitialized data from the previous SDRAM cycle. Required
+fix: gate Z80 WAIT_n on SDRAM ack (deassert WAIT_n while the fetch is in flight, assert when
+ack arrives).
+
+### toaplan_v2 / kaneko — GFX SDRAM upper 16 bits always zero
+
+`chips/toaplan_v2/` and `chips/kaneko_arcade/`: The GFX SDRAM data path concatenates upper
+and lower 16-bit words, but the upper word appears to be always zero in the current wiring.
+All GFX tiles will display with missing bitplanes. Requires verification against MAME GFX ROM
+layout and SDRAM word-swap conventions before declaring either core playable.
