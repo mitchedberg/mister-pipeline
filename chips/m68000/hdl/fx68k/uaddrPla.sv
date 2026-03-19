@@ -85,8 +85,11 @@ module pla_lined(
    assign plaA3 = lineBmap[0] ? scA3 : arA23[ line];
    
    
-   // Simple lines
+   // All PLA lines merged into one always_comb to avoid MULTIDRIVEN (Verilator)
    always_comb begin
+
+      // Simple lines
+
       // Line 6: Branch
       arIll[ 'h6] = 1'b0;
       arA23[ 'h6] = 'X;
@@ -94,23 +97,21 @@ module pla_lined(
          arA1[ 'h6] = (| opcode[7:0]) ? `BSRI1 : `BSRW1;
       else
          arA1[ 'h6] = (| opcode[7:0]) ? `BBCI1 : `BBCW1;
-                         
+
       // Line 7: moveq
       arIll[ 'h7] = opcode[ 8];
       arA23[ 'h7] = 'X;
       arA1[ 'h7] = `RLQL1;
 
-      // Line A & F      
+      // Line A & F
       arIll[ 'ha] = 1'b1;       arIll[ 'hf] = 1'b1;
       arA1[ 'ha]  = 'X;         arA1[ 'hf]  = 'X;
       arA23[ 'ha] = 'X;         arA23[ 'hf] = 'X;
-      
-   end   
 
-   // Special lines
+      // Special lines
 
-   // Line e: shifts
-   always_comb begin
+      // Line e: shifts
+      begin
       if( ~opcode[11] & opcode[7] & opcode[6])
       begin
          arA23[ 'he] = `SFTM1;
@@ -141,11 +142,11 @@ module pla_lined(
          2'b11: begin arIll[ 'he] = 1'b1; arA1[ 'he]  = 'X; end
          endcase
       end
-   end
+      end // end line-e shifts block
 
-   // Misc. line 4 row
-   always_comb begin
-      illMisc = 1'b0;
+      // Misc. line 4 row (local helpers only)
+      begin
+         illMisc = 1'b0;
       case( opcode[ 5:3])
       3'b000,
       3'b001:      a1Misc = `TRAP1;
@@ -168,7 +169,7 @@ module pla_lined(
          
       default:  begin  illMisc = 1'b1; a1Misc = 'X; end
       endcase
-   end
+      end // end misc line-4 row block
 
 //
 // Past here
@@ -178,7 +179,6 @@ module pla_lined(
 //
 // Line: 0
 //
-always_comb begin
 
 if( (opcode[11:6] & 'h1F) == 'h8) begin
     unique case ( col)
@@ -542,13 +542,10 @@ end
 
 else begin arIll[ 'h0] = 1'b1; arA1[ 'h0] = 'X   ; arA23[ 'h0] = 'X; scA3 = 'X; end
 
-end
-
 
 //
 // Line: 4
 //
-always_comb begin
 
 if( (opcode[11:6] & 'h27) == 'h0) begin
     unique case ( col)
@@ -897,10 +894,6 @@ else if( opcode[11:6] == 'h39) begin
 end
 
 else begin arIll[ 'h4] = 1'b1; arA1[ 'h4] = 'X   ; arA23[ 'h4] = 'X; end
-
-end
-
-always_comb begin
 
 //
 // Line: 1

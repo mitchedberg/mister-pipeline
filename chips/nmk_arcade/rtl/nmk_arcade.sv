@@ -389,7 +389,7 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
         spr_req_addr      <= 27'b0;
     end else begin
         if (spr_rom_rd_w && !spr_req_pending) begin
-            spr_req_addr      <= SPR_ROM_BASE + {6'b0, spr_rom_addr_w[20:1]};
+            spr_req_addr      <= SPR_ROM_BASE + {6'b0, spr_rom_addr_w[20:0]};
             spr_byte_sel      <= spr_rom_addr_w[0];
             spr_req_pending   <= 1'b1;
             spr_rom_sdram_req <= ~spr_rom_sdram_req;
@@ -423,7 +423,7 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
             // Opportunistically prefetch; actual demand is implicit from nmk16
             // In practice Gate 4 drives bg_rom_addr combinationally; we just
             // latch it when there is no valid pixel (conservative stub).
-            bg_req_addr      <= BG_ROM_BASE + {5'b0, bg_rom_addr_w[21:1]};
+            bg_req_addr      <= BG_ROM_BASE + {5'b0, bg_rom_addr_w[21:0]};
             bg_byte_sel      <= bg_rom_addr_w[0];
             bg_req_pending   <= 1'b1;
             bg_rom_sdram_req <= ~bg_rom_sdram_req;
@@ -452,9 +452,9 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
         prog_req_addr_r   <= 27'b0;
         prog_rom_data_r   <= 16'hFFFF;
     end else begin
-        if (prog_rom_cs && cpu_rw && !prog_req_pending) begin
-            // New ROM read request
-            prog_req_addr_r  <= {5'b0, cpu_addr[22:1]};   // word addr in SDRAM (27-bit)
+        if (prog_rom_cs && cpu_rw && !prog_req_pending && !dtack_r) begin
+            // New ROM read request — guard !dtack_r prevents re-issuing in same bus cycle
+            prog_req_addr_r  <= {3'b0, cpu_addr[23:1], 1'b0};  // byte addr in SDRAM (27-bit)
             prog_req_pending <= 1'b1;
             prog_rom_req     <= ~prog_rom_req;
         end else if (prog_req_pending && (prog_rom_req == prog_rom_ack)) begin
@@ -673,18 +673,32 @@ end
 
 // =============================================================================
 // DTACK Generation
-// All regions: 1-cycle registered DTACK.
+// Immediate regions (NMK16, work RAM, palette, I/O): asserted 1 cycle after CS.
+// Program ROM (SDRAM): deferred until SDRAM handshake completes.
+//
+// DTACK uses a hold-until-deassert pattern: once asserted it stays asserted
+// until the CPU ends the bus cycle (AS_n goes high).  This ensures the CPU
+// can sample DTACK at any state of its bus cycle regardless of when it fires.
 // =============================================================================
-logic any_cs;
 logic dtack_r;
 
-assign any_cs = prog_rom_cs | !nmk_cs_n | wram_cs | pal_cs | io_cs;
+// Immediate regions: present one cycle after AS_n/CS (BRAM latency = 1 cycle)
+logic imm_cs;
+assign imm_cs = (!nmk_cs_n | wram_cs | pal_cs | io_cs) && !cpu_as_n;
 
+// Program ROM: one-cycle pulse when SDRAM data arrives
+// prog_req_pending: 0→1 when request issued, 1→0 when req==ack (data ready)
+logic prog_dtack_src;
+assign prog_dtack_src = prog_rom_cs && prog_req_pending && (prog_rom_req == prog_rom_ack);
+
+// DTACK hold latch: set when any source fires; cleared when AS_n deasserts.
+// dtack_r = !cpu_as_n  AND  (already_held  OR  new_source)
+// The cpu_as_n gate clears it the cycle after the bus master ends the cycle.
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n)
         dtack_r <= 1'b0;
     else
-        dtack_r <= any_cs;
+        dtack_r <= !cpu_as_n && (dtack_r | imm_cs | prog_dtack_src);
 end
 
 assign cpu_dtack_n = cpu_as_n ? 1'b1 : !dtack_r;
@@ -975,7 +989,7 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
         oki_sdram_data_r<= 16'h0;
     end else begin
         if ((oki_rom_addr_w != oki_addr_prev) && !oki_req_pending) begin
-            adpcm_rom_addr  <= {6'b0, oki_rom_addr_w[17:1]} + ADPCM_ROM_BASE[23:0];
+            adpcm_rom_addr  <= {6'b0, oki_rom_addr_w[17:0]} + ADPCM_ROM_BASE[23:0];
             oki_byte_sel_r  <= oki_rom_addr_w[0];
             oki_addr_prev   <= oki_rom_addr_w;
             oki_req_pending <= 1'b1;

@@ -28,13 +28,24 @@ RTL_T80        := ../rtl/t80/T80s.v
 RTL_JT03       := $(ROOT)/vendor/audio/jt12/jt03.v
 RTL_JT6295     := $(ROOT)/vendor/audio/jt6295/jt6295.v
 
+# fx68k MC68000 CPU (Jorge Cwik) + adapter
+RTL_FX68K      := $(ROOT)/chips/m68000/hdl/fx68k/fx68kAlu.sv \
+                  $(ROOT)/chips/m68000/hdl/fx68k/fx68k.sv
+RTL_FX68K_ADPT := $(ROOT)/chips/m68000/rtl/fx68k_adapter.sv
+
+# Simulation top (wraps nmk_arcade + fx68k_adapter)
+RTL_TB_TOP     := ../rtl/tb_top.sv
+
 # All RTL sources: order matters (top last so Verilator can resolve)
 SRCS = \
     $(RTL_NMK16) \
     $(RTL_T80) \
     $(RTL_JT03) \
     $(RTL_JT6295) \
-    $(RTL_TOP)
+    $(RTL_FX68K) \
+    $(RTL_FX68K_ADPT) \
+    $(RTL_TOP) \
+    $(RTL_TB_TOP)
 
 # Include paths
 INCDIRS = \
@@ -46,12 +57,14 @@ INCDIRS = \
     -I$(ROOT)/vendor/audio/jt12/dac \
     -I$(ROOT)/vendor/audio/jt12/adpcm \
     -I$(ROOT)/vendor/audio/jt6295 \
-    -I$(ROOT)/chips/taito_support
+    -I$(ROOT)/chips/taito_support \
+    -I$(ROOT)/chips/m68000/hdl/fx68k \
+    -I$(ROOT)/chips/m68000/rtl
 
 # Verilator flags
 VLFLAGS = \
     --sv --cc --exe --build --trace \
-    --top-module nmk_arcade \
+    --top-module tb_top \
     -Wno-PINMISSING \
     -Wno-MODMISSING \
     -Wno-UNUSED \
@@ -65,10 +78,19 @@ VLFLAGS = \
     -Wno-COMBDLY \
     -Wno-INITIALDLY \
     -Wno-MULTIDRIVEN \
+    -Wno-BLKANDNBLK \
+    -Wno-UNOPTFLAT \
+    -Wno-DECLFILENAME \
+    -Wno-VARHIDDEN \
+    -Wno-PINCONNECTEMPTY \
+    -Wno-SYMRSVDWORD \
+    -Wno-ALWCOMBORDER \
+    -Wno-TIMESCALEMOD \
     -O2
 
 # C++ flags for tb_system.cpp
-CFLAGS = -O2 -std=c++17
+# -DVL_USER_STOP: suppress default vl_stop() in verilated.cpp so our override compiles
+CFLAGS = -O2 -std=c++17 -DVL_USER_STOP
 
 SIM_NAME   = sim_nmk_arcade
 # Verilator 5 places the binary in obj_dir/ regardless of -o; we symlink it out.

@@ -542,7 +542,7 @@ module aluGetOp( input [15:0] row, input [2:0] col, input isCorf,
 		5:   aluOp = OP_EXT;
 
 		default:
-			unique case( 1'b1)
+			priority case( 1'b1)
 				row[1]:
 					unique case( col)
 					2: aluOp = OP_SUB;
@@ -790,7 +790,7 @@ module ccrTable(
 		1:			ccrMask = ccrMask1;
 		
 		2,3:
-			unique case( 1'b1)
+			priority case( 1'b1)
 			row[1]:		ccrMask = KNZ0C;		// DIV, used as 3n in col3
 			
 			row[3],								// ABCD

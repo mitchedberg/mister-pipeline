@@ -279,6 +279,16 @@ def main():
     out_dir = os.path.abspath(args.out_dir)
     os.makedirs(out_dir, exist_ok=True)
 
+    # fx68k requires nanorom.mem and microrom.mem in the CWD of the simulation.
+    # Copy them from the HDL source tree into out_dir before running.
+    fx68k_dir = os.path.join(script_dir, '..', '..', '..', 'chips', 'm68000', 'hdl', 'fx68k')
+    for mem_name in ('nanorom.mem', 'microrom.mem'):
+        src = os.path.normpath(os.path.join(fx68k_dir, mem_name))
+        dst = os.path.join(out_dir, mem_name)
+        if os.path.exists(src) and not os.path.exists(dst):
+            import shutil
+            shutil.copy2(src, dst)
+
     # ── Run simulator ─────────────────────────────────────────────────────────
     print(f"Running simulation: {args.frames} frames...")
     result = subprocess.run(
