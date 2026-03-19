@@ -7,20 +7,23 @@
 //                + sprite rasterizer + priority mixer)
 //
 // Plus local block RAMs:
-//   work_ram   — 64KB at 0x080000–0x08FFFF (MC68000 general-purpose)
-//   palette_ram — 512 entries × 16-bit at 0x0E0000–0x0E03FF (CPU-writable)
+//   work_ram   — 64KB at 0x0B0000–0x0BFFFF (MC68000 general-purpose)
+//   palette_ram — 512 entries × 16-bit at 0x0C8000–0x0C87FF (CPU-writable)
 //
 // Z80 sound CPU: T80s core, 8 MHz, drives YM2203 and OKI M6295
 //
 // Target game: Thunder Dragon (nmk16 hardware variant)
 //   MC68000 @ 10 MHz, VBLANK IRQ = level 4
+//   SSP = 0x0C0000 (stack at top of work RAM 0x0BFFFC and below)
 //
-// Memory map (byte addresses):
-//   0x000000–0x07FFFF  Program ROM (512KB, SDRAM)
-//   0x080000–0x08FFFF  Work RAM (64KB, BRAM)
-//   0x0C0000–0x0CFFFF  NMK16 chip (registers, sprite RAM, tilemap VRAM)
-//   0x0E0000–0x0E03FF  Palette RAM (512 entries × 16-bit, BRAM)
-//   0x0E8000–0x0E8FFF  I/O registers (joystick, coin, DIP)
+// Memory map (byte addresses, verified against FBNeo d_nmk16.cpp):
+//   0x000000–0x03FFFF  Program ROM (256KB, SDRAM)
+//   0x0B0000–0x0BFFFF  Work RAM (64KB, BRAM)   ← SSP=0x0C0000 → stack here
+//   0x0C0000–0x0C001F  I/O registers (joystick, coin, DIP, sound comm)
+//   0x0C4000–0x0C43FF  Scroll registers (NMK16 GPU regs)
+//   0x0C8000–0x0C87FF  Palette RAM (512 entries × 16-bit, BRAM)
+//   0x0CC000–0x0CFFFF  BG tilemap VRAM (NMK16 chip)
+//   0x0D0000–0x0D07FF  Tx (text) VRAM (NMK16 chip, stub)
 //
 // NOT instantiated here (provided by the MiSTer HPS top-level wrapper):
 //   MC68000 CPU, SDRAM controller, video timing generator
@@ -145,104 +148,79 @@ module nmk_arcade #(
 //
 // All decodes require !cpu_as_n.
 
-// Program ROM: upper 7 bits = 0 → 0x000000–0x07FFFF
+// Address decode note: cpu_addr is logic [23:1], carrying the 68000's A[23:1]
+// pins directly. cpu_addr[N] = AN (not shifted). Decodes use the BYTE address
+// top bits directly, i.e. cpu_addr[23:16] == A[23:16] == byte_addr[23:16].
+//
+// =============================================================================
+// Address decode note:
+//   cpu_addr is logic [23:1] carrying 68000 A[23:1] pins directly.
+//   cpu_addr[N] = AN (NOT a divided word address).
+//   cpu_addr[23:16] == byte_addr[23:16] (top 8 bits of the byte address).
+//
+// Thunder Dragon memory map (verified against FBNeo d_nmk16.cpp NMK004Init):
+//   0x000000–0x03FFFF  Program ROM (256KB, SDRAM)
+//   0x0B0000–0x0BFFFF  Work RAM (64KB, BRAM)
+//   0x0C0000–0x0C001F  I/O registers (joystick/coin/DIP at 0x0C0000-0x0C000F,
+//                       sound comm at 0x0C001E, flip at 0x0C0014)
+//   0x0C4000–0x0C43FF  Scroll registers (GPU control)
+//   0x0C8000–0x0C87FF  Palette RAM (512 × 16-bit, BRAM)
+//   0x0CC000–0x0CFFFF  BG tilemap VRAM (NMK16 chip internal RAM)
+//   0x0D0000–0x0D07FF  Tx text VRAM (NMK16 chip, stub)
+// =============================================================================
+
+// Program ROM: 0x000000–0x03FFFF → A[23:18] == 6'b0 (256KB; bit 18 set at 0x040000)
 logic prog_rom_cs;
-assign prog_rom_cs = (cpu_addr[23:17] == 7'b0) && !cpu_as_n;
+assign prog_rom_cs = (cpu_addr[23:18] == 6'b0) && !cpu_as_n;
 
-// Work RAM: 64KB at 0x080000–0x08FFFF
+// Work RAM: 64KB at 0x0B0000–0x0BFFFF → A[23:16] == 8'h0B
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:16] == 8'h04) && !cpu_as_n;
-// Note: byte_addr = cpu_addr[23:1] << 1; top byte = cpu_addr[23:17] << 1.
-// 0x080000 >> 1 = 0x040000; cpu_addr[23:16] for word addr: 0x040000 >> 8 = 0x04 ✓
+assign wram_cs = (cpu_addr[23:16] == 8'h0B) && !cpu_as_n;
 
-// NMK16 chip: 0x0C0000–0x0CFFFF → word base 0x060000
-logic nmk_cs_n;
-assign nmk_cs_n = !((cpu_addr[23:16] == 8'h06) && !cpu_as_n);
-
-// Palette RAM: 0x0E0000–0x0E03FF → word base 0x070000, top 9 bits word addr[23:9]
-// 0x0E0000 >> 1 = 0x070000; cpu_addr[23:9] == {8'h07, 7'b0} ? No —
-// 0x070000 in 23-bit word space: cpu_addr[23:16]=8'h07, cpu_addr[15:9]=7'b0
-logic pal_cs;
-assign pal_cs = (cpu_addr[23:16] == 8'h07) && (cpu_addr[15:9] == 7'b0) && !cpu_as_n;
-
-// I/O: 0x0E8000–0x0E8FFF → word base 0x074000
-// 0x0E8000 >> 1 = 0x074000; cpu_addr[23:12] == 12'h074
+// I/O registers: 0x0C0000–0x0C001F → A[23:16]==8'h0C, A[15:5]==11'b0
+// (32 bytes of I/O at 0x0C0000-0x0C001F; cpu_addr[4:1] selects register word)
 logic io_cs;
-assign io_cs  = (cpu_addr[23:12] == 12'h074) && !cpu_as_n;
+assign io_cs = (cpu_addr[23:16] == 8'h0C) && (cpu_addr[15:5] == 11'b0) && !cpu_as_n;
+
+// Scroll registers: 0x0C4000–0x0C43FF → A[23:16]==8'h0C, A[15:10]==6'b010000
+// 0x0C4000: A15=0,A14=1,A13=0,A12=0,A11=0,A10=0 → cpu_addr[15:10]=6'b010000
+logic scroll_cs;
+assign scroll_cs = (cpu_addr[23:16] == 8'h0C) && (cpu_addr[15:10] == 6'b010000) && !cpu_as_n;
+
+// Palette RAM: 0x0C8000–0x0C87FF → A[23:16]==8'h0C, A[15]==1, A[14:11]==4'b0
+// 0x0C8000: A15=1,A14=0,A13=0,A12=0 → cpu_addr[15:12]=4'h8, A11=0,A10=0 (512 entries)
+logic pal_cs;
+assign pal_cs = (cpu_addr[23:16] == 8'h0C) && (cpu_addr[15:11] == 5'b10000) && !cpu_as_n;
+
+// BG VRAM: 0x0CC000–0x0CFFFF → A[23:16]==8'h0C, A[15:14]==2'b11
+// 0x0CC000: A15=1,A14=1 → cpu_addr[15:14]=2'b11
+logic bg_vram_cs;
+assign bg_vram_cs = (cpu_addr[23:16] == 8'h0C) && (cpu_addr[15:14] == 2'b11) && !cpu_as_n;
+
+// TX text VRAM: 0x0D0000–0x0D07FF → A[23:16]==8'h0D, A[15:11]==5'b0
+// 2KB text-layer tilemap (used by NMK16 text overlay)
+logic tx_vram_cs;
+assign tx_vram_cs = (cpu_addr[23:16] == 8'h0D) && (cpu_addr[15:11] == 5'b0) && !cpu_as_n;
+
+// NMK16 cs_n: assert for any access to the NMK16 region
+// (BG VRAM at 0x0CC000; other NMK16 regs handled by scroll_cs/pal_cs/io_cs above)
+// For simplicity route bg_vram_cs to nmk16 chip; scroll/pal handled locally.
+logic nmk_cs_n;
+assign nmk_cs_n = !bg_vram_cs;
 
 // =============================================================================
-// NMK16 Chip Instance
+// NMK16 Chip Address Construction
 // =============================================================================
-// The NMK16 chip addr port is [ADDR_WIDTH-1:1] = [20:1] (21-bit word addr).
-// The chip uses bit [20:16] for range decode internally.
-// We pass cpu_addr[21:1] — enough to cover 0x0C0000–0x0CFFFF inside the chip
-// (chip sees bit [20:16] patterns for its own sub-ranges; the full byte address
-// 0x0C0000 >> 1 = 0x060000, so within the chip window we pass the low bits).
-
-// NMK16 chip internal sub-range decode uses addr[20:16]:
-//   Tilemap RAM: addr[20:16]=5'b10001 → 0x110000 in chip's 21-bit space
-//   GPU regs:    addr[20:16]=5'b10010 → 0x120000 in chip's 21-bit space
-//   Sprite RAM:  addr[20:16]=5'b10011 → 0x130000 in chip's 21-bit space
-//   Palette:     addr[20:16]=5'b10100 → 0x140000 in chip's 21-bit space
+// The nmk16 chip has a 21-bit addr port [20:1]. Its internal decode:
+//   Tilemap RAM: addr[20:16]=5'b10001 → offset 0x110000
+//   GPU regs:    addr[20:16]=5'b10010 → offset 0x120000
+//   Sprite RAM:  addr[20:16]=5'b10011 → offset 0x130000
 //
-// When the system CS window is 0x0C0000–0x0CFFFF (64KB), internal offsets
-// map directly: cpu_addr[16:1] → chip addr[16:1].
-// We tie the top bits to select the correct sub-window:
-//   chip_addr[20:17] = 4'b1000 | (cpu_addr[16:16] = 0) → addr[20:16]=5'b10000
-// This means the 64KB window maps to chip addr 0x100000–0x10FFFF.
-// That doesn't match the chip's internal decode pattern.
-//
-// SOLUTION: Use the chip's full 21-bit address space and pass the offset within
-// the 0x0C0000 window by constructing:
-//   chip_addr[20:1] = {4'b0001, cpu_addr[16:1]}  → maps 0x0C0000 to chip 0x010000
-// But the chip's decode uses specific top-bit patterns.
-//
-// Simplest approach: pass the raw cpu_addr lower bits and set the top bits
-// so the chip sees 0x110000–0x13FFFF range from the CPU perspective.
-// The outer CS gate (nmk_cs_n) already qualifies accesses to 0x0C0000–0x0CFFFF.
-// We remap: chip_addr = {5'b10000, cpu_addr[16:1]} giving chip range 0x100000–0x10FFFF
-// Then add per-sub-region offsets to hit 0x110000/0x120000/0x130000/0x140000.
-//
-// Better: connect chip addr[20:1] directly to {cpu_addr[20:1]} — the chip will
-// decode based on addr[20:16]. For the window 0x0C0000–0x0CFFFF, those bits are:
-//   cpu_addr[23:1]  for 0x0C0000 byte = 0x060000 word: bits[23:20]=4'b0000, [19:16]=4'b0110
-// So addr[20:16] = 5'b00110 from the CPU word address. That matches none of the
-// chip's internal patterns (which expect 5'b10001 etc.).
-//
-// CORRECT APPROACH: The chip's internal address decode was designed for an NMK board
-// where the full 21-bit address bus is used (chip sits at system base 0x000000).
-// Since we use it as a peripheral chip at 0x0C0000, we simply pass the OFFSET within
-// the chip's window and prepend the required range prefix bits manually.
-//
-// Tile/Sprite/GPU sub-ranges within 0x0C0000 block:
-//   0x0C0000 + offset: we pick three 64KB sub-windows by the caller's design.
-//   The GATE_PLAN uses a flat 0x0C0000–0x0CFFFF window for NMK16.
-//   We break this up by asserting cs_n only when in that range, and passing
-//   addr[20:1] = {5'b10001, cpu_addr[15:1]} for tilemap (first 32KB of window),
-//   etc. But 64KB isn't enough for all three ranges at native addresses.
-//
-// PRACTICAL IMPLEMENTATION: Use cpu_addr[15:14] to select sub-range offset:
-//   cpu_addr[15:14]=2'b00 → tilemap  → chip sees addr[20:16]=5'b10001
-//   cpu_addr[15:14]=2'b01 → GPU regs → chip sees addr[20:16]=5'b10010
-//   cpu_addr[15:14]=2'b10 → sprites  → chip sees addr[20:16]=5'b10011
-//   (palette handled externally)
-//
-// So the system byte map within 0x0C0000 window:
-//   0x0C0000–0x0C3FFF → tilemap RAM  (16KB, chip 0x110000–0x113FFF)
-//   0x0C4000–0x0C7FFF → GPU regs    (16KB, chip 0x120000–0x123FFF)
-//   0x0C8000–0x0CBFFF → sprite RAM  (16KB, chip 0x130000–0x133FFF)
-//   0x0CC000–0x0CFFFF → (unused)
-
-// Construct chip address: remap cpu_addr offset into chip's 21-bit space
+// Thunder Dragon uses BG VRAM at 0x0CC000-0x0CFFFF (system addr).
+// We map this to the chip's tilemap range with addr[20:16]=5'b10001.
+// The lower bits [15:1] come from the offset within the 0x0CC000 window.
 logic [20:1] chip_addr;
-always_comb begin
-    case (cpu_addr[15:14])
-        2'b00:   chip_addr = {5'b10001, cpu_addr[15:1]};   // tilemap RAM
-        2'b01:   chip_addr = {5'b10010, cpu_addr[15:1]};   // GPU registers
-        2'b10:   chip_addr = {5'b10011, cpu_addr[15:1]};   // sprite RAM
-        default: chip_addr = {5'b10001, cpu_addr[15:1]};   // fallback: tilemap
-    endcase
-end
+assign chip_addr = {5'b10001, cpu_addr[15:1]};   // BG tilemap RAM
 
 // Signals driven by NMK16 submodule outputs.
 // Suppress UNDRIVEN: these are outputs from the nmk16 instance (not visible
@@ -405,37 +383,24 @@ assign spr_rom_data_w = spr_byte_sel ? spr_rom_sdram_data[7:0]
                                      : spr_rom_sdram_data[15:8];
 
 // =============================================================================
-// BG Tile ROM SDRAM Bridge
-// bg_rom_addr_w is a 22-bit BYTE address into BG tile ROM.
+// BG Tile ROM SDRAM Bridge — combinational pixel-rate fetch
+//
+// nmk16 Gate 4 presents bg_rom_addr as a registered output (Stage 1 FF).
+// Stage 2 reads bg_rom_data combinationally in the SAME clock cycle that
+// bg_rom_addr is valid.
+//
+// For simulation correctness we drive bg_rom_sdram_addr directly from
+// bg_rom_addr_w (combinational, no registered latency). The testbench then
+// does a direct SDRAM lookup every cycle and drives bg_rom_sdram_data
+// with zero latency. bg_rom_sdram_req/ack are held constant (req=0, ack=0)
+// since no toggle-handshake is needed for this synchronous-read model.
+//
+// For FPGA synthesis a proper SDRAM or BRAM cache bridge would replace this.
 // =============================================================================
-logic        bg_req_pending;
-logic        bg_byte_sel;
-logic [26:0] bg_req_addr;
-
-always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n) begin
-        bg_rom_sdram_req <= 1'b0;
-        bg_req_pending   <= 1'b0;
-        bg_byte_sel      <= 1'b0;
-        bg_req_addr      <= 27'b0;
-    end else begin
-        if (!bg_pix_valid[0] && !bg_pix_valid[1] && !bg_req_pending) begin
-            // Opportunistically prefetch; actual demand is implicit from nmk16
-            // In practice Gate 4 drives bg_rom_addr combinationally; we just
-            // latch it when there is no valid pixel (conservative stub).
-            bg_req_addr      <= BG_ROM_BASE + {5'b0, bg_rom_addr_w[21:0]};
-            bg_byte_sel      <= bg_rom_addr_w[0];
-            bg_req_pending   <= 1'b1;
-            bg_rom_sdram_req <= ~bg_rom_sdram_req;
-        end else if (bg_req_pending && (bg_rom_sdram_req == bg_rom_sdram_ack)) begin
-            bg_req_pending <= 1'b0;
-        end
-    end
-end
-
-assign bg_rom_sdram_addr = bg_req_addr;
-assign bg_rom_data_w     = bg_byte_sel ? bg_rom_sdram_data[7:0]
-                                       : bg_rom_sdram_data[15:8];
+assign bg_rom_sdram_addr = BG_ROM_BASE + {5'b0, bg_rom_addr_w[21:1], 1'b0};
+assign bg_rom_sdram_req  = 1'b0;  // not used; testbench drives data directly
+assign bg_rom_data_w     = bg_rom_addr_w[0] ? bg_rom_sdram_data[7:0]
+                                             : bg_rom_sdram_data[15:8];
 
 // =============================================================================
 // Program ROM SDRAM Bridge
@@ -618,35 +583,179 @@ assign rgb_b = {pal_entry[4:0],   pal_entry[4:2]};
 `endif
 
 // =============================================================================
-// I/O Register File
-// 0x0E8000–0x0E8FFF: read-only input ports
-//   +0x00: P1 joystick [7:0] (active low)
-//   +0x02: P2 joystick [7:0] (active low)
-//   +0x04: {coin[1], coin[0], service, 5'b11111} (active low)
-//   +0x06: DIP switch bank 1
-//   +0x08: DIP switch bank 2
-// Sound latch: 0x0E8002 byte write (lower byte) → sound_cmd
+// TX Text VRAM — 0x0D0000–0x0D07FF (2KB × 16-bit)
+// Used by the NMK16 text overlay layer.
+// CPU must be able to read/write this; DTACK is immediate (BRAM).
+// =============================================================================
+localparam TX_ABITS = 10;  // 1024 word addresses = 2KB
+
+logic [15:0] tx_vram [0:(1<<TX_ABITS)-1];
+logic [15:0] tx_dout_r;
+
+always_ff @(posedge clk_sys) begin
+    if (tx_vram_cs && !cpu_rw) begin
+        if (!cpu_uds_n) tx_vram[cpu_addr[TX_ABITS:1]][15:8] <= cpu_din[15:8];
+        if (!cpu_lds_n) tx_vram[cpu_addr[TX_ABITS:1]][ 7:0] <= cpu_din[ 7:0];
+    end
+end
+
+always_ff @(posedge clk_sys) begin
+    if (tx_vram_cs) tx_dout_r <= tx_vram[cpu_addr[TX_ABITS:1]];
+end
+
+// =============================================================================
+// I/O Register File — Thunder Dragon
+// 0x0C0000–0x0C001F: cpu_addr[4:1] selects word offset within this 32-byte block.
+//
+// Reads (verified against FBNeo tdragon_main_read_word):
+//   0x0C0000 (word 0): joystick_p1 [15:0] (active low)
+//   0x0C0002 (word 1): joystick_p2 [15:0] (active low)
+//   0x0C0008 (word 4): DIP switch bank 1
+//   0x0C000A (word 5): DIP switch bank 2
+//   0x0C000E (word 7): NMK004 MCU read (sound status) — returns 0 (stub)
+//
+// Writes (verified against FBNeo tdragon_main_write_word):
+//   0x0C0014 (word A): flip screen (ignored)
+//   0x0C0016 (word B): NMK004 NMI trigger (ignored — MCU stub)
+//   0x0C0018 (word C): tile bank select (ignored — stub)
+//   0x0C001E (word F): NMK004 write (sound command latch)
 // =============================================================================
 logic [15:0] io_dout;
 
-// Sound command latch — captured when M68000 writes to 0x0E8002 (lower byte)
+// =============================================================================
+// NMK004 MCU Stub — behavioural handshake emulation
+//
+// The real NMK004 is a TLCS90 MCU.  Thunder Dragon calls two handshake
+// subroutines during boot (0x0105D8 and 0x01060C) that use a write-driven
+// echo protocol on 0x0C001E (write) / 0x0C000E (read):
+//
+// Subroutine 0x0105D8 (called 3×, each with a different idle value):
+//   IDLE state:     return idle_val (bits[7:5]=100, bits[4:0]=version_code)
+//     Thunder Dragon idle sequence: 0x82 (v2), 0x9F (v31), 0x8B (v11)
+//   Write val with bit5=1, bit7=0:  → return 0x00C7
+//   Write val with bit6=1:          → return 0x0000
+//   Write 0x0000 (final clear):     → advance idle_index, back to IDLE
+//
+// Subroutine 0x01060C (called 2×, D0 is command payload):
+//   Write val with bit7=1, val≠0xC7: save bits[4:0], → return (cmd&0x1F)|0x20
+//   Write 0x00C7:                     → return (saved_cmd&0x1F)|0x40
+//   Write 0x0000 (CLR.W):             → return 0x0000, back to IDLE
+//
+// State encoding:
+//   3'd0 NMK_IDLE   — return idle_val (cycling through version codes)
+//   3'd1 NMK_ACK_C7 — return 0x00C7  (after bit5-only write)
+//   3'd2 NMK_ACK_00 — return 0x0000  (after bit6 write)
+//   3'd3 NMK_ECHO1  — return (saved_cmd|0x20) (after cmd|0x80 write)
+//   3'd4 NMK_ECHO2  — return (saved_cmd|0x40) (after 0xC7 write in echo proto)
+//   3'd5 NMK_CLEAR  — return 0x0000  (echo protocol clear phase)
+// =============================================================================
 logic [7:0] sound_cmd;
+logic [2:0] nmk004_state;
+logic [4:0] nmk004_saved_cmd;  // bits[4:0] of the 0x01060C command
+logic [1:0] nmk004_idle_idx;   // which idle value to return (0→0x82, 1→0x9F, 2→0x8B)
+
+// Idle return value for 0x0C000E based on idle_idx
+// Each corresponds to a distinct boot handshake pass:
+//   idx=0: 0x82 → D7=2  (first  0x0105D8 call, CMPI.B #2,   D7)
+//   idx=1: 0x9F → D7=31 (second 0x0105D8 call, CMPI.B #$1F, D7)
+//   idx=2: 0x8B → D7=11 (third  0x0105D8 call, CMPI.B #$B,  D7)
+logic [7:0] nmk004_idle_val;
+always_comb begin
+    case (nmk004_idle_idx)
+        2'd0:    nmk004_idle_val = 8'h82;
+        2'd1:    nmk004_idle_val = 8'h9F;
+        2'd2:    nmk004_idle_val = 8'h8B;
+        default: nmk004_idle_val = 8'h82;
+    endcase
+end
+
+// Write strobe: 68K writes to 0x0C001E (level, true while AS_n low and write)
+wire nmk_wr_lvl = io_cs && !cpu_rw && (cpu_addr[4:1] == 4'hF);
+// Read strobe: 68K reads 0x0C000E (level)
+wire nmk_rd_lvl = io_cs &&  cpu_rw && (cpu_addr[4:1] == 4'h7);
+
+// Edge-detect: only pulse on the rising edge (first clock after AS_n asserts)
+// nmk004_as_prev tracks the previous cycle's AS_n so we see only the first clock.
+logic nmk004_wr_prev;
+logic nmk004_rd_prev;
+wire  nmk_wr = nmk_wr_lvl && !nmk004_wr_prev;  // one-shot on first active clock
+wire  nmk_rd = nmk_rd_lvl && !nmk004_rd_prev;
+
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n)
-        sound_cmd <= 8'h00;
-    else if (io_cs && !cpu_rw && (cpu_addr[4:1] == 4'h1) && !cpu_lds_n)
-        sound_cmd <= cpu_din[7:0];   // Z80 polls this via sound_cmd latch
+    if (!reset_n) begin
+        sound_cmd        <= 8'h00;
+        nmk004_state     <= 3'd0;
+        nmk004_saved_cmd <= 5'd0;
+        nmk004_idle_idx  <= 2'd0;
+        nmk004_wr_prev   <= 1'b0;
+        nmk004_rd_prev   <= 1'b0;
+    end else begin
+        nmk004_wr_prev <= nmk_wr_lvl;
+        nmk004_rd_prev <= nmk_rd_lvl;
+        if (nmk_wr) begin
+            sound_cmd <= cpu_din[7:0];
+            case (nmk004_state)
+                3'd0: begin  // IDLE
+                    if (cpu_din[7] && cpu_din[7:0] != 8'hC7) begin
+                        // bit7=1, not 0xC7 → echo protocol phase 1
+                        nmk004_saved_cmd <= cpu_din[4:0];
+                        nmk004_state     <= 3'd3;  // ECHO1
+                    end else if (cpu_din[5] && !cpu_din[7]) begin
+                        // bit5=1, bit7=0 → handshake ACK_C7
+                        nmk004_state <= 3'd1;
+                    end else if (cpu_din[6]) begin
+                        // bit6=1 without bit7 → ACK_00 (handles 0x60-0x7F range)
+                        nmk004_state <= 3'd2;
+                    end
+                    // else val==0 (CLR.W init) → stay IDLE (no-op)
+                end
+                3'd1: begin  // ACK_C7 — write is cmd|0x60
+                    nmk004_state <= 3'd2;  // → ACK_00
+                end
+                3'd2: begin  // ACK_00 — write is final clear (val==0)
+                    // Advance idle index after each complete 0x0105D8 handshake
+                    if (nmk004_idle_idx != 2'd2)
+                        nmk004_idle_idx <= nmk004_idle_idx + 2'd1;
+                    nmk004_state <= 3'd0;  // → IDLE
+                end
+                3'd3: begin  // ECHO1 — write is 0xC7
+                    nmk004_state <= 3'd4;  // → ECHO2
+                end
+                3'd4: begin  // ECHO2 — write is CLR.W (0x00)
+                    nmk004_state <= 3'd5;  // → CLEAR
+                end
+                default: nmk004_state <= 3'd0;  // CLEAR or unknown → IDLE
+            endcase
+        end else if (nmk004_rd_prev && !nmk_rd_lvl && nmk004_state == 3'd5) begin
+            // CLEAR state: auto-transition to IDLE on the FALLING EDGE of nmk_rd_lvl
+            // (i.e., after the CPU's bus cycle ends, so the CPU correctly latches 0x0000
+            // during the read, and subsequent reads get the new IDLE value).
+            nmk004_state <= 3'd0;
+        end
+    end
 end
 
 always_comb begin
     io_dout = 16'hFFFF;
     if (io_cs) begin
         case (cpu_addr[4:1])
-            4'h0: io_dout = {8'hFF, joystick_p1};
-            4'h1: io_dout = {8'hFF, joystick_p2};
-            4'h2: io_dout = {8'hFF, coin[1], coin[0], service, 5'b11111};
-            4'h3: io_dout = {8'hFF, dipsw1};
-            4'h4: io_dout = {8'hFF, dipsw2};
+            4'h0: io_dout = {8'hFF, joystick_p1};   // 0x0C0000: P1
+            4'h1: io_dout = {8'hFF, joystick_p2};   // 0x0C0002: P2
+            4'h4: io_dout = {8'hFF, dipsw1};         // 0x0C0008: DIP1
+            4'h5: io_dout = {8'hFF, dipsw2};         // 0x0C000A: DIP2
+            4'h2: io_dout = {8'hFF, coin[1], coin[0], service, 5'b11111}; // 0x0C0004
+            // 0x0C000E: NMK004 status register
+            4'h7: begin
+                case (nmk004_state)
+                    3'd0: io_dout = {8'h00, nmk004_idle_val};          // IDLE
+                    3'd1: io_dout = 16'h00C7;                          // ACK_C7
+                    3'd2: io_dout = 16'h0000;                          // ACK_00
+                    3'd3: io_dout = {8'h00, 3'b001, nmk004_saved_cmd};  // ECHO1: (saved_cmd&0x1F)|0x20
+                    3'd4: io_dout = {8'h00, 3'b011, nmk004_saved_cmd};  // ECHO2: (saved_cmd&0x1F)|0x60
+                    3'd5: io_dout = 16'h0000;                          // CLEAR
+                    default: io_dout = {8'h00, nmk004_idle_val};
+                endcase
+            end
             default: io_dout = 16'hFFFF;
         endcase
     end
@@ -654,7 +763,7 @@ end
 
 // =============================================================================
 // CPU Data Bus Read Mux
-// Priority: prog_rom > NMK16 > work_ram > palette_ram > io > open-bus
+// Priority: prog_rom > NMK16 (bg_vram) > work_ram > palette_ram > io > open-bus
 //
 // For the program ROM path we distinguish two cases:
 //   prog_dtack_now  — the SDRAM ack has just arrived THIS cycle; use the LIVE
@@ -678,15 +787,17 @@ always_comb begin
         cpu_dout = wram_dout_r;
     else if (pal_cs)
         cpu_dout = pal_dout_r;
+    else if (tx_vram_cs)
+        cpu_dout = tx_dout_r;
     else if (io_cs)
         cpu_dout = io_dout;
     else
-        cpu_dout = 16'hFFFF;   // open bus
+        cpu_dout = 16'hFFFF;   // open bus (scroll regs write-only, return 0xFFFF)
 end
 
 // =============================================================================
 // DTACK Generation
-// Immediate regions (NMK16, work RAM, palette, I/O): asserted 1 cycle after CS.
+// Immediate regions (wram, pal, io, scroll, bg_vram): 1 cycle after CS.
 // Program ROM (SDRAM): deferred until SDRAM handshake completes.
 //
 // DTACK uses a hold-until-deassert pattern: once asserted it stays asserted
@@ -705,9 +816,10 @@ end
 // =============================================================================
 logic dtack_r;
 
-// Immediate regions: present one cycle after AS_n/CS (BRAM latency = 1 cycle)
+// Immediate regions: all RAM/regs respond in 1 cycle (BRAM latency = 1 cycle)
+// Includes: wram, pal, io, scroll registers, bg_vram (nmk16 chip), tx_vram
 logic imm_cs;
-assign imm_cs = (!nmk_cs_n | wram_cs | pal_cs | io_cs) && !cpu_as_n;
+assign imm_cs = (wram_cs | pal_cs | io_cs | scroll_cs | bg_vram_cs | tx_vram_cs) && !cpu_as_n;
 
 // Program ROM: combinational pulse when SDRAM data arrives THIS cycle.
 // prog_req_pending goes 1→0 at the NEXT posedge (registered), so while
@@ -1076,7 +1188,6 @@ assign _unused = ^{
     hpos,
     vpos,
     cpu_lds_n, cpu_uds_n,   // referenced above in RAM writes
-    chip_addr,
     vsync_n_r,
     spr_rom_data_w, bg_rom_data_w,  // inputs to nmk16 rom ports; driven by SDRAM bridges
     dl_x[8:0], dl_y[8:0], dl_tile[11:0],       // element 0 of flat-encoded arrays
