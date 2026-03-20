@@ -214,41 +214,56 @@ assign vblank_rise = vblank & ~vblank_r;
 // Chip-Select Decode (all comparisons on cpu_addr[23:1], qualified by !cpu_as_n)
 // =============================================================================
 
-// Program ROM: 0x000000–0x07FFFF  (512KB = 256K words, 18-bit index)
-//   word addr [23:18] == 6'b0 covers 0x000000–0x07FFFF
-logic prog_rom_cs;
-assign prog_rom_cs = (cpu_addr[23:18] == 6'b0) && !cpu_as_n;
+// ─────────────────────────────────────────────────────────────────────────────
+// ADDRESS DECODE — IMPORTANT SLICE CONVENTION
+// cpu_addr is declared [23:1] so cpu_addr[k] = bit (k-1) of the integer value,
+// i.e., the integer = word_address = byte_address >> 1.
+//
+// For a region with N-bit index starting at WORD_BASE:
+//   - Index bits occupy cpu_addr[N:1]  (N bits, zero-based word offset within region)
+//   - Tag   bits occupy cpu_addr[23:N+1]  (23-N bits, match WORD_BASE[23:N+1])
+//
+// Common mistake: using cpu_addr[23:N] includes bit N (MSB of index) in the tag,
+// which halves the visible address range.  Always use cpu_addr[23:N+1].
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Work RAM: 0x100000–0x10FFFF  (64KB = 32K words, 15-bit index)
-//   word base 0x080000; top 8 bits from [23:15] == 8'h10
+// Program ROM: 0x000000–0x07FFFF  (512KB = 256K words, 18-bit index)
+//   word base 0; tag [23:19] == 5'b0
+logic prog_rom_cs;
+assign prog_rom_cs = (cpu_addr[23:19] == 5'b0) && !cpu_as_n;
+
+// Work RAM: parameterised base and size.
+//   Default (Superman): 0x100000–0x10FFFF (64KB = 32K words, WRAM_ABITS=15, WRAM_BASE=23'h080000)
+//   Gigandes:           0xF00000–0xF03FFF (16KB =  8K words, WRAM_ABITS=13, WRAM_BASE=23'h780000)
+//   Tag compare: cpu_addr[23:WRAM_ABITS+1] == WRAM_BASE[23:WRAM_ABITS+1]
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:15] == 9'h010) && !cpu_as_n;
+assign wram_cs = (cpu_addr[23:WRAM_ABITS+1] == WRAM_BASE[23:WRAM_ABITS+1]) && !cpu_as_n;
 
 // Palette RAM: 0xB00000–0xB00FFF  (4KB = 2048 × 16-bit, 11-bit index)
-//   word base 0x580000; top 12 bits from [23:11] == 12'hB00
+//   word base 0x580000; tag [23:12] == 12'hB00
 logic pal_cs;
-assign pal_cs  = (cpu_addr[23:11] == 13'hB00) && !cpu_as_n;
+assign pal_cs  = (cpu_addr[23:12] == 12'hB00) && !cpu_as_n;
 
 // Sprite Y RAM: 0xD00000–0xD005FF  (768 bytes = 384 × 16-bit, 9-bit index)
-//   word base 0x680000; top 14 bits from [23:9] == 14'h3400, then sub-range check
+//   word base 0x680000; tag [23:10] == 14'h3400, then sub-range check
 logic yram_cs;
-assign yram_cs = (cpu_addr[23:9] == 15'h3400) && !cpu_as_n
+assign yram_cs = (cpu_addr[23:10] == 14'h3400) && !cpu_as_n
                  && (cpu_addr[9:1] < 9'h180);  // 0x180 word entries (0x300 bytes / 2)
 
 // Sprite ctrl: 0xD00600–0xD00607  (4 × 16-bit registers, 2-bit index)
-//   word base 0x680300; [23:2] = 22 bits == 22'h1A00C0
+//   word base 0x680300; tag [23:3] == 21'h1A00C0
 logic ctrl_cs;
-assign ctrl_cs = (cpu_addr[23:2] == 22'h1A00C0) && !cpu_as_n;
+assign ctrl_cs = (cpu_addr[23:3] == 21'h1A00C0) && !cpu_as_n;
 
 // Sprite code RAM: 0xE00000–0xE03FFF  (16KB = 8K words, 13-bit index)
-//   word base 0x700000; top 10 bits from [23:13] == 10'h380
+//   word base 0x700000; tag [23:14] == 10'h380
 logic cram_cs;
-assign cram_cs = (cpu_addr[23:13] == 11'h380) && !cpu_as_n;
+assign cram_cs = (cpu_addr[23:14] == 10'h380) && !cpu_as_n;
 
 // I/O ports: 0x500000–0x50000F  (8 × 16-bit words, 3-bit index)
-//   word base 0x280000; [23:3] = 21 bits == 21'h50000
+//   word base 0x280000; tag [23:4] == 20'h50000
 logic io_cs;
-assign io_cs   = (cpu_addr[23:3] == 21'h50000) && !cpu_as_n;
+assign io_cs   = (cpu_addr[23:4] == 20'h50000) && !cpu_as_n;
 
 // Sound command: 0x780000–0x780001  (1 × 16-bit, write-only from 68000)
 logic snd_cmd_cs;
@@ -605,12 +620,35 @@ assign imm_cs = wram_cs | pal_cs | yram_cs | ctrl_cs | cram_cs
 // Combinational pulse: SDRAM ack arrives this cycle while request is pending.
 assign prog_dtack_now = prog_rom_cs && prog_req_pending && (sdr_req == sdr_ack);
 
+// Open-bus DTACK: fire after 2 cycles for any unmapped address (prevents CPU hang).
+// This covers watchdog (0x400000, 0x600000), unused I/O, etc.
+logic any_cs;
+assign any_cs = prog_rom_cs | wram_cs | pal_cs | yram_cs | ctrl_cs | cram_cs
+              | io_cs | snd_cmd_cs | snd_ack_cs;
+logic open_bus_dtack;
+logic open_bus_r;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        open_bus_r     <= 1'b0;
+        open_bus_dtack <= 1'b0;
+    end else begin
+        open_bus_dtack <= 1'b0;
+        if (!cpu_as_n && !any_cs) begin
+            // Bus cycle for unmapped address: fire DTACK after 1 wait state
+            open_bus_r <= !open_bus_r ? 1'b1 : 1'b0;
+            if (open_bus_r) open_bus_dtack <= 1'b1;
+        end else begin
+            open_bus_r <= 1'b0;
+        end
+    end
+end
+
 // Hold latch: set by any source firing, cleared when AS_n deasserts.
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n)
         dtack_r <= 1'b0;
     else
-        dtack_r <= !cpu_as_n && (dtack_r | imm_cs | prog_dtack_now);
+        dtack_r <= !cpu_as_n && (dtack_r | imm_cs | prog_dtack_now | open_bus_dtack);
 end
 
 assign cpu_dtack_n = cpu_as_n       ? 1'b1 :
@@ -643,8 +681,9 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     end
 end
 
-// IPL5: active-low encoded = ~3'd5 = 3'b010
-assign cpu_ipl_n = ipl_active ? ~3'd5 : 3'b111;
+// IPL6: active-low encoded = ~3'd6 = 3'b001
+// Gigandes VBlank interrupt: level 6 autovector (vec[0x78] = 0x5B8).
+assign cpu_ipl_n = ipl_active ? ~3'd6 : 3'b111;
 
 // =============================================================================
 // Program ROM SDRAM Bridge
