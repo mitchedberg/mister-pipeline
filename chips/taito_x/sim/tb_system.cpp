@@ -248,9 +248,20 @@ int main(int argc, char** argv) {
 
             // ── SDRAM channels (tick every rising edge) ───────────────────────
             {
+                static uint8_t prev_sdr_req = 0;
+                static int sdr_tick_count = 0;
+                bool req_changed = (top->sdr_req != prev_sdr_req);
+                prev_sdr_req = top->sdr_req;
                 auto r = sdr_ch.tick(top->sdr_req, (uint32_t)top->sdr_addr);
                 top->sdr_data = r.data;
                 top->sdr_ack  = r.ack;
+                if (req_changed && sdr_tick_count < 20) {
+                    fprintf(stderr, "  SDR tick#%d @iter=%lu: req=%d addr=0x%06X -> data=0x%04X ack=%d\n",
+                            sdr_tick_count, (unsigned long)iter,
+                            (int)top->sdr_req, (unsigned)top->sdr_addr,
+                            (unsigned)r.data, (int)r.ack);
+                    sdr_tick_count++;
+                }
             }
             {
                 auto r = z80_rom_ch.tick(top->z80_rom_req, (uint32_t)top->z80_rom_addr);
@@ -276,9 +287,9 @@ int main(int argc, char** argv) {
                     bus_cycles_c++;
                 }
 
-                // Log first 60 bus cycles
+                // Log first 200 bus cycles
                 bool log_this = (!asn_c && prev_asn_c && iter > RESET_ITERS) &&
-                    (bus_cycles_c < 60);
+                    (bus_cycles_c < 200);
                 if (log_this) {
                     fprintf(stderr, "  [%6lu|bc%d] ASn=0 RW=%d addr=%06X dtack_n=%d dout=%04X\n",
                             (unsigned long)iter, bus_cycles_c, (int)rwn_c, addr_c,
@@ -315,6 +326,31 @@ int main(int argc, char** argv) {
                     halted_reported_c = true;
                     fprintf(stderr, "\n*** CPU HALTED at iter %lu (bus_cycles=%d) ***\n",
                             (unsigned long)iter, bus_cycles_c);
+                }
+
+                // Stall detection: no ASn activity for 500K iters
+                static uint64_t last_bus_iter = 0;
+                static bool stall_reported = false;
+                if (!asn_c) last_bus_iter = iter;
+                if (iter > RESET_ITERS + 500000 && bus_cycles_c > 0 &&
+                    (iter - last_bus_iter) > 500000 && !stall_reported) {
+                    stall_reported = true;
+                    fprintf(stderr, "\n*** CPU STALL at iter %lu bc=%d last_bus=%lu ***\n",
+                            (unsigned long)iter, bus_cycles_c, (unsigned long)last_bus_iter);
+                    fprintf(stderr, "    ASn=%d RW=%d addr=%06X dtack_n=%d halted_n=%d\n",
+                            asn_c, rwn_c, addr_c, (int)top->dbg_cpu_dtack_n,
+                            (int)top->dbg_cpu_halted_n);
+                }
+
+                // After bc18, trace DTACK state for 100 iters (debug watchdog write)
+                static bool dtack_trace = false;
+                static int dtack_trace_count = 0;
+                if (bus_cycles_c >= 19 && !dtack_trace) dtack_trace = true;
+                if (dtack_trace && dtack_trace_count < 40 && !asn_c) {
+                    fprintf(stderr, "  DTACK-trace @%lu: ASn=%d dtack_n=%d addr=%06X RW=%d halted=%d\n",
+                            (unsigned long)iter, asn_c, (int)top->dbg_cpu_dtack_n,
+                            addr_c, rwn_c, (int)top->dbg_cpu_halted_n);
+                    dtack_trace_count++;
                 }
 
                 prev_asn_c = asn_c;

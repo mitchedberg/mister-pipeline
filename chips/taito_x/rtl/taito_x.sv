@@ -178,21 +178,21 @@ localparam int VS_START   = 244;
 localparam int VS_END     = 247;
 
 logic [8:0] hpos;   // 0..511
-logic [7:0] vpos;   // 0..261
+logic [8:0] vpos;   // 0..261 (needs 9 bits: V_TOTAL=262 > 255)
 logic        vblank_r;
 logic        vblank_rise;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         hpos <= 9'd0;
-        vpos <= 8'd0;
+        vpos <= 9'd0;
     end else if (clk_pix) begin
         if (hpos == 9'(H_TOTAL - 1)) begin
             hpos <= 9'd0;
-            if (vpos == 8'(V_TOTAL - 1))
-                vpos <= 8'd0;
+            if (vpos == 9'(V_TOTAL - 1))
+                vpos <= 9'd0;
             else
-                vpos <= vpos + 8'd1;
+                vpos <= vpos + 9'd1;
         end else begin
             hpos <= hpos + 9'd1;
         end
@@ -200,9 +200,9 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
 end
 
 assign hblank  = (hpos >= 9'(H_VISIBLE));
-assign vblank  = (vpos >= 8'(V_VISIBLE));
+assign vblank  = (vpos >= 9'(V_VISIBLE));
 assign hsync_n = ~((hpos >= 9'(HS_START)) && (hpos < 9'(HS_END)));
-assign vsync_n = ~((vpos >= 8'(VS_START)) && (vpos < 8'(VS_END)));
+assign vsync_n = ~((vpos >= 9'(VS_START)) && (vpos < 9'(VS_END)));
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) vblank_r <= 1'b0;
@@ -219,10 +219,11 @@ assign vblank_rise = vblank & ~vblank_r;
 logic prog_rom_cs;
 assign prog_rom_cs = (cpu_addr[23:18] == 6'b0) && !cpu_as_n;
 
-// Work RAM: 0x100000–0x10FFFF  (64KB = 32K words, 15-bit index)
-//   word base 0x080000; top 8 bits from [23:15] == 8'h10
+// Work RAM: parameterised base and size (WRAM_BASE, WRAM_ABITS).
+//   Superman: byte 0x100000 (word 0x080000), 64KB, WRAM_ABITS=15
+//   Gigandes: byte 0xF00000 (word 0x780000), 16KB, WRAM_ABITS=13
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:15] == 9'h010) && !cpu_as_n;
+assign wram_cs = (cpu_addr[23:15] == WRAM_BASE[22:14]) && !cpu_as_n;
 
 // Palette RAM: 0xB00000–0xB00FFF  (4KB = 2048 × 16-bit, 11-bit index)
 //   word base 0x580000; top 12 bits from [23:11] == 12'hB00
@@ -602,6 +603,14 @@ logic imm_cs;
 assign imm_cs = wram_cs | pal_cs | yram_cs | ctrl_cs | cram_cs
               | io_cs | snd_cmd_cs | snd_ack_cs;
 
+// Open-bus DTACK: any active bus cycle with no known chip-select → 1-cycle DTACK.
+// Prevents CPU hang on unmapped accesses (watchdog, sound bank reg, etc.)
+logic any_cs;
+logic open_bus_cs;
+assign any_cs      = prog_rom_cs | wram_cs | pal_cs | yram_cs | ctrl_cs | cram_cs
+                   | io_cs | snd_cmd_cs | snd_ack_cs;
+assign open_bus_cs = !cpu_as_n && !any_cs;
+
 // Combinational pulse: SDRAM ack arrives this cycle while request is pending.
 assign prog_dtack_now = prog_rom_cs && prog_req_pending && (sdr_req == sdr_ack);
 
@@ -610,7 +619,7 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n)
         dtack_r <= 1'b0;
     else
-        dtack_r <= !cpu_as_n && (dtack_r | imm_cs | prog_dtack_now);
+        dtack_r <= !cpu_as_n && (dtack_r | imm_cs | prog_dtack_now | open_bus_cs);
 end
 
 assign cpu_dtack_n = cpu_as_n       ? 1'b1 :
@@ -643,8 +652,9 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     end
 end
 
-// IPL5: active-low encoded = ~3'd5 = 3'b010
-assign cpu_ipl_n = ipl_active ? ~3'd5 : 3'b111;
+// IPL2: active-low encoded = ~3'd2 = 3'b101 (Gigandes uses level 2)
+// Superman uses IPL6 (~3'd6 = 3'b001); this can be made a parameter if needed.
+assign cpu_ipl_n = ipl_active ? ~3'd2 : 3'b111;
 
 // =============================================================================
 // Program ROM SDRAM Bridge

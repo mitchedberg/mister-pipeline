@@ -176,52 +176,66 @@ def main():
         print(f"Extracting Gigandes ROMs from {zip_path}...")
         _tmpdir = tempfile.mkdtemp(prefix='gigandes_sim_')
 
-        # Gigandes (gigandes.zip) ROM file layout from MAME gigandes driver.
-        # CPU ROMs are two-file interleaved (even/odd bytes of the 16-bit bus).
-        # GFX ROM may consist of multiple files concatenated.
-        # Adjust filenames below to match your local MAME ROM set.
-        GIGANDES_FILES = {
-            'prog_even': ('b62_10.ic64',),   # 68000 program ROM, even bytes (D15:D8)
-            'prog_odd':  ('b62_08.ic48',),   # 68000 program ROM, odd bytes  (D7:D0)
-            'z80':       ('b62_01.ic29',),   # Z80 sound ROM (32KB)
-            # GFX ROMs: X1-001A sprite data — concatenate in order
-            'gfx':       ('b62_02.ic1', 'b62_03.ic2', 'b62_04.ic3', 'b62_05.ic4'),
-        }
+        # Gigandes (gigandes.zip) ROM file layout from MAME taitox.cpp.
+        # CPU: 4 × 128KB files, ROM_LOAD16_BYTE interleaved in two pairs.
+        #   Pair 0 (0x00000): east_1.10a (even/D15:D8) + east_2.8a (odd/D7:D0)
+        #   Pair 1 (0x40000): east_3.5a  (even/D15:D8) + east_4.3a (odd/D7:D0)
+        # GFX: 4 × 512KB files, ROM_LOAD64_WORD interleaved for X1-001A.
+        # Z80: east_5.17d (64KB).
+        GIGANDES_CPU_PAIRS = [
+            ('east_1.10a', 'east_3.5a'),   # pair 0: 0x000000-0x03FFFF (FBNeo ROM[0]+ROM[1])
+            ('east_2.8a',  'east_4.3a'),   # pair 1: 0x040000-0x07FFFF (FBNeo ROM[2]+ROM[3])
+        ]
+        GIGANDES_Z80 = 'east_5.17d'
+        # GFX ROM order from MAME ROM_LOAD64_WORD offsets (0,2,4,6):
+        GIGANDES_GFX = ['east_8.3f', 'east_7.3h', 'east_6.3k', 'east_9.3j']
+
+        ALL_FILES = []
+        for even, odd in GIGANDES_CPU_PAIRS:
+            ALL_FILES.extend([even, odd])
+        ALL_FILES.append(GIGANDES_Z80)
+        ALL_FILES.extend(GIGANDES_GFX)
 
         with zipfile.ZipFile(zip_path, 'r') as zf:
             names_in_zip = zf.namelist()
-            # Extract all known ROM files
-            for slot, files in GIGANDES_FILES.items():
-                for fname in files:
-                    if fname in names_in_zip:
-                        zf.extract(fname, _tmpdir)
-                        print(f"  extracted {fname}")
-                    else:
-                        print(f"  WARN: {fname} not found in ZIP")
+            for fname in ALL_FILES:
+                if fname in names_in_zip:
+                    zf.extract(fname, _tmpdir)
+                    print(f"  extracted {fname}")
+                else:
+                    print(f"  WARN: {fname} not found in ZIP")
 
-        # Interleave CPU ROMs: even (D15:D8) and odd (D7:D0) into one binary
-        even_path = os.path.join(_tmpdir, GIGANDES_FILES['prog_even'][0])
-        odd_path  = os.path.join(_tmpdir, GIGANDES_FILES['prog_odd'][0])
+        # Interleave CPU ROMs: two pairs, each even+odd → 256KB, total 512KB
         prog_path = os.path.join(_tmpdir, 'gigandes_prog.bin')
-        if os.path.exists(even_path) and os.path.exists(odd_path):
-            with open(even_path, 'rb') as fe, open(odd_path, 'rb') as fo:
-                even_data = fe.read()
-                odd_data  = fo.read()
-            interleaved = bytearray()
-            for i in range(min(len(even_data), len(odd_data))):
-                interleaved.append(even_data[i])  # D15:D8
-                interleaved.append(odd_data[i])   # D7:D0
+        prog_data = bytearray()
+        prog_ok = True
+        for even_name, odd_name in GIGANDES_CPU_PAIRS:
+            even_p = os.path.join(_tmpdir, even_name)
+            odd_p  = os.path.join(_tmpdir, odd_name)
+            if os.path.exists(even_p) and os.path.exists(odd_p):
+                with open(even_p, 'rb') as fe, open(odd_p, 'rb') as fo:
+                    even_data = fe.read()
+                    odd_data  = fo.read()
+                n = min(len(even_data), len(odd_data))
+                for i in range(n):
+                    prog_data.append(even_data[i])  # D15:D8
+                    prog_data.append(odd_data[i])    # D7:D0
+                print(f"  interleaved {even_name}+{odd_name}: {2*n} bytes")
+            else:
+                print(f"  WARN: missing CPU ROM pair ({even_name}, {odd_name})")
+                prog_ok = False
+        if prog_ok and prog_data:
             with open(prog_path, 'wb') as fp:
-                fp.write(interleaved)
-            print(f"  CPU ROM interleaved: {len(interleaved)} bytes -> {prog_path}")
+                fp.write(prog_data)
+            print(f"  CPU ROM: {len(prog_data)} bytes -> {prog_path}")
         else:
             prog_path = None
             print("  WARN: CPU ROMs not found for interleaving")
 
-        # Concatenate GFX ROMs in order
+        # Concatenate GFX ROMs in MAME ROM_LOAD64_WORD order
         gfx_path = os.path.join(_tmpdir, 'gigandes_gfx.bin')
         gfx_parts = []
-        for fname in GIGANDES_FILES['gfx']:
+        for fname in GIGANDES_GFX:
             p = os.path.join(_tmpdir, fname)
             if os.path.exists(p):
                 gfx_parts.append(p)
@@ -236,7 +250,7 @@ def main():
             print("  WARN: GFX ROM files not found")
 
         # Z80 sound ROM
-        z80_path = os.path.join(_tmpdir, GIGANDES_FILES['z80'][0])
+        z80_path = os.path.join(_tmpdir, GIGANDES_Z80)
         if not os.path.exists(z80_path):
             z80_path = None
 

@@ -177,8 +177,8 @@ def extract_nastar_zip(zip_path, tmpdir):
     print(f"Extracting Nastar ROMs from {zip_path}...")
 
     NASTAR_FILES = [
-        'b81-08.50', 'b81-13.31',   # CPU pair 0 (even/odd)
-        'b81-10.49', 'b81-09.30',   # CPU pair 1 (even/odd)
+        'b81-08.50', 'b81-13.31',   # CPU pair 0 (even/odd, FBNeo ROM[0]+ROM[1])
+        'b81-10.49', 'b81-09.30',   # CPU pair 1 (even/odd, FBNeo ROM[2]+ROM[3])
         'b81-11.37',                  # Z80 audio
         'b81-03.14', 'b81-04.15',   # GFX low/high
         'b81-02.2',                   # ADPCM-A
@@ -200,8 +200,8 @@ def extract_nastar_zip(zip_path, tmpdir):
     # Each pair: even byte (D[15:8]) interleaved with odd byte (D[7:0])
     prog_path = os.path.join(tmpdir, 'nastar_prog.bin')
     pairs = [
-        ('b81-08.50', 'b81-13.31'),   # pair 0: 0x000000-0x03FFFF
-        ('b81-10.49', 'b81-09.30'),   # pair 1: 0x040000-0x07FFFF
+        ('b81-08.50', 'b81-13.31'),   # pair 0: 0x000000-0x03FFFF (FBNeo ROM[0]+ROM[1])
+        ('b81-10.49', 'b81-09.30'),   # pair 1: 0x040000-0x07FFFF (FBNeo ROM[2]+ROM[3])
     ]
     prog_data = bytearray()
     prog_ok = True
