@@ -215,10 +215,36 @@ int main(int argc, char** argv) {
     int      pal_wr_count      = 0;
     int      wram_wr_count     = 0;
 
+    // No-bus-cycle timeout: detect if CPU stops executing
+    uint64_t last_bc_change_iter = 0;
+    int      last_bc_snapshot    = 0;
+    int      no_bc_reports       = 0;
+
     // Stall detection: track repeated reads to the same address
     uint32_t last_read_addr    = 0xFFFFFFFF;
     int      last_read_repeat  = 0;
     int      stall_reported    = 0;
+
+    // Track last ROM fetch for progress snapshots
+    uint32_t last_rom_pc       = 0;
+    uint32_t snapshot_rom_pc[20] = {};
+    int      snapshot_count    = 0;
+
+    // Milestone tracking: first time CPU fetches from key addresses
+    bool milestone_273E0 = false;  // game loop entry
+    bool milestone_274A2 = false;  // JSR $258 VBlank sync
+    bool milestone_27E   = false;  // inside VBlank sync poll loop
+    bool milestone_1002CE_wr = false;  // IRQ2 handler sets VBlank flag
+
+    // Pre-init loop tracing: log first N entries into range 0x29A-0x2C5
+    // to see BTST #2 result and BEQ/JMP outcome
+    int preinit_trace_count = 0;  // how many bus cycles in 0x29A-0x2C5 logged
+    static constexpr int PREINIT_TRACE_MAX = 300;
+
+    // Count how many times BEQ (0x2BC) and JMP (0x2BE) are fetched
+    int preinit_beq_count = 0;
+    int preinit_jmp_count = 0;
+    int preinit_btst_io_count = 0;  // reads from $700001 while near pre-init loop
 
     // Reset duration
     static constexpr int RESET_ITERS = 20;
@@ -239,7 +265,7 @@ int main(int argc, char** argv) {
     // ========================================================================
     fprintf(stderr, "Running RTL BUS eval loop (bypass_en=0)...\n");
 
-    for (iter = 0; !done && iter < (uint64_t)n_frames * 800000ULL; iter++) {
+    for (iter = 0; !done && iter < (uint64_t)n_frames * 2000000ULL; iter++) {
         // Toggle clock
         top->clk_sys = top->clk_sys ^ 1;
 
@@ -324,9 +350,9 @@ int main(int argc, char** argv) {
                 uint8_t  rwn_c  = top->dbg_cpu_rw;
                 uint32_t addr_c = ((uint32_t)top->dbg_cpu_addr << 1) & 0xFFFFFF;
 
-                // Cycle-level trace: log EVERY clock when AS_n=0 near the stall
-                // to see what happens to din/dout/dtack cycle by cycle
-                if (!asn_c && iter > RESET_ITERS && bus_cycles_c >= 114760 && bus_cycles_c <= 114875) {
+                // Cycle-level trace: log EVERY clock when AS_n=0 during first func_2799E
+                // iteration to see what the $700016 read actually delivers
+                if (!asn_c && iter > RESET_ITERS && bus_cycles_c >= 590255 && bus_cycles_c <= 590275) {
                     fprintf(stderr, "  [iter%7" PRIu64 "|bc%d] ASn=%d RW=%d addr=%06X dtack_n=%d din=%04X dout=%04X uds=%d lds=%d\n",
                             iter, bus_cycles_c, (int)asn_c, (int)rwn_c, addr_c,
                             (int)top->dbg_cpu_dtack_n,
@@ -348,23 +374,94 @@ int main(int argc, char** argv) {
                                 (unsigned)(top->dbg_cpu_dout & 0xFFFF));
                     }
 
-                    // Log bus cycles near the 114K stall point
-                    if (bus_cycles_c >= 114700) {
-                        fprintf(stderr, "  [bc%d] RW=%d addr=%06X dtack_n=%d din=%04X dout=%04X\n",
-                                bus_cycles_c, (int)rwn_c, addr_c,
-                                (int)top->dbg_cpu_dtack_n,
+                    // Track ROM PC (reads from program ROM = instruction fetches)
+                    if (rwn_c && addr_c < 0x080000) {
+                        last_rom_pc = addr_c;
+
+                        // Milestone: game loop entry
+                        if (addr_c == 0x0273E0 && !milestone_273E0) {
+                            milestone_273E0 = true;
+                            fprintf(stderr, "  *** MILESTONE: CPU reached game loop 0x273E0 at bc=%d frame=%d ***\n",
+                                    bus_cycles_c, frame_num);
+                        }
+                        // Milestone: VBlank sync call
+                        if (addr_c == 0x0274A2 && !milestone_274A2) {
+                            milestone_274A2 = true;
+                            fprintf(stderr, "  *** MILESTONE: CPU reached JSR $258 (VBlank sync) 0x274A2 at bc=%d frame=%d ***\n",
+                                    bus_cycles_c, frame_num);
+                        }
+                        // Milestone: inside VBlank sync poll loop
+                        if (addr_c == 0x00027E && !milestone_27E) {
+                            milestone_27E = true;
+                            fprintf(stderr, "  *** MILESTONE: CPU entered VBlank poll loop 0x27E at bc=%d frame=%d ***\n",
+                                    bus_cycles_c, frame_num);
+                        }
+                    }
+                    // Milestone: IRQ2 handler writes VBlank flag
+                    if (!rwn_c && addr_c == 0x1002CE && !milestone_1002CE_wr) {
+                        milestone_1002CE_wr = true;
+                        fprintf(stderr, "  *** MILESTONE: IRQ2 handler wrote VBlank flag 0x1002CE at bc=%d frame=%d ***\n",
+                                bus_cycles_c, frame_num);
+                    }
+
+                    // Pre-init loop tracing: log every bus cycle in 0x29A-0x2C5
+                    // to observe BTST result, BEQ vs JMP outcome
+                    if (addr_c >= 0x00029A && addr_c <= 0x0002C5) {
+                        if (preinit_trace_count < PREINIT_TRACE_MAX) {
+                            preinit_trace_count++;
+                            fprintf(stderr, "  [preinit bc%d fr%d] RW=%d addr=%06X din=%04X ipl=%d\n",
+                                    bus_cycles_c, frame_num, (int)rwn_c, addr_c,
+                                    (unsigned)(top->dbg_cpu_din & 0xFFFF),
+                                    (int)(top->dbg_cpu_dtack_n));
+                        }
+                        // Count BEQ (0x2BC) and JMP (0x2BE) fetches
+                        if (rwn_c && addr_c == 0x0002BC) {
+                            preinit_beq_count++;
+                            if (preinit_beq_count <= 20)
+                                fprintf(stderr, "  [BEQ@2BC #%d bc=%d fr=%d]\n",
+                                        preinit_beq_count, bus_cycles_c, frame_num);
+                        }
+                        if (rwn_c && addr_c == 0x0002BE) {
+                            preinit_jmp_count++;
+                            if (preinit_jmp_count <= 20)
+                                fprintf(stderr, "  [JMP@2BE #%d bc=%d fr=%d] *** GAME LOOP PATH ***\n",
+                                        preinit_jmp_count, bus_cycles_c, frame_num);
+                        }
+                    }
+                    // Track reads from $700016/$700017 ($38000B → io_cs case 5)
+                    // Also log reads from $700000/$700001 (BTST #2 target)
+                    if (rwn_c && (addr_c == 0x700000 || addr_c == 0x70000A ||
+                                  addr_c == 0x70000B || addr_c == 0x70000C ||
+                                  (addr_c >= 0x700014 && addr_c <= 0x700018))) {
+                        preinit_btst_io_count++;
+                        if (preinit_btst_io_count <= 60)
+                            fprintf(stderr, "  [IO read addr=%06X #%d bc=%d fr=%d] din=%04X uds=%d lds=%d io_cs_bits[3:1]=%d\n",
+                                    addr_c, preinit_btst_io_count, bus_cycles_c, frame_num,
+                                    (unsigned)(top->dbg_cpu_din & 0xFFFF),
+                                    (int)top->dbg_cpu_uds_n,
+                                    (int)top->dbg_cpu_lds_n,
+                                    (addr_c >> 1) & 7);
+                    }
+                    // Log ALL bus cycles after VBlank poll entry (bc>=640000)
+                    // Wide window: now that GP9001_BASE is fixed, CPU should advance further
+                    if (bus_cycles_c >= 640000 && bus_cycles_c <= 680000) {
+                        fprintf(stderr, "  [bc%d fr%d] RW=%d addr=%06X din=%04X uds=%d lds=%d dtack=%d\n",
+                                bus_cycles_c, frame_num, (int)rwn_c, addr_c,
                                 (unsigned)(top->dbg_cpu_din & 0xFFFF),
-                                (unsigned)(top->dbg_cpu_dout & 0xFFFF));
+                                (int)top->dbg_cpu_uds_n,
+                                (int)top->dbg_cpu_lds_n,
+                                (int)top->dbg_cpu_dtack_n);
                     }
 
                     // Track repeated reads to same address (polling loop detection)
                     if (rwn_c && addr_c == last_read_addr) {
                         last_read_repeat++;
-                        if (last_read_repeat == 100 && stall_reported < 5) {
+                        if (last_read_repeat == 200 && stall_reported < 10) {
                             stall_reported++;
-                            fprintf(stderr, "\n*** STALL DETECTED at bc=%d: addr=%06X read 100+ times, dout=%04X ***\n",
-                                    bus_cycles_c, addr_c,
-                                    (unsigned)(top->dbg_cpu_dout & 0xFFFF));
+                            fprintf(stderr, "\n*** STALL DETECTED at bc=%d frame=%d: addr=%06X read 200+ times, dout=%04X (last_rom_pc=%06X) ***\n",
+                                    bus_cycles_c, frame_num, addr_c,
+                                    (unsigned)(top->dbg_cpu_dout & 0xFFFF),
+                                    last_rom_pc);
                         }
                     } else {
                         last_read_addr   = addr_c;
@@ -391,12 +488,16 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                // Periodic status summary
-                if (bus_cycles_c > 0 && (bus_cycles_c % 10000) == 0 &&
+                // Periodic status summary every 20K bus cycles
+                if (bus_cycles_c > 0 && (bus_cycles_c % 20000) == 0 &&
                     !prev_asn_c && asn_c) {
-                    fprintf(stderr, "  [%dK bus] pal_wr=%d wram_wr=%d frame=%d\n",
-                            bus_cycles_c / 1000, pal_wr_count, wram_wr_count,
-                            frame_num);
+                    fprintf(stderr, "  [%dK bus] last_rom_pc=%06X pal_wr=%d wram_wr=%d frame=%d [273E0:%s 274A2:%s 27E:%s vbl_wr:%s]\n",
+                            bus_cycles_c / 1000, last_rom_pc, pal_wr_count, wram_wr_count,
+                            frame_num,
+                            milestone_273E0 ? "Y" : "N",
+                            milestone_274A2 ? "Y" : "N",
+                            milestone_27E   ? "Y" : "N",
+                            milestone_1002CE_wr ? "Y" : "N");
                 }
 
                 // Detect CPU halt
@@ -460,6 +561,26 @@ int main(int argc, char** argv) {
             fprintf(stderr, "  iter %" PRIu64 "  bus_cycles=%d  frame=%d\n",
                     iter, bus_cycles_c, frame_num);
         }
+
+        // Detect if CPU stops executing bus cycles for 200K iters
+        if (bus_cycles_c != last_bc_snapshot) {
+            last_bc_snapshot   = bus_cycles_c;
+            last_bc_change_iter = iter;
+            no_bc_reports      = 0;
+        } else if (bus_cycles_c > 0 && (iter - last_bc_change_iter) >= 200000) {
+            if (no_bc_reports < 3) {
+                no_bc_reports++;
+                uint32_t cur_addr = ((uint32_t)top->dbg_cpu_addr << 1) & 0xFFFFFF;
+                uint8_t  cur_asn  = top->dbg_cpu_as_n;
+                uint8_t  cur_dtack = top->dbg_cpu_dtack_n;
+                fprintf(stderr, "\n*** CPU NO-BC-CHANGE: bc=%d frozen for %" PRIu64 " iters"
+                        " (last change at iter %" PRIu64 "); current addr=%06X ASn=%d DTACKn=%d halted_n=%d ***\n",
+                        bus_cycles_c, iter - last_bc_change_iter, last_bc_change_iter,
+                        cur_addr, (int)cur_asn, (int)cur_dtack,
+                        (int)top->dbg_cpu_halted_n);
+                last_bc_change_iter = iter;  // reset so we don't spam
+            }
+        }
     }
 
     // ── Final summary ────────────────────────────────────────────────────────
@@ -477,6 +598,12 @@ int main(int argc, char** argv) {
         fprintf(stderr, "CPU BOOT: SUCCESS (>= 6 bus cycles)\n");
     else
         fprintf(stderr, "CPU BOOT: FAIL (only %d bus cycles)\n", bus_cycles_c);
+
+    // Pre-init loop stats
+    fprintf(stderr, "Pre-init loop stats:\n");
+    fprintf(stderr, "  BEQ@0x2BC fetched: %d times\n", preinit_beq_count);
+    fprintf(stderr, "  JMP@0x2BE fetched: %d times (game loop path)\n", preinit_jmp_count);
+    fprintf(stderr, "  $700001 reads:     %d times\n", preinit_btst_io_count);
 
     return 0;
 }

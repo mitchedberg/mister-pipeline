@@ -181,13 +181,13 @@ assign dbg_cpu_halted_n = cpu_halted_n_raw;
 
 // =============================================================================
 // toaplan_v2 — full system (GP9001, palette, work RAM, Z80, audio, I/O)
-// Truxton II address map overrides:
-//   GP9001_BASE: byte 0x200000 >> 1 = word 0x100000  (Batsugun: 0x400000)
-//   PALRAM_BASE: byte 0x300000 >> 1 = word 0x180000  (Batsugun: 0x500000)
+// Truxton II address map:
+//   GP9001_BASE: byte 0x400000 >> 1 = word 0x200000  (default, same as Batsugun)
+//   PALRAM_BASE: byte 0x300000 >> 1 = word 0x180000  (Truxton II: palette at 0x300000)
+// Note: ROM trace confirmed CPU writes GP9001 at 0x400000 and palette at 0x300000.
 // =============================================================================
 toaplan_v2 #(
-    .GP9001_BASE (23'h100000),   // byte 0x200000 >> 1
-    .PALRAM_BASE (23'h180000)    // byte 0x300000 >> 1
+    .PALRAM_BASE (23'h180000)    // byte 0x300000 >> 1 (Truxton II palette address)
 ) u_toaplan (
     .clk_sys            (clk_sys),
     .clk_pix            (clk_pix),
@@ -204,6 +204,7 @@ toaplan_v2 #(
     .cpu_lds_n          (cpu_lds_n),
     .cpu_dtack_n        (cpu_dtack_n),
     .cpu_ipl_n          (cpu_ipl_n),
+    .cpu_inta_n         (inta_n),       // IACK detection from FC pins
 
     // Program ROM
     .prog_rom_addr      (prog_rom_addr),

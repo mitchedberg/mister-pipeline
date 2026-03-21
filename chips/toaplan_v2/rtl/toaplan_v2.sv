@@ -87,6 +87,7 @@ module toaplan_v2 #(
     input  logic        cpu_lds_n,       // lower data strobe (active low)
     output logic        cpu_dtack_n,     // data transfer acknowledge (active low)
     output logic [2:0]  cpu_ipl_n,       // interrupt priority level (active low encoded)
+    input  logic        cpu_inta_n,      // interrupt acknowledge (active low, FC=111 & ASn=0)
 
     // ── Program ROM (from SDRAM) ───────────────────────────────────────────────
     // prog_rom_addr is a WORD address (byte_addr[19:1]).
@@ -235,9 +236,9 @@ assign vblank_rising = vblank_r & ~vblank_prev;
 // =============================================================================
 
 // Program ROM: 0x000000–0x0FFFFF (byte), word 0x000000–0x07FFFF
-//   20-bit window: cpu_addr[19:0] within 1MB
+//   19-bit window: word addr bits [23:19] must all be zero (1MB / 2 = 512K words)
 logic prog_rom_cs;
-assign prog_rom_cs = (cpu_addr[23:20] == 4'b0000) && !cpu_as_n;
+assign prog_rom_cs = (cpu_addr[23:19] == 5'b00000) && !cpu_as_n;
 
 // Work RAM: byte 0x100000–0x10FFFF → word 0x080000–0x087FFF (15-bit)
 logic wram_cs;
@@ -256,37 +257,60 @@ assign palram_cs = (cpu_addr[23:9] == PALRAM_BASE[23:9]) && !cpu_as_n;
 logic io_cs;
 assign io_cs = (cpu_addr[23:11] == IO_BASE[23:11]) && !cpu_as_n;
 
+// DEBUG: trace io_cs and address decode
+`ifndef SYNTHESIS
+// Use a registered wire to hold the byte addr so we can log without 'automatic'
+logic [23:0] io_dbg_byte_addr;
+assign io_dbg_byte_addr = {cpu_addr, 1'b0};
+always_ff @(posedge clk_sys) begin
+    if (!cpu_as_n && io_dbg_byte_addr[23:20] == 4'h7)
+        $display("[IO_ACCESS] cpu_addr=%06x cpu_addr[23:11]=%04x IO_BASE[23:11]=0e00 match=%b io_cs=%b cpu_din=%04x dtack=%b",
+                 io_dbg_byte_addr, io_dbg_byte_addr,
+                 (cpu_addr[23:11] == IO_BASE[23:11]),
+                 io_cs, cpu_din, cpu_dtack_n);
+end
+`endif
+
 // YM2151 (68K-direct): byte 0x600000–0x600001 → word 0x300000
 //   Truxton II drives YM2151 directly from the 68K (no Z80 sound CPU).
-//   The 68K polls a "ready strobe" at 0x600000: the polling sequence is:
-//     loop1: wait until bit 8 = 1  (YM2151 raises READY)
-//     loop2: wait until bit 8 = 0  (YM2151 clears READY after accepting data)
-//   To unblock both loops without a full YM2151 timing model, we implement a
-//   toggle register that flips bit 8 on each read: first read → 1 (exits loop1),
-//   next read → 0 (exits loop2).
+//   Poll loop patterns observed in firmware:
+//     Loop A: BTST #8; BEQ loop — exits when bit 8 = 1 (wait-for-NOT-busy)
+//     Loop B: BTST #8; BNE loop — exits when bit 8 = 0 (wait-for-busy)
+//     Loop C: MOVE.W; BMI; MOVE.W; ADDQ+CMPI.B #0xF1; BCS — exits when byte ≥ 0xF1
+//     Loop D: MOVE.W; BMI; CMPI.B #0xEF; BCC — exits when byte ≥ 0xEF
+//
+//   Stub: fixed low byte = 0xF0 (so +1 = 0xF1 → BCS/BCC exits in 1 pass).
+//   Bit 8 toggles every 256 clocks for BTST#8 BEQ/BNE loops.
 //   The Z80-side jt51 instance is separate and used only for audio output.
 logic ym_cpu_cs;
 assign ym_cpu_cs = (cpu_addr[23:1] == 23'h300000) && !cpu_as_n;
 
-// Toggle flip-flop: alternates bit 8 on each 68K read of 0x600000.
-// Gives loop1 (wait-for-set) and loop2 (wait-for-clear) both an exit path.
-logic ym_cpu_toggle;
-logic ym_cpu_rd_prev;   // detect new read cycle (rising edge of ym_cpu_cs with RW=1)
-
+// Free-running counter: increments every system clock.
+// CPU reads see a cycling byte that covers all wait loop types:
+//
+//   Loop A/B (BTST #8; BEQ/BNE): bit 8 toggles every 256 clocks → exits ≤256 reads
+//   Loop C   (MOVE.W; BMI; MOVE.W; ADDQ #1; CMPI.B #$F1; BCS):
+//              byte cycles 0→255 every 256 clocks; exits when byte >= 0xF0 (+1=0xF1)
+//              consecutive reads ~6 clocks apart → at most ~40 iterations to exit
+//   Loop D   (MOVE.W; BMI; MOVE.W; CMPI.B #0xEF; BCC):
+//              exits when byte < 0xEF; cycles 0→255 → exits in at most ~40 iterations
+//
+//   Loop C and D have CONTRADICTORY requirements for a fixed byte (C needs ≥0xF0,
+//   D needs <0xEF), so the byte MUST cycle. With ctr[7:0] advancing ~6/read, each
+//   inner loop exits within ~40 iterations → total init time ≈ few frames vs. 57+.
+//
+// Returned word layout:
+//   bit 15   = 0           → BMI never taken (not busy)
+//   bits 14:9 = 0
+//   bit 8    = ctr[8]      → toggles every 256 clocks for BTST#8 loops
+//   bits 7:0 = ctr[7:0]    → cycles 0→255 every 256 clocks for CMPI loops
+logic [8:0] ym_free_ctr;
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n) begin
-        ym_cpu_toggle  <= 1'b1;   // initial state: bit 8 = 1 → exits loop1 first
-        ym_cpu_rd_prev <= 1'b0;
-    end else begin
-        // Detect start of a new YM2151 read bus cycle (AS falling with RW=1)
-        ym_cpu_rd_prev <= ym_cpu_cs && cpu_rw;
-        if (ym_cpu_cs && cpu_rw && !ym_cpu_rd_prev)
-            ym_cpu_toggle <= ~ym_cpu_toggle;   // toggle on each new read
-    end
+    if (!reset_n) ym_free_ctr <= '0;
+    else          ym_free_ctr <= ym_free_ctr + 1'b1;
 end
 
-// Status word returned to CPU: bit 8 = toggle, all other bits 0.
-wire [15:0] ym_cpu_dout = {7'b0, ym_cpu_toggle, 8'b0};
+wire [15:0] ym_cpu_dout = {7'b0, ym_free_ctr[8], ym_free_ctr[7:0]};
 
 // =============================================================================
 // GP9001 — Graphics Processor
@@ -681,13 +705,20 @@ end
 // =============================================================================
 // I/O Registers
 // =============================================================================
-// Batsugun I/O map (byte addresses within 0x700000 window, from MAME):
-//   0x700000 — Player 1 joystick + buttons (read)
-//   0x700002 — Player 2 joystick + buttons (read)
-//   0x700004 — Coins + service (read)
-//   0x700006 — DIP switch bank 1 (read)
-//   0x700008 — DIP switch bank 2 (read)
-//   0x70000E — Z80 sound command (write only, captured in sound_cmd above)
+// I/O register decode (byte addresses within 0x700000 window):
+//   0x700000/1 — Player 1 joystick + buttons (read)    cpu_addr[4:1]=0x00
+//   0x700002/3 — Player 2 joystick + buttons (read)    cpu_addr[4:1]=0x01
+//   0x700004/5 — Coins + service (read)                 cpu_addr[4:1]=0x02
+//   0x700006/7 — DIP switch bank 1 (read)              cpu_addr[4:1]=0x03
+//   0x700008/9 — DIP switch bank 2 (read)              cpu_addr[4:1]=0x04
+//   0x70000E/F — Z80 sound command (write only)        cpu_addr[4:1]=0x07
+//
+// Truxton II: EEPROM strobe at 0x700016/17.
+//   cpu_addr[4:1] = 0xB  (bit[4]=1, bits[3:1]=3)
+//   Firmware polls bit 7 of byte at 0x700017, loops while bit 7=1.
+//   Return 0x00 (bit 7=0) immediately so the game can proceed.
+//   NOTE: 0x700006 (DIP SW 1) and 0x700016 (strobe) both have
+//   cpu_addr[3:1]=3; they are distinguished by cpu_addr[4].
 //
 // All registers are byte-wide on the lower byte (D[7:0]).
 // Word reads return the active byte in [7:0], [15:8] = 0xFF.
@@ -696,12 +727,15 @@ logic [7:0] io_dout_byte;
 
 always_comb begin
     io_dout_byte = 8'hFF;   // default: open bus
-    case (cpu_addr[3:1])   // A[3:1] selects register
-        3'h0: io_dout_byte = joystick_p1;
-        3'h1: io_dout_byte = joystick_p2;
-        3'h2: io_dout_byte = {2'b11, service, 1'b1, coin[1], coin[0], 2'b11};
-        3'h3: io_dout_byte = dipsw1;
-        3'h4: io_dout_byte = dipsw2;
+    // Use cpu_addr[4:1] (4 bits) to distinguish registers that alias on [3:1].
+    // 0x700016/17 (cpu_addr[4:1]=4'hB) must return 0x00 (not dipsw1).
+    case (cpu_addr[4:1])
+        4'h0: io_dout_byte = joystick_p1;                          // 0x700000/1
+        4'h1: io_dout_byte = joystick_p2;                          // 0x700002/3
+        4'h2: io_dout_byte = {2'b11, service, 1'b1, coin[1], coin[0], 2'b11}; // 0x700004/5
+        4'h3: io_dout_byte = dipsw1;                               // 0x700006/7
+        4'h4: io_dout_byte = dipsw2;                               // 0x700008/9
+        4'hB: io_dout_byte = 8'h00;  // 0x700016/17: EEPROM strobe — bit7=0 exits poll
         default: io_dout_byte = 8'hFF;
     endcase
 end
@@ -797,49 +831,45 @@ end
 // =============================================================================
 // IRQ2 = VBLANK   → IPL 3'b101 (level 2, active-low encoded: ~2 = 3'b101)
 // IRQ1 = irq_sprite (sprite scan complete from GP9001) → IPL 3'b110 (level 1)
+//
+// NOTE: For Truxton II, only VBlank IRQ (level 2) is wired to the CPU.
+// The sprite scan IRQ fires every frame and has a dummy handler (STOP #$2700)
+// which halts the CPU. Keep ipl_spr_active disabled until a game needs it.
+//
+// Community pattern (jotego, Cave, NeoGeo, va7deo, atrac17):
+//   SET IPL on edge, CLEAR on IACK only. NEVER use a timer.
+//   Timer-based clear races with pswI mask — interrupt expires before
+//   the CPU enables interrupts, so the game never takes the interrupt.
 
 logic ipl_vbl_active;
-logic [15:0] ipl_vbl_timer;
-logic ipl_spr_active;
-logic [15:0] ipl_spr_timer;
+// ipl_spr_active: sprite scan IRQ (IRQ1) — disabled for Truxton II
+// (MAME confirms only VBLANK IRQ is connected to CPU in truxton2 memory map)
+// logic ipl_spr_active;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         ipl_vbl_active <= 1'b0;
-        ipl_vbl_timer  <= 16'b0;
-        ipl_spr_active <= 1'b0;
-        ipl_spr_timer  <= 16'b0;
     end else begin
-        // VBLANK → IRQ2
-        if (vblank_rising) begin
-            ipl_vbl_active <= 1'b1;
-            ipl_vbl_timer  <= 16'hFFFF;
-        end else if (ipl_vbl_active) begin
-            if (ipl_vbl_timer == 16'b0)
-                ipl_vbl_active <= 1'b0;
-            else
-                ipl_vbl_timer <= ipl_vbl_timer - 16'd1;
+        // IACK cycle: CPU acknowledged the interrupt — clear highest-priority active
+        if (!cpu_inta_n) begin
+            ipl_vbl_active <= 1'b0;
         end
 
-        // Sprite scan complete → IRQ1
-        if (gp9001_irq_sprite) begin
-            ipl_spr_active <= 1'b1;
-            ipl_spr_timer  <= 16'hFFFF;
-        end else if (ipl_spr_active) begin
-            if (ipl_spr_timer == 16'b0)
-                ipl_spr_active <= 1'b0;
-            else
-                ipl_spr_timer <= ipl_spr_timer - 16'd1;
-        end
+        // VBLANK rising edge → assert IRQ2
+        if (vblank_rising)   ipl_vbl_active <= 1'b1;
+
+        // Sprite scan complete IRQ1 disabled — Truxton II uses STOP #$2700 for level 1
+        // if (gp9001_irq_sprite) ipl_spr_active <= 1'b1;
     end
 end
 
-// Encode IPL: higher level wins; cpu_ipl_n is active-low encoded
-always_comb begin
-    if (ipl_vbl_active)       cpu_ipl_n = 3'b101;   // ~2 = level 2 VBLANK
-    else if (ipl_spr_active)  cpu_ipl_n = 3'b110;   // ~1 = level 1 sprite
-    else                      cpu_ipl_n = 3'b111;   // no interrupt
+// Encode IPL: only VBlank (level 2) active; sprite IRQ disabled
+reg [2:0] ipl_sync;
+always_ff @(posedge clk_sys) begin
+    if (ipl_vbl_active) ipl_sync <= 3'b101;   // ~2 = level 2 VBLANK
+    else                ipl_sync <= 3'b111;   // no interrupt
 end
+assign cpu_ipl_n = ipl_sync;
 
 // =============================================================================
 // Audio Subsystem — Z80 (T80s) + YM2151 (jt51) + OKI M6295 (jt6295)
