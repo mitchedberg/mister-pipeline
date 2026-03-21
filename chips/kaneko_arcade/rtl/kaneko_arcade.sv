@@ -1104,28 +1104,51 @@ end
 // interrupt stays active until next vblank_falling (end of vblank).
 // This ensures the interrupt persists through the entire init phase.
 
-logic int_vbl_n;  // active-low VBlank interrupt (berlwall level 4)
+// berlwall uses THREE interrupt levels at different scanlines:
+//   Level 3 at scanline 144 (mid-screen timer)
+//   Level 4 at scanline 64  (early-screen update)
+//   Level 5 at scanline 224 (near VBlank — sets game-start flag!)
+// All three are needed for attract mode to work.
+
+logic int3_n, int4_n, int5_n;  // active-low, one per level
+
+// Scanline-based interrupt triggers
+wire at_scanline_64  = (vpos_r == 9'd64)  & clk_pix & (hpos_r == 9'd0);
+wire at_scanline_144 = (vpos_r == 9'd144) & clk_pix & (hpos_r == 9'd0);
+wire at_scanline_224 = (vpos_r == 9'd224) & clk_pix & (hpos_r == 9'd0);
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n)
-        int_vbl_n <= 1'b1;           // inactive (no interrupt)
-    else if (vblank_rising)
-        int_vbl_n <= 1'b0;           // SET on VBlank rising edge
-    // Hold until end of VBlank (falling edge) — guarantees the interrupt
-    // persists through init when pswI=7. When game lowers pswI, the
-    // next VBlank will be acknowledged.
-    else if (!vblank & vblank_prev)   // vblank falling edge
-        int_vbl_n <= 1'b1;           // CLEAR at end of VBlank period
+    if (!reset_n) begin
+        int3_n <= 1'b1;
+        int4_n <= 1'b1;
+        int5_n <= 1'b1;
+    end else begin
+        // Level 3: set at scanline 144, clear at next scanline
+        if (at_scanline_144)         int3_n <= 1'b0;
+        else if (at_scanline_144 + 1'd1) int3_n <= 1'b1; // auto-clear next line
+
+        // Level 4: set at scanline 64, clear at next scanline
+        if (at_scanline_64)          int4_n <= 1'b0;
+        else if (vblank_rising)      int4_n <= 1'b1; // clear at VBlank
+
+        // Level 5: set at scanline 224, clear at VBlank falling
+        if (at_scanline_224)         int5_n <= 1'b0;
+        else if (!vblank_r & vblank_prev) int5_n <= 1'b1; // clear at VBlank fall
+    end
 end
 
-// Fix 2: Register IPL through synchronizer FF
-// berlwall: level 4 = IPL encoding ~4 = 3'b011 (IPL2n=0, IPL1n=1, IPL0n=1)
+// Priority encoder: highest active level wins
+// Level 5 = ~5 = 3'b010, Level 4 = ~4 = 3'b011, Level 3 = ~3 = 3'b100
 reg [2:0] ipl_sync;
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n)
-        ipl_sync <= 3'b111;          // no interrupt
-    else
-        ipl_sync <= int_vbl_n ? 3'b111 : 3'b011;  // level 4 when active
+        ipl_sync <= 3'b111;
+    else begin
+        if      (!int5_n) ipl_sync <= 3'b010;  // level 5 (highest)
+        else if (!int4_n) ipl_sync <= 3'b011;  // level 4
+        else if (!int3_n) ipl_sync <= 3'b100;  // level 3
+        else              ipl_sync <= 3'b111;  // no interrupt
+    end
 end
 
 assign cpu_ipl_n = ipl_sync;
