@@ -88,6 +88,8 @@ module tb_top (
     output logic        dbg_cpu_dtack_n,
     output logic        dbg_cpu_halted_n,  // oHALTEDn from fx68k (low = CPU halted)
     output logic [15:0] dbg_cpu_dout,      // read data FROM kaneko_arcade TO CPU
+    output logic [2:0]  dbg_cpu_ipl_n,     // interrupt priority level (for debug)
+    output logic        dbg_iack,          // 1 during IACK cycle (FC=111, ASn=0)
 
     // ── Bus bypass: C++ testbench drives CPU data/DTACK directly ───────────────
     input  logic        bypass_en,
@@ -133,9 +135,17 @@ logic cpu_reset_n_out;
 // =============================================================================
 logic [15:0] cpu_iEdb_mux;
 logic        cpu_dtack_mux;
+logic        iack_cycle;
 
 assign cpu_iEdb_mux  = bypass_en ? bypass_data    : cpu_read_data;
-assign cpu_dtack_mux = bypass_en ? bypass_dtack_n : cpu_dtack_n;
+
+// Suppress kaneko_arcade DTACK during IACK cycles.
+// During interrupt acknowledge (FC=111, ASn=0), VPA handles the ack.
+// If kaneko_arcade's open-bus DTACK fires on the high IACK address,
+// the CPU would incorrectly treat it as a vectored interrupt.
+assign iack_cycle    = fx_FC2 & fx_FC1 & fx_FC0 & ~cpu_as_n;
+assign cpu_dtack_mux = bypass_en    ? bypass_dtack_n :
+                       iack_cycle   ? 1'b1           : cpu_dtack_n;
 
 fx68k u_cpu (
     .clk        (clk_sys),
@@ -262,6 +272,8 @@ assign dbg_cpu_rw      = cpu_rw;
 assign dbg_cpu_din     = cpu_write_data;  // data FROM CPU (write path)
 assign dbg_cpu_dtack_n = cpu_dtack_n;
 assign dbg_cpu_dout    = cpu_read_data;   // read data path (kaneko_arcade → CPU)
+assign dbg_cpu_ipl_n = cpu_ipl_n;
+assign dbg_iack = iack_cycle;
 // dbg_cpu_halted_n is wired directly from u_cpu above
 
 endmodule

@@ -5,6 +5,62 @@ Any agent can append. Newest entries at top.
 
 ---
 
+## 2026-03-20 — BLOCKER: fx68k never takes interrupts in Verilator
+**Found by:** Agent 2 (sim-batch2)
+**Affects:** ALL cores using fx68k (Kaneko, Taito B, Taito X, NMK, Toaplan V2, Psikyo)
+**Status:** UNRESOLVED — needs investigation
+
+**Symptoms:**
+- IPL signal correctly driven to level 4 (221K samples where IPL != 7)
+- CPU never generates IACK cycle (FC=111, ASn=0) — 0 IACK events
+- Tested with level 4 AND level 6 — same result
+- enPhi1/enPhi2 alternation works for bus cycles (millions executed)
+- VPAn correctly wired for autovector (VPAn = ~&{FC2,FC1,FC0,~ASn})
+- Added IACK DTACK suppression to prevent open-bus interference — no effect
+
+**What was tried:**
+1. Level 4 interrupt (berlwall native) → IACK=0
+2. Level 6 interrupt → IACK=0
+3. Supervisor mode forced (SR=0x201F) → IACK=0
+4. IACK DTACK suppression in tb_top.sv → IACK=0
+
+**Hypothesis:** The fx68k's internal `intPend` flag might never be set, or the sequencer never reaches the state that processes it. Could be a Verilator-specific simulation issue with the `/* verilator public */` annotated signals, or a clock enable timing issue.
+
+**Impact:** Games boot and run code, but VBlank-driven game logic never executes. Rendering works (palette, tiles visible) but display is static. ALL cores are affected since they all need VBlank interrupts for gameplay.
+
+**Workaround ideas:**
+1. Use Musashi (software 68000) instead of fx68k for simulation
+2. Inject VBlank handler calls from C++ testbench via bypass mechanism
+3. Debug fx68k's `intPend`/`iplStable`/`iplComp` signals with VCD trace
+
+---
+
+## 2026-03-20 — CROSS-CORE LESSONS LEARNED (Agent 2 session)
+**Applies to:** ALL cores going forward. Hard-won rules from debugging 3 cores.
+
+### 1. ALWAYS verify game-specific memory map from the ACTUAL init function
+Each Kaneko16 game has a DIFFERENT memory map. I wasted hours using GtmrMachineInit's map for berlwall — wrong game entirely. **Rule: grep for `GameNameInit` in FBNeo, find the SekMapMemory calls in THAT function, not a shared/common init.**
+
+### 2. Open-bus DTACK is MANDATORY for every core
+Any unmapped address without DTACK hangs the CPU forever. Add a catch-all open-bus chip select that covers everything not matched by real chip selects. Costs 1 LUT, saves hours of debugging.
+
+### 3. fx68k microrom.mem must be in the sim binary's CWD
+The `$readmem` in fx68k loads from the current working directory at runtime. If `--out-dir` differs from the sim binary location, copy microrom.mem + nanorom.mem to the output directory too.
+
+### 4. Pixel capture must use clk_pix gating
+Never sample RGB on every sys_clk — the DAR/palette pipeline only produces valid pixels on pixel clock edges. Gate capture with `&& top->clk_pix`. For cores with internal video timing (no external hpos/vpos), track position from hblank/vblank edges.
+
+### 5. ROM self-test traps are BRA.S * (0x60FE) at consecutive addresses
+Games typically have 3+ `BRA.S *` instructions at 0x0B00/0B02/0B04 (or similar). BNE/BMI branches target specific trap addresses — the target tells you WHICH test failed. Patch with NOP (4E71) to skip tests during bring-up.
+
+### 6. kaneko16 address mux: set cpu_addr[20:16] prefix for internal regions
+kaneko16.sv uses `cpu_addr[20:16]` to identify internal regions (5'd18=sprites, 5'd27=GFX window). The kaneko_arcade wrapper must set these high bits based on which external chip select matched — passing `{5'b0, addr}` makes is_sprite_ram/is_gfx_window permanently false.
+
+### 7. AY8910 DIP reads: register number encoded in CPU address
+berlwall reads AY8910 via combined address/data: `reg_num = (byte_addr - 0x800000) >> 1`. Register 14 = Port A (DIP1), register 15 = Port B (DIP2). Simple stub: decode cpu_addr[4:1] and return DIP values for 14/15.
+
+---
+
 ## 2026-03-20 — Kaneko/Berlwall: address map completely wrong for this game
 **Found by:** Agent 2 (sim-batch2)
 **Affects:** kaneko_arcade RTL + sim harness

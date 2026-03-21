@@ -233,7 +233,7 @@ module fx68k(
 	end
 
 	reg Tpend;
-	reg intPend;											// Interrupt pending
+	reg intPend /* verilator public */;						// Interrupt pending
 	reg pswT, pswS;
 	reg [ 2:0] pswI;
 	wire [7:0] ccr;

@@ -439,6 +439,48 @@ int main(int argc, char** argv) {
 
                 // Trap detection: ring buffer filled in the bus cycle edge detection below
 
+                // Count VBlank handler calls and IRQ state
+                {
+                    static int vbl_fetch_count = 0;
+                    static int update_fetch_count = 0;
+                    static int ipl_active_samples = 0;
+                    if (!asn && prev_asn && rwn) {
+                        if (addr >= 0x000E5A && addr <= 0x000E8A) vbl_fetch_count++;
+                        if (addr >= 0x005990 && addr <= 0x005A00) update_fetch_count++;
+                    }
+                    // Sample IPL state periodically
+                    if ((iter % 100000) == 0 && top->clk_sys) {
+                        if ((top->dbg_cpu_addr & 0) == 0) {} // just to reference
+                        // Check the ipl output — it's cpu_ipl_n from kaneko_arcade
+                        // We can't easily read it, but we can check if vblank_rising fires
+                    }
+                    // Track IPL and IACK state
+                    static int ipl_active_count = 0;
+                    static int iack_count = 0;
+                    if (top->clk_sys && (top->dbg_cpu_ipl_n & 7) != 7) {
+                        ipl_active_count++;
+                        if (ipl_active_count <= 3)
+                            fprintf(stderr, "  IPL ACTIVE: ipl_n=%d @iter=%" PRIu64 " frame=%d\n",
+                                    (int)(top->dbg_cpu_ipl_n & 7), iter, frame_num);
+                    }
+                    if (top->clk_sys && top->dbg_iack) {
+                        iack_count++;
+                        if (iack_count <= 3)
+                            fprintf(stderr, "  IACK CYCLE @iter=%" PRIu64 " frame=%d\n", iter, frame_num);
+                    }
+                    static int intpend_count = 0; // placeholder
+
+                    // Report at frame 5
+                    if (frame_num == 5) {
+                        static bool reported2 = false;
+                        if (!reported2) {
+                            reported2 = true;
+                            fprintf(stderr, "\n*** IRQ CHECK at frame 5: VBL=%d update=%d IPL=%d IACK=%d intPend=%d ***\n\n",
+                                    vbl_fetch_count, update_fetch_count, ipl_active_count, iack_count, intpend_count);
+                        }
+                    }
+                }
+
                 // Log any fetch NOT in the fill range (0x0D20-0x0D30) after bc 120K
                 {
                     static int nonfill_count = 0;
