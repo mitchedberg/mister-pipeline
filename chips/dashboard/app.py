@@ -289,6 +289,11 @@ TIMELINE = [
     {'date': '2026-03-19', 'event': '3 cores rendering game graphics', 'detail': 'Thunder Dragon (BG tiles, 91% non-black), Gunbird, Berlwall'},
     {'date': '2026-03-20', 'event': 'Gigandes + Berlwall rendering', 'detail': 'Purple sprite pixels from frame 12; Berlwall palette writes visible'},
     {'date': '2026-03-20', 'event': 'Process safety added', 'detail': 'Timeouts on all sim runners to prevent runaway processes'},
+    {'date': '2026-03-20', 'event': 'fx68k interrupt fix (IACK pattern)', 'detail': 'Timer-based IPL replaced with IACK-based clear — community pattern from 10+ cores'},
+    {'date': '2026-03-20', 'event': 'NMK sprites rendering!', 'detail': 'Thunder Dragon: BG + sprites + palette + scrolling. 95.73% MainRAM accuracy vs MAME'},
+    {'date': '2026-03-20', 'event': 'Toaplan V2 Truxton II boots', 'detail': '45M bus cycles, 2048 palette writes. YM2151 stub + WRAM decode + address map fixed'},
+    {'date': '2026-03-20', 'event': 'MAME RAM comparison pipeline', 'detail': '1012 NMK + 1000 Truxton II frames captured. Byte-by-byte comparison tool working'},
+    {'date': '2026-03-20', 'event': 'Taito F3 optimization plan', 'detail': '8-phase plan: time-multiplex 4 BG engines at 96MHz. Estimated 35-42K ALMs'},
 ]
 
 # ---------------------------------------------------------------------------
@@ -301,10 +306,9 @@ AGENT_STATUS = [
         'machine': 'Mac Mini 3',
         'status': 'active',
         'tasks': [
-            {'core': 'NMK16', 'task': 'Sprite debugging (nmk004.bin MCU workaround)', 'status': 'next'},
-            {'core': 'Psikyo', 'task': 'Synthesis overflow fix (ifdef VERILATOR guard)', 'status': 'next'},
-            {'core': 'Toaplan V2', 'task': 'V25 sound CPU investigation', 'status': 'blocked'},
-            {'core': 'Taito B', 'task': 'Pop stash and commit gameplay fix', 'status': 'next'},
+            {'core': 'NMK16', 'task': 'DONE — sprites + BG + palette rendering, 95.73% RAM accuracy', 'status': 'in_progress'},
+            {'core': 'Toaplan V2', 'task': 'IACK fix in progress, Truxton II boots 45M cycles', 'status': 'in_progress'},
+            {'core': 'Psikyo', 'task': 'IACK fix applied, Gunbird sim running', 'status': 'in_progress'},
         ],
     },
     {
@@ -313,9 +317,9 @@ AGENT_STATUS = [
         'machine': 'iMac-Garage',
         'status': 'active',
         'tasks': [
-            {'core': 'Kaneko', 'task': 'I/O poll stall diagnosis (WRAM writes=0)', 'status': 'in_progress'},
-            {'core': 'Taito X', 'task': 'Full BG+sprite rendering (300+ frames)', 'status': 'in_progress'},
-            {'core': 'Taito B', 'task': 'Nastar harness validation', 'status': 'in_progress'},
+            {'core': 'Kaneko', 'task': 'VBlank IRQ working! Palette writes every frame', 'status': 'in_progress'},
+            {'core': 'Taito X', 'task': 'BG tilemap renderer complete, Gigandes rendering', 'status': 'in_progress'},
+            {'core': 'Taito B', 'task': 'IACK fix needed', 'status': 'next'},
         ],
     },
 ]
@@ -450,6 +454,223 @@ def api_timeline():
 @app.route('/api/agents')
 def api_agents():
     return jsonify(AGENT_STATUS)
+
+
+# ---------------------------------------------------------------------------
+# Factory Status API — reads live .shared/ files
+# ---------------------------------------------------------------------------
+
+SHARED_DIR = os.path.join(os.path.dirname(BASE), '.shared')
+
+def read_shared_file(name):
+    path = os.path.join(SHARED_DIR, name)
+    if os.path.exists(path):
+        with open(path) as f:
+            return f.read()
+    return ""
+
+def parse_factory_tasks():
+    """Parse task_queue.md for structured tasks."""
+    import re
+    content = read_shared_file('task_queue.md')
+    tasks = []
+    pattern = re.compile(
+        r'###\s+TASK-(\d+):\s*(.+?)(?=\n###\s+TASK-|\Z)', re.DOTALL
+    )
+    for m in pattern.finditer(content):
+        block = m.group(0)
+        task_id = f"TASK-{m.group(1)}"
+        title = m.group(2).split('\n')[0].strip()
+        status_m = re.search(r'\*\*Status:\*\*\s*(\S+)', block)
+        status = status_m.group(1) if status_m else 'UNKNOWN'
+        depends_m = re.search(r'\*\*Depends on:\*\*\s*(.+)', block)
+        depends = depends_m.group(1).strip() if depends_m else 'none'
+        assigned_m = re.search(r'\*\*Assigned to:\*\*\s*(.+)', block)
+        assigned = assigned_m.group(1).strip() if assigned_m else 'any'
+        tasks.append({
+            'id': task_id, 'title': title, 'status': status,
+            'depends': depends, 'assigned': assigned,
+        })
+    return tasks
+
+@app.route('/api/factory')
+def api_factory():
+    """Factory status: tasks, findings, heartbeat, failure catalog."""
+    tasks = parse_factory_tasks()
+    heartbeat = read_shared_file('heartbeat.md')
+    last_heartbeat = heartbeat.strip().split('\n')[-1] if heartbeat.strip() else 'none'
+
+    findings_raw = read_shared_file('findings.md')
+    # Count entries by looking for ## headers
+    findings_count = findings_raw.count('\n## ')
+
+    catalog_raw = read_shared_file('failure_catalog.md')
+    catalog_count = catalog_raw.count('\n### ')
+
+    comms_raw = read_shared_file('agent_comms.md')
+    comms_count = comms_raw.count('\n## ')
+
+    status_counts = {}
+    for t in tasks:
+        k = t['status'].split(':')[0]
+        status_counts[k] = status_counts.get(k, 0) + 1
+
+    return jsonify({
+        'tasks': tasks,
+        'summary': status_counts,
+        'total_tasks': len(tasks),
+        'last_heartbeat': last_heartbeat,
+        'findings_count': findings_count,
+        'catalog_entries': catalog_count,
+        'agent_comms_count': comms_count,
+        'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    })
+
+@app.route('/api/factory/findings')
+def api_factory_findings():
+    return read_shared_file('findings.md'), 200, {'Content-Type': 'text/plain'}
+
+@app.route('/api/factory/catalog')
+def api_factory_catalog():
+    return read_shared_file('failure_catalog.md'), 200, {'Content-Type': 'text/plain'}
+
+@app.route('/api/factory/comms')
+def api_factory_comms():
+    return read_shared_file('agent_comms.md'), 200, {'Content-Type': 'text/plain'}
+
+@app.route('/api/factory/roadmap')
+def api_factory_roadmap():
+    roadmap_path = os.path.join(os.path.dirname(BASE), 'BUILD_ROADMAP.md')
+    if os.path.exists(roadmap_path):
+        with open(roadmap_path) as f:
+            return f.read(), 200, {'Content-Type': 'text/plain'}
+    return 'No roadmap found', 404
+
+@app.route('/api/mame/stats')
+def api_mame_stats():
+    """Full MAME database stats from SQLite."""
+    db_path = os.path.join(os.path.dirname(BASE), 'factory', 'mame.db')
+    if not os.path.exists(db_path):
+        return jsonify({"error": "No MAME database"}), 404
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+
+    total = conn.execute("SELECT COUNT(*) FROM games").fetchone()[0]
+    arcade = conn.execute("SELECT COUNT(*) FROM games WHERE is_arcade = 1").fetchone()[0]
+    feasible = conn.execute("SELECT COUNT(*) FROM games WHERE feasibility = 'FEASIBLE'").fetchone()[0]
+    maybe = conn.execute("SELECT COUNT(*) FROM games WHERE feasibility = 'MAYBE'").fetchone()[0]
+    unique_chips = conn.execute("SELECT COUNT(*) FROM chips").fetchone()[0]
+    total_roms = conn.execute("SELECT COUNT(*) FROM roms").fetchone()[0]
+
+    # Top drivers
+    top_drivers = conn.execute("""
+        SELECT source_file, COUNT(*) as cnt,
+               SUM(CASE WHEN is_clone = 0 THEN 1 ELSE 0 END) as unique_cnt,
+               feasibility
+        FROM games WHERE is_arcade = 1
+        GROUP BY source_file ORDER BY cnt DESC LIMIT 50
+    """).fetchall()
+
+    # Top chips (non-trivial)
+    top_chips = conn.execute("""
+        SELECT c.chip_name, c.chip_type, COUNT(DISTINCT g.id) as cnt
+        FROM games g JOIN game_chips gc ON g.id = gc.game_id
+        JOIN chips c ON gc.chip_id = c.id
+        WHERE g.is_arcade = 1 AND g.feasibility IN ('FEASIBLE', 'MAYBE')
+        AND c.chip_name NOT LIKE '%Speaker%'
+        GROUP BY c.chip_name ORDER BY cnt DESC LIMIT 40
+    """).fetchall()
+
+    conn.close()
+    return jsonify({
+        "total_games": total, "arcade_games": arcade,
+        "feasible_games": feasible, "maybe_games": maybe,
+        "unique_chips": unique_chips, "total_roms": total_roms,
+        "top_drivers": [{"source": r[0], "total": r[1], "unique": r[2], "feasibility": r[3]} for r in top_drivers],
+        "top_chips": [{"name": r[0], "type": r[1], "games": r[2]} for r in top_chips],
+        "updated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    })
+
+@app.route('/api/mame/search')
+def api_mame_search():
+    """Search MAME games."""
+    q = request.args.get('q', '')
+    feasible_only = request.args.get('feasible', '') == '1'
+    db_path = os.path.join(os.path.dirname(BASE), 'factory', 'mame.db')
+    if not os.path.exists(db_path):
+        return jsonify([])
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    query_sql = "SELECT short_name, description, year, manufacturer, source_file, feasibility FROM games WHERE is_arcade = 1"
+    params = []
+    if q:
+        query_sql += " AND (description LIKE ? OR short_name LIKE ?)"
+        params.extend([f"%{q}%", f"%{q}%"])
+    if feasible_only:
+        query_sql += " AND feasibility = 'FEASIBLE'"
+    query_sql += " ORDER BY year LIMIT 200"
+    rows = conn.execute(query_sql, params).fetchall()
+    conn.close()
+    return jsonify([{"name": r[0], "title": r[1], "year": r[2], "mfg": r[3], "driver": r[4], "feasibility": r[5]} for r in rows])
+
+@app.route('/api/factory/requirements')
+def api_factory_requirements():
+    req_path = os.path.join(os.path.dirname(BASE), 'factory', 'requirements_tree.json')
+    if os.path.exists(req_path):
+        with open(req_path) as f:
+            return jsonify(json.load(f))
+    return jsonify({"error": "No requirements tree found"}), 404
+
+@app.route('/api/factory/community_patterns')
+def api_factory_patterns():
+    patterns_path = os.path.join(BASE, 'COMMUNITY_PATTERNS.md')
+    if os.path.exists(patterns_path):
+        with open(patterns_path) as f:
+            return f.read(), 200, {'Content-Type': 'text/plain'}
+    return 'No patterns found', 404
+
+@app.route('/mame')
+def mame_page():
+    """MAME database explorer."""
+    return render_template('mame.html')
+
+@app.route('/factory')
+def factory_page():
+    """Factory dashboard — comprehensive view of the autonomous pipeline."""
+    tasks = parse_factory_tasks()
+    heartbeat = read_shared_file('heartbeat.md')
+    last_hb = heartbeat.strip().split('\n')[-1] if heartbeat.strip() else 'No heartbeat yet'
+
+    status_counts = {}
+    for t in tasks:
+        k = t['status'].split(':')[0]
+        status_counts[k] = status_counts.get(k, 0) + 1
+
+    # Read roadmap for display
+    roadmap_path = os.path.join(os.path.dirname(BASE), 'BUILD_ROADMAP.md')
+    roadmap = ''
+    if os.path.exists(roadmap_path):
+        with open(roadmap_path) as f:
+            roadmap = f.read()
+
+    # Read BOM
+    bom_path = os.path.join(os.path.dirname(BASE), 'ARCADE_CHIP_BOM.md')
+    bom = ''
+    if os.path.exists(bom_path):
+        with open(bom_path) as f:
+            bom = f.read()
+
+    return render_template('factory.html',
+        tasks=tasks,
+        summary=status_counts,
+        last_heartbeat=last_hb,
+        roadmap=roadmap,
+        bom=bom,
+        findings=read_shared_file('findings.md'),
+        catalog=read_shared_file('failure_catalog.md'),
+        comms=read_shared_file('agent_comms.md'),
+        updated_at=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    )
 
 
 if __name__ == '__main__':
