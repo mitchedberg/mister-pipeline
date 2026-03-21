@@ -439,6 +439,19 @@ int main(int argc, char** argv) {
 
                 // Trap detection: ring buffer filled in the bus cycle edge detection below
 
+                // Log any fetch NOT in the fill range (0x0D20-0x0D30) after bc 120K
+                {
+                    static int nonfill_count = 0;
+                    if (!asn && prev_asn && bus_cycles > 120000 && rwn) {
+                        if (addr < 0x000D20 || addr > 0x000D30) {
+                            ++nonfill_count;
+                            if (nonfill_count <= 20)
+                                fprintf(stderr, "  NON-FILL fetch #%d addr=%06X @bc=%d\n",
+                                        nonfill_count, addr, bus_cycles);
+                        }
+                    }
+                }
+
                 // Sample CPU address every 10K bus cycles
                 if (bus_cycles > 0 && (bus_cycles % 10000) == 0 && !prev_asn && asn) {
                     fprintf(stderr, "  [%dK bus] addr=%06X rw=%d frame=%d pal=%d wram=%d io=%d\n",
