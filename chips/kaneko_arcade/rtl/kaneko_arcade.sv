@@ -42,18 +42,28 @@
 /* verilator lint_off SYNCASYNCNET */
 module kaneko_arcade #(
     // ── Address decode parameters (WORD addresses = byte_addr >> 1) ────────
-    // Kaneko16 chip: 0x200000–0x20FFFF byte → word base 0x100000
-    parameter logic [23:1] K16_BASE    = 23'h100000,   // byte 0x200000 >> 1
-    // Sprite RAM: 0x400000–0x400FFF byte → word base 0x200000
-    parameter logic [23:1] SPR_BASE    = 23'h200000,   // byte 0x400000 >> 1
-    // Tilemap VRAM: 0x500000–0x507FFF byte → word base 0x280000
-    parameter logic [23:1] VRAM_BASE   = 23'h280000,   // byte 0x500000 >> 1
-    // Palette RAM: 0x600000–0x6003FF byte → word base 0x300000
-    parameter logic [23:1] PALRAM_BASE = 23'h300000,   // byte 0x600000 >> 1
+    // berlwall memory map (FBNeo d_kaneko16.cpp, BerlwallInit line 4724):
+    //   0x000000  ROM (256KB)    0x200000  Work RAM (64KB, stack here)
+    //   0x30E000  Sprite RAM     0x400000  Palette (4KB)
+    //   0x600002  Sprite Regs    0x700000  I/O
+    //   0x780000  Watchdog       0x800000  AY8910
+    //   0xC00000  VRAM (tilemaps + scroll)
+    //   0xD00000  Layer Regs
+
+    // Kaneko16 sprite registers: 0x600000 byte → word base 0x300000
+    parameter logic [23:1] K16_BASE    = 23'h300000,   // byte 0x600000 >> 1
+    // Kaneko16 layer registers: 0xD00000 byte → word base 0x680000
+    parameter logic [23:1] LAYER_BASE  = 23'h680000,   // byte 0xD00000 >> 1
+    // Sprite RAM: 0x30E000–0x30FFFF byte → word base 0x187000
+    parameter logic [23:1] SPR_BASE    = 23'h187000,   // byte 0x30E000 >> 1
+    // Tilemap VRAM: 0xC00000–0xC03FFF byte → word base 0x600000
+    parameter logic [23:1] VRAM_BASE   = 23'h600000,   // byte 0xC00000 >> 1
+    // Palette RAM: 0x400000–0x400FFF byte → word base 0x200000
+    parameter logic [23:1] PALRAM_BASE = 23'h200000,   // byte 0x400000 >> 1
     // I/O: 0x700000–0x70000F byte → word base 0x380000
     parameter logic [23:1] IO_BASE     = 23'h380000,   // byte 0x700000 >> 1
-    // Work RAM: 0x100000–0x10FFFF byte → word base 0x080000 (15-bit, 32K words)
-    parameter logic [23:1] WRAM_BASE   = 23'h080000,   // byte 0x100000 >> 1
+    // Work RAM: 0x200000–0x20FFFF byte → word base 0x100000 (15-bit, 32K words)
+    parameter logic [23:1] WRAM_BASE   = 23'h100000,   // byte 0x200000 >> 1
     parameter int WRAM_WORDS = 32768,                   // 64KB / 2 = 32K words
 
     // ── SDRAM base addresses ────────────────────────────────────────────────
@@ -134,7 +144,7 @@ module kaneko_arcade #(
 // Local parameters
 // =============================================================================
 
-localparam int WRAM_ABITS = $clog2(WRAM_WORDS);   // 15
+localparam int WRAM_ABITS   = $clog2(WRAM_WORDS);    // 15
 
 // =============================================================================
 // Video Timing Generator — 320×240 standard arcade
@@ -241,22 +251,28 @@ assign prog_rom_cs = (cpu_addr[23:20] == 4'b0000) && !cpu_as_n;
 logic wram_cs;
 assign wram_cs = (cpu_addr[23:WRAM_ABITS] == WRAM_BASE[23:WRAM_ABITS]) && !cpu_as_n;
 
+// Layer registers: 0xD00000–0xD0001F byte (berlwall layer0 control)
+logic layer_cs;
+assign layer_cs = (cpu_addr[23:16] == LAYER_BASE[23:16]) && !cpu_as_n;
+
 // Kaneko16 chip registers: 0x200000–0x20FFFF byte → word 0x100000–0x1007FF
 //   16-bit word window (cpu_addr[15:1] chip-relative)
 logic k16_cs_n;
 assign k16_cs_n = !((cpu_addr[23:16] == K16_BASE[23:16]) && !cpu_as_n);
 
 // Kaneko16 Sprite RAM: 0x400000–0x400FFF byte → word 0x200000–0x2007FF (11-bit)
+// Sprite RAM: 0x30E000–0x30FFFF (8KB, word addr 0x187000–0x187FFF, 12-bit window)
 logic spr_cs_n;
-assign spr_cs_n = !((cpu_addr[23:11] == SPR_BASE[23:11]) && !cpu_as_n);
+assign spr_cs_n = !((cpu_addr[23:12] == SPR_BASE[23:12]) && !cpu_as_n);
 
 // Kaneko16 Tilemap VRAM: 0x500000–0x507FFF byte → word 0x280000–0x283FFF (14-bit)
+// Tilemap VRAM: 0xC00000–0xC03FFF (16KB, word addr 0x600000–0x601FFF, 13-bit window)
 logic vram_cs_n;
-assign vram_cs_n = !((cpu_addr[23:14] == VRAM_BASE[23:14]) && !cpu_as_n);
+assign vram_cs_n = !((cpu_addr[23:13] == VRAM_BASE[23:13]) && !cpu_as_n);
 
-// Palette RAM: 0x600000–0x6003FF byte → word 0x300000–0x3001FF (9-bit window)
+// Palette RAM: 0x400000–0x400FFF byte (4KB, word addr 0x200000–0x2007FF, 11-bit window)
 logic palram_cs;
-assign palram_cs = (cpu_addr[23:9] == PALRAM_BASE[23:9]) && !cpu_as_n;
+assign palram_cs = (cpu_addr[23:11] == PALRAM_BASE[23:11]) && !cpu_as_n;
 
 // I/O: 0x700000–0x70000F byte → word 0x380000–0x380007 (3-bit window)
 logic io_cs;
@@ -352,19 +368,33 @@ logic [15:0] k16_coin_in_out, k16_dip_switches_out;
 logic [7:0]  k16_mcu_status, k16_mcu_command;
 logic [7:0]  k16_mcu_param1, k16_mcu_param2;
 
+// kaneko16 internal address mux: set high bits based on which chip select is active.
+// kaneko16 uses cpu_addr[20:16] to distinguish registers (0), sprite RAM (18), GFX window (27).
+logic [20:0] k16_addr_mux;
+always_comb begin
+    if (!spr_cs_n)
+        k16_addr_mux = {5'd18, cpu_addr[15:1], 1'b0};  // sprite RAM region
+    else if (!vram_cs_n)
+        k16_addr_mux = {5'd27, cpu_addr[15:1], 1'b0};  // GFX window / VRAM region
+    else
+        k16_addr_mux = {5'b0,  cpu_addr[15:1], 1'b0};  // registers
+end
+
 kaneko16 u_kaneko16 (
     .clk            (clk_sys),
     .rst_n          (reset_n),
 
     // CPU bus — chip-relative 21-bit byte address
-    // kaneko16.sv cpu_addr is 21-bit (A[20:0]); map from 23-bit word addr:
-    //   chip offset byte addr = {5'b0, cpu_addr[15:1], 1'b0}
-    // For the default K16_BASE = 0x100000 (word), chip byte addr = cpu_addr[16:0]<<1
-    // kaneko16 module takes cpu_addr[20:0] as its byte address input
-    .cpu_addr       ({5'b0, cpu_addr[15:1], 1'b0}),   // 21-bit chip-relative byte addr
+    // kaneko16.sv uses cpu_addr[20:16] to decode internal regions:
+    //   5'd0  = registers (scroll, layer control, etc.)
+    //   5'd18 = sprite RAM (is_sprite_ram)
+    //   5'd27 = GFX ROM window (is_gfx_window)
+    // kaneko_arcade does external chip-select decode (K16/SPR/VRAM), then
+    // sets the high bits to match kaneko16's internal expectations.
+    .cpu_addr       (k16_addr_mux),   // 21-bit chip-relative byte addr
     .cpu_din        (cpu_dout),                  // CPU write data
     .cpu_dout       (k16_dout),
-    .cpu_cs_n       (k16_cs_n & spr_cs_n & vram_cs_n),  // any chip select
+    .cpu_cs_n       (k16_cs_n & spr_cs_n & vram_cs_n & !layer_cs),  // any chip select (layer_cs is active-high)
     .cpu_rd_n       ( cpu_rw ? 1'b0 : 1'b1),   // active low read
     .cpu_wr_n       (!cpu_rw ? 1'b0 : 1'b1),   // active low write
     .cpu_lds_n      (cpu_lds_n),
@@ -565,7 +595,7 @@ end
 `endif
 
 // =============================================================================
-// Palette RAM — 512 × 16-bit synchronous block RAM
+// Palette RAM — berlwall: 4KB at 0x400000 (2K × 16-bit)
 // =============================================================================
 // Format: 0bRRRRRGGGGGBBBBB (RGB555, standard Kaneko16 format)
 // CPU accesses palette at byte 0x600000–0x6003FF.
@@ -626,19 +656,19 @@ always_ff @(posedge clk_sys) begin
     if (clk_pix) pal_entry_r <= palram_pix_raw;
 end
 `else
-logic [15:0] palette_ram [0:511];
+logic [15:0] palette_ram [0:2047];  // 4KB = 2K words (berlwall palette: 0x400000-0x400FFF)
 always_ff @(posedge clk_sys) begin
     if (palram_cs && !cpu_rw) begin
-        if (!cpu_uds_n) palette_ram[cpu_addr[9:1]][15:8] <= cpu_dout[15:8];
-        if (!cpu_lds_n) palette_ram[cpu_addr[9:1]][ 7:0] <= cpu_dout[ 7:0];
+        if (!cpu_uds_n) palette_ram[cpu_addr[10:1]][15:8] <= cpu_dout[15:8];
+        if (!cpu_lds_n) palette_ram[cpu_addr[10:1]][ 7:0] <= cpu_dout[ 7:0];
     end
 end
 always_ff @(posedge clk_sys) begin
-    if (palram_cs) palram_cpu_dout <= palette_ram[cpu_addr[9:1]];
+    if (palram_cs) palram_cpu_dout <= palette_ram[cpu_addr[10:1]];
 end
 logic [15:0] pal_entry_r;
 always_ff @(posedge clk_sys) begin
-    if (clk_pix) pal_entry_r <= palette_ram[{1'b0, k16_final_color}];
+    if (clk_pix) pal_entry_r <= palette_ram[{3'b0, k16_final_color}];
 end
 `endif
 
@@ -672,6 +702,39 @@ always_comb begin
         3'h4: io_dout_byte = dipsw2;
         default: io_dout_byte = 8'hFF;
     endcase
+end
+
+// =============================================================================
+// AY8910 Stub — berlwall reads DIP switches via AY8910 ports
+// =============================================================================
+// berlwall AY8910 × 2:
+//   AY0: 0x800000-0x8001FF (DIP switches on port A/B)
+//   AY1: 0x800200-0x8003FF
+//   MSM6295: 0x800400-0x8005FF
+//
+// Read protocol: CPU address encodes AY register number.
+//   Register addr = cpu_addr[4:1] (berlwall encodes reg in address bits)
+//   Register 14 (0xE) = Port A input → DIP switch 1
+//   Register 15 (0xF) = Port B input → DIP switch 2
+//
+// For simulation: just return DIP values for reg 14/15, 0 for everything else.
+
+logic ay_cs;
+assign ay_cs = (cpu_addr[23:16] == 8'h40) && !cpu_as_n;  // byte 0x800000-0x80FFFF
+
+logic [7:0] ay_dout_byte;
+always_comb begin
+    ay_dout_byte = 8'h00;
+    if (cpu_addr[9] == 1'b0) begin
+        // AY0: 0x800000-0x8001FF
+        case (cpu_addr[4:1])
+            4'd14:   ay_dout_byte = dipsw1;   // Port A = DIP1
+            4'd15:   ay_dout_byte = dipsw2;   // Port B = DIP2
+            default: ay_dout_byte = 8'h00;
+        endcase
+    end
+    // AY1 at 0x800200: no ports connected, return 0
+    // MSM6295 at 0x800400: stub, return 0
 end
 
 // =============================================================================
@@ -972,6 +1035,8 @@ always_comb begin
         cpu_din = palram_cpu_dout;
     else if (io_cs)
         cpu_din = {8'hFF, io_dout_byte};
+    else if (ay_cs)
+        cpu_din = {8'hFF, ay_dout_byte};
     else if (wram_cs)
         cpu_din = wram_dout_r;
     else if (prog_rom_cs)
@@ -987,9 +1052,17 @@ end
 // All other devices: 1-cycle DTACK (registered any_fast_cs).
 
 logic any_fast_cs;
+logic openbus_cs;
 logic dtack_r;
 
-assign any_fast_cs = !k16_cs_n | !spr_cs_n | !vram_cs_n | palram_cs | io_cs | wram_cs;
+// Open-bus DTACK: any bus cycle not matching a specific chip select.
+// Prevents CPU hang on unmapped reads (watchdog 0x780000, brightness 0x500000,
+// AY8910 0x800000+, etc.). Returns 0xFFFF data (from read mux default).
+assign openbus_cs = !cpu_as_n && !prog_rom_cs
+                  && k16_cs_n && spr_cs_n && vram_cs_n
+                  && !palram_cs && !io_cs && !wram_cs && !layer_cs && !ay_cs;
+
+assign any_fast_cs = !k16_cs_n | !spr_cs_n | !vram_cs_n | palram_cs | io_cs | wram_cs | layer_cs | ay_cs | openbus_cs;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) dtack_r <= 1'b0;

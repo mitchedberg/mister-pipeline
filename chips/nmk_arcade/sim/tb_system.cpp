@@ -566,6 +566,31 @@ int main(int argc, char** argv) {
             if (fb.write_ppm(fname))
                 fprintf(stderr, "Frame %4d written: %s\n", frame_num, fname);
 
+            // ── Sprite DMA: copy WRAM[0x4000..0x47FF] → NMK16 sprite_ram_storage ──
+            // Emulates the hardware DMA that fires at VBlank (line 241).
+            // The CPU writes sprite data to WRAM at word offset 0x4000; the
+            // NMK hardware DMAs 1024 words into sprite_ram_storage each VBlank.
+            // Verilator-only: RTL synthesis path needs a proper DMA state machine.
+            {
+                auto* r = top->rootp;
+                // Debug: print first 8 words of WRAM at sprite DMA offset on frame 100
+                if (frame_num == 100) {
+                    fprintf(stderr, "  [DMA debug] WRAM[0x4000..0x4007]: ");
+                    for (int i = 0; i < 8; i++)
+                        fprintf(stderr, "%04x ", (uint16_t)r->tb_top__DOT__u_nmk__DOT__work_ram[0x4000 + i]);
+                    fprintf(stderr, "\n");
+                    // Also check a wider region for any non-zero
+                    int nonzero = 0;
+                    for (int i = 0; i < 32768; i++)
+                        if (r->tb_top__DOT__u_nmk__DOT__work_ram[i]) nonzero++;
+                    fprintf(stderr, "  [DMA debug] WRAM total non-zero words: %d\n", nonzero);
+                }
+                for (int i = 0; i < 1024; i++) {
+                    r->tb_top__DOT__u_nmk__DOT__u_nmk16__DOT__sprite_ram_storage[i] =
+                        r->tb_top__DOT__u_nmk__DOT__work_ram[0x4000 + i];
+                }
+            }
+
             // ── Per-frame RAM dump (matches mame_ram_dump.lua format) ─────────
             if (ram_dump_f) {
                 dump_frame_ram(ram_dump_f, (uint32_t)frame_num, top);
@@ -743,8 +768,28 @@ int main(int argc, char** argv) {
                 // Track palette writes (0x0C8000-0x0C87FF) and report first few
                 static int pal_wr_count_c = 0;
                 static int wram_wr_count_c = 0;
+                static int spr_direct_wr_c = 0;
                 if (!asn_c && !rwn_c && prev_asn_c) {
                     // New write bus cycle starting
+                    // Track direct sprite RAM writes (0x130000-0x13FFFF)
+                    if (addr_c >= 0x130000 && addr_c <= 0x13FFFF) {
+                        ++spr_direct_wr_c;
+                        if (spr_direct_wr_c <= 8)
+                            fprintf(stderr, "  SPR DIRECT WR #%d addr=%06X din=%04X frame=%d\n",
+                                    spr_direct_wr_c, addr_c, (unsigned)(top->dbg_cpu_din & 0xFFFF), frame_num);
+                    }
+                    // At frame 50: print all write addresses and data (first 30 writes)
+                    static int frame50_wr = 0;
+                    static bool frame50_logged = false;
+                    if (frame_num == 50 && !frame50_logged) {
+                        ++frame50_wr;
+                        if (frame50_wr <= 30) {
+                            fprintf(stderr, "  F50 WR #%d addr=%06X din=%04X\n",
+                                    frame50_wr, addr_c, (unsigned)(top->dbg_cpu_din & 0xFFFF));
+                        } else {
+                            frame50_logged = true;
+                        }
+                    }
                     if (addr_c >= 0x0C8000 && addr_c <= 0x0C87FF) {
                         ++pal_wr_count_c;
                         if (pal_wr_count_c <= 5)
@@ -757,6 +802,19 @@ int main(int argc, char** argv) {
                         if (wram_wr_count_c <= 3)
                             fprintf(stderr, "  WRAM WR #%d addr=%06X @iter=%lu\n",
                                     wram_wr_count_c, addr_c, (unsigned long)iter);
+                        // Track writes to WRAM[0x8000..0x8FFF] — sprite DMA source region
+                        if ((addr_c & 0xFFFF) >= 0x8000 && (addr_c & 0xFFFF) <= 0x8FFF) {
+                            static int wram_spr_wr = 0;
+                            static int wram_spr_nonzero = 0;
+                            ++wram_spr_wr;
+                            uint16_t din_val = (uint16_t)(top->dbg_cpu_din & 0xFFFF);
+                            if (din_val != 0) {
+                                ++wram_spr_nonzero;
+                                if (wram_spr_nonzero <= 10)
+                                    fprintf(stderr, "  WRAM SPR NONZERO #%d addr=%06X din=%04X frame=%d\n",
+                                            wram_spr_nonzero, addr_c, din_val, frame_num);
+                            }
+                        }
                     }
                 }
 
@@ -807,6 +865,34 @@ int main(int argc, char** argv) {
                 if (fb.write_ppm(fname))
                     fprintf(stderr, "Frame %4d written: %s  (bus_cycles=%d)\n",
                             frame_num, fname, bus_cycles_c);
+
+                // ── Sprite DMA: copy WRAM[0x4000..0x47FF] → NMK16 sprite_ram_storage ──
+                // Emulates the hardware DMA that fires at VBlank (line 241).
+                // The CPU writes sprite data to WRAM at word offset 0x4000; the
+                // NMK hardware DMAs 1024 words into sprite_ram_storage each VBlank.
+                // Verilator-only: RTL synthesis path needs a proper DMA state machine.
+                {
+                    auto* r = top->rootp;
+                    // Debug: scan for first non-zero in sprite DMA region [0x4000..0x47FF]
+                    {
+                        static bool spr_range_hit = false;
+                        if (!spr_range_hit) {
+                            for (int i = 0x4000; i < 0x4800; i++) {
+                                uint16_t v = (uint16_t)r->tb_top__DOT__u_nmk__DOT__work_ram[i];
+                                if (v) {
+                                    fprintf(stderr, "  [DMA debug] First non-zero in [4000..47FF]: wram[%04X]=%04X at frame=%d\n",
+                                            i, v, frame_num);
+                                    spr_range_hit = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    for (int i = 0; i < 1024; i++) {
+                        r->tb_top__DOT__u_nmk__DOT__u_nmk16__DOT__sprite_ram_storage[i] =
+                            r->tb_top__DOT__u_nmk__DOT__work_ram[0x4000 + i];
+                    }
+                }
 
                 if (ram_dump_f) {
                     dump_frame_ram(ram_dump_f, (uint32_t)frame_num, top);

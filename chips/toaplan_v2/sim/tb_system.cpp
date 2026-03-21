@@ -215,6 +215,11 @@ int main(int argc, char** argv) {
     int      pal_wr_count      = 0;
     int      wram_wr_count     = 0;
 
+    // Stall detection: track repeated reads to the same address
+    uint32_t last_read_addr    = 0xFFFFFFFF;
+    int      last_read_repeat  = 0;
+    int      stall_reported    = 0;
+
     // Reset duration
     static constexpr int RESET_ITERS = 20;
 
@@ -319,6 +324,18 @@ int main(int argc, char** argv) {
                 uint8_t  rwn_c  = top->dbg_cpu_rw;
                 uint32_t addr_c = ((uint32_t)top->dbg_cpu_addr << 1) & 0xFFFFFF;
 
+                // Cycle-level trace: log EVERY clock when AS_n=0 near the stall
+                // to see what happens to din/dout/dtack cycle by cycle
+                if (!asn_c && iter > RESET_ITERS && bus_cycles_c >= 114760 && bus_cycles_c <= 114875) {
+                    fprintf(stderr, "  [iter%7" PRIu64 "|bc%d] ASn=%d RW=%d addr=%06X dtack_n=%d din=%04X dout=%04X uds=%d lds=%d\n",
+                            iter, bus_cycles_c, (int)asn_c, (int)rwn_c, addr_c,
+                            (int)top->dbg_cpu_dtack_n,
+                            (unsigned)(top->dbg_cpu_din & 0xFFFF),
+                            (unsigned)(top->dbg_cpu_dout & 0xFFFF),
+                            (int)top->dbg_cpu_uds_n,
+                            (int)top->dbg_cpu_lds_n);
+                }
+
                 // Count bus cycles on AS_n falling edge (new cycle start)
                 if (!asn_c && prev_asn_c && iter > RESET_ITERS) {
                     bus_cycles_c++;
@@ -329,6 +346,29 @@ int main(int argc, char** argv) {
                                 iter, bus_cycles_c, (int)rwn_c, addr_c,
                                 (int)top->dbg_cpu_dtack_n,
                                 (unsigned)(top->dbg_cpu_dout & 0xFFFF));
+                    }
+
+                    // Log bus cycles near the 114K stall point
+                    if (bus_cycles_c >= 114700) {
+                        fprintf(stderr, "  [bc%d] RW=%d addr=%06X dtack_n=%d din=%04X dout=%04X\n",
+                                bus_cycles_c, (int)rwn_c, addr_c,
+                                (int)top->dbg_cpu_dtack_n,
+                                (unsigned)(top->dbg_cpu_din & 0xFFFF),
+                                (unsigned)(top->dbg_cpu_dout & 0xFFFF));
+                    }
+
+                    // Track repeated reads to same address (polling loop detection)
+                    if (rwn_c && addr_c == last_read_addr) {
+                        last_read_repeat++;
+                        if (last_read_repeat == 100 && stall_reported < 5) {
+                            stall_reported++;
+                            fprintf(stderr, "\n*** STALL DETECTED at bc=%d: addr=%06X read 100+ times, dout=%04X ***\n",
+                                    bus_cycles_c, addr_c,
+                                    (unsigned)(top->dbg_cpu_dout & 0xFFFF));
+                        }
+                    } else {
+                        last_read_addr   = addr_c;
+                        last_read_repeat = rwn_c ? 1 : 0;
                     }
 
                     // Track palette and work RAM writes

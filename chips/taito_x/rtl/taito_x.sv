@@ -214,42 +214,61 @@ assign vblank_rise = vblank & ~vblank_r;
 // Chip-Select Decode (all comparisons on cpu_addr[23:1], qualified by !cpu_as_n)
 // =============================================================================
 
-// Program ROM: 0x000000–0x07FFFF  (512KB = 256K words, 18-bit index)
-//   word addr [23:18] == 6'b0 covers 0x000000–0x07FFFF
+// Program ROM: 0x000000–0x07FFFF  (512KB = 256K words, 17-bit word index)
+//   cpu_addr[23:19] == 5'b0 covers byte range 0x000000–0x07FFFF (512KB)
+//   Previously used [23:18]==6'b0 which only covered 256KB — missing upper half.
 logic prog_rom_cs;
-assign prog_rom_cs = (cpu_addr[23:18] == 6'b0) && !cpu_as_n;
+assign prog_rom_cs = (cpu_addr[23:19] == 5'b0) && !cpu_as_n;
 
 // Work RAM: parameterised base and size (WRAM_BASE, WRAM_ABITS).
 //   Superman: byte 0x100000 (word 0x080000), 64KB, WRAM_ABITS=15
 //   Gigandes: byte 0xF00000 (word 0x780000), 16KB, WRAM_ABITS=13
+// NOTE: cpu_addr is [23:1], so addr bits 23..15 map to signal indices 23..15.
+// WRAM_BASE is also [23:1], so use matching indices [23:15].
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:15] == WRAM_BASE[22:14]) && !cpu_as_n;
+assign wram_cs = (cpu_addr[23:15] == WRAM_BASE[23:15]) && !cpu_as_n;
 
 // Palette RAM: 0xB00000–0xB00FFF  (4KB = 2048 × 16-bit, 11-bit index)
-//   word base 0x580000; top 12 bits from [23:11] == 12'hB00
+//   word base 0x580000; cpu_addr[23:12] = word_addr >> 11 = 0x580000>>11 = 0xB00
 logic pal_cs;
-assign pal_cs  = (cpu_addr[23:11] == 13'hB00) && !cpu_as_n;
+assign pal_cs  = (cpu_addr[23:12] == 12'hB00) && !cpu_as_n;
 
-// Sprite Y RAM: 0xD00000–0xD005FF  (768 bytes = 384 × 16-bit, 9-bit index)
-//   word base 0x680000; top 14 bits from [23:9] == 14'h3400, then sub-range check
+// Sprite Y RAM: 0xD00000–0xD003FF  (1KB = 512 × 16-bit, 9-bit index)
+//   word base 0x680000; cpu_addr[23:10] = word_addr >> 9 = 0x680000>>9 = 0x3400
+//   [23:10]==0x3400 covers exactly word addrs 0x680000-0x6801FF (512 words = 1KB byte).
 logic yram_cs;
-assign yram_cs = (cpu_addr[23:9] == 15'h3400) && !cpu_as_n
-                 && (cpu_addr[9:1] < 9'h180);  // 0x180 word entries (0x300 bytes / 2)
+assign yram_cs = (cpu_addr[23:10] == 14'h3400) && !cpu_as_n;
 
 // Sprite ctrl: 0xD00600–0xD00607  (4 × 16-bit registers, 2-bit index)
-//   word base 0x680300; [23:2] = 22 bits == 22'h1A00C0
+//   word base 0x680300; cpu_addr[23:3] = word_addr >> 2 = 0x680300>>2 = 0x1A00C0
+//   Using [23:3] (21 bits) so all 4 word-aligned regs match (0x680300-0x680303).
 logic ctrl_cs;
-assign ctrl_cs = (cpu_addr[23:2] == 22'h1A00C0) && !cpu_as_n;
+assign ctrl_cs = (cpu_addr[23:3] == 21'h1A00C0) && !cpu_as_n;
 
 // Sprite code RAM: 0xE00000–0xE03FFF  (16KB = 8K words, 13-bit index)
-//   word base 0x700000; top 10 bits from [23:13] == 10'h380
+//   word base 0x700000; cpu_addr[23:14] = word_addr >> 13 = 0x700000>>13 = 0x380
 logic cram_cs;
-assign cram_cs = (cpu_addr[23:13] == 11'h380) && !cpu_as_n;
+assign cram_cs = (cpu_addr[23:14] == 10'h380) && !cpu_as_n;
 
-// I/O ports: 0x500000–0x50000F  (8 × 16-bit words, 3-bit index)
-//   word base 0x280000; [23:3] = 21 bits == 21'h50000
+// DIP switch / X1-004 I/O: 0x500000–0x500007  (4 × 16-bit words)
+//   word base [23:2] = 0x280000>>1 covering 0x500000-0x500006
+//   From MAME/FBNeo: word reads at 0x500000/2/4/6 return DIP nibbles.
+//   cpu_addr[23:2] == 22'h140000 covers 0x500000-0x500007 (4 words).
 logic io_cs;
-assign io_cs   = (cpu_addr[23:3] == 21'h50000) && !cpu_as_n;
+assign io_cs   = (cpu_addr[23:2] == 22'h140000) && !cpu_as_n;
+
+// Player inputs: 0x900000–0x900007  (byte reads at odd addresses)
+//   0x900001 = P1, 0x900003 = P2, 0x900005 = coin/service
+//   cpu_addr[23:2] == 22'h240000 covers 0x900000-0x900007
+logic joy_cs;
+assign joy_cs  = (cpu_addr[23:2] == 22'h240000) && !cpu_as_n;
+
+// TC0140SYT sound chip: 0x800000–0x800003 (2 × 16-bit words)
+//   0x800001 (write): port select; 0x800003 (read/write): command/status
+//   Return 0x00 for sound status (ready) to allow game to proceed.
+//   cpu_addr[23:1] covers individual words; use [23:2] for 4-byte range.
+logic syt_cs;
+assign syt_cs  = (cpu_addr[23:2] == 22'h200000) && !cpu_as_n;
 
 // Sound command: 0x780000–0x780001  (1 × 16-bit, write-only from 68000)
 logic snd_cmd_cs;
@@ -518,29 +537,56 @@ assign z80_ram_cs_n = ~(!z80_mreq_n && (z80_addr[15:13] == 3'b110));
 // =============================================================================
 // I/O Registers (X1-004 input ports, read-only from 68000)
 // =============================================================================
-//
-// From MAME taito_x.cpp: I/O at 0x500000–0x50000F.
-// Typical layout (game-specific byte positions):
-//   0x500000: joystick P1 [7:0]
-//   0x500002: joystick P2 [7:0]
-//   0x500004: coin / service / start [7:0]
-//   0x500006: DIP switch bank 1
-//   0x500008: DIP switch bank 2
+// X1-004 DIP switch port (0x500000–0x500007):
+//   From MAME/FBNeo taitox.cpp (word reads):
+//     0x500000: DIP[0] bits [3:0]  (lo nibble of dipsw1)
+//     0x500002: DIP[0] bits [7:4]  (hi nibble of dipsw1)
+//     0x500004: DIP[1] bits [3:0]  (lo nibble of dipsw2)
+//     0x500006: DIP[1] bits [7:4]  (hi nibble of dipsw2)
+//   Byte reads use odd addresses (A0=1) and return low byte.
+//   cpu_addr[1] is the word select within each 32-bit pair.
+//   cpu_addr[2:1] selects the word (0=500000, 1=500002, 2=500004, 3=500006).
 
 logic [15:0] io_dout;
 always_comb begin
     io_dout = 16'hFFFF;
     if (io_cs) begin
-        case (cpu_addr[3:1])
-            3'd0: io_dout = {8'hFF, joystick_p1};
-            3'd1: io_dout = {8'hFF, joystick_p2};
-            3'd2: io_dout = {8'hFF, {2'b11, 1'b1 /*TILT*/, service,
-                                     coin[1], coin[0], 1'b1 /*START2*/, 1'b1}};
-            3'd3: io_dout = {8'hFF, dipsw1};
-            3'd4: io_dout = {8'hFF, dipsw2};
+        case (cpu_addr[2:1])
+            2'd0: io_dout = {8'hFF, 4'hF, dipsw1[3:0]};   // 0x500000: DIP1 lo nibble
+            2'd1: io_dout = {8'hFF, 4'hF, dipsw1[7:4]};   // 0x500002: DIP1 hi nibble
+            2'd2: io_dout = {8'hFF, 4'hF, dipsw2[3:0]};   // 0x500004: DIP2 lo nibble
+            2'd3: io_dout = {8'hFF, 4'hF, dipsw2[7:4]};   // 0x500006: DIP2 hi nibble
             default: io_dout = 16'hFFFF;
         endcase
     end
+end
+
+// Player input port (0x900000–0x900007, byte reads at odd addresses):
+//   0x900001: P1 joystick  0x900003: P2 joystick  0x900005: coin/service
+logic [15:0] joy_dout;
+always_comb begin
+    joy_dout = 16'hFFFF;
+    if (joy_cs) begin
+        case (cpu_addr[2:1])
+            2'd0: joy_dout = {8'hFF, joystick_p1};   // 0x900000/1: P1
+            2'd1: joy_dout = {8'hFF, joystick_p2};   // 0x900002/3: P2
+            2'd2: joy_dout = {8'hFF, {2'b11, 1'b1 /*TILT*/, service,
+                                      coin[1], coin[0], 1'b1 /*START2*/, 1'b1}};
+            default: joy_dout = 16'hFFFF;
+        endcase
+    end
+end
+
+// TC0140SYT sound chip stub (0x800000–0x800003):
+//   Read 0x800003 status byte:
+//     bits[1:0] = 0: not busy (game polls these to clear before sending)
+//     bit[2]    = 1: request complete (game polls this to set after sending)
+//   Without a real Z80, returning 0x0004 fakes "idle and ready" permanently.
+//   Writes ignored.
+logic [15:0] syt_dout;
+always_comb begin
+    // 0x04 = bits[1:0] clear (not busy) + bit[2] set (request complete = ready)
+    syt_dout = 16'h0004;
 end
 
 // =============================================================================
@@ -571,6 +617,10 @@ always_comb begin
         cpu_dout = wram_dout_r;
     else if (io_cs)
         cpu_dout = io_dout;
+    else if (joy_cs)
+        cpu_dout = joy_dout;
+    else if (syt_cs)
+        cpu_dout = syt_dout;
     else if (snd_ack_cs)
         cpu_dout = {8'hFF, snd_ack_reg};
     else
@@ -601,14 +651,14 @@ logic dtack_r;
 // Immediate chip-selects: BRAM/registers that respond in 1 pipeline cycle.
 logic imm_cs;
 assign imm_cs = wram_cs | pal_cs | yram_cs | ctrl_cs | cram_cs
-              | io_cs | snd_cmd_cs | snd_ack_cs;
+              | io_cs | joy_cs | syt_cs | snd_cmd_cs | snd_ack_cs;
 
 // Open-bus DTACK: any active bus cycle with no known chip-select → 1-cycle DTACK.
 // Prevents CPU hang on unmapped accesses (watchdog, sound bank reg, etc.)
 logic any_cs;
 logic open_bus_cs;
 assign any_cs      = prog_rom_cs | wram_cs | pal_cs | yram_cs | ctrl_cs | cram_cs
-                   | io_cs | snd_cmd_cs | snd_ack_cs;
+                   | io_cs | joy_cs | syt_cs | snd_cmd_cs | snd_ack_cs;
 assign open_bus_cs = !cpu_as_n && !any_cs;
 
 // Combinational pulse: SDRAM ack arrives this cycle while request is pending.

@@ -168,8 +168,8 @@ int main(int argc, char** argv) {
     top->joystick_p2 = 0xFF;
     top->coin        = 0x3;
     top->service     = 1;
-    top->dipsw1      = 0xFF;
-    top->dipsw2      = 0xFF;
+    top->dipsw1      = 0xDF;  // Gigandes default: difficulty=Easy, debug=Off (MAME default)
+    top->dipsw2      = 0x98;  // Gigandes default: 3 lives, demo sounds ON, flip screen OFF
 
     // ── Simulation state ─────────────────────────────────────────────────────
     int      frame_num       = 0;
@@ -212,7 +212,9 @@ int main(int argc, char** argv) {
     // ========================================================================
     fprintf(stderr, "Running RTL BUS eval loop (bypass_en=0)...\n");
 
-    for (iter = 0; iter < (uint64_t)n_frames * 800000ULL; iter++) {
+    // Budget: ~1.5M iters/frame (empirical: Gigandes takes ~1.1M iters/frame at 16 iters/bus_cycle)
+    // Hard cap at 2M iters/frame to prevent infinite loops on genuine stalls
+    for (iter = 0; iter < (uint64_t)n_frames * 1500000ULL; iter++) {
 
         // Toggle clock
         top->clk_sys = top->clk_sys ^ 1;
@@ -287,7 +289,7 @@ int main(int argc, char** argv) {
                     bus_cycles_c++;
                 }
 
-                // Log first 200 bus cycles
+                // Log first 200 bus cycles only
                 bool log_this = (!asn_c && prev_asn_c && iter > RESET_ITERS) &&
                     (bus_cycles_c < 200);
                 if (log_this) {
@@ -296,29 +298,217 @@ int main(int argc, char** argv) {
                             (int)top->dbg_cpu_dtack_n, (unsigned)(top->dbg_cpu_dout));
                 }
 
+                // Log VBlank handler entry (addr 0x0005D4 = first word of VBlank handler)
+                static int vblank_entry_count = 0;
+                if (!asn_c && prev_asn_c && rwn_c &&
+                    (addr_c == 0x0005D4 || addr_c == 0x0005D6) &&
+                    vblank_entry_count < 5) {
+                    ++vblank_entry_count;
+                    fprintf(stderr, "  *** VBlank handler addr=%06X entry#%d bc=%d iter=%lu\n",
+                            addr_c, vblank_entry_count, bus_cycles_c, (unsigned long)iter);
+                }
+                // Track palette-load callsite (0x01CD0E/0x01CD30 call 0x04E2)
+                static int pal_load_count = 0;
+                if (!asn_c && prev_asn_c && rwn_c &&
+                    (addr_c >= 0x01CD00 && addr_c <= 0x01CD40) &&
+                    pal_load_count < 10) {
+                    ++pal_load_count;
+                    fprintf(stderr, "  *** PAL-LOAD callsite addr=%06X #%d bc=%d frame=%d\n",
+                            addr_c, pal_load_count, bus_cycles_c, frame_num);
+                }
+                // Track game main loop area (0x001330-0x001400)
+                static int mainloop_count = 0;
+                if (!asn_c && prev_asn_c && rwn_c &&
+                    (addr_c >= 0x001330 && addr_c <= 0x001400) &&
+                    mainloop_count < 5) {
+                    ++mainloop_count;
+                    fprintf(stderr, "  *** MAINLOOP addr=%06X #%d bc=%d frame=%d\n",
+                            addr_c, mainloop_count, bus_cycles_c, frame_num);
+                }
+                // Track writes to key WRAM flags: 0x002E (palette flag), 0x0036 (sprite flag)
+                static int flag_wr_count = 0;
+                if (!asn_c && !rwn_c && prev_asn_c) {
+                    // Flag at F0002E: when set to 1, triggers palette DMA in VBlank
+                    if (addr_c == 0xF0002E || addr_c == 0xF00030) {
+                        ++flag_wr_count;
+                        fprintf(stderr, "  FLAG WR addr=%06X val=%04X @bc=%d frame=%d\n",
+                                addr_c, (unsigned)top->dbg_cpu_din, bus_cycles_c, frame_num);
+                    }
+                    // Flag at F00036: when set to 1, triggers sprite DMA
+                    if (addr_c == 0xF00036 || addr_c == 0xF00038) {
+                        ++flag_wr_count;
+                        fprintf(stderr, "  FLAG WR addr=%06X val=%04X @bc=%d frame=%d\n",
+                                addr_c, (unsigned)top->dbg_cpu_din, bus_cycles_c, frame_num);
+                    }
+                }
+
                 // Track palette writes (0xB00000–0xB00FFF)
                 static int pal_wr_count_c = 0;
+                static int pal_nonzero_count_c = 0;
                 static int wram_wr_count_c = 0;
                 if (!asn_c && !rwn_c && prev_asn_c) {
                     if (addr_c >= 0xB00000 && addr_c <= 0xB00FFF) {
                         ++pal_wr_count_c;
+                        uint16_t pal_data = (uint16_t)top->dbg_cpu_din;
+                        // Log first 5 writes (for init detection)
                         if (pal_wr_count_c <= 5)
                             fprintf(stderr, "  PAL WR #%d addr=%06X data=%04X @iter=%lu\n",
-                                    pal_wr_count_c, addr_c, (unsigned)top->dbg_cpu_din,
+                                    pal_wr_count_c, addr_c, (unsigned)pal_data,
                                     (unsigned long)iter);
+                        // Log non-zero palette writes (these are real color data)
+                        if (pal_data != 0) {
+                            ++pal_nonzero_count_c;
+                            if (pal_nonzero_count_c <= 200)
+                                fprintf(stderr, "  PAL WR NONZERO #%d addr=%06X data=%04X @bc=%d frame=%d\n",
+                                        pal_nonzero_count_c, addr_c, (unsigned)pal_data,
+                                        bus_cycles_c, frame_num);
+                        }
+                        // Log palette writes to the sprite color=5 range (indices 80-95 = addr 0xB000A0-0xB000BE)
+                        {
+                            static int pal_col5_count = 0;
+                            if (addr_c >= 0xB000A0 && addr_c <= 0xB000BE && pal_col5_count < 20) {
+                                ++pal_col5_count;
+                                fprintf(stderr, "  PAL COL5 WR: addr=%06X data=%04X @bc=%d frame=%d\n",
+                                        addr_c, (unsigned)pal_data, bus_cycles_c, frame_num);
+                            }
+                        }
                     }
-                    if (addr_c >= 0x100000 && addr_c <= 0x10FFFF) {
+                    // WRAM at 0xF00000-0xF03FFF (Gigandes)
+                    if (addr_c >= 0xF00000 && addr_c <= 0xF03FFF) {
                         ++wram_wr_count_c;
-                        if (wram_wr_count_c <= 3)
-                            fprintf(stderr, "  WRAM WR #%d addr=%06X @iter=%lu\n",
-                                    wram_wr_count_c, addr_c, (unsigned long)iter);
+                        if (wram_wr_count_c <= 20 || (wram_wr_count_c % 5000) == 0)
+                            fprintf(stderr, "  WRAM WR #%d addr=%06X din=%04X @bc=%d iter=%lu\n",
+                                    wram_wr_count_c, addr_c, (unsigned)top->dbg_cpu_din,
+                                    bus_cycles_c, (unsigned long)iter);
+                        // Track writes to palette DMA source area (0xF004EC - 0xF008AC)
+                        static int pal_src_wr = 0;
+                        if (addr_c >= 0xF004EC && addr_c <= 0xF008AC && pal_src_wr < 5) {
+                            ++pal_src_wr;
+                            fprintf(stderr, "  PAL SRC WR: addr=%06X din=%04X @bc=%d frame=%d\n",
+                                    addr_c, (unsigned)top->dbg_cpu_din,
+                                    bus_cycles_c, frame_num);
+                        }
+                    }
+                    // Sprite Y RAM at 0xD00000-0xD005FF
+                    static int yram_wr = 0;
+                    if (addr_c >= 0xD00000 && addr_c <= 0xD005FF) {
+                        ++yram_wr;
+                        uint16_t yram_data = (unsigned)top->dbg_cpu_din;
+                        // Always log non-0xFA writes; log first 500 of any write
+                        if (yram_data != 0x00FA || yram_wr <= 5) {
+                            fprintf(stderr, "  YRAM WR #%d addr=%06X din=%04X @bc=%d frame=%d\n",
+                                yram_wr, addr_c, (unsigned)yram_data,
+                                bus_cycles_c, frame_num);
+                        }
+                    }
+                    // Sprite code RAM at 0xE00000-0xE03FFF — track all writes
+                    static int cram_nz_wr = 0;
+                    static int cram_total_wr = 0;
+                    if (addr_c >= 0xE00000 && addr_c <= 0xE03FFF) {
+                        uint16_t cram_val = (uint16_t)top->dbg_cpu_din;
+                        ++cram_total_wr;
+                        // Log first 10 writes (any value) + periodic
+                        if (cram_total_wr <= 10 || (cram_total_wr % 1000) == 0)
+                            fprintf(stderr, "  CRAM WR #%d addr=%06X din=%04X @bc=%d frame=%d\n",
+                                    cram_total_wr, addr_c, cram_val,
+                                    bus_cycles_c, frame_num);
+                        if (cram_val != 0 && cram_nz_wr < 50) {
+                            ++cram_nz_wr;
+                            fprintf(stderr, "  CRAM NZ WR #%d addr=%06X din=%04X @bc=%d frame=%d\n",
+                                    cram_nz_wr, addr_c, cram_val,
+                                    bus_cycles_c, frame_num);
+                        }
+                    }
+                    // Sprite ctrl at 0xD00600-0xD00607 — log D00602 (frame_bank ctrl) always
+                    static int ctrl_wr = 0;
+                    if (addr_c >= 0xD00600 && addr_c <= 0xD00607) {
+                        ++ctrl_wr;
+                        // Always log D00602 (frame bank register); log first 20 of others
+                        if (addr_c == 0xD00602 || ctrl_wr <= 20) {
+                            fprintf(stderr, "  CTRL WR #%d addr=%06X din=%04X @bc=%d frame=%d\n",
+                                    ctrl_wr, addr_c, (unsigned)top->dbg_cpu_din,
+                                    bus_cycles_c, frame_num);
+                        }
                     }
                 }
 
-                // Periodic write summary
+                // Periodic write summary + PC sample
                 if (bus_cycles_c > 0 && (bus_cycles_c % 50000) == 0 && prev_asn_c && asn_c) {
-                    fprintf(stderr, "  [%dK bus] pal_wr=%d wram_wr=%d frame=%d\n",
-                            bus_cycles_c/1000, pal_wr_count_c, wram_wr_count_c, frame_num);
+                    fprintf(stderr, "  [%dK bus] pal_wr=%d(nz=%d) wram_wr=%d frame=%d\n",
+                            bus_cycles_c/1000, pal_wr_count_c, pal_nonzero_count_c,
+                            wram_wr_count_c, frame_num);
+                }
+                // Periodic PC sampling: log current fetch addr every 10K bus cycles (bc=200..200K)
+                if (!asn_c && prev_asn_c && rwn_c &&
+                    bus_cycles_c >= 200 && (bus_cycles_c % 10000) == 0) {
+                    fprintf(stderr, "  [PC-sample bc=%d] fetch addr=%06X frame=%d\n",
+                            bus_cycles_c, addr_c, frame_num);
+                }
+
+                // Dense PC sampling around stall region (bc=550000-575000, every 500 cycles)
+                static int stall_sample_count = 0;
+                if (!asn_c && prev_asn_c && rwn_c &&
+                    bus_cycles_c >= 550000 && bus_cycles_c <= 575000 &&
+                    (bus_cycles_c % 500) == 0 && stall_sample_count < 100) {
+                    ++stall_sample_count;
+                    fprintf(stderr, "  [STALL-REGION bc=%d] fetch addr=%06X dtack_n=%d halted_n=%d frame=%d\n",
+                            bus_cycles_c, addr_c, (int)top->dbg_cpu_dtack_n,
+                            (int)top->dbg_cpu_halted_n, frame_num);
+                }
+
+                // Log ALL bus cycles after bc=566800 (near stall point), including FC codes.
+                // FC2:FC0 encoding:
+                //   000 = (unused)
+                //   001 = user data space
+                //   010 = user program space
+                //   011 = (unused)
+                //   100 = (unused)
+                //   101 = supervisor data space  (exception stacking reads/writes WRAM)
+                //   110 = supervisor program space (exception vector fetch from ROM)
+                //   111 = interrupt acknowledge  (IACK cycle: cpu reads interrupt vector)
+                static bool near_stall = false;
+                static int near_stall_count = 0;
+                if (bus_cycles_c >= 566500 && !near_stall) near_stall = true;
+                if (near_stall && !asn_c && prev_asn_c && near_stall_count < 800) {
+                    ++near_stall_count;
+                    uint8_t fc = top->dbg_cpu_fc & 0x7;
+                    const char* fc_str = (fc == 7) ? "IACK" :
+                                         (fc == 6) ? "SP-PROG" :
+                                         (fc == 5) ? "SP-DATA" :
+                                         (fc == 2) ? "UP-PROG" :
+                                         (fc == 1) ? "UP-DATA" : "???";
+                    fprintf(stderr, "  [NEAR-STALL #%d bc=%d] FC=%d(%s) RW=%d addr=%06X dtack_n=%d din=%04X dout=%04X halted=%d\n",
+                            near_stall_count, bus_cycles_c, fc, fc_str, rwn_c, addr_c,
+                            (int)top->dbg_cpu_dtack_n, (unsigned)top->dbg_cpu_din,
+                            (unsigned)top->dbg_cpu_dout, (int)!top->dbg_cpu_halted_n);
+                    // Alert on exception-related FC codes
+                    if (fc == 7) {
+                        fprintf(stderr, "  *** IACK CYCLE: CPU acknowledging interrupt at bc=%d addr=%06X\n",
+                                bus_cycles_c, addr_c);
+                    }
+                    if (fc == 6 && addr_c < 0x400) {
+                        fprintf(stderr, "  *** EXCEPTION VECTOR FETCH: PC=0x%05X (vec offset=%d) at bc=%d\n",
+                                addr_c, addr_c / 4, bus_cycles_c);
+                    }
+                }
+                // Also log when CPU enters the crash handler zone (0x000F90-0x001010)
+                static bool crash_reported = false;
+                if (!asn_c && prev_asn_c && rwn_c &&
+                    addr_c >= 0x000F90 && addr_c <= 0x001010 && !crash_reported) {
+                    crash_reported = true;
+                    uint8_t fc = top->dbg_cpu_fc & 0x7;
+                    fprintf(stderr, "  *** CRASH HANDLER ENTRY: fetch at %06X FC=%d bc=%d frame=%d\n",
+                            addr_c, fc, bus_cycles_c, frame_num);
+                }
+                // Detect DTACK timeout: ASn asserted but no DTACK after 1000 iters
+                static uint64_t asn_low_since = 0;
+                static bool dtack_timeout_reported = false;
+                if (!asn_c && prev_asn_c) asn_low_since = iter;
+                if (!asn_c && !dtack_timeout_reported &&
+                    (iter - asn_low_since) > 2000 && top->dbg_cpu_dtack_n == 1) {
+                    dtack_timeout_reported = true;
+                    fprintf(stderr, "  *** DTACK TIMEOUT: ASn asserted %lu iters ago, no DTACK! addr=%06X RW=%d bc=%d\n",
+                            (unsigned long)(iter - asn_low_since), addr_c, rwn_c, bus_cycles_c);
                 }
 
                 // Detect CPU halt
@@ -390,6 +580,14 @@ int main(int argc, char** argv) {
             bool active = (!cur_hblank) && (!cur_vblank);
             if (active && top->clk_pix) {
                 fb.set(fb_x, fb_y, top->rgb_r, top->rgb_g, top->rgb_b);
+                // Track non-black pixels
+                static int rgb_nonzero_count = 0;
+                if ((top->rgb_r | top->rgb_g | top->rgb_b) != 0 && rgb_nonzero_count < 5) {
+                    ++rgb_nonzero_count;
+                    fprintf(stderr, "  *** RGB NONZERO #%d r=%d g=%d b=%d @fb=(%d,%d) frame=%d\n",
+                            rgb_nonzero_count, (int)top->rgb_r, (int)top->rgb_g,
+                            (int)top->rgb_b, fb_x, fb_y, frame_num);
+                }
                 fb_x++;
             }
 

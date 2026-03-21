@@ -8,8 +8,8 @@ Verilator Toaplan V2 simulation, dumping one PPM frame file per vertical sync.
 Truxton II ROM layout (from Truxton2.mra and MAME toaplan2 driver):
   SDRAM 0x000000: tp024_1.bin (512KB CPU program ROM, standard ROM_LOAD)
   SDRAM 0x100000: GFX ROMs — tp024_3.bin + tp024_4.bin concatenated
-  SDRAM 0x600000: tp024_2.bin (512KB Z80 ROM)
-  SDRAM ADPCM:    empty (Truxton II uses YM2151 only, no OKI/MSM6295)
+  SDRAM ADPCM:    tp024_2.bin (512KB MSM6295 ADPCM sample ROM)
+  ROM_Z80:        empty (Truxton II has no Z80 — 68K drives YM2151+MSM6295 directly)
 
 Usage:
   python3 run_sim.py [options]
@@ -43,7 +43,7 @@ import tempfile
 #
 # ROM files inside truxton2.zip:
 #   tp024_1.bin — 512KB CPU program ROM (standard ROM_LOAD, no word swap)
-#   tp024_2.bin — 512KB Z80 sound ROM
+#   tp024_2.bin — 512KB MSM6295 ADPCM sample ROM
 #   tp024_3.bin — GFX ROM part 1
 #   tp024_4.bin — GFX ROM part 2
 #
@@ -52,8 +52,9 @@ import tempfile
 #   0x100000.  This matches the MRA <part> order exactly.
 #
 # Audio:
-#   Truxton II uses YM2151 only — no OKI/MSM6295 ADPCM samples.
-#   ROM_ADPCM is left empty.
+#   Truxton II has NO Z80 — the 68K drives YM2151 + MSM6295 directly.
+#   tp024_2.bin is the MSM6295 ADPCM sample ROM → ROM_ADPCM.
+#   ROM_Z80 is left empty.
 # =============================================================================
 
 # Search paths for truxton2.zip
@@ -108,10 +109,10 @@ def extract_roms(zip_path, out_dir):
         print(f'  CPU ROM: tp024_1.bin ({os.path.getsize(prog_path)//1024}KB)',
               file=sys.stderr)
 
-    # Z80 sound ROM
+    # MSM6295 ADPCM sample ROM (no Z80 in Truxton II)
     z80_path = extract('tp024_2.bin')
     if z80_path:
-        print(f'  Z80 ROM: tp024_2.bin ({os.path.getsize(z80_path)//1024}KB)',
+        print(f'  ADPCM ROM: tp024_2.bin ({os.path.getsize(z80_path)//1024}KB)',
               file=sys.stderr)
 
     # GFX ROMs — concatenate in MRA order
@@ -131,10 +132,10 @@ def extract_roms(zip_path, out_dir):
     z.close()
 
     return {
-        'ROM_PROG':  prog_path or '',
+        'ROM_PROG':  prog_path  or '',
         'ROM_GFX':   gfx_path,
-        'ROM_ADPCM': '',          # Truxton II: YM2151 only, no OKI ADPCM samples
-        'ROM_Z80':   z80_path or '',
+        'ROM_ADPCM': z80_path or '',   # tp024_2.bin is actually ADPCM data
+        'ROM_Z80':   '',                # No Z80 in Truxton II
     }
 
 

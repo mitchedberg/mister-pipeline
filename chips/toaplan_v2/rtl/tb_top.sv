@@ -83,6 +83,8 @@ module tb_top (
     output logic        dbg_cpu_dtack_n,
     output logic        dbg_cpu_halted_n,
     output logic [15:0] dbg_cpu_dout,
+    output logic        dbg_cpu_uds_n,
+    output logic        dbg_cpu_lds_n,
 
     // ── Bus bypass: C++ testbench drives CPU data/DTACK directly ────────────
     input  logic        bypass_en,
@@ -179,8 +181,14 @@ assign dbg_cpu_halted_n = cpu_halted_n_raw;
 
 // =============================================================================
 // toaplan_v2 — full system (GP9001, palette, work RAM, Z80, audio, I/O)
+// Truxton II address map overrides:
+//   GP9001_BASE: byte 0x200000 >> 1 = word 0x100000  (Batsugun: 0x400000)
+//   PALRAM_BASE: byte 0x300000 >> 1 = word 0x180000  (Batsugun: 0x500000)
 // =============================================================================
-toaplan_v2 u_toaplan (
+toaplan_v2 #(
+    .GP9001_BASE (23'h100000),   // byte 0x200000 >> 1
+    .PALRAM_BASE (23'h180000)    // byte 0x300000 >> 1
+) u_toaplan (
     .clk_sys            (clk_sys),
     .clk_pix            (clk_pix),
     .clk_sound          (clk_sound),
@@ -250,5 +258,7 @@ assign dbg_cpu_rw      = cpu_rw;
 assign dbg_cpu_din     = cpu_din;
 assign dbg_cpu_dtack_n = cpu_dtack_n;
 assign dbg_cpu_dout    = cpu_dout;
+assign dbg_cpu_uds_n   = cpu_uds_n;
+assign dbg_cpu_lds_n   = cpu_lds_n;
 
 endmodule

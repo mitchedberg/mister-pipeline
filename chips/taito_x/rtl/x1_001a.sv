@@ -61,7 +61,7 @@
 //   write if nibble != 0 && screen_y < SCREEN_H && screen_x < SCREEN_W
 
 module x1_001a #(
-    // Y offset for FG sprites in no-flip mode (Superman = -0x12)
+    // Y offset for FG sprites in no-flip mode (Superman = -0x12 = -18, Gigandes = -0x0a = -10)
     parameter int FG_NOFLIP_YOFFS = -18,
     parameter int FG_NOFLIP_XOFFS = 0,
     // Screen geometry
@@ -137,8 +137,8 @@ module x1_001a #(
     // =========================================================================
 
 `ifndef QUARTUS
-    logic [7:0] yram_lo [0:383];
-    logic [7:0] yram_hi [0:383];
+    logic [7:0] yram_lo [0:511];
+    logic [7:0] yram_hi [0:511];
 
     always_ff @(posedge clk) begin
         if (yram_cs && yram_we) begin
@@ -267,9 +267,22 @@ module x1_001a #(
         if (!rst_n) vblank_r <= 1'b0;
         else        vblank_r <= vblank;
 
-    // Bank base addresses (combinational from frame_bank)
-    wire [12:0] bank_base = frame_bank ? 13'h1000 : 13'h0000;
-    wire [12:0] xptr_base = frame_bank ? 13'h1200 : 13'h0200;
+    // Bank base addresses: latch frame_bank at vblank_rise to hold constant
+    // during the entire sprite scan. Without latching, a CPU write to spritectrl[1]
+    // during VBlank would corrupt the scan midway. The FBNeo reference latches
+    // Ctrl2 at frame-render time (end of VBLANK), so we must do the same.
+    logic frame_bank_latch;
+    always_ff @(posedge clk or negedge rst_n)
+        if (!rst_n) frame_bank_latch <= 1'b0;
+        else if (vblank_rise) frame_bank_latch <= frame_bank;
+
+    wire [12:0] bank_base = frame_bank_latch ? 13'h1000 : 13'h0000;
+    // xptr_base — matches MAME x1_001.cpp draw_foreground():
+    //   x_pointer = &m_spritecode[0x0200];
+    //   if bank_toggle: x_pointer += bank_size (0x1000)
+    //   bank=0: xptr at spritecode[0x0200]
+    //   bank=1: xptr at spritecode[0x0200 + 0x1000] = spritecode[0x1200]
+    wire [12:0] xptr_base = frame_bank_latch ? 13'h1200 : 13'h0200;
 
     // Sprite index
     logic [8:0] scan_idx;
@@ -329,11 +342,25 @@ module x1_001a #(
 `endif
 
     // linebuf_bank: currently DISPLAYED bank (scanner writes to ~linebuf_bank)
+    // Bank swap at VBlank FALL (end of VBlank / start of active display):
+    //   During VBlank: scanner fills ~linebuf_bank (old display bank).
+    //   At VBlank fall: swap → linebuf_bank = what scanner just filled.
+    //   During active display: display reads linebuf_bank (scanner's output). ✓
+    //   Clear erases ~linebuf_bank (old display buffer → next frame's write target). ✓
+    // Swapping at VBlank RISE was wrong: it caused display to always read the
+    // just-cleared buffer, and the clear to always erase the scanner's fresh output.
     logic linebuf_bank;
+    // vblank_fall derived from vblank_r (already declared above for vblank_rise)
+    wire  vblank_fall = ~vblank & vblank_r;
 
     always_ff @(posedge clk or negedge rst_n)
         if (!rst_n) linebuf_bank <= 1'b0;
-        else if (vblank_rise) linebuf_bank <= ~linebuf_bank;
+        else if (vblank_fall) begin
+            linebuf_bank <= ~linebuf_bank;
+`ifndef QUARTUS
+            $display("[X1-001A] LINEBUF SWAP: vblank_fall linebuf_bank %0d->%0d", linebuf_bank, ~linebuf_bank);
+`endif
+        end
 
     // ── HBlank clear sweep ────────────────────────────────────────────────────
     logic        hblank_r;
@@ -503,6 +530,9 @@ module x1_001a #(
                         scan_idx         <= 9'(SPRITE_LIMIT);
                         fsm_cram_rd_addr <= bank_base + 13'(SPRITE_LIMIT);
                         fsm_state        <= ST_RD_CHAR;
+`ifndef QUARTUS
+                        $display("[X1-001A] SCAN START: vblank_rise bank_base=0x%04x xptr_base=0x%04x frame_bank_latch=%0d linebuf_bank=%0d", bank_base, xptr_base, frame_bank_latch, linebuf_bank);
+`endif
                     end
                 end
 
@@ -511,6 +541,11 @@ module x1_001a #(
                     char_latch       <= fsm_cram_rd_data;
                     fsm_cram_rd_addr <= xptr_base + {4'b0, scan_idx};
                     fsm_state        <= ST_RD_XPTR;
+                    // DBG: trace CRAM read for first and last few sprites (disabled for perf)
+`ifndef QUARTUS
+                    //if (scan_idx >= 9'd509 || scan_idx <= 9'd3)
+                    //    $display("[X1-001A] ST_RD_CHAR: ...", scan_idx, fsm_cram_rd_addr, fsm_cram_rd_data, bank_base);
+`endif
                 end
 
                 // BRAM 1-cycle latency: x_pointer data arrives this cycle
@@ -525,6 +560,12 @@ module x1_001a #(
                         cw = char_latch;
                         xw = fsm_cram_rd_data;
 
+`ifndef QUARTUS
+                        // DBG: trace sprites with non-zero tile or xptr (first 10 per scan)
+                        if (cw != 16'd0 || xw != 16'd0)
+                            $display("[X1-001A] ST_RD_XPTR: idx=%0d cw=0x%04x xw=0x%04x bank=%0d", scan_idx, cw, xw, frame_bank_latch);
+`endif
+
                         spr_tile  <= cw[13:0];
                         spr_flipx <= cw[15];
                         spr_flipy <= cw[14];
@@ -536,14 +577,14 @@ module x1_001a #(
                         spr_sx <= sx_10[8:0];
 
                         // screen_y_top = SCREEN_H - ((yraw + yoffs) & 0xFF)
-                        // Sprite i's Y byte: spriteylow is a flat byte array.
-                        // In our 16-bit BRAM, flat byte 2k = yram_lo[k], byte 2k+1 = yram_hi[k].
-                        // So sprite i's Y = yram_lo[i>>1] if even, yram_hi[i>>1] if odd.
+                        // MAME x1_001.cpp: spriteylow_w16 writes data[7:0] to spriteylow[offset]
+                        // where offset = word_index. So sprite i's Y = low byte of word at
+                        // YRAM word address i. In our RTL: yram_lo[i] = sprite i's Y.
+                        // The high byte (yram_hi) is never used for sprite coordinates.
                         begin
                             logic [7:0] sy_byte;
 `ifndef QUARTUS
-                            sy_byte = scan_idx[0] ? yram_hi[scan_idx >> 1]
-                                                   : yram_lo[scan_idx >> 1];
+                            sy_byte = yram_lo[scan_idx];   // sprite i's Y = yram_lo[i]
 `else
                             sy_byte = 8'b0; // yram stub — synthesis gate target
 `endif
@@ -602,6 +643,11 @@ module x1_001a #(
                         wr_sx    <= spr_sx + 9'(FG_NOFLIP_XOFFS);
                         do_write <= 1'b1;    // pulse write for this cycle
                         fsm_state <= ST_WRITE_ROW;
+`ifndef QUARTUS
+                        // DBG: trace first row of every sprite with non-zero GFX data
+                        if (row_cnt == 4'd0 && (gfx_w[0] != 0 || gfx_w[1] != 0 || gfx_w[2] != 0 || gfx_data != 0))
+                            $display("[X1-001A] WRITE_ROW0: scan_idx=%0d tile=%0d sx=%0d ytop=%0d color=%0d gfx_w0=0x%04x gfx_w1=0x%04x gfx_w2=0x%04x gfx_w3=0x%04x bank=%0d lbk=%0d", scan_idx, spr_tile, spr_sx, spr_ytop, spr_color, gfx_w[0], gfx_w[1], gfx_w[2], gfx_data, frame_bank_latch, linebuf_bank);
+`endif
                     end
                 end
 
@@ -644,6 +690,9 @@ module x1_001a #(
                         scan_idx         <= 9'(SPRITE_LIMIT);
                         fsm_cram_rd_addr <= bank_base + 13'(SPRITE_LIMIT);
                         fsm_state        <= ST_RD_CHAR;
+`ifndef QUARTUS
+                        $display("[X1-001A] SCAN RESTART from ST_DONE: bank_base=0x%04x frame_bank_latch=%0d linebuf_bank=%0d", bank_base, frame_bank_latch, linebuf_bank);
+`endif
                     end
                 end
 

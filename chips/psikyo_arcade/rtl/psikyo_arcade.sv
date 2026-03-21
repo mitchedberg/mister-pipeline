@@ -1164,7 +1164,19 @@ assign adpcm_rom_addr = adpcm_req_addr_r;
 // gate3 requests a byte at g3_spr_rom_addr_raw on each g3_spr_rom_rd pulse.
 // SDRAM is 16-bit word; byte lane selected by addr[0].
 // SDRAM word address = SPR_SDR_BASE + byte_addr[23:1]
+//
+// Simulation (VERILATOR): 2-beat FSM issues a toggle-handshake SDRAM request,
+// waits for ack, then latches the byte lane from the returned 16-bit word.
+// State registers (spr_req_pending, spr_byte_sel, spr_req_addr_r) carry the
+// in-flight request across clock cycles.
+//
+// Synthesis (Quartus): direct combinational passthrough.  No pending state
+// registers → eliminates ~100 LABs that push the core over Cyclone V limit.
+// The real SDRAM controller satisfies the req/ack handshake in one cycle;
+// addr and data are wired directly and spr_rom_req is a simple strobe FF.
 // =============================================================================
+
+`ifdef VERILATOR
 
 logic        spr_req_pending;
 logic        spr_byte_sel;
@@ -1193,11 +1205,33 @@ end
 
 assign spr_rom_addr = spr_req_addr_r;
 
+`else
+
+// Synthesis passthrough: direct byte-lane select, no pending state registers.
+assign spr_rom_addr    = SPR_SDR_BASE + {3'b0, g3_spr_rom_addr_raw[23:1]};
+assign g3_spr_rom_data = g3_spr_rom_addr_raw[0] ? spr_rom_data16[15:8]
+                                                 : spr_rom_data16[7:0];
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) spr_rom_req <= 1'b0;
+    else if (g3_spr_rom_rd) spr_rom_req <= ~spr_rom_req;
+end
+
+`endif
+
 // =============================================================================
 // BG Tile ROM SDRAM Bridge
 // gate4 continuously drives g4_bg_rom_addr_raw; g4_bg_rom_rd is always 1.
 // We issue a new SDRAM request each time the address changes.
+//
+// Simulation (VERILATOR): 2-beat FSM with address-change detection and pending
+// state tracks in-flight SDRAM request and latches returned byte lane.
+//
+// Synthesis (Quartus): direct combinational passthrough.  No pending/last-addr
+// state registers → eliminates ~100 LABs that push the core over Cyclone V limit.
 // =============================================================================
+
+`ifdef VERILATOR
 
 logic        bg_req_pending;
 logic        bg_byte_sel;
@@ -1228,6 +1262,20 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
 end
 
 assign bg_rom_addr = bg_req_addr_r;
+
+`else
+
+// Synthesis passthrough: direct byte-lane select, no pending/last-addr state.
+assign bg_rom_addr    = BG_SDR_BASE + {3'b0, g4_bg_rom_addr_raw[23:1]};
+assign g4_bg_rom_data = g4_bg_rom_addr_raw[0] ? bg_rom_data16[15:8]
+                                               : bg_rom_data16[7:0];
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) bg_rom_req <= 1'b0;
+    else if (g4_bg_rom_rd) bg_rom_req <= ~bg_rom_req;
+end
+
+`endif
 
 // =============================================================================
 // Program ROM SDRAM Bridge

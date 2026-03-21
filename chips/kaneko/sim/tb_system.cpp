@@ -1,34 +1,38 @@
 // =============================================================================
-// tb_system.cpp — Kaneko 16 (berlwall) Verilator testbench
+// tb_system.cpp — Kaneko16 Arcade (Berlin Wall) Verilator testbench
 //
-// Drives tb_top.sv which contains kaneko16 + fx68k CPU executing the real
-// Berlin Wall ROM.
+// Drives chips/kaneko_arcade/rtl/tb_top.sv which wraps kaneko_arcade + fx68k
+// executing the real Berlin Wall ROM.
 //
-// Clock model: single clk_sys.
-//   enPhi1/enPhi2 toggle every cycle (giving half-speed CPU).
+// Key difference from Taito B: kaneko_arcade generates its own video timing,
+// so there are NO hpos/vpos/hblank_n_in/vblank_n_in inputs. Instead, we
+// capture pixels using the hblank/vblank/hsync_n/vsync_n OUTPUTS.
 //
-// ROM access model (bypass pattern, same as NMK sim):
-//   bypass_en=1 when CPU is accessing ROM space (A[23:21] == 0)
-//   C++ presents ROM data combinationally based on cpu_addr before posedge eval
-//   bypass_dtack_n=0 immediately (1-cycle ROM latency)
+// Clock model:
+//   32 MHz sys clock
+//   enPhi1/enPhi2: alternating every sys edge (16 MHz CPU)
+//   clk_pix: 1-cycle pulse every 5 sys clocks (6.4 MHz pixel clock)
+//   clk_sound_cen: 1-cycle pulse every 32 sys clocks (1 MHz sound clock)
 //
-// Video timing: Kaneko 16 standard
-//   H_ACTIVE=320, V_ACTIVE=240, Htotal=342, Vtotal=262 → ~60 Hz
+// SDRAM layout (byte addresses):
+//   0x000000 — CPU program ROM (256KB, interleaved 16-bit big-endian)
+//   0x200000 — GFX ROM (sprites + BG tiles, combined)
+//   0x600000 — Z80 sound ROM (32KB)
+//   0x700000 — ADPCM ROM (OKI M6295 samples)
 //
-// Sprite/BG ROMs: combinational zero-latency reads (C++ serves directly)
+// Note: gfx_rom_addr from kaneko_arcade includes GFX_ROM_BASE (0x100000)
+//       which is a WORD address. Byte addr = gfx_rom_addr << 1.
+//       So GFX data loaded at byte 0x200000 = GFX_ROM_BASE * 2.
 //
 // Environment variables:
-//   N_FRAMES  — frames to simulate (default 10)
-//   ROM_PROG  — path to interleaved program ROM binary (prog.bin, 256 KB)
-//   ROM_SPR   — path to sprite ROM binary (spr.bin)
-//   ROM_BG    — path to BG tile ROM binary (bg.bin)
-//   DUMP_VCD  — set to "1" to enable VCD trace (slow)
+//   N_FRAMES   — frames to simulate (default 30)
+//   ROM_PROG   — path to CPU program ROM binary (256KB, interleaved)
+//   ROM_GFX    — path to combined GFX ROM (sprites + BG concatenated)
+//   ROM_Z80    — path to Z80 sound ROM binary (32KB)
+//   ROM_ADPCM  — path to ADPCM sample ROM binary
+//   DUMP_VCD   — set to "1" for VCD trace (slow)
 //
-// Output: frame_NNNN.ppm — one PPM per vertical frame
-//
-// NOTE: watchdog_reset is NOT wired to system reset.
-//       RTL compiled with VERILATOR=1 (Verilator auto-defines) which disables
-//       the watchdog via `ifdef VERILATOR guard in kaneko16.sv.
+// Output: frame_NNNN.ppm — one PPM per vertical frame (320x240)
 // =============================================================================
 
 #include "Vtb_top.h"
@@ -45,15 +49,55 @@
 #include <string>
 #include <vector>
 
-// ── Video timing constants (Kaneko 16 standard 320×240) ─────────────────────
-static constexpr int VID_H_ACTIVE    = 320;
-static constexpr int VID_V_ACTIVE    = 240;
-static constexpr int VID_H_TOTAL     = 342;
-static constexpr int VID_V_TOTAL     = 262;
-static constexpr int VID_HSYNC_START = VID_H_ACTIVE + 16;
-static constexpr int VID_HSYNC_END   = VID_HSYNC_START + 5;
-static constexpr int VID_VSYNC_START = VID_V_ACTIVE + 4;
-static constexpr int VID_VSYNC_END   = VID_VSYNC_START + 4;
+// ── Video constants (Kaneko16 standard 320x240) ─────────────────────────────
+static constexpr int VID_H_ACTIVE = 320;
+static constexpr int VID_V_ACTIVE = 240;
+
+// Pixel clock: one pixel every 5 system clocks (32 MHz / 5 = 6.4 MHz)
+static constexpr int PIX_DIV = 5;
+// Sound clock: one pulse every 32 system clocks (32 MHz / 32 = 1 MHz)
+static constexpr int SND_DIV = 32;
+
+// =============================================================================
+// ToggleSdramChannel32 — 32-bit GFX ROM channel
+// Same toggle-handshake protocol, returns 32-bit data (two consecutive words).
+// =============================================================================
+class ToggleSdramChannel32 {
+public:
+    static constexpr int LATENCY = 2;
+
+    explicit ToggleSdramChannel32(const SdramModel& sdram)
+        : sdram_(sdram), ack_(0), last_req_(0), countdown_(0),
+          pending_addr_(0), data_(0) {}
+
+    struct Result { uint32_t data; uint8_t ack; };
+
+    Result tick(uint8_t req, uint32_t byte_addr) {
+        if (req != last_req_) {
+            last_req_     = req;
+            pending_addr_ = byte_addr;
+            countdown_    = LATENCY;
+        }
+        if (countdown_ > 0) {
+            --countdown_;
+            if (countdown_ == 0) {
+                uint16_t lo = sdram_.read_word(pending_addr_ & ~1u);
+                uint16_t hi = sdram_.read_word((pending_addr_ & ~1u) + 2);
+                data_ = ((uint32_t)hi << 16) | lo;
+                ack_  = last_req_;
+            }
+        }
+        return {data_, ack_};
+    }
+
+private:
+    const SdramModel& sdram_;
+    uint8_t  ack_;
+    uint8_t  last_req_;
+    int      countdown_;
+    uint32_t pending_addr_;
+    uint32_t data_;
+};
 
 // =============================================================================
 // Frame buffer
@@ -96,33 +140,40 @@ int main(int argc, char** argv) {
     // ── Configuration ────────────────────────────────────────────────────────
     const char* env_frames = getenv("N_FRAMES");
     const char* env_prog   = getenv("ROM_PROG");
-    const char* env_spr    = getenv("ROM_SPR");
-    const char* env_bg     = getenv("ROM_BG");
+    const char* env_gfx    = getenv("ROM_GFX");
+    const char* env_z80    = getenv("ROM_Z80");
+    const char* env_adpcm  = getenv("ROM_ADPCM");
     const char* env_vcd    = getenv("DUMP_VCD");
 
-    int n_frames = env_frames ? atoi(env_frames) : 10;
+    int n_frames = env_frames ? atoi(env_frames) : 30;
     if (n_frames < 1) n_frames = 1;
 
     fprintf(stderr, "Kaneko16 (berlwall) simulation: %d frames\n", n_frames);
 
-    // ── Load ROM data ─────────────────────────────────────────────────────────
+    // ── Load ROM data ────────────────────────────────────────────────────────
     SdramModel sdram;
-    // Program ROM: loaded at SDRAM byte 0 (CPU byte 0x000000)
-    if (env_prog) sdram.load(env_prog, 0x000000);
-    else fprintf(stderr, "WARNING: ROM_PROG not set\n");
+    if (env_prog)  sdram.load(env_prog,  0x000000);   // CPU program ROM (256KB)
+    else fprintf(stderr, "WARNING: ROM_PROG not set — CPU will read zeros\n");
 
-    // Sprite ROM: loaded at SDRAM byte 0x100000
-    if (env_spr) sdram.load(env_spr, 0x100000);
-    else fprintf(stderr, "WARNING: ROM_SPR not set\n");
+    if (env_gfx)   sdram.load(env_gfx,   0x200000);   // GFX ROM (sprites + BG)
+    else fprintf(stderr, "WARNING: ROM_GFX not set — no graphics\n");
 
-    // BG tile ROM: loaded at SDRAM byte 0x500000
-    if (env_bg) sdram.load(env_bg, 0x500000);
-    else fprintf(stderr, "WARNING: ROM_BG not set\n");
+    if (env_z80)   sdram.load(env_z80,   0x600000);   // Z80 sound ROM
+    // Z80 is optional — many sims work without sound
 
-    // ── DUT init ──────────────────────────────────────────────────────────────
+    if (env_adpcm) sdram.load(env_adpcm, 0x700000);   // ADPCM samples
+    // ADPCM is optional
+
+    // ── SDRAM channels ───────────────────────────────────────────────────────
+    ToggleSdramChannel   prog_ch(sdram);     // CPU program ROM (16-bit)
+    ToggleSdramChannel32 gfx_ch(sdram);      // GFX ROM (32-bit)
+    ToggleSdramChannelByte z80_ch(sdram);    // Z80 sound ROM (byte)
+    ToggleSdramChannelByte adpcm_ch(sdram);  // ADPCM ROM (byte)
+
+    // ── DUT init ─────────────────────────────────────────────────────────────
     Vtb_top* top = new Vtb_top();
 
-    // ── Optional VCD trace ────────────────────────────────────────────────────
+    // ── Optional VCD trace ───────────────────────────────────────────────────
     VerilatedVcdC* vcd = nullptr;
     if (env_vcd && env_vcd[0] == '1') {
         Verilated::traceEverOn(true);
@@ -132,239 +183,409 @@ int main(int argc, char** argv) {
         fprintf(stderr, "VCD trace enabled: sim_kaneko16.vcd\n");
     }
 
-    // ── Initial port state ────────────────────────────────────────────────────
-    top->clk_sys          = 0;
-    top->reset_n          = 0;
-    top->enPhi1           = 0;
-    top->enPhi2           = 0;
-    top->spr_rom_data     = 0;
-    top->bg_tile_rom_data = 0;
-    top->vsync_n_in       = 1;
-    top->hsync_n_in       = 1;
-    top->hpos             = 0;
-    top->vpos             = 0;
-    top->joystick_p1      = 0xFFFF;   // all buttons released
-    top->joystick_p2      = 0xFFFF;
-    top->coin_in          = 0x0000;
-    top->dip_switches     = 0xFFFF;
-    top->bypass_en        = 0;
-    top->bypass_data      = 0xFFFF;
-    top->bypass_dtack_n   = 1;
+    // ── Initial port state ───────────────────────────────────────────────────
+    top->clk_sys   = 0;
+    top->reset_n   = 0;
 
-    // ── Simulation state ──────────────────────────────────────────────────────
-    uint64_t cycle     = 0;
-    int      frame_num = 0;
-    bool     done      = false;
+    // Bus bypass: disabled — CPU reads through kaneko_arcade SDRAM bridge
+    top->bypass_en      = 0;
+    top->bypass_data    = 0xFFFF;
+    top->bypass_dtack_n = 1;
 
-    int hcnt = 0;
-    int vcnt = 0;
+    // Clock enables: driven from C++
+    top->enPhi1        = 0;
+    top->enPhi2        = 0;
+    top->clk_pix       = 0;
+    top->clk_sound_cen = 0;
 
+    // SDRAM channel inputs
+    top->prog_rom_data = 0;
+    top->prog_rom_ack  = 0;
+    top->gfx_rom_data  = 0;
+    top->gfx_rom_ack   = 0;
+    top->z80_rom_data  = 0;
+    top->z80_rom_ack   = 0;
+    top->adpcm_rom_data = 0;
+    top->adpcm_rom_ack  = 0;
+
+    // Player inputs — all active-low: release all buttons/coins
+    top->joystick_p1 = 0xFF;     // all buttons released
+    top->joystick_p2 = 0xFF;
+    top->coin        = 0x3;      // both coins inactive (active low)
+    top->service     = 1;        // service not pressed (active low)
+    top->dipsw1      = 0xFF;     // all DIPs default
+    top->dipsw2      = 0xFF;
+
+    // ── Simulation state ─────────────────────────────────────────────────────
+    int      frame_num  = 0;
+    bool     done       = false;
+
+    // Clock dividers
+    int  pix_div_cnt  = 0;
+    int  snd_div_cnt  = 0;
+
+    // Pixel position tracking (from hblank/vblank edges)
+    int  px = 0, py = 0;
+    uint8_t prev_hblank = 0;
+    uint8_t prev_vblank = 0;
+
+    // Frame buffer and vsync edge detection
     FrameBuffer fb;
     uint8_t vsync_n_prev = 1;
 
-    int bus_cycle_count = 0;
-    int palette_writes  = 0;
-    int ram_writes      = 0;
+    // Bus diagnostics
+    bool     phi_toggle      = false;
+    bool     prev_asn        = true;
+    int      bus_cycles      = 0;
+    uint64_t iter            = 0;
+    bool     halted_reported = false;
+    static constexpr int RESET_ITERS = 20;
 
-    // ── Main simulation loop ──────────────────────────────────────────────────
-    auto tick = [&]() {
+    uint64_t vcd_ts = 0;
 
-        // ── Video timing ─────────────────────────────────────────────────────
-        {
-            bool h_active = (hcnt < VID_H_ACTIVE);
-            bool v_active = (vcnt < VID_V_ACTIVE);
-            bool hsync    = (hcnt >= VID_HSYNC_START && hcnt < VID_HSYNC_END);
-            bool vsync    = (vcnt >= VID_VSYNC_START && vcnt < VID_VSYNC_END);
+    top->reset_n = 0;
 
-            top->hsync_n_in = hsync ? 0 : 1;
-            top->vsync_n_in = vsync ? 0 : 1;
-            top->hpos = (uint16_t)(h_active ? hcnt : 0);
-            top->vpos = (uint8_t) (v_active ? vcnt : 0);
+    fprintf(stderr, "Running Kaneko16 berlwall simulation (kaneko_arcade RTL)...\n");
 
-            ++hcnt;
-            if (hcnt >= VID_H_TOTAL) {
-                hcnt = 0;
-                ++vcnt;
-                if (vcnt >= VID_V_TOTAL) vcnt = 0;
-            }
-        }
+    // =====================================================================
+    // Main simulation loop
+    // =====================================================================
+    // Iteration budget: H_TOTAL=416, V_TOTAL=264, PIX_DIV=5, 2 half-cycles/iter
+    // → ~416*264*5*2 = 1,098,240 iters/frame. Use 1.2M for margin.
+    for (iter = 0; iter < (uint64_t)n_frames * 1200000ULL; iter++) {
+        // Toggle clock
+        top->clk_sys = top->clk_sys ^ 1;
 
-        // ── Sprite ROM: combinational zero-latency ────────────────────────────
-        {
-            // Sprite byte addr offset: loaded at SDRAM 0x100000
-            uint32_t spr_byte_addr = 0x100000u + (uint32_t)top->spr_rom_addr;
-            uint16_t lo = sdram.read_word(spr_byte_addr);
-            uint16_t hi = sdram.read_word(spr_byte_addr + 2);
-            top->spr_rom_data = ((uint32_t)hi << 16) | lo;
-        }
+        // Release reset after RESET_ITERS half-cycles
+        if (iter >= RESET_ITERS) top->reset_n = 1;
 
-        // ── BG tile ROM: combinational zero-latency ───────────────────────────
-        {
-            uint32_t bg_byte_addr = 0x500000u + (uint32_t)top->bg_tile_rom_addr;
-            top->bg_tile_rom_data = sdram.read_byte(bg_byte_addr);
-        }
+        if (top->clk_sys == 1) {
+            // ── Rising edge ──────────────────────────────────────────────
 
-        // ── Bus bypass: set data BEFORE posedge eval ──────────────────────────
-        // The CPU samples iEdb ON posedge eval. We use the previous cycle's
-        // address/ASn (already settled) to decide what to present.
-        // ROM space: A[23:21] = 0b000 → byte addresses 0x000000–0x1FFFFF
-        {
-            uint32_t cur_addr = (uint32_t)top->dbg_cpu_addr;  // [23:1]
-            bool     cur_as_n = (bool)top->dbg_cpu_as_n;
-            bool     cur_rw   = (bool)top->dbg_cpu_rw;
+            // Phi enables (alternating, 16 MHz CPU from 32 MHz sys)
+            top->enPhi1 = phi_toggle ? 0 : 1;
+            top->enPhi2 = phi_toggle ? 1 : 0;
+            phi_toggle  = !phi_toggle;
 
-            // ROM chip select: upper 3 bits of byte address = 0
-            bool rom_cs = (!cur_as_n) && ((cur_addr >> 20) == 0);
-
-            if (rom_cs && cur_rw) {
-                // Read from program ROM
-                uint32_t byte_addr = (uint32_t)(cur_addr << 1) & 0x1FFFFFu;
-                top->bypass_data    = sdram.read_word(byte_addr);
-                top->bypass_dtack_n = 0;
-                top->bypass_en      = 1;
+            // ── Pixel clock enable (/5 from 32 MHz = 6.4 MHz) ──────────
+            ++pix_div_cnt;
+            if (pix_div_cnt >= PIX_DIV) {
+                pix_div_cnt = 0;
+                top->clk_pix = 1;
             } else {
-                top->bypass_en      = 0;
-                top->bypass_data    = 0xFFFF;
-                top->bypass_dtack_n = 1;
+                top->clk_pix = 0;
             }
-        }
 
-        // ── Phi enables: toggle every cycle after reset ───────────────────────
-        {
-            static bool phi_toggle = false;
-            if (cycle >= 16) {
-                top->enPhi1 = phi_toggle ? 0 : 1;
-                top->enPhi2 = phi_toggle ? 1 : 0;
-                phi_toggle  = !phi_toggle;
+            // ── Sound clock enable (/32 from 32 MHz = 1 MHz) ───────────
+            ++snd_div_cnt;
+            if (snd_div_cnt >= SND_DIV) {
+                snd_div_cnt = 0;
+                top->clk_sound_cen = 1;
             } else {
-                top->enPhi1 = 0;
-                top->enPhi2 = 0;
+                top->clk_sound_cen = 0;
             }
-        }
 
-        // ── Posedge eval ──────────────────────────────────────────────────────
-        top->clk_sys = 1;
-        top->eval();
-        if (vcd) vcd->dump((vluint64_t)(cycle * 2 + 1));
-
-        // ── Capture pixel ─────────────────────────────────────────────────────
-        {
-            bool active = (!top->vblank) && (!top->hblank);
-            if (active) {
-                int cx = (int)top->hpos;
-                int cy = (int)top->vpos;
-                fb.set(cx, cy, top->rgb_r, top->rgb_g, top->rgb_b);
+            // ── SDRAM channels (tick every rising edge) ─────────────────
+            {
+                // Program ROM: [19:1] word-addressed, byte_addr = addr << 1
+                auto r = prog_ch.tick(top->prog_rom_req,
+                                      (uint32_t)top->prog_rom_addr << 1);
+                top->prog_rom_data = r.data;
+                top->prog_rom_ack  = r.ack;
             }
-        }
+            {
+                // GFX ROM: [21:0] word-addressed, byte_addr = addr << 1
+                auto r = gfx_ch.tick(top->gfx_rom_req,
+                                     (uint32_t)top->gfx_rom_addr << 1);
+                top->gfx_rom_data = r.data;
+                top->gfx_rom_ack  = r.ack;
+            }
+            {
+                // Z80 ROM: [15:0] byte-addressed, add SDRAM base 0x600000
+                auto r = z80_ch.tick(top->z80_rom_req,
+                                     0x600000u + (uint32_t)top->z80_rom_addr);
+                top->z80_rom_data = r.data;
+                top->z80_rom_ack  = r.ack;
+            }
+            {
+                // ADPCM ROM: [23:0] byte-addressed, add SDRAM base 0x700000
+                auto r = adpcm_ch.tick(top->adpcm_rom_req,
+                                       0x700000u + (uint32_t)top->adpcm_rom_addr);
+                top->adpcm_rom_data = r.data;
+                top->adpcm_rom_ack  = r.ack;
+            }
 
-        // ── CPU bus diagnostics: first 200 cycles ────────────────────────────
-        if (cycle <= 200) {
-            fprintf(stderr, "  [%4" PRIu64 "] as_n=%d halted_n=%d rw=%d addr=0x%06X"
-                            " dtack_n=%d bypass=%d dout=0x%04X\n",
-                    cycle,
-                    (int)top->dbg_cpu_as_n,
-                    (int)top->dbg_cpu_halted_n,
-                    (int)top->dbg_cpu_rw,
-                    (unsigned)(((uint32_t)top->dbg_cpu_addr) << 1),
-                    (int)top->dbg_cpu_dtack_n,
-                    (int)top->bypass_en,
-                    (unsigned)(top->dbg_cpu_dout & 0xFFFF));
-        }
+            // ── Bus diagnostics ─────────────────────────────────────────
+            {
+                uint8_t  asn  = top->dbg_cpu_as_n;
+                uint8_t  rwn  = top->dbg_cpu_rw;
+                uint32_t addr = ((uint32_t)top->dbg_cpu_addr << 1) & 0xFFFFFF;
 
-        // ── Bus cycle tracking ────────────────────────────────────────────────
-        {
-            static bool prev_as_n = true;
-            bool cur_as_n = (bool)top->dbg_cpu_as_n;
-            if (!cur_as_n && prev_as_n) {
-                ++bus_cycle_count;
-                uint32_t byte_addr = ((uint32_t)top->dbg_cpu_addr) << 1;
+                if (!prev_asn && asn) {
+                    bus_cycles++;
+                }
 
-                // Log first 200 bus cycles
-                if (bus_cycle_count <= 200) {
-                    fprintf(stderr, "  BUS#%3d [%7" PRIu64 "] %s 0x%06X dtack=%d data=0x%04X\n",
-                            bus_cycle_count, cycle,
-                            top->dbg_cpu_rw ? "RD" : "WR",
-                            byte_addr, (int)top->dbg_cpu_dtack_n,
+                // Trap backtrace ring buffer
+                {
+                    static constexpr int RING_SIZE = 50;
+                    struct BCE { uint32_t addr; bool rw; int bc; };
+                    static BCE ring[RING_SIZE];
+                    static int ring_idx = 0;
+                    static bool trap_dumped = false;
+
+                    if (!asn && prev_asn && iter > RESET_ITERS) {
+                        ring[ring_idx % RING_SIZE] = {addr, (bool)rwn, bus_cycles};
+                        ring_idx++;
+                    }
+                    if (!trap_dumped && !asn && prev_asn && addr >= 0x000B00 && addr <= 0x000B04) {
+                        trap_dumped = true;
+                        int n = (ring_idx < RING_SIZE) ? ring_idx : RING_SIZE;
+                        fprintf(stderr, "\n*** TRAP at 0x%06X (bc=%d)! Last %d bus cycles:\n",
+                                addr, bus_cycles, n);
+                        int start = (ring_idx >= RING_SIZE) ? ring_idx - RING_SIZE : 0;
+                        for (int i = start; i < ring_idx; i++) {
+                            auto& e = ring[i % RING_SIZE];
+                            fprintf(stderr, "    bc=%6d  %s  0x%06X\n",
+                                    e.bc, e.rw ? "RD" : "WR", e.addr);
+                        }
+                        fprintf(stderr, "***\n\n");
+                    }
+                }
+
+                // Log first 60 bus cycles
+                bool log_this = (!asn && prev_asn && iter > RESET_ITERS) &&
+                    (bus_cycles < 60);
+                if (log_this) {
+                    fprintf(stderr, "  [%6" PRIu64 "|bc%d] ASn=0 RW=%d addr=%06X dtack_n=%d dout=%04X\n",
+                            iter, bus_cycles, (int)rwn, addr,
+                            (int)top->dbg_cpu_dtack_n,
                             (unsigned)(top->dbg_cpu_dout & 0xFFFF));
                 }
 
-                // Palette write trace (0x140000–0x14FFFF)
-                if (!top->dbg_cpu_rw && byte_addr >= 0x140000 && byte_addr <= 0x14FFFF) {
-                    ++palette_writes;
-                    if (palette_writes <= 10)
-                        fprintf(stderr, "  PAL WR #%d addr=0x%06X data=0x%04X\n",
-                                palette_writes, byte_addr, (unsigned)top->dbg_cpu_din);
+                // Track writes to key address ranges
+                static int pal_wr_count = 0;
+                static int wram_wr_count = 0;
+                static int io_rd_count = 0;
+                if (!asn && prev_asn) {
+                    if (!rwn) {
+                        // Palette RAM: 0x600000-0x6003FF
+                        if (addr >= 0x600000 && addr <= 0x6003FF) {
+                            ++pal_wr_count;
+                            if (pal_wr_count <= 5)
+                                fprintf(stderr, "  PAL WR #%d addr=%06X data=%04X @iter=%" PRIu64 "\n",
+                                        pal_wr_count, addr, (unsigned)top->dbg_cpu_din,
+                                        iter);
+                        }
+                        // Work RAM: 0x100000-0x10FFFF
+                        if (addr >= 0x100000 && addr <= 0x10FFFF) {
+                            ++wram_wr_count;
+                            uint16_t wd2 = (unsigned)(top->dbg_cpu_din & 0xFFFF);
+                            if (wram_wr_count <= 5 || (wd2 != 0 && wram_wr_count <= 20))
+                                fprintf(stderr, "  WRAM WR #%d addr=%06X data=%04X @bc=%d\n",
+                                        wram_wr_count, addr, wd2, bus_cycles);
+                        }
+                    } else {
+                        // I/O reads: 0x700000-0x70000F
+                        if (addr >= 0x700000 && addr <= 0x70000F) {
+                            ++io_rd_count;
+                            if (io_rd_count <= 10)
+                                fprintf(stderr, "  I/O RD #%d addr=%06X data=%04X @iter=%" PRIu64 "\n",
+                                        io_rd_count, addr,
+                                        (unsigned)(top->dbg_cpu_dout & 0xFFFF),
+                                        iter);
+                        }
+                        // AY8910 reads: 0x800000-0x800FFF
+                        static int ay_rd_count = 0;
+                        if (addr >= 0x800000 && addr <= 0x800FFF) {
+                            ++ay_rd_count;
+                            if (ay_rd_count <= 20)
+                                fprintf(stderr, "  AY RD #%d addr=%06X data=%04X @iter=%" PRIu64 "\n",
+                                        ay_rd_count, addr,
+                                        (unsigned)(top->dbg_cpu_dout & 0xFFFF),
+                                        iter);
+                        }
+                        // Brightness reads: 0x500000
+                        static int brt_rd_count = 0;
+                        if (addr >= 0x500000 && addr <= 0x500003) {
+                            ++brt_rd_count;
+                            if (brt_rd_count <= 5)
+                                fprintf(stderr, "  BRT RD #%d addr=%06X data=%04X @iter=%" PRIu64 "\n",
+                                        brt_rd_count, addr,
+                                        (unsigned)(top->dbg_cpu_dout & 0xFFFF),
+                                        iter);
+                        }
+                    }
                 }
 
-                // Count all RAM/register writes
-                if (!top->dbg_cpu_rw && byte_addr >= 0x100000)
-                    ++ram_writes;
+                // MCU RAM accesses (both reads and writes): 0x200000-0x20FFFF
+                static int mcuram_wr_count = 0;
+                static int mcuram_rd_count = 0;
+                if (!asn && prev_asn && addr >= 0x200000 && addr <= 0x20FFFF) {
+                    if (!rwn) {
+                        ++mcuram_wr_count;
+                        // Log MCU writes with non-zero data (fill test) or near the stall
+                        uint16_t wd = (unsigned)(top->dbg_cpu_din & 0xFFFF);
+                        if ((wd != 0 && mcuram_wr_count <= 30) || (bus_cycles >= 100000 && mcuram_wr_count <= 200))
+                            fprintf(stderr, "  MCU WR #%d addr=%06X data=%04X @bc=%d\n",
+                                    mcuram_wr_count, addr, wd, bus_cycles);
+                    } else {
+                        ++mcuram_rd_count;
+                        uint16_t rd = (unsigned)(top->dbg_cpu_dout & 0xFFFF);
+                        if ((rd != 0 && mcuram_rd_count <= 30) || (bus_cycles >= 100000 && mcuram_rd_count <= 200))
+                            fprintf(stderr, "  MCU RD #%d addr=%06X data=%04X @bc=%d\n",
+                                    mcuram_rd_count, addr, rd, bus_cycles);
+                    }
+                }
+
+                // Trap detection: ring buffer filled in the bus cycle edge detection below
+
+                // Sample CPU address every 10K bus cycles
+                if (bus_cycles > 0 && (bus_cycles % 10000) == 0 && !prev_asn && asn) {
+                    fprintf(stderr, "  [%dK bus] addr=%06X rw=%d frame=%d pal=%d wram=%d io=%d\n",
+                            bus_cycles/1000, addr, (int)rwn, frame_num,
+                            pal_wr_count, wram_wr_count, io_rd_count);
+                }
+
+                // Detect CPU halt (double bus fault)
+                if (top->dbg_cpu_halted_n == 0 && iter > (uint64_t)RESET_ITERS + 100 &&
+                    !halted_reported) {
+                    halted_reported = true;
+                    fprintf(stderr, "\n*** CPU HALTED at iter %" PRIu64 " (bus_cycles=%d) ***\n",
+                            iter, bus_cycles);
+                }
+
+                // Stall detection: if bus_cycles hasn't changed for 500K iters, log CPU state
+                {
+                    static int      prev_bus_cycles = 0;
+                    static uint64_t last_advance_iter = 0;
+                    static bool     stall_reported = false;
+
+                    if (bus_cycles != prev_bus_cycles) {
+                        prev_bus_cycles = bus_cycles;
+                        last_advance_iter = iter;
+                        stall_reported = false;
+                    } else if (iter - last_advance_iter > 500000 && !stall_reported) {
+                        stall_reported = true;
+                        fprintf(stderr, "\n*** CPU STALL detected at iter %" PRIu64
+                                        " (bus_cycles=%d, stale for %luK iters)\n"
+                                        "    addr=0x%06X rw=%d asn=%d dtack_n=%d halted_n=%d\n\n",
+                                iter, bus_cycles,
+                                (unsigned long)((iter - last_advance_iter) / 1000),
+                                addr, (int)rwn, (int)asn,
+                                (int)top->dbg_cpu_dtack_n,
+                                (int)top->dbg_cpu_halted_n);
+                    }
+                }
+
+                prev_asn = asn;
             }
-            prev_as_n = cur_as_n;
+
+        } else {
+            // ── Falling edge ─────────────────────────────────────────────
+            top->enPhi1        = 0;
+            top->enPhi2        = 0;
+            top->clk_pix       = 0;
+            top->clk_sound_cen = 0;
         }
 
-        // Detect CPU halt
-        {
-            static bool halted_reported = false;
-            if (!top->dbg_cpu_halted_n && !halted_reported) {
-                halted_reported = true;
-                fprintf(stderr, "\n*** CPU HALTED at cycle %" PRIu64
-                                " (double bus fault) — bus_cycles=%d ***\n\n",
-                        cycle, bus_cycle_count);
-            }
-        }
-
-        // Periodic status
-        if (cycle > 0 && (cycle % 100000) == 0) {
-            fprintf(stderr, "  @%" PRIu64 "K: frame=%d bus=%d pal_wr=%d ram_wr=%d"
-                            " as_n=%d halted_n=%d addr=0x%06X\n",
-                    cycle / 1000, frame_num, bus_cycle_count, palette_writes, ram_writes,
-                    (int)top->dbg_cpu_as_n,
-                    (int)top->dbg_cpu_halted_n,
-                    (unsigned)(((uint32_t)top->dbg_cpu_addr) << 1));
-        }
-
-        // ── vsync falling edge → save frame ──────────────────────────────────
-        uint8_t vsync_n_now = top->vsync_n;
-        if (vsync_n_prev == 1 && vsync_n_now == 0) {
-            char fname[64];
-            snprintf(fname, sizeof(fname), "frame_%04d.ppm", frame_num);
-            if (fb.write_ppm(fname))
-                fprintf(stderr, "Frame %4d written: %s\n", frame_num, fname);
-            ++frame_num;
-            if (frame_num >= n_frames) done = true;
-            fb = FrameBuffer();
-        }
-        vsync_n_prev = vsync_n_now;
-
-        // ── Negedge ───────────────────────────────────────────────────────────
-        top->clk_sys = 0;
-        top->enPhi1  = 0;
-        top->enPhi2  = 0;
         top->eval();
-        if (vcd) vcd->dump((vluint64_t)(cycle * 2));
+        if (vcd) vcd->dump((vluint64_t)vcd_ts);
+        ++vcd_ts;
 
-        ++cycle;
-    };
+        // ── Pixel capture (on rising edge, after eval) ──────────────────
+        // kaneko_arcade generates its own hblank/vblank — no external timing.
+        // Track pixel position by counting active pixels between blanking edges.
 
-    // ── Reset sequence ────────────────────────────────────────────────────────
-    fprintf(stderr, "Asserting reset for 16 cycles...\n");
-    top->reset_n = 0;
-    for (int i = 0; i < 16; i++) tick();
-    top->reset_n = 1;
-    fprintf(stderr, "Reset released at cycle %" PRIu64 "\n", cycle);
+        // DEBUG: Check if video signals are ever active
+        {
+            static uint64_t rgb_nonzero_count = 0;
+            static uint64_t active_count = 0;
+            static uint64_t hblank_low_count = 0;
+            static uint64_t vblank_low_count = 0;
+            static bool dbg_reported = false;
 
-    // ── Run simulation ────────────────────────────────────────────────────────
-    while (!done && !Verilated::gotFinish()) {
-        tick();
+            if (top->clk_sys == 1) {
+                if (top->rgb_r || top->rgb_g || top->rgb_b) rgb_nonzero_count++;
+                if (!top->hblank) hblank_low_count++;
+                if (!top->vblank) vblank_low_count++;
+                if (!top->hblank && !top->vblank) active_count++;
+            }
+
+            if (!dbg_reported && frame_num >= 3) {
+                dbg_reported = true;
+                fprintf(stderr, "\n*** VIDEO DEBUG after %d frames:\n"
+                        "    rgb_nonzero=%llu  active_video=%llu\n"
+                        "    hblank_low=%llu  vblank_low=%llu\n"
+                        "    hblank=%d vblank=%d rgb=(%d,%d,%d)\n***\n\n",
+                        frame_num,
+                        (unsigned long long)rgb_nonzero_count,
+                        (unsigned long long)active_count,
+                        (unsigned long long)hblank_low_count,
+                        (unsigned long long)vblank_low_count,
+                        (int)top->hblank, (int)top->vblank,
+                        (int)top->rgb_r, (int)top->rgb_g, (int)top->rgb_b);
+            }
+        }
+
+        if (top->clk_sys == 1 && top->clk_pix) {
+            uint8_t cur_hblank = top->hblank;
+            uint8_t cur_vblank = top->vblank;
+
+            // Active pixel: not in any blanking
+            if (!cur_vblank && !cur_hblank) {
+                fb.set(px, py, top->rgb_r, top->rgb_g, top->rgb_b);
+                px++;
+            }
+
+            // Hblank rising edge -> end of active line
+            if (cur_hblank && !prev_hblank) {
+                px = 0;
+                if (!cur_vblank) py++;
+            }
+
+            // Vblank rising edge -> end of active frame area
+            if (cur_vblank && !prev_vblank) {
+                px = 0;
+                py = 0;
+            }
+
+            prev_hblank = cur_hblank;
+            prev_vblank = cur_vblank;
+        }
+
+        // ── Vsync edge detection -> frame save ──────────────────────────
+        {
+            uint8_t vsync_n_now = top->vsync_n;
+            if (vsync_n_prev == 1 && vsync_n_now == 0) {
+                char fname[64];
+                snprintf(fname, sizeof(fname), "frame_%04d.ppm", frame_num);
+                if (fb.write_ppm(fname))
+                    fprintf(stderr, "Frame %4d written: %s  (bus_cycles=%d)\n",
+                            frame_num, fname, bus_cycles);
+                ++frame_num;
+                if (frame_num >= n_frames) done = true;
+                fb = FrameBuffer();
+            }
+            vsync_n_prev = vsync_n_now;
+        }
+
+        if (done) break;
+
+        if ((iter % 2000000) == 0 && iter > 0) {
+            fprintf(stderr, "  iter %" PRIu64 "  bus_cycles=%d  frame=%d\n",
+                    iter, bus_cycles, frame_num);
+        }
     }
 
-    fprintf(stderr, "Simulation complete: %d frames, %" PRIu64 " cycles, "
-                    "%d bus_cycles, %d pal_writes, %d ram_writes\n",
-            frame_num, cycle, bus_cycle_count, palette_writes, ram_writes);
-
-    if (vcd) { vcd->close(); delete vcd; }
+    // ── Final cleanup ────────────────────────────────────────────────────────
+    if (vcd) {
+        vcd->close();
+        delete vcd;
+    }
     top->final();
     delete top;
+
+    fprintf(stderr, "Simulation complete. %d frames, %" PRIu64 " iters (%d bus cycles).\n",
+            frame_num, iter, bus_cycles);
     return 0;
 }
