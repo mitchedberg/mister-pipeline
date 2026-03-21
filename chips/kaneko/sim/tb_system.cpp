@@ -36,6 +36,9 @@
 // =============================================================================
 
 #include "Vtb_top.h"
+#include "Vtb_top___024root.h"
+#include "Vtb_top_tb_top.h"
+#include "Vtb_top_fx68k.h"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
@@ -468,7 +471,9 @@ int main(int argc, char** argv) {
                         if (iack_count <= 3)
                             fprintf(stderr, "  IACK CYCLE @iter=%" PRIu64 " frame=%d\n", iter, frame_num);
                     }
-                    static int intpend_count = 0; // fx68k intPend probe deferred to Agent 1
+                    // Probe fx68k internal state via Verilator public signals
+                    // Access path from Agent 1's NMK pattern
+                    static int intpend_count = 0;
 
                     // Report at frame 5
                     if (frame_num == 5) {
@@ -494,11 +499,13 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                // Sample CPU address every 10K bus cycles
-                if (bus_cycles > 0 && (bus_cycles % 10000) == 0 && !prev_asn && asn) {
-                    fprintf(stderr, "  [%dK bus] addr=%06X rw=%d frame=%d pal=%d wram=%d io=%d\n",
-                            bus_cycles/1000, addr, (int)rwn, frame_num,
-                            pal_wr_count, wram_wr_count, io_rd_count);
+                // Sample CPU address + pswI every 50K bus cycles
+                if (bus_cycles > 0 && (bus_cycles % 50000) == 0 && !prev_asn && asn) {
+                    // Access fx68k internals via rootp (same pattern as NMK sim)
+                    auto* cpu_r = top->rootp->tb_top->u_cpu;
+                    fprintf(stderr, "  [%dK bus] addr=%06X frame=%d pswI=%d intPend=%d iIpl=%d\n",
+                            bus_cycles/1000, addr, frame_num,
+                            (int)cpu_r->pswI, (int)cpu_r->intPend, (int)cpu_r->iIpl);
                 }
 
                 // Detect CPU halt (double bus fault)
