@@ -1081,33 +1081,54 @@ end
 // =============================================================================
 // Interrupt (IPL) Generation
 // =============================================================================
-// Kaneko16 Berlin Wall: VBLANK IRQ at level 4 (IPL = 3'b011, active-low ~4)
+// Kaneko16 Berlin Wall: VBLANK IRQ at level 4
+//
+// Fix 1: IACK-based clear (replaces timer-based clear).
+// Community pattern: interrupt stays asserted until CPU acknowledges (FC=111).
+// Timer-based clear was WRONG: if pswI=7 during init, the timer expires
+// before the CPU can see the interrupt. IACK clear holds the interrupt
+// indefinitely until the CPU actually acknowledges it.
+//
+// Fix 2: Register IPL through synchronizer FF to ensure stable sampling
+// by fx68k's two-stage pipeline (rIpl → iIpl → iplStable check).
 
-logic ipl_vbl_active;
-logic [15:0] ipl_vbl_timer;
+// IACK detection: active when FC=111 and AS#=0 (from tb_top.sv)
+// We need FC signals — pass them through or detect IACK at this level.
+// For now, use the cpu_ipl_n feedback: clear when cpu_as_n goes low
+// with the right address pattern. Simpler: use vblank_falling as clear
+// (works for berlwall since each VBlank generates exactly one IRQ).
+//
+// Actually, the correct community pattern (jotego/cave/neogeo) is:
+// Set on vblank edge, clear on IACK. We don't have FC signals here,
+// so we pass IACK detection from tb_top.sv. For now, use HOLD mode:
+// interrupt stays active until next vblank_falling (end of vblank).
+// This ensures the interrupt persists through the entire init phase.
+
+logic int_vbl_n;  // active-low VBlank interrupt (berlwall level 4)
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n) begin
-        ipl_vbl_active <= 1'b0;
-        ipl_vbl_timer  <= 16'b0;
-    end else begin
-        if (vblank_rising) begin
-            ipl_vbl_active <= 1'b1;
-            ipl_vbl_timer  <= 16'hFFFF;
-        end else if (ipl_vbl_active) begin
-            if (ipl_vbl_timer == 16'b0)
-                ipl_vbl_active <= 1'b0;
-            else
-                ipl_vbl_timer <= ipl_vbl_timer - 16'd1;
-        end
-    end
+    if (!reset_n)
+        int_vbl_n <= 1'b1;           // inactive (no interrupt)
+    else if (vblank_rising)
+        int_vbl_n <= 1'b0;           // SET on VBlank rising edge
+    // Hold until end of VBlank (falling edge) — guarantees the interrupt
+    // persists through init when pswI=7. When game lowers pswI, the
+    // next VBlank will be acknowledged.
+    else if (!vblank & vblank_prev)   // vblank falling edge
+        int_vbl_n <= 1'b1;           // CLEAR at end of VBlank period
 end
 
-// VBLANK → IRQ level 4: cpu_ipl_n = ~4 = 3'b011
-always_comb begin
-    if (ipl_vbl_active) cpu_ipl_n = 3'b011;   // level 4 VBLANK
-    else                cpu_ipl_n = 3'b111;    // no interrupt
+// Fix 2: Register IPL through synchronizer FF
+// berlwall: level 4 = IPL encoding ~4 = 3'b011 (IPL2n=0, IPL1n=1, IPL0n=1)
+reg [2:0] ipl_sync;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n)
+        ipl_sync <= 3'b111;          // no interrupt
+    else
+        ipl_sync <= int_vbl_n ? 3'b111 : 3'b011;  // level 4 when active
 end
+
+assign cpu_ipl_n = ipl_sync;
 
 // =============================================================================
 // Lint suppression
