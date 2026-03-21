@@ -241,7 +241,7 @@ assign prog_rom_cs = (cpu_addr[23:20] == 4'b0000) && !cpu_as_n;
 
 // Work RAM: byte 0x100000–0x10FFFF → word 0x080000–0x087FFF (15-bit)
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:WRAM_ABITS] == WRAM_BASE[23:WRAM_ABITS]) && !cpu_as_n;
+assign wram_cs = (cpu_addr[23:WRAM_ABITS+1] == WRAM_BASE[23:WRAM_ABITS+1]) && !cpu_as_n;
 
 // GP9001: byte 0x400000–0x40FFFF → word 0x200000–0x2007FF
 //   11-bit chip-relative window (gp9001 addr[10:0])
@@ -255,6 +255,38 @@ assign palram_cs = (cpu_addr[23:9] == PALRAM_BASE[23:9]) && !cpu_as_n;
 // I/O: byte 0x700000–0x700FFF → word 0x380000–0x3807FF (11-bit window)
 logic io_cs;
 assign io_cs = (cpu_addr[23:11] == IO_BASE[23:11]) && !cpu_as_n;
+
+// YM2151 (68K-direct): byte 0x600000–0x600001 → word 0x300000
+//   Truxton II drives YM2151 directly from the 68K (no Z80 sound CPU).
+//   The 68K polls a "ready strobe" at 0x600000: the polling sequence is:
+//     loop1: wait until bit 8 = 1  (YM2151 raises READY)
+//     loop2: wait until bit 8 = 0  (YM2151 clears READY after accepting data)
+//   To unblock both loops without a full YM2151 timing model, we implement a
+//   toggle register that flips bit 8 on each read: first read → 1 (exits loop1),
+//   next read → 0 (exits loop2).
+//   The Z80-side jt51 instance is separate and used only for audio output.
+logic ym_cpu_cs;
+assign ym_cpu_cs = (cpu_addr[23:1] == 23'h300000) && !cpu_as_n;
+
+// Toggle flip-flop: alternates bit 8 on each 68K read of 0x600000.
+// Gives loop1 (wait-for-set) and loop2 (wait-for-clear) both an exit path.
+logic ym_cpu_toggle;
+logic ym_cpu_rd_prev;   // detect new read cycle (rising edge of ym_cpu_cs with RW=1)
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ym_cpu_toggle  <= 1'b1;   // initial state: bit 8 = 1 → exits loop1 first
+        ym_cpu_rd_prev <= 1'b0;
+    end else begin
+        // Detect start of a new YM2151 read bus cycle (AS falling with RW=1)
+        ym_cpu_rd_prev <= ym_cpu_cs && cpu_rw;
+        if (ym_cpu_cs && cpu_rw && !ym_cpu_rd_prev)
+            ym_cpu_toggle <= ~ym_cpu_toggle;   // toggle on each new read
+    end
+end
+
+// Status word returned to CPU: bit 8 = toggle, all other bits 0.
+wire [15:0] ym_cpu_dout = {7'b0, ym_cpu_toggle, 8'b0};
 
 // =============================================================================
 // GP9001 — Graphics Processor
@@ -704,7 +736,7 @@ assign prog_rom_addr = prog_req_addr_r;
 // =============================================================================
 // CPU Data Bus Read Mux
 // =============================================================================
-// Priority: GP9001 > palette RAM > I/O > WRAM > prog ROM > open bus
+// Priority: GP9001 > palette RAM > I/O > YM2151 > WRAM > prog ROM > open bus
 
 always_comb begin
     if (!gp9001_cs_n)
@@ -713,6 +745,8 @@ always_comb begin
         cpu_din = palram_cpu_dout;
     else if (io_cs)
         cpu_din = {8'hFF, io_dout_byte};
+    else if (ym_cpu_cs)
+        cpu_din = ym_cpu_dout;   // YM2151 stub: toggle bit 8 to unblock poll loops
     else if (wram_cs)
         cpu_din = wram_dout_r;
     else if (prog_rom_cs)
@@ -735,7 +769,7 @@ logic dtack_r;
 // Fallback: 2-cycle counter for open-bus cycles
 logic dtack_fallback_r;
 
-assign any_fast_cs = !gp9001_cs_n | palram_cs | io_cs | wram_cs;
+assign any_fast_cs = !gp9001_cs_n | palram_cs | io_cs | ym_cpu_cs | wram_cs;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
