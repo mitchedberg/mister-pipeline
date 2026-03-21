@@ -203,6 +203,7 @@ nmk_arcade #(
     .cpu_uds_n          (cpu_uds_n),
     .cpu_rw             (cpu_rw),
     .cpu_as_n           (cpu_as_n),
+    .cpu_inta_n         (inta_n),       // IACK detection from FC pins
     .cpu_dtack_n        (cpu_dtack_n),
     .cpu_ipl_n          (cpu_ipl_n),
 

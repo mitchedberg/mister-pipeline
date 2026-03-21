@@ -68,6 +68,7 @@ module nmk_arcade #(
     input  logic        cpu_uds_n,      // upper data strobe (active low)
     input  logic        cpu_rw,         // 1=read, 0=write
     input  logic        cpu_as_n,       // address strobe (active low)
+    input  logic        cpu_inta_n,     // interrupt acknowledge (active low, FC=111 & ASn=0)
     output logic        cpu_dtack_n,    // data transfer acknowledge (active low)
     output logic [2:0]  cpu_ipl_n,      // interrupt priority level (active low encoded)
 
@@ -809,8 +810,12 @@ logic dtack_r;
 
 // Immediate regions: all RAM/regs respond in 1 cycle (BRAM latency = 1 cycle)
 // Includes: wram, pal, io, scroll registers, bg_vram (nmk16 chip), tx_vram
+// Also: ROM write cycles — writes to ROM address space are silently ignored
+// (FBNeo maps ROM with MAP_ROM which completes writes immediately with no effect).
+// Without this, CLR.W $0002 in the Thunder Dragon MCU-sync loop stalls forever.
 logic imm_cs;
-assign imm_cs = (wram_cs | pal_cs | io_cs | scroll_cs | bg_vram_cs | tx_vram_cs) && !cpu_as_n;
+assign imm_cs = (wram_cs | pal_cs | io_cs | scroll_cs | bg_vram_cs | tx_vram_cs
+                 | (prog_rom_cs && !cpu_rw)) && !cpu_as_n;
 
 // Program ROM: combinational pulse when SDRAM data arrives THIS cycle.
 // prog_req_pending goes 1→0 at the NEXT posedge (registered), so while
@@ -840,28 +845,31 @@ assign cpu_dtack_n = cpu_as_n          ? 1'b1 :
 // =============================================================================
 // Interrupt (IPL) Generation — VBLANK at level 4
 // =============================================================================
-logic        ipl4_active;
-logic [15:0] ipl4_timer;
+// Community pattern (jotego, Cave, NeoGeo, va7deo, atrac17):
+//   SET IPL on VBLANK edge, CLEAR on IACK only. NEVER use a timer.
+//   Timer-based clear races with pswI mask — interrupt expires before
+//   the CPU enables interrupts, so the game never takes VBlank.
+// =============================================================================
+logic ipl4_active;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         ipl4_active <= 1'b0;
-        ipl4_timer  <= 16'b0;
     end else begin
-        if (nmk_irq_vblank_pulse) begin
+        if (!cpu_inta_n)               // IACK cycle: CPU acknowledged the interrupt
+            ipl4_active <= 1'b0;
+        else if (nmk_irq_vblank_pulse) // VBlank: assert interrupt
             ipl4_active <= 1'b1;
-            ipl4_timer  <= 16'hFFFF;
-        end else if (ipl4_active) begin
-            if (ipl4_timer == 16'b0)
-                ipl4_active <= 1'b0;
-            else
-                ipl4_timer <= ipl4_timer - 16'd1;
-        end
     end
 end
 
 // IPL4 encoding: level 4 = ~4 = 3'b011 (active low)
-assign cpu_ipl_n = ipl4_active ? 3'b011 : 3'b111;
+// Register through synchronizer FF to avoid Verilator scheduling race
+reg [2:0] ipl_sync;
+always_ff @(posedge clk_sys) begin
+    ipl_sync <= ipl4_active ? 3'b011 : 3'b111;
+end
+assign cpu_ipl_n = ipl_sync;
 
 // =============================================================================
 // Video Sync / Blank Output
