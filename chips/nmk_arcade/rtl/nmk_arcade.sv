@@ -205,11 +205,10 @@ assign bg_vram_cs = (cpu_addr[23:16] == 8'h0C) && (cpu_addr[15:14] == 2'b11) && 
 logic tx_vram_cs;
 assign tx_vram_cs = (cpu_addr[23:16] == 8'h0D) && (cpu_addr[15:11] == 5'b0) && !cpu_as_n;
 
-// NMK16 cs_n: assert for any access to the NMK16 region
-// (BG VRAM at 0x0CC000; other NMK16 regs handled by scroll_cs/pal_cs/io_cs above)
-// For simplicity route bg_vram_cs to nmk16 chip; scroll/pal handled locally.
+// NMK16 cs_n: assert for BG VRAM (tilemap) and scroll register accesses.
+// Both regions are handled by the nmk16 chip.
 logic nmk_cs_n;
-assign nmk_cs_n = !bg_vram_cs;
+assign nmk_cs_n = !(bg_vram_cs | scroll_cs);
 
 // =============================================================================
 // NMK16 Chip Address Construction
@@ -219,11 +218,19 @@ assign nmk_cs_n = !bg_vram_cs;
 //   GPU regs:    addr[20:16]=5'b10010 → offset 0x120000
 //   Sprite RAM:  addr[20:16]=5'b10011 → offset 0x130000
 //
-// Thunder Dragon uses BG VRAM at 0x0CC000-0x0CFFFF (system addr).
-// We map this to the chip's tilemap range with addr[20:16]=5'b10001.
-// The lower bits [15:1] come from the offset within the 0x0CC000 window.
+// Thunder Dragon memory mapping:
+//   CPU 0x0CC000-0x0CFFFF → NMK16 tilemap RAM (addr[20:16]=5'b10001)
+//   CPU 0x0C4000-0x0C43FF → NMK16 GPU registers (addr[20:16]=5'b10010)
+//
+// For scroll_cs (0x0C4000): map to nmk16 GPU reg range 0x120000.
+// The scroll/control register offsets are in cpu_addr[4:1].
 logic [20:1] chip_addr;
-assign chip_addr = {5'b10001, cpu_addr[15:1]};   // BG tilemap RAM
+always_comb begin
+    if (scroll_cs)
+        chip_addr = {5'b10010, 11'h0, cpu_addr[4:1]};  // GPU regs: 0x120000 + offset
+    else
+        chip_addr = {5'b10001, cpu_addr[15:1]};          // BG tilemap RAM: 0x110000 + offset
+end
 
 // Signals driven by NMK16 submodule outputs.
 // Suppress UNDRIVEN: these are outputs from the nmk16 instance (not visible
@@ -269,6 +276,12 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) vsync_n_r <= 1'b1;
     else          vsync_n_r <= vsync_n_in;
 end
+
+// Scanline trigger: 1-cycle pulse at start of each active scanline (hpos==0,
+// hblank inactive). Feeds the G3 sprite rasterizer so it knows which scanline
+// to render pixels for.
+logic scan_trigger_w;
+assign scan_trigger_w = (hpos == 9'd0) && hblank_n_in;
 
 /* verilator lint_off PINCONNECTEMPTY */
 nmk16 #(
@@ -327,8 +340,8 @@ nmk16 #(
     .irq_vblank_pulse     (nmk_irq_vblank_pulse),
 
     // Gate 3: sprite rasterizer inputs
-    .scan_trigger     (1'b0),          // stub — no rasterizer pump
-    .current_scanline (9'b0),
+    .scan_trigger     (scan_trigger_w),    // pulse at start of each active scanline
+    .current_scanline ({1'b0, vpos}),      // current active scanline (vpos is 8-bit)
     .spr_rom_addr     (spr_rom_addr_w),
     .spr_rom_rd       (spr_rom_rd_w),
     .spr_rom_data     (spr_rom_data_w),
@@ -864,12 +877,8 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
 end
 
 // IPL4 encoding: level 4 = ~4 = 3'b011 (active low)
-// Register through synchronizer FF to avoid Verilator scheduling race
-reg [2:0] ipl_sync;
-always_ff @(posedge clk_sys) begin
-    ipl_sync <= ipl4_active ? 3'b011 : 3'b111;
-end
-assign cpu_ipl_n = ipl_sync;
+// Direct combinational assignment — no extra register that could initialize to 0 in Verilator.
+assign cpu_ipl_n = ipl4_active ? 3'b011 : 3'b111;
 
 // =============================================================================
 // Video Sync / Blank Output
