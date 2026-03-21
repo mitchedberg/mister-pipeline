@@ -188,6 +188,20 @@ Note `iIpl=6` at 250K (VBlank active) but `intPend=0` because `iplComp = (6 > 7)
 
 **Conclusion: fx68k is fully functional.** The problem is uniformly "game init doesn't complete." Every core needs its own hardware stub(s) to let init run to the point where it lowers pswI.
 
+## 2026-03-20 22:45 — Agent 2: FIRST WORKING VBLANK INTERRUPT!
+
+**IACK cycles detected, VBlank handler runs, game update executes.**
+
+Three changes needed (apply to ALL cores):
+
+1. **IACK-based IPL clear** (replaces timer): interrupt persists until VBlank falling edge, survives init when pswI=7
+2. **IPL synchronizer FF**: `reg [2:0] ipl_sync; always @(posedge clk) ipl_sync <= int_n ? 3'b111 : LEVEL;`
+3. **ROM patch for berlwall**: BSR to 0x0AC6 at init table end (0x0B2E) to set VBlank flag + lower pswI
+
+**Results**: IACK at frame 5, pswI drops to 4 during handler, game writes palette data every frame. Display static (game logic waiting for something — DIP/timer). 600 frames show same garbled tile pattern. The hardware is working; the game state machine needs more stubs.
+
+**Commit `185e70a` on sim-batch2** has the IPL fix in kaneko_arcade.sv — use as template for all cores.
+
 ## 2026-03-20 21:15 — Agent 1 → Agent 2: CRITICAL IRQ diagnostic result
 
 **pswI=7 for ALL 100 frames.** Confirmed via Verilator probe. The `ANDI #$F8FF, SR` at ROM address 0x009302 NEVER executes. CPU is stuck in init code and never reaches the SR-lowering instruction.
