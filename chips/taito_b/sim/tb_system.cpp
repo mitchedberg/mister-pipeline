@@ -219,7 +219,9 @@ int main(int argc, char** argv) {
     // ========================================================================
     // RTL BUS EVAL LOOP
     // ========================================================================
-    for (iter = 0; iter < (uint64_t)n_frames * 800000ULL; iter++) {
+    // Iteration budget: H_TOTAL=416, V_TOTAL=264, PIX_DIV=5, 2 half-cycles/iter
+    // → ~416*264*5*2 = 1,098,240 iters/frame. Use 1.2M for margin.
+    for (iter = 0; iter < (uint64_t)n_frames * 1200000ULL; iter++) {
         // Toggle clock
         top->clk_sys = top->clk_sys ^ 1;
 
@@ -371,12 +373,16 @@ int main(int argc, char** argv) {
         if (vcd) vcd->dump((vluint64_t)vcd_ts);
         ++vcd_ts;
 
-        // ── Pixel capture (on rising edge, after eval) ────────────────────
-        if (top->clk_sys == 1) {
-            bool active = (!top->vblank) && (!top->hblank);
-            if (active) {
-                int cx = (int)top->hpos;
-                int cy = (int)top->vpos;
+        // ── Pixel capture (on pixel clock edge only, using C++-driven timing) ──
+        // Use C++-driven hcnt/vcnt for position (not RTL's delayed hblank/vblank
+        // outputs from TC0260DAR's 3-stage pipeline). Only capture on clk_pix
+        // edges since that's when the TC0260DAR latches valid pixel data.
+        if (top->clk_sys == 1 && top->clk_pix) {
+            bool h_active = (hcnt > 0 ? hcnt - 1 : VID_H_TOTAL - 1) < VID_H_ACTIVE;
+            bool v_active = (vcnt < VID_V_ACTIVE);
+            if (h_active && v_active) {
+                int cx = (hcnt > 0 ? hcnt - 1 : VID_H_TOTAL - 1);
+                int cy = vcnt;
                 if (cx >= 0 && cx < VID_H_ACTIVE && cy >= 0 && cy < VID_V_ACTIVE)
                     fb.set(cx, cy, top->rgb_r, top->rgb_g, top->rgb_b);
             }
