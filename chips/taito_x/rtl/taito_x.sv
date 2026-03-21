@@ -36,7 +36,7 @@
 //   0xE000 – 0xE001    YM2610/YM2151 register write (I/O mapped at 0x00/0x01)
 //
 // Interrupt routing:
-//   68000 IPL2 (level 5, active-low ~5 = 3'b010): VBlank from video timing.
+//   68000 IPL (level 2, active-low ~2 = 3'b101): VBlank from video timing.
 //   Z80 /INT: from 68000 sound command write (X1-004 NMI-like mechanism).
 //
 // Parameterised for per-game differences:
@@ -165,7 +165,7 @@ module taito_x #(
 //   HSync: assert during hpos 400..431 (32-pixel window in HBlank)
 //   VSync: assert during vpos 244..246 (2-line window in VBlank)
 //
-// Interrupt: VBlank rising edge → 68000 IPL5 (active-low ~5 = 3'b010)
+// Interrupt: VBlank rising edge → 68000 IPL2 (active-low ~2 = 3'b101)
 // =============================================================================
 
 localparam int H_VISIBLE  = 384;
@@ -680,31 +680,47 @@ assign cpu_dtack_n = cpu_as_n       ? 1'b1 :
 // Interrupt Controller
 // =============================================================================
 //
-// VBlank → 68000 IPL5 (level 5, active-low ~5 = 3'b010).
-// HOLD_LINE: latch and hold for 16-bit timer window (~65K sys_clk cycles).
-// This is sufficient time for the 68000 to IACK the interrupt.
+// Gigandes: VBlank → 68000 IPL level 2 (active-low ~2 = 3'b101).
+//
+// Fix: IACK-based clear (replaces timer-based clear).
+// Community pattern (jotego/cave/neogeo): interrupt stays asserted until
+// CPU acknowledges (FC=111). Timer-based clear was WRONG: if pswI=7 during
+// init, the timer expires before the CPU can see the interrupt. IACK clear
+// holds the interrupt indefinitely until the CPU actually acknowledges it.
+//
+// Pattern: set int_vbl_n LOW on vblank rising edge, clear HIGH on vblank
+// falling edge. This ensures the interrupt persists through the entire init
+// phase when pswI=7. When the game lowers pswI, the next VBlank will be
+// acknowledged.
+//
+// Fix 2: Register IPL through synchronizer FF to ensure stable sampling
+// by fx68k's two-stage pipeline (rIpl → iIpl → iplStable check).
 
-logic        ipl_active;
-logic [15:0] ipl_timer;
+logic int_vbl_n;  // active-low VBlank interrupt (Gigandes level 2)
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n) begin
-        ipl_active <= 1'b0;
-        ipl_timer  <= 16'b0;
-    end else begin
-        if (vblank_rise) begin
-            ipl_active <= 1'b1;
-            ipl_timer  <= 16'hFFFF;
-        end else if (ipl_active) begin
-            if (ipl_timer == 16'b0) ipl_active <= 1'b0;
-            else                    ipl_timer  <= ipl_timer - 16'd1;
-        end
-    end
+    if (!reset_n)
+        int_vbl_n <= 1'b1;           // inactive (no interrupt)
+    else if (vblank_rise)
+        int_vbl_n <= 1'b0;           // SET on VBlank rising edge
+    // Hold until end of VBlank (falling edge) — guarantees the interrupt
+    // persists through init when pswI=7. When game lowers pswI, the
+    // next VBlank will be acknowledged.
+    else if (!vblank & vblank_r)     // vblank falling edge
+        int_vbl_n <= 1'b1;           // CLEAR at end of VBlank period
 end
 
-// IPL2: active-low encoded = ~3'd2 = 3'b101 (Gigandes uses level 2)
-// Superman uses IPL6 (~3'd6 = 3'b001); this can be made a parameter if needed.
-assign cpu_ipl_n = ipl_active ? ~3'd2 : 3'b111;
+// Synchronizer FF: register IPL for stable sampling by fx68k
+// Gigandes: level 2 = IPL encoding ~2 = 3'b101 (IPL2n=1, IPL1n=0, IPL0n=1)
+reg [2:0] ipl_sync;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n)
+        ipl_sync <= 3'b111;          // no interrupt
+    else
+        ipl_sync <= int_vbl_n ? 3'b111 : 3'b101;  // level 2 when active
+end
+
+assign cpu_ipl_n = ipl_sync;
 
 // =============================================================================
 // Program ROM SDRAM Bridge

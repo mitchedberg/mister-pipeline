@@ -117,12 +117,21 @@ logic cpu_reset_n_out;
 // Bus bypass: C++ can drive iEdb and DTACKn directly for ROM reads.
 // When bypass_en=1, CPU reads from bypass_data with bypass_dtack_n.
 // When bypass_en=0, CPU reads from taito_x's cpu_dout/cpu_dtack_n.
+//
+// IACK DTACK suppression: during interrupt acknowledge cycles (FC=111, AS#=0),
+// force DTACKn HIGH so the CPU uses the autovector path (VPAn → AVEC) instead
+// of getting a spurious DTACK from the bus. Without this, fx68k may latch
+// random bus data as a vector number instead of autovectoring.
 // =============================================================================
 logic [15:0] cpu_iEdb_mux;
 logic        cpu_dtack_mux;
 
+logic iack_cycle;
+assign iack_cycle = fx_FC2 & fx_FC1 & fx_FC0 & ~cpu_as_n;
+
 assign cpu_iEdb_mux  = bypass_en ? bypass_data    : cpu_dout;
-assign cpu_dtack_mux = bypass_en ? bypass_dtack_n : cpu_dtack_n;
+assign cpu_dtack_mux = bypass_en ? bypass_dtack_n :
+                       iack_cycle ? 1'b1 : cpu_dtack_n;
 
 fx68k u_cpu (
     .clk        (clk_sys),

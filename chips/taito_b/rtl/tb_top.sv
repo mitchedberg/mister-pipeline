@@ -137,9 +137,17 @@ logic cpu_reset_n_out;
 // =============================================================================
 logic [15:0] cpu_iEdb_mux;
 logic        cpu_dtack_mux;
+logic        iack_cycle;
 
 assign cpu_iEdb_mux  = bypass_en ? bypass_data    : cpu_dout;
-assign cpu_dtack_mux = bypass_en ? bypass_dtack_n : cpu_dtack_n;
+
+// Suppress taito_b DTACK during IACK cycles.
+// During interrupt acknowledge (FC=111, ASn=0), VPA handles the ack.
+// If taito_b's open-bus DTACK fires on the high IACK address,
+// the CPU would incorrectly treat it as a vectored interrupt.
+assign iack_cycle    = fx_FC2 & fx_FC1 & fx_FC0 & ~cpu_as_n;
+assign cpu_dtack_mux = bypass_en  ? bypass_dtack_n :
+                       iack_cycle ? 1'b1           : cpu_dtack_n;
 
 fx68k u_cpu (
     .clk        (clk_sys),
@@ -227,6 +235,7 @@ taito_b u_taito_b (
     .cpu_as_n           (cpu_as_n),
     .cpu_dtack_n        (cpu_dtack_n),
     .cpu_ipl_n          (cpu_ipl_n),
+    .iack_cycle         (iack_cycle),
 
     // Z80 debug outputs (internal to taito_b — exposed for probing only)
     .z80_addr           (z80_addr_dbg),

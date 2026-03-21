@@ -82,6 +82,7 @@ module taito_b #(
     input  logic        cpu_as_n,        // address strobe (active low)
     output logic        cpu_dtack_n,     // data transfer acknowledge (active low)
     output logic [2:0]  cpu_ipl_n,       // interrupt priority level (active low encoded)
+    input  logic        iack_cycle,      // IACK detection from tb_top (FC=111, ASn=0)
 
     // ── Z80 Sound CPU Bus ───────────────────────────────────────────────────
     // Z80 CPU is now instantiated inside taito_b (T80s u_z80).
@@ -909,69 +910,68 @@ assign cpu_dtack_n = cpu_as_n       ? 1'b1
                    :                  !dtack_r;
 
 // =============================================================================
-// Interrupt (IPL) Generation
+// Interrupt (IPL) Generation — IACK-based clear
 // =============================================================================
 // int_h and int_l from TC0180VCU are single-cycle pulses (registered, cleared
-// next cycle) per tc0180vcu.sv lines 524–534.
+// next cycle) per tc0180vcu.sv lines 569–589.
 //
-// HOLD_LINE semantics: assert IPL for the duration of the interrupt window.
-// We latch each pulse and hold until the 68000 performs an IACK cycle.
-// IACK detection: cpu_as_n=0 AND cpu_fc==3'b111 (function codes).
-// Since FC is not a top-level port here (the CPU is external), we use a simpler
-// self-clearing approach: hold for a fixed window (one vblank line ≈ 256 pixels
-// = 256 clk_sys cycles at one pixel per cycle), then release.
-// The 68000 should respond well within this window.
+// Fix: IACK-based clear (replaces timer-based clear).
+// Community pattern (jotego/cave/neogeo): interrupt stays asserted until CPU
+// acknowledges (FC=111, ASn=0). Timer-based clear was WRONG: if pswI=7 during
+// init, the timer expires before the CPU can see the interrupt. IACK-based
+// clear holds the interrupt indefinitely until the CPU actually acknowledges it.
 //
-// Window timer: 9-bit counter (512 cycles ≈ 2 scanlines at 48 MHz/48 ns per clk
-// and 320-pixel lines = 320 clk_pix pulses per line; at 48MHz master with 4MHz
-// pixel CE, 48/4=12 clk_sys per pixel → 512 cycles ≈ 42 pixels = sufficient).
-// In practice, use a 16-bit counter for safety (65536 cycles).
+// iack_cycle is passed from tb_top.sv where FC signals are available.
+// On IACK, we clear the HIGHEST active interrupt (the one being acknowledged).
 
-logic        ipl_h_active, ipl_l_active;
-logic [15:0] ipl_h_timer,  ipl_l_timer;
+logic ipl_h_active, ipl_l_active;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         ipl_h_active <= 1'b0;
         ipl_l_active <= 1'b0;
-        ipl_h_timer  <= 16'b0;
-        ipl_l_timer  <= 16'b0;
     end else begin
-        // int_h: latch on pulse, hold for timer
-        if (vcu_int_h) begin
+        // int_h: latch on VCU pulse, clear on IACK when int_h is the active level
+        if (vcu_int_h)
             ipl_h_active <= 1'b1;
-            ipl_h_timer  <= 16'hFFFF;
-        end else if (ipl_h_active) begin
-            if (ipl_h_timer == 16'b0)
-                ipl_h_active <= 1'b0;
-            else
-                ipl_h_timer <= ipl_h_timer - 16'd1;
-        end
+        else if (iack_cycle && ipl_h_active &&
+                 (INT_H_LEVEL >= INT_L_LEVEL || !ipl_l_active))
+            ipl_h_active <= 1'b0;
 
-        // int_l: latch on pulse, hold for timer
-        if (vcu_int_l) begin
+        // int_l: latch on VCU pulse, clear on IACK when int_l is the active level
+        if (vcu_int_l)
             ipl_l_active <= 1'b1;
-            ipl_l_timer  <= 16'hFFFF;
-        end else if (ipl_l_active) begin
-            if (ipl_l_timer == 16'b0)
-                ipl_l_active <= 1'b0;
-            else
-                ipl_l_timer <= ipl_l_timer - 16'd1;
-        end
+        else if (iack_cycle && ipl_l_active &&
+                 (INT_L_LEVEL > INT_H_LEVEL || !ipl_h_active))
+            ipl_l_active <= 1'b0;
     end
 end
 
 // IPL encoding: highest pending level wins (HOLD_LINE semantics)
 // cpu_ipl_n is active-low encoded: 3'b111 = no interrupt, ~level = interrupt
 // If both active, higher level takes priority.
+//
+// Register IPL through synchronizer FF to ensure stable sampling
+// by fx68k's two-stage pipeline (rIpl → iIpl → iplStable check).
+logic [2:0] ipl_raw;
 always_comb begin
     if      (ipl_h_active && (INT_H_LEVEL >= INT_L_LEVEL || !ipl_l_active))
-        cpu_ipl_n = ~INT_H_LEVEL;
+        ipl_raw = ~INT_H_LEVEL;
     else if (ipl_l_active)
-        cpu_ipl_n = ~INT_L_LEVEL;
+        ipl_raw = ~INT_L_LEVEL;
     else
-        cpu_ipl_n = 3'b111;   // no interrupt
+        ipl_raw = 3'b111;   // no interrupt
 end
+
+reg [2:0] ipl_sync;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n)
+        ipl_sync <= 3'b111;
+    else
+        ipl_sync <= ipl_raw;
+end
+
+assign cpu_ipl_n = ipl_sync;
 
 // =============================================================================
 // Video Sync / Blank Output
