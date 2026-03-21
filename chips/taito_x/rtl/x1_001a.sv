@@ -243,18 +243,31 @@ module x1_001a #(
     // Phase 2: Scanner FSM
     // =========================================================================
 
-    typedef enum logic [3:0] {
-        ST_IDLE      = 4'd0,
-        ST_RD_CHAR   = 4'd1,   // issued CRAM read for char_pointer; wait 1 cycle
-        ST_RD_XPTR   = 4'd2,   // char arrives; issue x_pointer read; wait 1 cycle
-        ST_DECODE    = 4'd3,   // x_ptr arrives; decode all attributes; prime row loop
-        ST_FETCH0    = 4'd4,   // fetch GFX ROM word 0 of current row
-        ST_FETCH1    = 4'd5,
-        ST_FETCH2    = 4'd6,
-        ST_FETCH3    = 4'd7,   // fetch word 3; trigger pixel write on ack
-        ST_WRITE_ROW = 4'd8,   // pixel write pulse active this cycle
-        ST_NEXT_ROW  = 4'd9,   // advance row_cnt or sprite index
-        ST_DONE      = 4'd10
+    typedef enum logic [4:0] {
+        ST_IDLE      = 5'd0,
+        // ── BG scan states (run before FG, so FG overwrites) ──
+        ST_BG_INIT   = 5'd16,  // initialize BG column/row counters
+        ST_BG_RD_TILE= 5'd17,  // issue CRAM read for BG tile code; wait 1 cycle
+        ST_BG_RD_CLR = 5'd18,  // tile arrives; issue CRAM read for BG color; wait 1 cycle
+        ST_BG_DECODE = 5'd19,  // color arrives; decode tile attributes
+        ST_BG_FETCH0 = 5'd20,  // fetch GFX ROM word 0 for BG tile row
+        ST_BG_FETCH1 = 5'd21,
+        ST_BG_FETCH2 = 5'd22,
+        ST_BG_FETCH3 = 5'd23,
+        ST_BG_WRITE  = 5'd24,  // write 16 BG pixels to line buffer
+        ST_BG_NEXT   = 5'd25,  // advance to next tile/column
+        ST_BG_DONE   = 5'd26,  // BG scan complete → start FG scan
+        // ── FG sprite scan states ──
+        ST_RD_CHAR   = 5'd1,   // issued CRAM read for char_pointer; wait 1 cycle
+        ST_RD_XPTR   = 5'd2,   // char arrives; issue x_pointer read; wait 1 cycle
+        ST_DECODE    = 5'd3,   // x_ptr arrives; decode all attributes; prime row loop
+        ST_FETCH0    = 5'd4,   // fetch GFX ROM word 0 of current row
+        ST_FETCH1    = 5'd5,
+        ST_FETCH2    = 5'd6,
+        ST_FETCH3    = 5'd7,   // fetch word 3; trigger pixel write on ack
+        ST_WRITE_ROW = 5'd8,   // pixel write pulse active this cycle
+        ST_NEXT_ROW  = 5'd9,   // advance row_cnt or sprite index
+        ST_DONE      = 5'd10
     } fsm_t;
 
     fsm_t fsm_state;
