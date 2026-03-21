@@ -162,7 +162,11 @@ def build(force=False):
         return sim_bin
 
     print('Building sim_toaplan_v2...', file=sys.stderr)
-    result = subprocess.run(['make', '-j4'], cwd=sim_dir)
+    try:
+        result = subprocess.run(['make', '-j4'], cwd=sim_dir, timeout=600)
+    except subprocess.TimeoutExpired:
+        print(f"\nTIMEOUT: Build exceeded 600s — killed.", file=sys.stderr)
+        sys.exit(124)
     if result.returncode != 0:
         print('Build FAILED', file=sys.stderr)
         sys.exit(1)
@@ -170,7 +174,7 @@ def build(force=False):
     return sim_bin
 
 
-def run_sim(sim_bin, rom_env, n_frames, out_dir, vcd=False):
+def run_sim(sim_bin, rom_env, n_frames, out_dir, vcd=False, sim_timeout=None):
     """Run the simulation binary."""
     env = os.environ.copy()
     env['N_FRAMES'] = str(n_frames)
@@ -186,14 +190,23 @@ def run_sim(sim_bin, rom_env, n_frames, out_dir, vcd=False):
     print(f'  ROM_ADPCM = {env.get("ROM_ADPCM","(none)")}', file=sys.stderr)
     print(f'  ROM_Z80   = {env.get("ROM_Z80","(none)")}', file=sys.stderr)
 
+    if sim_timeout is None:
+        sim_timeout = max(300, n_frames * 30)
+
     # Always run from the sim directory so that $readmem (nanorom.mem,
     # microrom.mem) can be found by Verilator's VL_READMEM_N with relative path.
     sim_dir = os.path.dirname(os.path.abspath(sim_bin))
-    result = subprocess.run(
-        [sim_bin],
-        env=env,
-        cwd=sim_dir
-    )
+    try:
+        result = subprocess.run(
+            [sim_bin],
+            env=env,
+            cwd=sim_dir,
+            timeout=sim_timeout
+        )
+    except subprocess.TimeoutExpired:
+        print(f"\nTIMEOUT: Simulation exceeded {sim_timeout}s — killed to prevent system overload.",
+              file=sys.stderr)
+        return 124
     # Move output PPMs to out_dir if different from sim_dir
     if os.path.abspath(out_dir) != sim_dir:
         import glob
@@ -245,6 +258,8 @@ def main():
                         help='Force rebuild before running')
     parser.add_argument('--no-build', action='store_true',
                         help='Skip build step')
+    parser.add_argument('--timeout', type=int, default=0,
+                        help='Max seconds for simulation (0=auto: 30s per frame)')
     args = parser.parse_args()
 
     out_dir = os.path.abspath(args.out_dir)
@@ -263,7 +278,9 @@ def main():
         rom_env = extract_roms(zip_path, rom_dir)
 
         # Step 3: Run simulation
-        rc = run_sim(sim_bin, rom_env, args.frames, out_dir, vcd=args.vcd)
+        sim_timeout = args.timeout if args.timeout > 0 else max(300, args.frames * 30)
+        rc = run_sim(sim_bin, rom_env, args.frames, out_dir, vcd=args.vcd,
+                     sim_timeout=sim_timeout)
 
     # Step 4: Analyze results
     if rc == 0:

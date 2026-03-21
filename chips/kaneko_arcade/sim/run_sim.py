@@ -345,6 +345,8 @@ def main():
                         help='Force rebuild before running')
     parser.add_argument('--no-build', action='store_true',
                         help='Skip build step')
+    parser.add_argument('--timeout', type=int, default=0,
+                        help='Max seconds for simulation (0=auto: 30s per frame)')
 
     args = parser.parse_args()
 
@@ -374,9 +376,14 @@ def main():
         needs_build = args.build or not os.path.exists(sim_binary)
         if needs_build:
             print(f"Building simulator in {script_dir}...")
-            result = subprocess.run(
-                ['make', '-C', script_dir, 'all'],
-                stdout=sys.stdout, stderr=sys.stderr)
+            try:
+                result = subprocess.run(
+                    ['make', '-C', script_dir, 'all'],
+                    stdout=sys.stdout, stderr=sys.stderr,
+                    timeout=600)
+            except subprocess.TimeoutExpired:
+                print(f"\nTIMEOUT: Build exceeded 600s — killed.", file=sys.stderr)
+                return 124
             if result.returncode != 0:
                 print(f"Build failed (exit {result.returncode})")
                 return result.returncode
@@ -417,12 +424,21 @@ def main():
     if args.adpcm: print(f"  ROM_ADPCM = {env['ROM_ADPCM']}")
     if args.z80:   print(f"  ROM_Z80   = {env['ROM_Z80']}")
 
-    result = subprocess.run(
-        [sim_binary],
-        env=env,
-        cwd=out_dir,          # PPM files land in out_dir
-        stdout=sys.stdout,
-        stderr=sys.stderr)
+    sim_timeout = args.timeout if args.timeout > 0 else max(300, args.frames * 30)
+    try:
+        result = subprocess.run(
+            [sim_binary],
+            env=env,
+            cwd=out_dir,          # PPM files land in out_dir
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+            timeout=sim_timeout)
+    except subprocess.TimeoutExpired:
+        print(f"\nTIMEOUT: Simulation exceeded {sim_timeout}s — killed to prevent system overload.",
+              file=sys.stderr)
+        if _tmpdir and os.path.exists(_tmpdir):
+            shutil.rmtree(_tmpdir, ignore_errors=True)
+        return 124
 
     if result.returncode != 0:
         print(f"Simulation exited with code {result.returncode}")

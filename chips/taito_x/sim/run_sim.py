@@ -163,6 +163,8 @@ def main():
                         help='Skip build step')
     parser.add_argument('--gigandes-zip', default=None, metavar='ZIP',
                         help='Auto-extract Gigandes ROMs from gigandes.zip and run')
+    parser.add_argument('--timeout', type=int, default=0,
+                        help='Max seconds for simulation (0=auto: 30s per frame)')
 
     args = parser.parse_args()
 
@@ -182,9 +184,14 @@ def main():
         #   Pair 1 (0x40000): east_3.5a  (even/D15:D8) + east_4.3a (odd/D7:D0)
         # GFX: 4 × 512KB files, ROM_LOAD64_WORD interleaved for X1-001A.
         # Z80: east_5.17d (64KB).
+        # Gigandes ROM interleaving (FBNeo / MAME order):
+        #   east_1.10a (D15:D8) + east_3.5a (D7:D0) → block 0: 0x000000-0x03FFFF
+        #   east_2.8a  (D15:D8) + east_4.3a (D7:D0) → block 1: 0x040000-0x07FFFF
+        # NOTE: FBNeo lists files in order [e1, e3, e2, e4] not [e1, e2, e3, e4].
+        # Verified: SSP=0x00F04000 (top of WRAM), PC=0x000100 (ROM entry point).
         GIGANDES_CPU_PAIRS = [
-            ('east_1.10a', 'east_3.5a'),   # pair 0: 0x000000-0x03FFFF (FBNeo ROM[0]+ROM[1])
-            ('east_2.8a',  'east_4.3a'),   # pair 1: 0x040000-0x07FFFF (FBNeo ROM[2]+ROM[3])
+            ('east_1.10a', 'east_3.5a'),   # block 0: 0x000000-0x03FFFF
+            ('east_2.8a',  'east_4.3a'),   # block 1: 0x040000-0x07FFFF
         ]
         GIGANDES_Z80 = 'east_5.17d'
         # GFX ROM order from MAME ROM_LOAD64_WORD offsets (0,2,4,6):
@@ -232,22 +239,40 @@ def main():
             prog_path = None
             print("  WARN: CPU ROMs not found for interleaving")
 
-        # Concatenate GFX ROMs in MAME ROM_LOAD64_WORD order
+        # Interleave GFX ROMs using ROM_LOAD64_WORD order.
+        # Each file contributes 2 bytes (one 16-bit word) per 8-byte group:
+        #   east_8.3f → bytes 0,1 of each 8-byte group  (gfx_addr % 4 == 0)
+        #   east_7.3h → bytes 2,3 of each 8-byte group  (gfx_addr % 4 == 1)
+        #   east_6.3k → bytes 4,5 of each 8-byte group  (gfx_addr % 4 == 2)
+        #   east_9.3j → bytes 6,7 of each 8-byte group  (gfx_addr % 4 == 3)
+        # The x1_001a fetches 16-bit words at addresses: tile*64 + row*4 + word.
+        # Concatenating the files naively gives wrong data for word indices 1,2,3.
         gfx_path = os.path.join(_tmpdir, 'gigandes_gfx.bin')
-        gfx_parts = []
+        gfx_file_data = []
+        gfx_ok = True
         for fname in GIGANDES_GFX:
             p = os.path.join(_tmpdir, fname)
             if os.path.exists(p):
-                gfx_parts.append(p)
-        if gfx_parts:
+                with open(p, 'rb') as fin:
+                    gfx_file_data.append(fin.read())
+            else:
+                print(f"  WARN: GFX ROM {fname} not found")
+                gfx_ok = False
+        if gfx_ok and len(gfx_file_data) == 4:
+            # All 4 files must be same size (each 0x80000 bytes for Gigandes)
+            n = min(len(d) for d in gfx_file_data)
+            n_words_per_file = n // 2      # 16-bit words per file
+            interleaved = bytearray(n_words_per_file * 8)  # 4 files × 2 bytes/file per group
+            for group in range(n_words_per_file):
+                for slot, data in enumerate(gfx_file_data):
+                    interleaved[group * 8 + slot * 2]     = data[group * 2]
+                    interleaved[group * 8 + slot * 2 + 1] = data[group * 2 + 1]
             with open(gfx_path, 'wb') as fout:
-                for p in gfx_parts:
-                    with open(p, 'rb') as fin:
-                        fout.write(fin.read())
-            print(f"  GFX ROM concatenated: {len(gfx_parts)} files -> {gfx_path}")
+                fout.write(interleaved)
+            print(f"  GFX ROM interleaved (ROM_LOAD64_WORD): {len(gfx_file_data)} files × {n} bytes -> {len(interleaved)} bytes -> {gfx_path}")
         else:
             gfx_path = None
-            print("  WARN: GFX ROM files not found")
+            print("  WARN: GFX ROM files not found or incomplete")
 
         # Z80 sound ROM
         z80_path = os.path.join(_tmpdir, GIGANDES_Z80)
@@ -273,9 +298,14 @@ def main():
         needs_build = args.build or not os.path.exists(sim_binary)
         if needs_build:
             print(f"Building simulator in {script_dir}...")
-            result = subprocess.run(
-                ['make', '-C', script_dir, 'all'],
-                stdout=sys.stdout, stderr=sys.stderr)
+            try:
+                result = subprocess.run(
+                    ['make', '-C', script_dir, 'all'],
+                    stdout=sys.stdout, stderr=sys.stderr,
+                    timeout=600)
+            except subprocess.TimeoutExpired:
+                print(f"\nTIMEOUT: Build exceeded 600s — killed.", file=sys.stderr)
+                return 124
             if result.returncode != 0:
                 print(f"Build failed (exit {result.returncode})")
                 return result.returncode
@@ -310,12 +340,22 @@ def main():
 
     # ── Run simulator ─────────────────────────────────────────────────────────
     print(f"Running simulation: {args.frames} frames...")
-    result = subprocess.run(
-        [sim_binary],
-        env=env,
-        cwd=out_dir,
-        stdout=sys.stdout,
-        stderr=sys.stderr)
+    sim_timeout = args.timeout if args.timeout > 0 else max(300, args.frames * 30)
+    try:
+        result = subprocess.run(
+            [sim_binary],
+            env=env,
+            cwd=out_dir,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+            timeout=sim_timeout)
+    except subprocess.TimeoutExpired:
+        print(f"\nTIMEOUT: Simulation exceeded {sim_timeout}s — killed to prevent system overload.",
+              file=sys.stderr)
+        if _tmpdir and os.path.exists(_tmpdir):
+            import shutil
+            shutil.rmtree(_tmpdir, ignore_errors=True)
+        return 124
 
     if result.returncode != 0:
         print(f"Simulation exited with code {result.returncode}")
