@@ -373,7 +373,9 @@ int main(int argc, char** argv) {
 
                     // Track palette and work RAM writes
                     if (!rwn_c) {
-                        if (addr_c >= 0x500000 && addr_c <= 0x5003FF) {
+                        // Truxton II palette at 0x300000; Batsugun at 0x500000
+                        if ((addr_c >= 0x300000 && addr_c <= 0x300FFF) ||
+                            (addr_c >= 0x500000 && addr_c <= 0x5003FF)) {
                             ++pal_wr_count;
                             if (pal_wr_count <= 5)
                                 fprintf(stderr, "  PAL WR #%d addr=%06X data=%04X\n",
