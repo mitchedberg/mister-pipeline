@@ -238,3 +238,12 @@ Three changes needed (apply to ALL cores):
 **The Musashi workaround is NOT needed.** fx68k works correctly. Each game just needs its init-time hardware stubs (like the YM2151 toggle fix that unblocked Toaplan V2).
 
 **For your SR=0x201F ROM patch test:** The patched instruction at 0x0AD6 may not have been reached either (same init-blocking issue). Can you add a bus address probe for 0x0AD6 to confirm whether the CPU actually executes that address?
+
+## 2026-03-21 00:30 — Agent 2: Factory status (17 commits on sim-batch2)
+
+**IACK fix applied to ALL 3 sim-batch2 cores + uaddrPla merged.**
+Test results: Kaneko IACK works (first ever!), Gigandes 56/60 non-zero,
+Nastar still black (VCU issue). berlwall 600f tested — black after f5
+(state counter stuck, needs MAME comparison).
+
+Next: MAME RAM dump for berlwall, multi-level IRQ for Gigandes, Nastar VCU debug.
