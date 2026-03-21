@@ -331,6 +331,33 @@ module x1_001a #(
         rom_addr = ({4'b0, tile} * 18'd64) + ({14'b0, row} * 18'd4) + {16'b0, word};
     endfunction
 
+    // ── BG scan variables ──────────────────────────────────────────────────
+    // BG is rendered as columns of tile pairs (2 wide × 16 tall = 32 tiles/col)
+    // From FBNeo TaitoXDrawBgSprites():
+    //   NumCol = spritectrl[1] & 0xF (0 means 16)
+    //   Col0 from spritectrl[0] & 0xF
+    //   Column X/Y from YRAM words at col*16+512
+    //   Tile codes from CRAM[0x0400 + ((col+col0)&0xF)*0x20 + offs]
+    //   Colors from CRAM[0x0600 + ((col+col0)&0xF)*0x20 + offs]
+    logic [3:0]  bg_col;          // current column (0..NumCol-1)
+    logic [4:0]  bg_offs;         // tile offset within column (0..31)
+    logic [3:0]  bg_num_col;      // number of active columns
+    logic [3:0]  bg_col0;         // starting column offset
+    logic [7:0]  bg_col_x;        // column X position
+    logic [7:0]  bg_col_y;        // column Y scroll
+    logic [13:0] bg_tile;         // current tile code
+    logic        bg_flipx, bg_flipy;
+    logic [4:0]  bg_color;        // current tile color
+    logic [8:0]  bg_sx;           // screen X for current tile
+    logic [7:0]  bg_sy;           // screen Y for current tile
+    logic [3:0]  bg_row;          // row within tile (0..15)
+    logic [15:0] bg_upper;        // column upper bits (adds 256 to X)
+    logic        bg_flip;         // screen flip from ctrl
+
+    // BG CRAM source bank (matches FBNeo: src = SpriteRam2 + bank_offset)
+    wire [12:0] bg_src_base = (spritectrl[1] ^ (~spritectrl[1] << 1)) & 16'h0040
+                              ? 13'h1000 : 13'h0000;
+
     // scan_active
     assign scan_active = (fsm_state != ST_IDLE) && (fsm_state != ST_DONE);
 
@@ -540,14 +567,191 @@ module x1_001a #(
 
                 ST_IDLE: begin
                     if (vblank_rise) begin
-                        scan_idx         <= 9'(SPRITE_LIMIT);
-                        fsm_cram_rd_addr <= bank_base + 13'(SPRITE_LIMIT);
-                        fsm_state        <= ST_RD_CHAR;
+                        // Start with BG scan, then FG scan
+                        bg_num_col <= (spritectrl[1][3:0] == 4'd0) ? 4'd15 : spritectrl[1][3:0] - 4'd1;
+                        bg_col0    <= (spritectrl[0][3:0] == 4'h1) ? 4'h4 :
+                                      (spritectrl[0][3:0] == 4'h6) ? 4'h8 : 4'h0;
+                        bg_flip    <= spritectrl[0][6];
+                        bg_upper   <= {spritectrl[3][7:0], spritectrl[2][7:0]};
+                        bg_col     <= 4'd0;
+                        bg_offs    <= 5'd0;
+                        bg_row     <= 4'd0;
+                        fsm_state  <= ST_BG_INIT;
 `ifndef QUARTUS
-                        $display("[X1-001A] SCAN START: vblank_rise bank_base=0x%04x xptr_base=0x%04x frame_bank_latch=%0d linebuf_bank=%0d", bank_base, xptr_base, frame_bank_latch, linebuf_bank);
+                        $display("[X1-001A] SCAN START (BG+FG): vblank_rise ctrl0=0x%04x ctrl1=0x%04x bank=%0d lbk=%0d",
+                                 spritectrl[0], spritectrl[1], frame_bank_latch, linebuf_bank);
 `endif
                     end
                 end
+
+                // ═══════════════════════════════════════════════════════════
+                // BG tilemap scan states
+                // ═══════════════════════════════════════════════════════════
+
+                ST_BG_INIT: begin
+                    // Read column Y scroll from YRAM: word at col*16 + 512
+`ifndef QUARTUS
+                    begin
+                        logic [9:0] yram_idx;
+                        yram_idx = 10'(bg_col * 16 + 512);
+                        bg_col_y <= yram_lo[yram_idx];
+                        // Column X: word at col*16 + 516
+                        bg_col_x <= yram_lo[10'(bg_col * 16 + 516)];
+                    end
+`else
+                    bg_col_y <= 8'd0;
+                    bg_col_x <= 8'd0;
+`endif
+                    bg_offs  <= 5'd0;
+                    // Issue CRAM read for first tile code
+                    fsm_cram_rd_addr <= bg_src_base + {1'b0, ((bg_col + bg_col0) & 4'hF), 5'd0} + 13'h0400;
+                    fsm_state <= ST_BG_RD_TILE;
+                end
+
+                ST_BG_RD_TILE: begin
+                    // Tile code arrives; latch it and issue color read
+                    begin
+                        logic [15:0] tw;
+                        tw = fsm_cram_rd_data;
+                        bg_tile  <= tw[13:0];
+                        bg_flipx <= tw[15];
+                        bg_flipy <= tw[14];
+                    end
+                    // Issue color read at cram[0x0600 + same offset]
+                    fsm_cram_rd_addr <= bg_src_base + {1'b0, ((bg_col + bg_col0) & 4'hF), 5'd0} + {8'b0, bg_offs} + 13'h0600;
+                    fsm_state <= ST_BG_RD_CLR;
+                end
+
+                ST_BG_RD_CLR: begin
+                    // Color arrives; decode attributes and compute screen position
+                    bg_color <= fsm_cram_rd_data[15:11];
+
+                    // Screen X = col_x + (offs & 1) * 16
+                    begin
+                        logic [8:0] sx9;
+                        sx9 = {1'b0, bg_col_x} + (bg_offs[0] ? 9'd16 : 9'd0);
+                        if (bg_upper[bg_col]) sx9 = sx9 + 9'd256;
+                        bg_sx <= sx9;
+                    end
+
+                    // Screen Y = -(col_y + yoffs) + (offs / 2) * 16
+                    begin
+                        logic [8:0] sy9;
+                        sy9 = -(9'(bg_col_y) + (bg_flip ? 9'd1 : -9'd1))
+                              + {4'b0, bg_offs[4:1]} * 9'd16;
+                        bg_sy <= sy9[7:0];
+                    end
+
+                    bg_row    <= 4'd0;
+                    fsm_state <= ST_BG_DECODE;
+                end
+
+                ST_BG_DECODE: begin
+                    // Start GFX ROM fetch for row 0 of current BG tile
+                    gfx_addr  <= rom_addr(bg_tile,
+                                          bg_flipy ? (4'd15 - bg_row) : bg_row,
+                                          2'd0);
+                    gfx_req_r <= ~gfx_req_r;
+                    fsm_state <= ST_BG_FETCH0;
+                end
+
+                ST_BG_FETCH0: begin
+                    if (gfx_ack == gfx_req_r) begin
+                        gfx_w[0]  <= gfx_data;
+                        gfx_addr  <= rom_addr(bg_tile,
+                                              bg_flipy ? (4'd15 - bg_row) : bg_row,
+                                              2'd1);
+                        gfx_req_r <= ~gfx_req_r;
+                        fsm_state <= ST_BG_FETCH1;
+                    end
+                end
+
+                ST_BG_FETCH1: begin
+                    if (gfx_ack == gfx_req_r) begin
+                        gfx_w[1]  <= gfx_data;
+                        gfx_addr  <= rom_addr(bg_tile,
+                                              bg_flipy ? (4'd15 - bg_row) : bg_row,
+                                              2'd2);
+                        gfx_req_r <= ~gfx_req_r;
+                        fsm_state <= ST_BG_FETCH2;
+                    end
+                end
+
+                ST_BG_FETCH2: begin
+                    if (gfx_ack == gfx_req_r) begin
+                        gfx_w[2]  <= gfx_data;
+                        gfx_addr  <= rom_addr(bg_tile,
+                                              bg_flipy ? (4'd15 - bg_row) : bg_row,
+                                              2'd3);
+                        gfx_req_r <= ~gfx_req_r;
+                        fsm_state <= ST_BG_FETCH3;
+                    end
+                end
+
+                ST_BG_FETCH3: begin
+                    if (gfx_ack == gfx_req_r) begin
+                        gfx_w[3] <= gfx_data;
+                        // Write BG pixels using the FG write machinery
+                        // Reuse spr_* latches for the pixel writer
+                        spr_color <= bg_color;
+                        spr_flipx <= bg_flipx;
+                        wr_y      <= bg_sy + {4'b0, bg_row};
+                        wr_sx     <= bg_sx;
+                        do_write  <= 1'b1;
+                        fsm_state <= ST_BG_WRITE;
+                    end
+                end
+
+                ST_BG_WRITE: begin
+                    // Write pulse was issued; advance row or tile
+                    fsm_state <= ST_BG_NEXT;
+                end
+
+                ST_BG_NEXT: begin
+                    if (bg_row == 4'd15) begin
+                        // This tile is done; move to next tile in column
+                        if (bg_offs == 5'd31) begin
+                            // Column done; move to next column
+                            if (bg_col >= bg_num_col) begin
+                                // All columns done → start FG scan
+                                fsm_state <= ST_BG_DONE;
+                            end else begin
+                                bg_col    <= bg_col + 4'd1;
+                                fsm_state <= ST_BG_INIT;
+                            end
+                        end else begin
+                            bg_offs <= bg_offs + 5'd1;
+                            // Issue CRAM read for next tile
+                            fsm_cram_rd_addr <= bg_src_base
+                                              + {1'b0, ((bg_col + bg_col0) & 4'hF), 5'd0}
+                                              + {8'b0, bg_offs + 5'd1}
+                                              + 13'h0400;
+                            fsm_state <= ST_BG_RD_TILE;
+                        end
+                    end else begin
+                        bg_row    <= bg_row + 4'd1;
+                        // Fetch next row of same tile
+                        gfx_addr  <= rom_addr(bg_tile,
+                                              bg_flipy ? (4'd15 - (bg_row + 4'd1)) : (bg_row + 4'd1),
+                                              2'd0);
+                        gfx_req_r <= ~gfx_req_r;
+                        fsm_state <= ST_BG_FETCH0;
+                    end
+                end
+
+                ST_BG_DONE: begin
+                    // BG scan complete → start FG sprite scan
+                    scan_idx         <= 9'(SPRITE_LIMIT);
+                    fsm_cram_rd_addr <= bank_base + 13'(SPRITE_LIMIT);
+                    fsm_state        <= ST_RD_CHAR;
+`ifndef QUARTUS
+                    $display("[X1-001A] BG DONE → FG START: bank_base=0x%04x xptr_base=0x%04x", bank_base, xptr_base);
+`endif
+                end
+
+                // ═══════════════════════════════════════════════════════════
+                // FG sprite scan states (existing)
+                // ═══════════════════════════════════════════════════════════
 
                 // BRAM 1-cycle latency: char_pointer data arrives this cycle
                 ST_RD_CHAR: begin
@@ -697,14 +901,19 @@ module x1_001a #(
                 end
 
                 ST_DONE: begin
-                    // Stay here; next vblank_rise will be caught at ST_IDLE... but
-                    // ST_DONE doesn't re-enter ST_IDLE. Fix: check vblank_rise here too.
+                    // Next vblank_rise restarts from BG scan
                     if (vblank_rise) begin
-                        scan_idx         <= 9'(SPRITE_LIMIT);
-                        fsm_cram_rd_addr <= bank_base + 13'(SPRITE_LIMIT);
-                        fsm_state        <= ST_RD_CHAR;
+                        bg_num_col <= (spritectrl[1][3:0] == 4'd0) ? 4'd15 : spritectrl[1][3:0] - 4'd1;
+                        bg_col0    <= (spritectrl[0][3:0] == 4'h1) ? 4'h4 :
+                                      (spritectrl[0][3:0] == 4'h6) ? 4'h8 : 4'h0;
+                        bg_flip    <= spritectrl[0][6];
+                        bg_upper   <= {spritectrl[3][7:0], spritectrl[2][7:0]};
+                        bg_col     <= 4'd0;
+                        bg_offs    <= 5'd0;
+                        bg_row     <= 4'd0;
+                        fsm_state  <= ST_BG_INIT;
 `ifndef QUARTUS
-                        $display("[X1-001A] SCAN RESTART from ST_DONE: bank_base=0x%04x frame_bank_latch=%0d linebuf_bank=%0d", bank_base, frame_bank_latch, linebuf_bank);
+                        $display("[X1-001A] SCAN RESTART (BG+FG): ctrl0=0x%04x ctrl1=0x%04x", spritectrl[0], spritectrl[1]);
 `endif
                     end
                 end
