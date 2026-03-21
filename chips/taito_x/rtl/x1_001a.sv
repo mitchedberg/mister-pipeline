@@ -217,10 +217,10 @@ module x1_001a #(
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            spritectrl[0] <= 16'hFFFF;
-            spritectrl[1] <= 16'hFFFF;
-            spritectrl[2] <= 16'hFFFF;
-            spritectrl[3] <= 16'hFFFF;
+            spritectrl[0] <= 16'h0000;
+            spritectrl[1] <= 16'h0000;
+            spritectrl[2] <= 16'h0000;
+            spritectrl[3] <= 16'h0000;
         end else if (ctrl_cs && ctrl_we) begin
             if (ctrl_be[0]) spritectrl[ctrl_addr][ 7:0] <= ctrl_din[7:0];
             if (ctrl_be[1]) spritectrl[ctrl_addr][15:8] <= ctrl_din[15:8];
@@ -592,11 +592,15 @@ module x1_001a #(
                     // Read column Y scroll from YRAM: word at col*16 + 512
 `ifndef QUARTUS
                     begin
-                        logic [9:0] yram_idx;
-                        yram_idx = 10'(bg_col * 16 + 512);
-                        bg_col_y <= yram_lo[yram_idx];
-                        // Column X: word at col*16 + 516
-                        bg_col_x <= yram_lo[10'(bg_col * 16 + 516)];
+                        logic [9:0] yram_idx_y, yram_idx_x;
+                        yram_idx_y = 10'(bg_col * 16 + 512);
+                        yram_idx_x = 10'(bg_col * 16 + 516);
+                        bg_col_y <= yram_lo[yram_idx_y];
+                        bg_col_x <= yram_lo[yram_idx_x];
+                        if (bg_col <= 4'd3)
+                            $display("[BG] col=%0d yram_y[%0d]=0x%02x yram_x[%0d]=0x%02x",
+                                     bg_col, yram_idx_y, yram_lo[yram_idx_y],
+                                     yram_idx_x, yram_lo[yram_idx_x]);
                     end
 `else
                     bg_col_y <= 8'd0;
