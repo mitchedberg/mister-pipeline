@@ -276,6 +276,51 @@ SYSTEM_DISPLAY = {
 }
 
 # ---------------------------------------------------------------------------
+# Timeline — milestones in chronological order
+# ---------------------------------------------------------------------------
+TIMELINE = [
+    {'date': '2026-03-15', 'event': 'Project initialized', 'detail': 'Repo created, gate scripts, CI workflow, CPS1 OBJ + TC0100SCN RTL'},
+    {'date': '2026-03-16', 'event': 'Taito B + F3 + Z RTL complete', 'detail': 'TC0180VCU (398 tests), TC0630FDP (1,156 tests), TC0480SCP (213 tests)'},
+    {'date': '2026-03-17', 'event': '8 systems integrated', 'detail': 'NMK16, Toaplan V2, Psikyo, Kaneko16, Taito B/F3/Z/X — all with audio + I/O'},
+    {'date': '2026-03-17', 'event': 'CI synthesis pipeline live', 'detail': 'GitHub Actions Quartus workflows for all 8 chips'},
+    {'date': '2026-03-18', 'event': 'fx68k CPU boot breakthrough', 'detail': 'Root cause: enPhi1/enPhi2 Verilator race. Fix: C++-driven phi enables'},
+    {'date': '2026-03-18', 'event': '6 RBF bitstreams produced', 'detail': 'NMK, Psikyo, Taito B, Toaplan V2, Taito X, Kaneko — all fit Cyclone V'},
+    {'date': '2026-03-19', 'event': 'All 6 CPUs boot in Verilator', 'detail': 'Thunder Dragon, Batsugun, Gunbird, Berlwall, Nastar, Gigandes'},
+    {'date': '2026-03-19', 'event': '3 cores rendering game graphics', 'detail': 'Thunder Dragon (BG tiles, 91% non-black), Gunbird, Berlwall'},
+    {'date': '2026-03-20', 'event': 'Gigandes + Berlwall rendering', 'detail': 'Purple sprite pixels from frame 12; Berlwall palette writes visible'},
+    {'date': '2026-03-20', 'event': 'Process safety added', 'detail': 'Timeouts on all sim runners to prevent runaway processes'},
+]
+
+# ---------------------------------------------------------------------------
+# Agent Status — live task assignments
+# ---------------------------------------------------------------------------
+AGENT_STATUS = [
+    {
+        'name': 'Agent 1',
+        'branch': 'master',
+        'machine': 'Mac Mini 3',
+        'status': 'active',
+        'tasks': [
+            {'core': 'NMK16', 'task': 'Sprite debugging (nmk004.bin MCU workaround)', 'status': 'next'},
+            {'core': 'Psikyo', 'task': 'Synthesis overflow fix (ifdef VERILATOR guard)', 'status': 'next'},
+            {'core': 'Toaplan V2', 'task': 'V25 sound CPU investigation', 'status': 'blocked'},
+            {'core': 'Taito B', 'task': 'Pop stash and commit gameplay fix', 'status': 'next'},
+        ],
+    },
+    {
+        'name': 'Agent 2',
+        'branch': 'sim-batch2',
+        'machine': 'iMac-Garage',
+        'status': 'active',
+        'tasks': [
+            {'core': 'Kaneko', 'task': 'I/O poll stall diagnosis (WRAM writes=0)', 'status': 'in_progress'},
+            {'core': 'Taito X', 'task': 'Full BG+sprite rendering (300+ frames)', 'status': 'in_progress'},
+            {'core': 'Taito B', 'task': 'Nastar harness validation', 'status': 'in_progress'},
+        ],
+    },
+]
+
+# ---------------------------------------------------------------------------
 # Ecosystem statistics
 # ---------------------------------------------------------------------------
 def get_ecosystem_stats():
@@ -330,6 +375,8 @@ def dashboard():
         all_games_js=json.dumps(ALL_GAMES),
         system_display_js=json.dumps(SYSTEM_DISPLAY),
         updated_at=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        timeline=TIMELINE,
+        agent_status=AGENT_STATUS,
     )
 
 
@@ -393,6 +440,16 @@ def api_games():
 @app.route('/api/ecosystem')
 def api_ecosystem():
     return jsonify(ECOSYSTEM_DATA)
+
+
+@app.route('/api/timeline')
+def api_timeline():
+    return jsonify(TIMELINE)
+
+
+@app.route('/api/agents')
+def api_agents():
+    return jsonify(AGENT_STATUS)
 
 
 if __name__ == '__main__':
