@@ -626,20 +626,24 @@ module x1_001a #(
                     // Color arrives; decode attributes and compute screen position
                     bg_color <= fsm_cram_rd_data[15:11];
 
-                    // Screen X = col_x + (offs & 1) * 16
+                    // Screen position calculation (matches FBNeo TaitoXDrawBgSprites)
                     begin
-                        logic [8:0] sx9;
-                        sx9 = {1'b0, bg_col_x} + (bg_offs[0] ? 9'd16 : 9'd0);
-                        if (bg_upper[bg_col]) sx9 = sx9 + 9'd256;
-                        bg_sx <= sx9;
-                    end
+                        logic signed [9:0] sx_s, sy_s;
 
-                    // Screen Y = -(col_y + yoffs) + (offs / 2) * 16
-                    begin
-                        logic [8:0] sy9;
-                        sy9 = -(9'(bg_col_y) + (bg_flip ? 9'd1 : -9'd1))
-                              + {4'b0, bg_offs[4:1]} * 9'd16;
-                        bg_sy <= sy9[7:0];
+                        // X = col_x + (offs & 1) * 16 + (upper ? 256 : 0)
+                        sx_s = {2'b0, bg_col_x} + (bg_offs[0] ? 10'sd16 : 10'sd0);
+                        if (bg_upper[bg_col]) sx_s = sx_s + 10'sd256;
+                        // Wrap: sx = ((sx + 16) & 0x1FF) - 16
+                        sx_s = ((sx_s + 10'sd16) & 10'h1FF) - 10'sd16;
+                        bg_sx <= sx_s[8:0];
+
+                        // Y = -(col_y + yoffs) + (offs / 2) * 16
+                        // yoffs = flip ? 1 : -1
+                        sy_s = -(10'(bg_col_y) + (bg_flip ? 10'sd1 : -10'sd1))
+                               + 10'(bg_offs[4:1]) * 10'sd16;
+                        // Wrap: sy = ((sy + 8) & 0xFF) - 8
+                        sy_s = ((sy_s + 10'sd8) & 10'hFF) - 10'sd8;
+                        bg_sy <= sy_s[7:0];
                     end
 
                     bg_row    <= 4'd0;
