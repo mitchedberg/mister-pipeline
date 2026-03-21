@@ -135,9 +135,17 @@ stop_notifier = emu.add_machine_stop_notifier(function()
     close_output()
 end)
 
-frame_notifier = emu.add_machine_frame_notifier(function()
-    on_frame()
-end)
+-- MAME 0.257 uses emu.register_frame_done for per-frame callbacks.
+-- Older MAME uses emu.add_machine_frame_notifier.
+if emu.register_frame_done then
+    emu.register_frame_done(on_frame)
+    print("[mame_ram_dump] Registered per-frame callback (emu.register_frame_done)")
+elseif emu.add_machine_frame_notifier then
+    frame_notifier = emu.add_machine_frame_notifier(function() on_frame() end)
+    print("[mame_ram_dump] Registered per-frame callback (emu.add_machine_frame_notifier)")
+else
+    print("[mame_ram_dump] ERROR: No per-frame callback API available")
+end
 
 -- Open output immediately (machine is already running when script loads).
 print("[mame_ram_dump] Script loaded — opening output immediately.")
