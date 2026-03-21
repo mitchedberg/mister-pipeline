@@ -102,6 +102,7 @@ module psikyo_arcade #(
     input  logic        cpu_lds_n,       // lower data strobe (active low)
     output logic        cpu_dtack_n,     // data transfer acknowledge (active low)
     output logic [2:0]  cpu_ipl_n,       // interrupt priority level (active low)
+    input  logic        cpu_inta_n,      // interrupt acknowledge (active low, FC=111 & ASn=0)
 
     // ── Program ROM SDRAM interface ─────────────────────────────────────────
     output logic [26:0] prog_rom_addr,
@@ -1380,34 +1381,33 @@ always_comb begin
 end
 
 // =============================================================================
-// Interrupt (IPL) Generation
-// VBLANK → level 4 (cpu_ipl_n = ~4 = 3'b011)
+// Interrupt (IPL) Generation — VBLANK at level 4
 // =============================================================================
-
-logic       ipl_vbl_active;
-logic [15:0] ipl_vbl_timer;
+// Community pattern (jotego, Cave, NeoGeo, va7deo, atrac17):
+//   SET IPL on VBLANK edge, CLEAR on IACK only. NEVER use a timer.
+//   Timer-based clear races with pswI mask — interrupt expires before
+//   the CPU enables interrupts, so the game never takes VBlank.
+// =============================================================================
+logic ipl_vbl_active;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         ipl_vbl_active <= 1'b0;
-        ipl_vbl_timer  <= 16'b0;
     end else begin
-        if (vblank_rising) begin
+        if (!cpu_inta_n)               // IACK cycle: CPU acknowledged the interrupt
+            ipl_vbl_active <= 1'b0;
+        else if (vblank_rising)        // VBlank: assert interrupt
             ipl_vbl_active <= 1'b1;
-            ipl_vbl_timer  <= 16'hFFFF;
-        end else if (ipl_vbl_active) begin
-            if (ipl_vbl_timer == 16'b0)
-                ipl_vbl_active <= 1'b0;
-            else
-                ipl_vbl_timer <= ipl_vbl_timer - 16'd1;
-        end
     end
 end
 
-always_comb begin
-    if (ipl_vbl_active)  cpu_ipl_n = ~VBLANK_LEVEL;
-    else                 cpu_ipl_n = 3'b111;   // no interrupt
+// IPL4 encoding: level 4 = ~4 = 3'b011 (active low)
+// Register through synchronizer FF to avoid Verilator scheduling race
+reg [2:0] ipl_sync;
+always_ff @(posedge clk_sys) begin
+    ipl_sync <= ipl_vbl_active ? ~VBLANK_LEVEL : 3'b111;
 end
+assign cpu_ipl_n = ipl_sync;
 
 // =============================================================================
 // Lint suppression
