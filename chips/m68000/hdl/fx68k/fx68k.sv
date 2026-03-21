@@ -150,7 +150,7 @@ module fx68k(
 	//
 	// We synchronize some signals half clock earlier. We compensate later
 	reg rDtack, rBerr;
-	reg [2:0] rIpl, iIpl;
+	reg [2:0] rIpl /* verilator public */, iIpl /* verilator public */;
 	reg Vpai, BeI, Halti, BRi, BgackI, BeiDelay;
 	// reg rBR, rHALT;
 	wire BeDebounced = ~( BeI | BeiDelay);
@@ -235,7 +235,7 @@ module fx68k(
 	reg Tpend;
 	reg intPend /* verilator public */;						// Interrupt pending
 	reg pswT, pswS;
-	reg [ 2:0] pswI;
+	reg [ 2:0] pswI /* verilator public */;
 	wire [7:0] ccr;
 
 	wire [15:0] psw = { pswT, 1'b0, pswS, 2'b00, pswI, ccr};

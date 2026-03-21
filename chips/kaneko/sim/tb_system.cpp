@@ -468,7 +468,7 @@ int main(int argc, char** argv) {
                         if (iack_count <= 3)
                             fprintf(stderr, "  IACK CYCLE @iter=%" PRIu64 " frame=%d\n", iter, frame_num);
                     }
-                    static int intpend_count = 0; // placeholder
+                    static int intpend_count = 0; // fx68k intPend probe deferred to Agent 1
 
                     // Report at frame 5
                     if (frame_num == 5) {
