@@ -8,7 +8,7 @@ Any agent can append. Newest entries at top.
 ## 2026-03-20 — BLOCKER: fx68k never takes interrupts in Verilator
 **Found by:** Agent 2 (sim-batch2)
 **Affects:** ALL cores using fx68k (Kaneko, Taito B, Taito X, NMK, Toaplan V2, Psikyo)
-**Status:** UNRESOLVED — needs investigation
+**Status:** ROOT CAUSE IDENTIFIED — 3-part fix below (from community core forensic audit)
 
 **Symptoms:**
 - IPL signal correctly driven to level 4 (221K samples where IPL != 7)
@@ -18,20 +18,69 @@ Any agent can append. Newest entries at top.
 - VPAn correctly wired for autovector (VPAn = ~&{FC2,FC1,FC0,~ASn})
 - Added IACK DTACK suppression to prevent open-bus interference — no effect
 
-**What was tried:**
-1. Level 4 interrupt (berlwall native) → IACK=0
-2. Level 6 interrupt → IACK=0
-3. Supervisor mode forced (SR=0x201F) → IACK=0
-4. IACK DTACK suppression in tb_top.sv → IACK=0
+### ROOT CAUSE (from analysis of 10+ community MiSTer cores, 2026-03-20)
 
-**Hypothesis:** The fx68k's internal `intPend` flag might never be set, or the sequencer never reaches the state that processes it. Could be a Verilator-specific simulation issue with the `/* verilator public */` annotated signals, or a clock enable timing issue.
+**Three issues must ALL be fixed:**
+
+#### Fix 1: Replace timer-based IPL clear with IACK-based clear
+All our cores use `ipl_vbl_timer` (count down from 0xFFFF) to clear the interrupt.
+EVERY community core uses IACK-based clear instead. The timer approach creates a race
+condition: if the game's init code has interrupts masked (`pswI=7` from `ORI #$0700,SR`)
+for longer than the timer, the interrupt clears before the CPU ever sees it. The correct
+pattern (jotego CPS1, Cave, NeoGeo, va7deo, atrac17 — ALL of them):
+
+```verilog
+wire inta_n = ~&{FC[2], FC[1], FC[0], ~ASn};  // IACK detection
+
+always @(posedge clk, posedge rst) begin
+    if (rst)            int1 <= 1'b1;     // inactive (active-low)
+    else if (!inta_n)   int1 <= 1'b1;     // clear ONLY on IACK
+    else if (vblank_falling_edge)
+                        int1 <= 1'b0;     // set on VBLANK
+end
+
+// Wire directly:
+.IPL1n(int1),  // level 2 (or appropriate level for the game)
+```
+
+DELETE the ipl_timer / ipl_vbl_timer / ipl_spr_timer logic. It is wrong.
+
+#### Fix 2: Register IPL through synchronizer FF
+fx68k samples IPL on enPhi2 through a two-stage pipeline (rIpl -> iIpl).
+`intPend` only sets when `iplStable` (both stages agree). If IPL is driven
+from an always_comb block that evaluates AFTER fx68k in Verilator's scheduling,
+the sample is one cycle late. Fix: register IPL through an explicit FF:
+
+```verilog
+reg [2:0] ipl_sync;
+always @(posedge clk) ipl_sync <= {int2_n, int1_n, int0_n};
+// Use ipl_sync for IPL inputs, not raw combinational signals
+```
+
+#### Fix 3: Verify pswI (SR interrupt mask)
+The first instruction in most games is `ORI #$0700,SR` (mask all interrupts).
+Later init code runs `MOVE #$2000,SR` to unmask. Probe `pswI` (fx68k internal,
+marked `/* verilator public */`) in the C++ testbench:
+
+```cpp
+printf("pswI=%d intPend=%d iplStable=%d rIpl=%d iIpl=%d\n",
+    top->rootp->tb_top__DOT__cpu__DOT__pswI,
+    top->rootp->tb_top__DOT__cpu__DOT__intPend,
+    ...);
+```
+
+If pswI stays at 7 after the game's init completes, the SR update instruction
+is not executing correctly (likely uaddrPla MULTIDRIVEN issue in shared copy).
+
+### ALSO CHECK: uaddrPla MULTIDRIVEN in shared m68000/ copy
+The shared `chips/m68000/hdl/fx68k/uaddrPla.sv` has 7 separate `always @*` blocks.
+This causes silent CPU failure in Verilator (dispatches to microcode addr 0 on every
+instruction). The NMK sim fixed this by merging all blocks into one, but that fix is
+NOT in the shared copy. If your sim copies from chips/m68000/, you have this bug.
+
+See `chips/COMMUNITY_PATTERNS.md` Section 2.1 for details.
 
 **Impact:** Games boot and run code, but VBlank-driven game logic never executes. Rendering works (palette, tiles visible) but display is static. ALL cores are affected since they all need VBlank interrupts for gameplay.
-
-**Workaround ideas:**
-1. Use Musashi (software 68000) instead of fx68k for simulation
-2. Inject VBlank handler calls from C++ testbench via bypass mechanism
-3. Debug fx68k's `intPend`/`iplStable`/`iplComp` signals with VCD trace
 
 ---
 

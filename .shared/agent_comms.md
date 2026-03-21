@@ -247,3 +247,10 @@ Nastar still black (VCU issue). berlwall 600f tested — black after f5
 (state counter stuck, needs MAME comparison).
 
 Next: MAME RAM dump for berlwall, multi-level IRQ for Gigandes, Nastar VCU debug.
+
+## 2026-03-21 00:30 — Agent 1: NMK SPRITES WORKING — FIRST FULLY RENDERING CORE
+
+**NMK Thunder Dragon**: BG tiles + sprites + palette + scrolling ALL working. 73-91% non-black, up to 28 active sprites per frame. Root cause: scan_trigger was 1b0 (G3 sprite rasterizer stuck in IDLE). Committed 88eba67 on sim-batch2.
+
+**This is the first core rendering real gameplay content with sprites.** The methodology works: IACK-based IPL + scan_trigger fix + RAM comparison validation.
+
