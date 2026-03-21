@@ -96,6 +96,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Display list entry type (produced by Gate 2 scanner for Gate 3 renderer)
 // ─────────────────────────────────────────────────────────────────────────────
+`ifndef SPRITE_ENTRY_T_DEFINED
+`define SPRITE_ENTRY_T_DEFINED
 typedef struct packed {
     logic [8:0]  x;         // X position (9-bit)
     logic [8:0]  y;         // Y position (9-bit)
@@ -107,6 +109,7 @@ typedef struct packed {
     logic [1:0]  size;      // 0=8×8, 1=16×16, 2=32×32, 3=64×64
     logic        valid;
 } sprite_entry_t;
+`endif
 
 module gp9001 #(
     parameter int NUM_LAYERS = 2  // 2, 3, or 4 active BG layers

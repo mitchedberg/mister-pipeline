@@ -35,7 +35,9 @@
 module nmk_arcade #(
     // ── Work RAM ───────────────────────────────────────────────────────────────
     // 64KB: 15-bit word address (WRAM_ABITS=15 → 32768 words = 65536 bytes)
+    // WRAM_BASE: upper byte of work RAM address (0x0B for tdragon, 0x08 for tdragonb2)
     parameter int unsigned WRAM_ABITS = 15,
+    parameter logic [7:0]  WRAM_BASE  = 8'h0B,
 
     // ── Palette RAM ────────────────────────────────────────────────────────────
     // 512 entries × 16-bit: 9-bit word address
@@ -175,7 +177,7 @@ assign prog_rom_cs = (cpu_addr[23:18] == 6'b0) && !cpu_as_n;
 
 // Work RAM: 64KB at 0x0B0000–0x0BFFFF → A[23:16] == 8'h0B
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:16] == 8'h0B) && !cpu_as_n;
+assign wram_cs = (cpu_addr[23:16] == WRAM_BASE) && !cpu_as_n;
 
 // I/O registers: 0x0C0000–0x0C001F → A[23:16]==8'h0C, A[15:5]==11'b0
 // (32 bytes of I/O at 0x0C0000-0x0C001F; cpu_addr[4:1] selects register word)
