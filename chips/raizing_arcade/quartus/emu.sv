@@ -213,18 +213,8 @@ assign {UART_RTS, UART_TXD, UART_DTR} = '0;
 assign {SD_SCK, SD_MOSI, SD_CS}       = 'Z;
 assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;
 
-// SDRAM tied off — raizing_arcade uses internal BRAM for all ROMs
-assign SDRAM_CLK  = 1'b0;
-assign SDRAM_CKE  = 1'b0;
-assign SDRAM_A    = '0;
-assign SDRAM_BA   = '0;
-assign SDRAM_DQ   = 'Z;
-assign SDRAM_DQML = 1'b1;
-assign SDRAM_DQMH = 1'b1;
-assign SDRAM_nCS  = 1'b1;
-assign SDRAM_nCAS = 1'b1;
-assign SDRAM_nRAS = 1'b1;
-assign SDRAM_nWE  = 1'b1;
+// SDRAM_CLK is driven by the PLL (assign SDRAM_CLK = clk_sdram below).
+// All other SDRAM signals are driven by sdram_b instantiated below.
 
 assign VGA_F1         = 1'b0;
 assign VGA_SCALER     = 1'b0;
