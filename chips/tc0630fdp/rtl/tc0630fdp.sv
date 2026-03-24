@@ -1041,7 +1041,9 @@ localparam int GFX_ROM_WORDS = 4096;
 // Async read ports (one per BG instance)
 logic [21:0] bg_gfx_addr [0:3];
 logic [31:0] bg_gfx_data [0:3];
+/* verilator lint_off UNUSEDSIGNAL */
 logic        bg_gfx_rd   [0:3];
+/* verilator lint_on UNUSEDSIGNAL */
 
 // Sprite renderer read port (combinational — same BRAM, 32-bit)
 logic [21:0] spr_gfx_addr;

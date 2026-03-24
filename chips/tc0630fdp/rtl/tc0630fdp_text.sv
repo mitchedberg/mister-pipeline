@@ -163,6 +163,10 @@ end
 
 // =============================================================================
 // Line buffer: 320 × 9-bit {color[4:0], pen[3:0]}
+// NOTE: TX_TRAM writes 8 addresses per clock cycle (unrolled pixel decode).
+// This prevents altsyncram replacement (only 1 write port available).
+// (* ramstyle = "MLAB" *) hint is kept but ignored by Quartus 17.0 Lite;
+// these 320×9=2880 FFs will map to ALMs until pixel-write serialisation refactor.
 // =============================================================================
 `ifdef QUARTUS
 (* ramstyle = "MLAB" *) logic [8:0] linebuf [0:319];

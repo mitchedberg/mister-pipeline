@@ -80,7 +80,9 @@ module tc0630fdp_bg_4x (
 // Constants
 // =============================================================================
 localparam int H_START = 46;
+/* verilator lint_off UNUSEDPARAM */
 localparam int H_END   = 366;
+/* verilator lint_on UNUSEDPARAM */
 
 // =============================================================================
 // Cross-domain: hblank_rise in clk domain → synchronised into clk_4x domain.
@@ -222,9 +224,18 @@ end
 
 // =============================================================================
 // Per-layer 4 line buffers: 320 × 13-bit.
-// MLAB for FPGA synthesis (async read, no power-of-two restriction).
 // Written during HBLANK (clk_4x domain), read during display (clk domain).
 // Cross-domain safe: write and read phases are mutually exclusive.
+//
+// NOTE: Cannot be converted to explicit altsyncram because BG_WRITE writes
+// up to 16 different addresses per cycle (for-loop).  altsyncram SINGLE_PORT
+// supports one write per cycle only.  A true M10K conversion would require
+// serialising writes to one pixel per clk_4x cycle (Phase 0+2).
+//
+// The (* ramstyle = "MLAB" *) attribute is left in place as a hint; however
+// Quartus 17.0 Lite ignores it for 3D arrays and this will map to FFs.
+// Estimated cost: 4×320×13 = 16,640 FFs ≈ 400 ALMs.  This is the remaining
+// linebuf register cost that requires the Phase 0+2 serialisation refactor.
 // =============================================================================
 `ifdef QUARTUS
 (* ramstyle = "MLAB" *) logic [12:0] linebuf [0:3][0:319];
@@ -290,21 +301,39 @@ endgenerate
 // =============================================================================
 // Fetch geometry: Y zoom computation for current layer.
 // =============================================================================
+// Y-zoom row computation: canvas_y_raw * zoom_y → 17-bit product.
+// Explicit lpm_mult (combinational, pipeline=0) forces DSP block in Quartus 17.0 Lite.
+// multstyle attribute is ignored by that tool version.
 /* verilator lint_off UNUSED */
-`ifdef QUARTUS
-(* multstyle = "dsp" *)
-`endif
 logic [16:0] cy_zoomed_w;
 /* verilator lint_on UNUSED */
 logic [ 3:0] fetch_py;
 logic [ 4:0] fetch_ty;
 logic        fetch_extend;
+logic [ 8:0] canvas_y_raw_c;
 
 always_comb begin
-    logic [8:0] canvas_y_raw;
-    canvas_y_raw = (vpos_4x[8:0] + 9'd1) + cur_pf_yscroll[15:7];
-    cy_zoomed_w  = {1'b0, canvas_y_raw} * {1'b0, cur_ls_zoom_y};
+    canvas_y_raw_c = (vpos_4x[8:0] + 9'd1) + cur_pf_yscroll[15:7];
 end
+
+`ifdef QUARTUS
+lpm_mult #(
+    .lpm_widtha         (9),
+    .lpm_widthb         (8),
+    .lpm_widthp         (17),
+    .lpm_representation ("UNSIGNED"),
+    .lpm_pipeline       (0)
+) u_cy_zoom_mult (
+    .dataa  (canvas_y_raw_c),
+    .datab  (cur_ls_zoom_y),
+    .result (cy_zoomed_w),
+    .clock  (1'b0), .clken(1'b0), .aclr(1'b0), .sum({17{1'b0}})
+);
+`else
+always_comb begin
+    cy_zoomed_w = {1'b0, canvas_y_raw_c} * {1'b0, cur_ls_zoom_y};
+end
+`endif
 
 always_comb begin
     logic [8:0] canvas_y;

@@ -51,7 +51,9 @@
 // =============================================================================
 
 module tc0630fdp_sprite_render (
-    input  logic        clk,
+    /* verilator lint_off UNUSEDSIGNAL */
+    input  logic        clk,      // pixel clock (unused in this module; kept for port compatibility)
+    /* verilator lint_on UNUSEDSIGNAL */
     input  logic        clk_4x,   // 4× pixel clock for serialized pixel writes
     input  logic        rst_n,
 
@@ -92,18 +94,88 @@ localparam int H_END   = 366;
 // Two independent 2D arrays avoid that elaboration explosion.
 // FPGAs power up BRAM contents to 0, so no reset initialisation loop is needed.
 //
-// Phase 4: Sprite line buffers → MLAB block RAM.
-// The sprite render FSM writes up to 16 pixels per clock (for-loop in S_NEXT)
-// and reads are async — MLAB is the correct inference target (async read,
-// parallel write supported), not M10K (sync read only, single write port).
-// MLAB: 2×320×12=7680 bits ≈ 12 MLABs vs 7680 FFs.  Saves ~190 ALMs × 2 = ~380 ALMs.
-// (True M10K conversion requires Phase 0+2 serialization at 96MHz.)
+// Phase 4 (explicit): Sprite line buffers → altsyncram (MLAB) megafunction.
+// Quartus 17.0 Lite ignores (* ramstyle = "MLAB" *) attributes; explicit
+// altsyncram instantiation is required to force MLAB block type.
+//   Dual-port: port A = sync write (clk_4x), port B = async read (UNREGISTERED).
+//   Read and write addresses differ each cycle → dual-port required.
+// MLAB: 2×320×12=7680 bits ≈ 12 MLABs vs 7680 FFs. Saves ~380 ALMs.
+// (True M10K conversion requires Phase 0+2 serialization at 96MHz — serial write only.)
+
+// Write-side signals (one set per buffer)
+logic [11:0] lbuf0_wdata, lbuf1_wdata;
+logic  [8:0] lbuf0_waddr, lbuf1_waddr;
+logic        lbuf0_wen,   lbuf1_wen;
+// Read-side signals (one set per buffer)
+logic [11:0] lbuf0_rdata, lbuf1_rdata;
+
 `ifdef QUARTUS
-(* ramstyle = "MLAB" *) logic [11:0] lbuf0 [0:319];
-(* ramstyle = "MLAB" *) logic [11:0] lbuf1 [0:319];
+// ── lbuf0 — explicit altsyncram dual-port MLAB ───────────────────────────
+altsyncram #(
+    .width_a            (12),
+    .widthad_a          (9),
+    .numwords_a         (512),
+    .width_b            (12),
+    .widthad_b          (9),
+    .numwords_b         (512),
+    .operation_mode     ("DUAL_PORT"),
+    .ram_block_type     ("MLAB"),
+    .outdata_reg_a      ("UNREGISTERED"),
+    .outdata_reg_b      ("UNREGISTERED"),
+    .read_during_write_mode_mixed_ports ("DONT_CARE"),
+    .intended_device_family ("Cyclone V")
+) u_lbuf0 (
+    .clock0  (clk_4x),
+    .address_a (lbuf0_waddr),
+    .data_a    (lbuf0_wdata),
+    .wren_a    (lbuf0_wen),
+    .address_b (spr_scol_snap),
+    .q_b       (lbuf0_rdata),
+    // unused ports
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_a(1'b1), .byteena_b(1'b1), .clock1(1'b0), .clocken0(1'b1),
+    .clocken1(1'b1), .clocken2(1'b1), .clocken3(1'b1),
+    .data_b({12{1'b1}}), .eccstatus(), .q_a(), .rden_a(1'b1), .rden_b(1'b1),
+    .wren_b(1'b0)
+);
+// ── lbuf1 — explicit altsyncram dual-port MLAB ───────────────────────────
+altsyncram #(
+    .width_a            (12),
+    .widthad_a          (9),
+    .numwords_a         (512),
+    .width_b            (12),
+    .widthad_b          (9),
+    .numwords_b         (512),
+    .operation_mode     ("DUAL_PORT"),
+    .ram_block_type     ("MLAB"),
+    .outdata_reg_a      ("UNREGISTERED"),
+    .outdata_reg_b      ("UNREGISTERED"),
+    .read_during_write_mode_mixed_ports ("DONT_CARE"),
+    .intended_device_family ("Cyclone V")
+) u_lbuf1 (
+    .clock0  (clk_4x),
+    .address_a (lbuf1_waddr),
+    .data_a    (lbuf1_wdata),
+    .wren_a    (lbuf1_wen),
+    .address_b (spr_scol_snap),
+    .q_b       (lbuf1_rdata),
+    // unused ports
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_a(1'b1), .byteena_b(1'b1), .clock1(1'b0), .clocken0(1'b1),
+    .clocken1(1'b1), .clocken2(1'b1), .clocken3(1'b1),
+    .data_b({12{1'b1}}), .eccstatus(), .q_a(), .rden_a(1'b1), .rden_b(1'b1),
+    .wren_b(1'b0)
+);
 `else
-logic [11:0] lbuf0 [0:319];
-logic [11:0] lbuf1 [0:319];
+// Simulation: plain register arrays (async read via always_comb access)
+logic [11:0] lbuf0 [0:511];
+logic [11:0] lbuf1 [0:511];
+always_ff @(posedge clk_4x) begin
+    if (lbuf0_wen) lbuf0[lbuf0_waddr] <= lbuf0_wdata;
+    if (lbuf1_wen) lbuf1[lbuf1_waddr] <= lbuf1_wdata;
+end
+assign lbuf0_rdata = lbuf0[spr_scol_snap];
+assign lbuf1_rdata = lbuf1[spr_scol_snap];
 `endif
 logic back_buf;
 logic front_buf;
@@ -192,7 +264,7 @@ end
 
 always_comb begin
     if (hpos >= 10'(H_START) && hpos < 10'(H_END))
-        spr_pixel = front_buf ? lbuf1[spr_scol_snap] : lbuf0[spr_scol_snap];
+        spr_pixel = front_buf ? lbuf1_rdata : lbuf0_rdata;
     else
         spr_pixel = 12'd0;
 end
@@ -286,13 +358,30 @@ logic [7:0] dst_row_full;
 assign dst_row_full = abs_scan[7:0] - r_sy[7:0];
 
 // src_row = (dst_row * scale_y) >> 8 : dst_row is 4-bit (0..15), scale_y 9-bit.
-// Product is 13-bit max (15*256=3840); must widen operands before multiply to avoid
-// truncation.  Cast to 13-bit explicitly so Verilator allocates the correct result width.
-`ifdef QUARTUS
-(* multstyle = "dsp" *)
-`endif
+// Product is 13-bit max (15*256=3840).  Explicit lpm_mult (combinational, pipeline=0)
+// forces DSP block use in Quartus 17.0 Lite (multstyle attribute is ignored).
 logic [4:0] src_row_zoom;
+`ifdef QUARTUS
+logic [12:0] src_row_zoom_prod;
+lpm_mult #(
+    .lpm_widtha         (4),
+    .lpm_widthb         (9),
+    .lpm_widthp         (13),
+    .lpm_representation ("UNSIGNED"),
+    .lpm_pipeline       (0)
+) u_src_row_mult (
+    .dataa  (dst_row_full[3:0]),
+    .datab  (scale_y[8:0]),
+    .result (src_row_zoom_prod),
+    .clock  (1'b0),
+    .clken  (1'b0),
+    .aclr   (1'b0),
+    .sum    ({13{1'b0}})
+);
+assign src_row_zoom = 5'(src_row_zoom_prod >> 8);
+`else
 assign src_row_zoom = 5'((13'(dst_row_full[3:0]) * 13'(scale_y)) >> 8);
+`endif
 
 // fetch_row with flipY
 logic [3:0] fetch_row;
@@ -344,6 +433,52 @@ always_comb begin
 end
 
 // ---------------------------------------------------------------------------
+// Combinational write-port drivers for lbuf altsyncram instances.
+// Priority: clear takes precedence over pixel write (they never overlap in
+// practice — clear runs after HBLANK swap, pixel write runs during HBLANK).
+// altsyncram captures waddr/wdata/wen on the rising edge of clock0 (clk_4x).
+// ---------------------------------------------------------------------------
+logic        px_write_valid;
+assign px_write_valid = (state == S_PIXEL) &&
+                        (r_dst_row < render_h) &&
+                        (5'(px_idx) < render_w) &&
+                        (px_scol >= 13'sd0) &&
+                        (px_scol <  13'sd320) &&
+                        (px_pen  != 4'd0);
+
+// lbuf0 write port
+always_comb begin
+    lbuf0_wen   = 1'b0;
+    lbuf0_waddr = 9'd0;
+    lbuf0_wdata = 12'd0;
+    if (lbuf_clr_active && !back_buf) begin
+        lbuf0_wen   = 1'b1;
+        lbuf0_waddr = lbuf_clr_idx;
+        lbuf0_wdata = 12'd0;
+    end else if (px_write_valid && !back_buf) begin
+        lbuf0_wen   = 1'b1;
+        lbuf0_waddr = px_scol[8:0];
+        lbuf0_wdata = {r_prio, r_palette, px_pen};
+    end
+end
+
+// lbuf1 write port
+always_comb begin
+    lbuf1_wen   = 1'b0;
+    lbuf1_waddr = 9'd0;
+    lbuf1_wdata = 12'd0;
+    if (lbuf_clr_active && back_buf) begin
+        lbuf1_wen   = 1'b1;
+        lbuf1_waddr = lbuf_clr_idx;
+        lbuf1_wdata = 12'd0;
+    end else if (px_write_valid && back_buf) begin
+        lbuf1_wen   = 1'b1;
+        lbuf1_waddr = px_scol[8:0];
+        lbuf1_wdata = {r_prio, r_palette, px_pen};
+    end
+end
+
+// ---------------------------------------------------------------------------
 // FSM + ping-pong clear in a single always_ff block.
 // ---------------------------------------------------------------------------
 // The line buffer clear uses a sequential counter (lbuf_clr_active / lbuf_clr_idx)
@@ -388,8 +523,7 @@ always_ff @(posedge clk_4x) begin
     end else begin
         // ── Sequential back-buffer clear (runs after each ping-pong swap) ─
         if (lbuf_clr_active) begin
-            if (back_buf) lbuf1[lbuf_clr_idx] <= 12'd0;
-            else          lbuf0[lbuf_clr_idx] <= 12'd0;
+            // Write enables driven combinationally below (lbuf0_wen/lbuf1_wen).
             if (lbuf_clr_idx == 9'd319)
                 lbuf_clr_active <= 1'b0;
             else
@@ -467,16 +601,8 @@ always_ff @(posedge clk_4x) begin
             // Saves ~15,000 ALMs (16× write mux elimination + 16× multiply removal).
             S_PIXEL: begin
                 // Guard: only write pixels when scanline falls within rendered height.
-                if (r_dst_row < render_h &&
-                    5'(px_idx) < render_w &&
-                    px_scol >= 13'sd0 &&
-                    px_scol <  13'sd320 &&
-                    px_pen  != 4'd0) begin
-                    if (back_buf)
-                        lbuf1[px_scol[8:0]] <= {r_prio, r_palette, px_pen};
-                    else
-                        lbuf0[px_scol[8:0]] <= {r_prio, r_palette, px_pen};
-                end
+                // Write enables and data driven combinationally below (lbuf0_wen/lbuf1_wen).
+                // No NBA here — altsyncram captures waddr/wdata/wen on the clock edge.
 
                 // Advance pixel or move to next sprite
                 if (px_idx == 4'd15 || 5'(px_idx) + 5'd1 >= render_w) begin
@@ -500,9 +626,11 @@ always_ff @(posedge clk_4x) begin
 end  // always_ff @(posedge clk_4x)
 
 /* verilator lint_off UNUSED */
+/* verilator lint_off UNUSEDSIGNAL */
 logic _unused;
 assign _unused = ^{hblank,
                    vpos[8],
+                   vpos_4x[8],
                    slist_rd_data[4:0],
                    dst_row_full[7:4],
                    r_sy[11:8],
@@ -510,6 +638,7 @@ assign _unused = ^{hblank,
                    abs_scan[8],
                    hfall_sync_4x[0],
                    hend_sync_4x[0]};
+/* verilator lint_on UNUSEDSIGNAL */
 /* verilator lint_on UNUSED */
 
 endmodule

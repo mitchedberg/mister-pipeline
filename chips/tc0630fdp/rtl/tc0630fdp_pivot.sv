@@ -157,6 +157,10 @@ end
 `endif
 
 // Line buffer 320 × 8-bit
+// NOTE: PV_TILE writes 8 addresses per clock cycle (unrolled pixel decode).
+// This prevents altsyncram replacement (only 1 write port available).
+// (* ramstyle = "MLAB" *) hint is kept but ignored by Quartus 17.0 Lite;
+// 320×8=2560 FFs will map to ALMs until pixel-write serialisation refactor.
 `ifdef QUARTUS
 (* ramstyle = "MLAB" *) logic [7:0] linebuf [0:319];
 `else

@@ -4,6 +4,7 @@ FDA_DIR    := $(abspath $(CHIP_DIR)/../tc0650fda)
 RTL        := $(CHIP_DIR)/rtl/tc0630fdp.sv \
               $(CHIP_DIR)/rtl/tc0630fdp_text.sv \
               $(CHIP_DIR)/rtl/tc0630fdp_bg.sv \
+              $(CHIP_DIR)/rtl/tc0630fdp_bg_4x.sv \
               $(CHIP_DIR)/rtl/tc0630fdp_lineram.sv \
               $(CHIP_DIR)/rtl/tc0630fdp_sprite_scan.sv \
               $(CHIP_DIR)/rtl/tc0630fdp_sprite_render.sv \

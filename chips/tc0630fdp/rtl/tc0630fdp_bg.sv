@@ -362,12 +362,12 @@ end
 // Line buffer: 320 × 13-bit
 // =============================================================================
 // Phase 3: BG line buffer registers → MLAB block RAM.
-// The BG_WRITE FSM writes 16 pixels in parallel (one per clock) and the read is
-// async — this pattern requires MLAB (supports async reads and parallel writes)
-// rather than M10K (sync-read only, single write port).
-// MLAB: 640 bits per ALM cluster; 320×13=4160 bits ≈ 7 MLABs vs 320×13=4160 FFs.
-// Savings: ~4160 FFs freed — each BG instance saves ~100 ALMs × 4 instances = ~400 ALMs.
-// (True M10K conversion requires Phase 0+2: 96MHz clock + serialized BG_WRITE.)
+// NOTE: Cannot be converted to explicit altsyncram — BG_WRITE writes 16
+// different addresses per clock cycle (for-loop), which requires 16 write
+// ports.  altsyncram SINGLE_PORT supports one write per cycle only.
+// The (* ramstyle = "MLAB" *) attribute hint is left in place but Quartus 17.0
+// Lite ignores it; these 320×13=4160 FFs will map to ALMs until Phase 0+2
+// serialisation refactor.  One instance = ~100 ALMs, 4 instances = ~400 ALMs.
 // =============================================================================
 `ifdef QUARTUS
 (* ramstyle = "MLAB" *) logic [12:0] linebuf [0:319];
