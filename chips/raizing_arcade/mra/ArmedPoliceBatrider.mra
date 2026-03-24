@@ -1,0 +1,112 @@
+<!--
+    Armed Police Batrider (World, Ver. B) — Raizing/8ing
+    MiSTer ROM descriptor for Raizing Arcade (Batrider) core
+
+    Hardware (Board: RA9704):
+      MC68000 @ 16 MHz (32 MHz XTAL / 2)
+      Z80     @  4 MHz (32 MHz XTAL / 8, for audio)
+      GP9001 VDP (single — tile + sprite processor, OBJECTBANK_EN=1)
+      YMZ280B @ 16.9344 MHz (8-channel ADPCM)
+      GAL16V8 × 5 (OKI ROM bank switching, same as Battle Garegga)
+      ExtraText DMA (TVRMCTL7 at 0x300030)
+
+    Key hardware differences vs Battle Garegga:
+      - GP9001 OBJECTBANK_EN=1: 8-slot bank table extends sprite tile codes to 14 bits
+        CPU writes 0x500000–0x500007 to program the 8 × 4-bit bank table
+        Each byte write: data[3:0] → bank[2n], data[7:4] → bank[2n+1]
+      - YMZ280B audio (replaces YM2151 + OKI M6295)
+        Z80 ports: 0xE000 = address reg, 0xE001 = data reg
+      - ExtraText DMA: 68K writes DMA base address to 0x300030; hardware copies
+        512 text tile words from work RAM to text VRAM each frame
+      - Larger program ROM: 2MB (vs 1MB in bgaregga)
+      - Larger GFX ROM: 12MB (6 × 2MB)
+
+    Memory map (68000):
+      0x000000 - 0x1FFFFF  Program ROM (2MB)
+      0x200000 - 0x20FFFF  Work RAM (64KB)
+      0x300000 - 0x30002F  GP9001 VDP registers + I/O
+      0x300030 - 0x300031  ExtraText DMA address register
+      0x400000 - 0x400FFF  Palette RAM
+      0x500000 - 0x50000F  Object bank registers (GP9001_OP_OBJECTBANK_WR)
+      0x600001             Sound latch write
+      0x700000 - 0x703FFF  Text tilemap VRAM
+
+    SDRAM layout (for MiSTer ROM loading):
+      ROM index 0: 0x000000 - 0x1FFFFF  2MB   68K program ROM
+      ROM index 1: 0x200000 - 0xDFFFFF  12MB  GP9001 tile ROMs (6 × 2MB)
+      ROM index 2: 0xE00000 - 0xE3FFFF  256KB Z80 audio ROM
+      ROM index 3: 0xE40000 - 0xF3FFFF  1MB   YMZ280B ADPCM sample ROM
+      ROM index 4: 0xF40000 - 0xF47FFF  32KB  Text tilemap ROM
+
+    ROM set: batrider (from MAME 0.245)
+    Parent: batrider
+    Manufacturer: Raizing/8ing
+    Year: 1998
+
+    CRCs verified from batrider.zip (MAME 0.245 merged ROM set).
+    Verify with: mame -listxml batrider
+-->
+
+<misterromdescription>
+    <name>Armed Police Batrider</name>
+    <setname>batrider</setname>
+    <rbf>batrider_arcade</rbf>
+    <manufacturer>Raizing/8ing</manufacturer>
+    <year>1998</year>
+    <category>Shooter</category>
+
+    <!-- DIP switches — defaults from MAME batrider driver -->
+    <nvram index="2" size="2"/>
+
+    <!-- Program ROM (68K CPU, index 0x00) -->
+    <!-- SDRAM byte offset 0x000000 — 2MB total -->
+    <!-- ROM_LOAD16_BYTE: even bytes = prg0.bin, odd bytes = prg1.bin -->
+    <rom index="0" zip="batrider.zip" md5="None" type="merged">
+        <!-- prg0.bin: 68K program even bytes, 1MB -->
+        <part name="prg0.bin" crc="4b0f8a4c" map="21"/>
+        <!-- prg1.bin: 68K program odd bytes, 1MB -->
+        <part name="prg1.bin" crc="e11a8a9e" map="12"/>
+    </rom>
+
+    <!-- GFX ROMs — GP9001 tile data (index 0x01) -->
+    <!-- SDRAM byte offset 0x200000 — 12MB total -->
+    <!-- 6 × 2MB ROMs loaded sequentially (standard ROM_LOAD) -->
+    <!-- Load order: rom11 (0x000000), rom12 (0x200000), ... rom16 (0xA00000) -->
+    <rom index="1" zip="batrider.zip" md5="None" type="merged">
+        <part name="rom11.bin" crc="3bfc6131"/>   <!-- 2MB, GP9001 tile data 0x000000-0x1FFFFF -->
+        <part name="rom12.bin" crc="70c6f49b"/>   <!-- 2MB, GP9001 tile data 0x200000-0x3FFFFF -->
+        <part name="rom13.bin" crc="2d7f751e"/>   <!-- 2MB, GP9001 tile data 0x400000-0x5FFFFF -->
+        <part name="rom14.bin" crc="a7d2a7ed"/>   <!-- 2MB, GP9001 tile data 0x600000-0x7FFFFF -->
+        <part name="rom15.bin" crc="fb6541c7"/>   <!-- 2MB, GP9001 tile data 0x800000-0x9FFFFF -->
+        <part name="rom16.bin" crc="08a832e9"/>   <!-- 2MB, GP9001 tile data 0xA00000-0xBFFFFF -->
+    </rom>
+
+    <!-- Z80 sound CPU ROM (index 0x02) -->
+    <!-- SDRAM byte offset 0xE00000 — 256KB total -->
+    <!-- Fixed 32KB at 0x0000–0x7FFF, banked 16KB pages at 0x8000–0xBFFF -->
+    <!-- Z80 bank register at 0xE00A selects 16KB pages; 256KB / 16KB = 16 pages -->
+    <rom index="2" zip="batrider.zip" md5="None" type="merged">
+        <part name="snd.bin" crc="4580b2fd"/>    <!-- 256KB Z80 audio ROM -->
+    </rom>
+
+    <!-- YMZ280B ADPCM sample ROM (index 0x03) -->
+    <!-- SDRAM byte offset 0xE40000 — 1MB total -->
+    <!-- YMZ280B internal 24-bit address; addressed by Z80-programmed channels -->
+    <rom index="3" zip="batrider.zip" md5="None" type="merged">
+        <part name="rom17.bin" crc="4d7555b0"/>   <!-- 1MB YMZ280B ADPCM samples -->
+    </rom>
+
+    <!-- Text tilemap ROM (index 0x04) -->
+    <!-- SDRAM byte offset 0xF40000 — 32KB total -->
+    <!-- toaplan_txtilemap device: 8×8 4bpp tiles, ExtraText DMA destination -->
+    <rom index="4" zip="batrider.zip" md5="None" type="merged">
+        <part name="text.u81" crc="f9b8b381"/>   <!-- 32KB text tilemap ROM -->
+    </rom>
+
+    <!-- DIP switch defaults (index 0xFE) -->
+    <!-- From MAME batrider INPUT_PORTS_START — factory defaults all off -->
+    <rom index="254">
+        <part>00 00</part>
+    </rom>
+
+</misterromdescription>
