@@ -85,6 +85,7 @@ module kaneko_arcade #(
     input  logic        cpu_lds_n,       // lower data strobe (active low)
     output logic        cpu_dtack_n,     // data transfer acknowledge (active low)
     output logic [2:0]  cpu_ipl_n,       // interrupt priority level (active low encoded)
+    input  logic [2:0]  cpu_fc,          // CPU function code (FC2=MSB; 3'b111 = IACK)
 
     // ── Program ROM (from SDRAM) ───────────────────────────────────────────
     output logic [19:1] prog_rom_addr,
@@ -720,7 +721,7 @@ end
 // For simulation: just return DIP values for reg 14/15, 0 for everything else.
 
 logic ay_cs;
-assign ay_cs = (cpu_addr[23:16] == 8'h40) && !cpu_as_n;  // byte 0x800000-0x80FFFF
+assign ay_cs = (cpu_addr[23:16] == 8'h80) && !cpu_as_n;  // byte 0x800000-0x80FFFF
 
 logic [7:0] ay_dout_byte;
 always_comb begin
@@ -1079,75 +1080,72 @@ always_comb begin
 end
 
 // =============================================================================
-// Interrupt (IPL) Generation
+// Interrupt (IPL) Generation — IACK-based set/clear latch pattern
 // =============================================================================
-// Kaneko16 Berlin Wall: VBLANK IRQ at level 4
-//
-// Fix 1: IACK-based clear (replaces timer-based clear).
-// Community pattern: interrupt stays asserted until CPU acknowledges (FC=111).
-// Timer-based clear was WRONG: if pswI=7 during init, the timer expires
-// before the CPU can see the interrupt. IACK clear holds the interrupt
-// indefinitely until the CPU actually acknowledges it.
-//
-// Fix 2: Register IPL through synchronizer FF to ensure stable sampling
-// by fx68k's two-stage pipeline (rIpl → iIpl → iplStable check).
-
-// IACK detection: active when FC=111 and AS#=0 (from tb_top.sv)
-// We need FC signals — pass them through or detect IACK at this level.
-// For now, use the cpu_ipl_n feedback: clear when cpu_as_n goes low
-// with the right address pattern. Simpler: use vblank_falling as clear
-// (works for berlwall since each VBlank generates exactly one IRQ).
-//
-// Actually, the correct community pattern (jotego/cave/neogeo) is:
-// Set on vblank edge, clear on IACK. We don't have FC signals here,
-// so we pass IACK detection from tb_top.sv. For now, use HOLD mode:
-// interrupt stays active until next vblank_falling (end of vblank).
-// This ensures the interrupt persists through the entire init phase.
-
 // berlwall uses THREE interrupt levels at different scanlines:
 //   Level 3 at scanline 144 (mid-screen timer)
 //   Level 4 at scanline 64  (early-screen update)
 //   Level 5 at scanline 224 (near VBlank — sets game-start flag!)
 // All three are needed for attract mode to work.
+//
+// Community pattern (jotego/CPS1, Cave, NeoGeo, va7deo, atrac17):
+//   SET  on the scanline trigger event
+//   CLEAR on IACK only (FC=111 && ASn=0)
+//
+// NEVER use a timer to clear IPL. If pswI=7 during game init code, the
+// interrupt must persist until the CPU unmasks and acknowledges it.
+// IACK-based clear guarantees the CPU has acknowledged before clearing.
+// (See COMMUNITY_PATTERNS.md Section 1.2 and .shared/findings.md)
+//
+// IPL synchronizer FF: register IPL one extra cycle so fx68k's two-stage
+// pipeline (rIpl → iIpl → iplStable) samples a stable value even if the
+// latch updates at the same Verilator scheduling step as fx68k evaluation.
+
+// IACK detection (combinational): active when FC=111 and AS#=0
+wire inta_n = ~&{cpu_fc[2], cpu_fc[1], cpu_fc[0], ~cpu_as_n};
 
 logic int3_n, int4_n, int5_n;  // active-low, one per level
 
-// Scanline-based interrupt triggers
+// Scanline-based interrupt triggers (1-cycle pulse at pixel-clock boundary)
 wire at_scanline_64  = (vpos_r == 9'd64)  & clk_pix & (hpos_r == 9'd0);
 wire at_scanline_144 = (vpos_r == 9'd144) & clk_pix & (hpos_r == 9'd0);
 wire at_scanline_224 = (vpos_r == 9'd224) & clk_pix & (hpos_r == 9'd0);
 
+// Set/clear latches — cleared ONLY by IACK (FC=111 + ASn=0)
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
-        int3_n <= 1'b1;
+        int3_n <= 1'b1;  // inactive (active-low)
         int4_n <= 1'b1;
         int5_n <= 1'b1;
     end else begin
-        // Level 3: set at scanline 144, clear at next scanline
-        if (at_scanline_144)         int3_n <= 1'b0;
-        else if (at_scanline_144 + 1'd1) int3_n <= 1'b1; // auto-clear next line
+        // Level 3 (scanline 144): set on trigger, clear on IACK
+        if      (!inta_n)        int3_n <= 1'b1;  // cleared by CPU acknowledge
+        else if (at_scanline_144) int3_n <= 1'b0;  // set on scanline event
 
-        // Level 4: set at scanline 64, clear at next scanline
-        if (at_scanline_64)          int4_n <= 1'b0;
-        else if (vblank_rising)      int4_n <= 1'b1; // clear at VBlank
+        // Level 4 (scanline 64): set on trigger, clear on IACK
+        if      (!inta_n)        int4_n <= 1'b1;
+        else if (at_scanline_64)  int4_n <= 1'b0;
 
-        // Level 5: set at scanline 224, clear at VBlank falling
-        if (at_scanline_224)         int5_n <= 1'b0;
-        else if (!vblank_r & vblank_prev) int5_n <= 1'b1; // clear at VBlank fall
+        // Level 5 (scanline 224): set on trigger, clear on IACK
+        if      (!inta_n)        int5_n <= 1'b1;
+        else if (at_scanline_224) int5_n <= 1'b0;
     end
 end
 
-// Priority encoder: highest active level wins
-// Level 5 = ~5 = 3'b010, Level 4 = ~4 = 3'b011, Level 3 = ~3 = 3'b100
+// Priority encoder: highest active level wins, registered for IPL synchronizer FF.
+// Level 5 = IPL[2:0] active-low encoding of 5 = 3'b010 (~5 & 7)
+// Level 4 = 3'b011, Level 3 = 3'b100
+// This FF also serves as the synchronizer stage to prevent Verilator late-sample
+// (fx68k rIpl→iIpl pipeline requires IPL stable across two consecutive enPhi2).
 reg [2:0] ipl_sync;
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n)
         ipl_sync <= 3'b111;
     else begin
-        if      (!int5_n) ipl_sync <= 3'b010;  // level 5 (highest)
+        if      (!int5_n) ipl_sync <= 3'b010;  // level 5 (highest priority)
         else if (!int4_n) ipl_sync <= 3'b011;  // level 4
         else if (!int3_n) ipl_sync <= 3'b100;  // level 3
-        else              ipl_sync <= 3'b111;  // no interrupt
+        else              ipl_sync <= 3'b111;  // no interrupt pending
     end
 end
 

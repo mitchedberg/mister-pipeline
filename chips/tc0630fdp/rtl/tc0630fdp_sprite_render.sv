@@ -90,8 +90,20 @@ localparam int H_END   = 366;
 // is selected by a variable at runtime (e.g. lbuf[front_buf][col]).
 // Two independent 2D arrays avoid that elaboration explosion.
 // FPGAs power up BRAM contents to 0, so no reset initialisation loop is needed.
+//
+// Phase 4: Sprite line buffers → MLAB block RAM.
+// The sprite render FSM writes up to 16 pixels per clock (for-loop in S_NEXT)
+// and reads are async — MLAB is the correct inference target (async read,
+// parallel write supported), not M10K (sync read only, single write port).
+// MLAB: 2×320×12=7680 bits ≈ 12 MLABs vs 7680 FFs.  Saves ~190 ALMs × 2 = ~380 ALMs.
+// (True M10K conversion requires Phase 0+2 serialization at 96MHz.)
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [11:0] lbuf0 [0:319];
+(* ramstyle = "MLAB" *) logic [11:0] lbuf1 [0:319];
+`else
 logic [11:0] lbuf0 [0:319];
 logic [11:0] lbuf1 [0:319];
+`endif
 logic back_buf;
 logic front_buf;
 

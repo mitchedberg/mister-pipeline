@@ -38,6 +38,7 @@
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 #include "Vtb_top___024root.h"
+#include "Vtb_top_tb_top.h"
 #include "sdram_model.h"
 
 #include <cstdio>
@@ -100,23 +101,72 @@ struct FrameBuffer {
 };
 
 // =============================================================================
+// Per-frame RAM dump (matches dump_truxton2_v2.lua format for byte-by-byte comparison)
+//
+// Format: 4B LE frame# + 64KB MainRAM + 1KB Palette = 66564 bytes/frame
+//
+// Verilator field names (from obj_dir/Vtb_top_tb_top.h):
+//   VlUnpacked<SData,32768> __PVT__u_toaplan__DOT__work_ram   (64KB MainRAM)
+//   VlUnpacked<SData,512>   __PVT__u_toaplan__DOT__palette_ram (1KB Palette)
+// =============================================================================
+
+static inline void write_word_be(FILE* f, uint16_t w) {
+    uint8_t b[2] = { (uint8_t)(w >> 8), (uint8_t)(w & 0xFF) };
+    fwrite(b, 1, 2, f);
+}
+
+static void dump_frame_ram(FILE* f, uint32_t frame_num, Vtb_top* top) {
+    auto* r = top->tb_top;
+
+    // 4-byte LE frame number
+    uint8_t hdr[4] = {
+        (uint8_t)(frame_num & 0xFF),
+        (uint8_t)((frame_num >> 8) & 0xFF),
+        (uint8_t)((frame_num >> 16) & 0xFF),
+        (uint8_t)((frame_num >> 24) & 0xFF)
+    };
+    fwrite(hdr, 1, 4, f);
+
+    // Main RAM: 32768 words = 64KB (0x100000-0x10FFFF)
+    for (int i = 0; i < 32768; i++)
+        write_word_be(f, (uint16_t)r->__PVT__u_toaplan__DOT__work_ram[i]);
+
+    // Palette RAM: 512 words = 1KB (0x300000-0x3003FF)
+    for (int i = 0; i < 512; i++)
+        write_word_be(f, (uint16_t)r->__PVT__u_toaplan__DOT__palette_ram[i]);
+}
+
+// =============================================================================
 // main
 // =============================================================================
 int main(int argc, char** argv) {
     Verilated::commandArgs(argc, argv);
 
     // ── Configuration from environment ──────────────────────────────────────
-    const char* env_frames  = getenv("N_FRAMES");
-    const char* env_prog    = getenv("ROM_PROG");
-    const char* env_gfx     = getenv("ROM_GFX");
-    const char* env_adpcm   = getenv("ROM_ADPCM");
-    const char* env_z80     = getenv("ROM_Z80");
-    const char* env_vcd     = getenv("DUMP_VCD");
+    const char* env_frames   = getenv("N_FRAMES");
+    const char* env_prog     = getenv("ROM_PROG");
+    const char* env_gfx      = getenv("ROM_GFX");
+    const char* env_adpcm    = getenv("ROM_ADPCM");
+    const char* env_z80      = getenv("ROM_Z80");
+    const char* env_vcd      = getenv("DUMP_VCD");
+    const char* env_ram_dump = getenv("RAM_DUMP");
 
     int n_frames = env_frames ? atoi(env_frames) : 30;
     if (n_frames < 1) n_frames = 1;
 
-    fprintf(stderr, "Toaplan V2 (Batsugun) simulation: %d frames\n", n_frames);
+    fprintf(stderr, "Toaplan V2 (Truxton II) simulation: %d frames\n", n_frames);
+
+    // ── Optional RAM dump file ───────────────────────────────────────────────
+    FILE* ram_dump_f = nullptr;
+    if (env_ram_dump) {
+        ram_dump_f = fopen(env_ram_dump, "wb");
+        if (!ram_dump_f) {
+            fprintf(stderr, "ERROR: cannot open RAM_DUMP file: %s\n", env_ram_dump);
+        } else {
+            fprintf(stderr, "RAM dump enabled: %s\n", env_ram_dump);
+            fprintf(stderr, "  Format: 4B frame# + 64KB MainRAM + 1KB Palette = 66564 bytes/frame\n");
+        }
+    }
 
     // ── Load ROM data ────────────────────────────────────────────────────────
     SdramModel sdram;
@@ -550,6 +600,12 @@ int main(int argc, char** argv) {
                             frame_num, fname, bus_cycles_c, nonblack);
                 }
 
+                // Per-frame RAM dump (gate-5 MAME comparison)
+                if (ram_dump_f) {
+                    dump_frame_ram(ram_dump_f, (uint32_t)frame_num, top);
+                    if ((frame_num % 10) == 0) fflush(ram_dump_f);
+                }
+
                 ++frame_num;
                 if (frame_num >= n_frames) done = true;
                 fb = FrameBuffer();
@@ -585,6 +641,7 @@ int main(int argc, char** argv) {
 
     // ── Final summary ────────────────────────────────────────────────────────
     if (vcd) { vcd->close(); delete vcd; }
+    if (ram_dump_f) { fflush(ram_dump_f); fclose(ram_dump_f); }
     top->final();
     delete top;
 

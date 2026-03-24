@@ -40,6 +40,7 @@
 // =============================================================================
 
 #include "Vtb_top.h"
+#include "Vtb_top_tb_top.h"    // access to sub-module internal arrays
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
@@ -86,6 +87,55 @@ struct FrameBuffer {
 };
 
 // =============================================================================
+// WRAM dump helpers — for gate-5 comparison against MAME Lua dumps
+// =============================================================================
+//
+// MAME Lua dump format (dump_berlwall.lua):
+//   Per frame: 65536 bytes  = 32768 × 16-bit words, high byte first (big-endian)
+//   Addresses: 0x200000–0x20FFFF (work RAM)
+//
+// Verilator struct path:
+//   top->tb_top->__PVT__u_kaneko__DOT__work_ram   (VlUnpacked<SData,32768>)
+//
+// Environment variable:
+//   RAM_DUMP — path for per-frame WRAM binary dump
+//
+
+static inline void write_byte(FILE* f, uint8_t b) {
+    fwrite(&b, 1, 1, f);
+}
+
+// Write a 16-bit word as two bytes in 68000 big-endian order (MSB first).
+static inline void write_word_be(FILE* f, uint16_t w) {
+    uint8_t b[2] = { (uint8_t)(w >> 8), (uint8_t)(w & 0xFF) };
+    fwrite(b, 1, 2, f);
+}
+
+// Dump one frame of RAM to the binary file.
+// Format: 4B LE frame# + 64KB work_ram + 4KB palette_ram
+// Total: 4 + 65536 + 4096 = 69636 bytes per frame
+static void dump_frame_ram(FILE* f, uint32_t frame_num, Vtb_top* top) {
+    auto* r = top->tb_top;
+
+    // ── 4-byte LE frame number ───────────────────────────────────────────────
+    uint8_t hdr[4] = {
+        (uint8_t)(frame_num & 0xFF),
+        (uint8_t)((frame_num >> 8) & 0xFF),
+        (uint8_t)((frame_num >> 16) & 0xFF),
+        (uint8_t)((frame_num >> 24) & 0xFF)
+    };
+    fwrite(hdr, 1, 4, f);
+
+    // ── Work RAM: 64KB = 32768 words at byte 0x200000–0x20FFFF ──────────────
+    for (int i = 0; i < 32768; i++)
+        write_word_be(f, (uint16_t)r->__PVT__u_kaneko__DOT__work_ram[i]);
+
+    // ── Palette RAM: 4KB = 2048 words at byte 0x400000–0x400FFF ──────────────
+    for (int i = 0; i < 2048; i++)
+        write_word_be(f, (uint16_t)r->__PVT__u_kaneko__DOT__palette_ram[i]);
+}
+
+// =============================================================================
 // main
 // =============================================================================
 int main(int argc, char** argv) {
@@ -98,11 +148,23 @@ int main(int argc, char** argv) {
     const char* env_adpcm    = getenv("ROM_ADPCM");
     const char* env_z80      = getenv("ROM_Z80");
     const char* env_vcd      = getenv("DUMP_VCD");
+    const char* env_ram_dump = getenv("RAM_DUMP");
 
     int n_frames = env_frames ? atoi(env_frames) : 30;
     if (n_frames < 1) n_frames = 1;
 
     fprintf(stderr, "Kaneko16 Arcade simulation: %d frames\n", n_frames);
+
+    // ── Open RAM dump file if requested ──────────────────────────────────────
+    FILE* ram_dump_f = nullptr;
+    if (env_ram_dump && env_ram_dump[0]) {
+        ram_dump_f = fopen(env_ram_dump, "wb");
+        if (!ram_dump_f) {
+            fprintf(stderr, "WARNING: Cannot open RAM_DUMP file: %s\n", env_ram_dump);
+        } else {
+            fprintf(stderr, "RAM dump enabled: %s (69636 bytes/frame = 4B frame# + 64KB wram + 4KB palette)\n", env_ram_dump);
+        }
+    }
 
     // ── Load ROM data ────────────────────────────────────────────────────────
     // SDRAM layout (byte addresses):
@@ -301,9 +363,11 @@ int main(int argc, char** argv) {
                     bus_cycles++;
                 }
 
-                // Log first 60 bus cycles
+                // Log first 60 bus cycles AND a window around frame 5 (~270K bc)
+                // to capture the stuck-loop polling behavior
                 bool log_this = (!asn_c && prev_asn && iter > RESET_ITERS) &&
-                                (bus_cycles < 60);
+                                (bus_cycles < 60 ||
+                                 (bus_cycles >= 270000 && bus_cycles < 270100));
                 if (log_this) {
                     fprintf(stderr, "  [%6lu|bc%d] ASn=0 RW=%d addr=%06X dtack_n=%d dout=%04X\n",
                             (unsigned long)iter, bus_cycles, (int)rwn_c, addr_c,
@@ -376,6 +440,9 @@ int main(int argc, char** argv) {
                     fprintf(stderr, "Frame %4d written: %s  (bus_cycles=%d)\n",
                             frame_num, fname, bus_cycles);
 
+                // Dump RAM regions for gate-5 comparison against MAME golden
+                if (ram_dump_f) dump_frame_ram(ram_dump_f, (uint32_t)frame_num, top);
+
                 ++frame_num;
                 if (frame_num >= n_frames) done = true;
                 fb = FrameBuffer();
@@ -394,6 +461,11 @@ int main(int argc, char** argv) {
     }
 
     // ── Final cleanup ─────────────────────────────────────────────────────────
+    if (ram_dump_f) {
+        fclose(ram_dump_f);
+        fprintf(stderr, "RAM dump closed: %d frames × 65536 bytes = %d bytes total\n",
+                frame_num, frame_num * 65536);
+    }
     if (vcd) {
         vcd->close();
         delete vcd;

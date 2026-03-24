@@ -215,6 +215,7 @@ kaneko_arcade u_kaneko (
     .cpu_as_n           (cpu_as_n),
     .cpu_dtack_n        (cpu_dtack_n),
     .cpu_ipl_n          (cpu_ipl_n),
+    .cpu_fc             ({fx_FC2, fx_FC1, fx_FC0}),
 
     // Program ROM
     .prog_rom_addr      (prog_rom_addr),

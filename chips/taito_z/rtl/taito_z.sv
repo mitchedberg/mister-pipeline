@@ -20,8 +20,8 @@
 //
 // CPU A address map (dblaxle byte addresses):
 //   0x000000–0x07FFFF  prog ROM A (512KB, SDRAM via sdr_*)
-//   0x100000–0x10FFFF  work RAM A (64KB)
-//   0x200000–0x20FFFF  shared RAM (64KB; maps to CPU B 0x110000)
+//   0x200000–0x203FFF  work RAM A (16KB private — dblaxle only uses 16KB)
+//   0x210000–0x21FFFF  shared RAM (64KB; maps to CPU B 0x110000)
 //   0x400000–0x40001F  TC0510NIO (I/O)
 //   0x600000–0x600001  CPU B reset register (write bit 0: 1=run, 0=reset)
 //   0x620000–0x620003  TC0140SYT master port + comm
@@ -63,7 +63,7 @@
 //   4. SDRAM prog ROM access: CPU AS_N-gated, single-cycle DTACK for now;
 //      a real SDRAM arbiter (latency 3–8 cycles) will require wait states.
 //   5. Work RAM A declared 64KB (ABITS=15 words); dblaxle only uses 16KB
-//      (0x200000–0x203FFF), but 64KB declared to match max shared RAM size.
+//      (0x200000–0x203FFF, addr[23:14]==10'h080), 64KB declared for margin.
 //
 // Reference: chips/taito_z/integration_plan.md
 //            MAME src/mame/taito/taito_z.cpp (dblaxle_map, dblaxle_cpub_map)
@@ -86,6 +86,7 @@ module taito_z (
     input  logic        cpua_as_n,      // address strobe
     output logic        cpua_dtack_n,
     output logic [ 2:0] cpua_ipl_n,     // active-low encoded IPL
+    input  logic [ 2:0] cpua_fc,        // function codes FC[2:0] for IACK detection
 
     // ── CPU B 68000 Bus ────────────────────────────────────────────────────────
     input  logic [23:1] cpub_addr,
@@ -98,6 +99,7 @@ module taito_z (
     output logic        cpub_dtack_n,
     output logic [ 2:0] cpub_ipl_n,
     output logic        cpub_reset_n,   // driven by CPU A control register bit 0
+    input  logic [ 2:0] cpub_fc,        // function codes FC[2:0] for IACK detection
 
     // ── GFX ROM (TC0480SCP tilemap — 4 × 32-bit ports, one per BG engine) ────
     // Each engine gets independent req/ack toggle handshake.
@@ -170,13 +172,15 @@ module taito_z (
 // All comparisons on cpua_addr[23:1] (word address).
 // Window qualifications use cpua_as_n to gate on valid bus cycle.
 
-// Work RAM A: 0x100000–0x10FFFF (64KB = 32K words, 15-bit index)
+// Work RAM A: 0x200000–0x203FFF (16KB = 8K words, 13-bit index)
+// dblaxle_map: AM_RANGE(0x200000, 0x203fff) AM_RAM (tc0480scp cpua work RAM)
 logic wrama_cs;
-assign wrama_cs = (cpua_addr[23:16] == 8'h10) && !cpua_as_n;
+assign wrama_cs = (cpua_addr[23:14] == 10'h080) && !cpua_as_n;
 
-// Shared RAM (CPU A port): 0x200000–0x20FFFF (64KB = 32K words, 15-bit index)
+// Shared RAM (CPU A port): 0x210000–0x21FFFF (64KB = 32K words, 15-bit index)
+// dblaxle_map: AM_RANGE(0x210000, 0x21ffff) AM_RAM AM_SHARE("share1")
 logic shram_a_cs;
-assign shram_a_cs = (cpua_addr[23:16] == 8'h20) && !cpua_as_n;
+assign shram_a_cs = (cpua_addr[23:16] == 8'h21) && !cpua_as_n;
 
 // TC0510NIO: 0x400000–0x40001F (32-byte window = 16 word addresses, 4-bit index)
 logic nio_cs_n;
@@ -683,8 +687,8 @@ T80s u_z80 (
 
 // =============================================================================
 // Shared RAM — 64KB dual-port BRAM
-//   CPU A: 0x200000–0x20FFFF  (byte) = word base 0x100000, 15-bit word index
-//   CPU B: 0x110000–0x11FFFF  (byte) = word base 0x088000, 15-bit word index
+//   CPU A: 0x210000–0x21FFFF  (byte) = cpua_addr[15:1] = 15-bit word index
+//   CPU B: 0x110000–0x11FFFF  (byte) = cpub_addr[15:1] = 15-bit word index
 // Two altsyncram instances share port A (write), each has distinct port B (read).
 // =============================================================================
 logic [15:0] shram_a_dout;
@@ -770,8 +774,8 @@ end
 `endif
 
 // =============================================================================
-// Work RAM A — 64KB BRAM (CPU A private, 0x100000–0x10FFFF)
-// Only 16KB (0x100000–0x103FFF) used in dblaxle; full 64KB declared for margin.
+// Work RAM A — 64KB BRAM (CPU A private, 0x200000–0x203FFF dblaxle)
+// Only 16KB (0x200000–0x203FFF) used in dblaxle; full 64KB declared for margin.
 // =============================================================================
 logic [15:0] wrama_dout;
 
@@ -1089,76 +1093,89 @@ end
 // =============================================================================
 logic cpua_any_cs;
 logic cpua_dtack_r;
+// Catch-all DTACK for unmapped CPU A addresses (sim only — prevents bus hang).
+// In hardware, unmapped accesses would bus-error; in sim we want to keep going.
+logic cpua_dtack_fallback;
 
 assign cpua_any_cs = scp_vram_cs | scp_ctrl_cs | pal_cs | !nio_cs_n |
                      !syt_mcs_n | spr_ram_cs | shram_a_cs | wrama_cs | cpub_rst_cs;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n)
-        cpua_dtack_r <= 1'b0;
-    else
-        cpua_dtack_r <= cpua_any_cs;
+    if (!reset_n) begin
+        cpua_dtack_r        <= 1'b0;
+        cpua_dtack_fallback <= 1'b0;
+    end else begin
+        cpua_dtack_r        <= cpua_any_cs;
+        // Fire 1 cycle after AS asserts if no real CS responded
+        cpua_dtack_fallback <= !cpua_as_n && !cpua_any_cs && !cpua_dtack_r;
+    end
 end
 
-assign cpua_dtack_n = cpua_as_n ? 1'b1 : !cpua_dtack_r;
+assign cpua_dtack_n = cpua_as_n ? 1'b1 : !(cpua_dtack_r || cpua_dtack_fallback);
 
 // =============================================================================
 // DTACK Generation (CPU B)
 // =============================================================================
 logic cpub_any_cs;
 logic cpub_dtack_r;
+logic cpub_dtack_fallback;
 
 assign cpub_any_cs = shram_b_cs | wramb_cs | rod_cs | netram_cs;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n)
-        cpub_dtack_r <= 1'b0;
-    else
-        cpub_dtack_r <= cpub_any_cs;
-end
-
-assign cpub_dtack_n = cpub_as_n ? 1'b1 : !cpub_dtack_r;
-
-// =============================================================================
-// Interrupt Controller
-// VBL (vblank_fall from TC0480SCP) → IRQ4 on CPU A and CPU B
-// HOLD_LINE semantics: latch and hold for 16-bit timer window.
-// dblaxle: single IRQ4 per VBL; no IRQ6 (racingb IRQ6 deferred).
-// =============================================================================
-logic        ipl_a_active, ipl_b_active;
-logic [15:0] ipl_a_timer,  ipl_b_timer;
-
-always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
-        ipl_a_active <= 1'b0;
-        ipl_b_active <= 1'b0;
-        ipl_a_timer  <= 16'b0;
-        ipl_b_timer  <= 16'b0;
+        cpub_dtack_r        <= 1'b0;
+        cpub_dtack_fallback <= 1'b0;
     end else begin
-        // vblank_fall is in clk_pix domain; sample in clk_sys domain.
-        // At the resolutions involved this is safe (vblank_fall is a single
-        // clk_pix pulse, and clk_sys is typically much faster than clk_pix).
-        if (scp_vblank_fall) begin
-            ipl_a_active <= 1'b1;
-            ipl_a_timer  <= 16'hFFFF;
-            ipl_b_active <= 1'b1;
-            ipl_b_timer  <= 16'hFFFF;
-        end else begin
-            if (ipl_a_active) begin
-                if (ipl_a_timer == 16'b0) ipl_a_active <= 1'b0;
-                else                       ipl_a_timer  <= ipl_a_timer - 16'd1;
-            end
-            if (ipl_b_active) begin
-                if (ipl_b_timer == 16'b0) ipl_b_active <= 1'b0;
-                else                       ipl_b_timer  <= ipl_b_timer - 16'd1;
-            end
-        end
+        cpub_dtack_r        <= cpub_any_cs;
+        cpub_dtack_fallback <= !cpub_as_n && !cpub_any_cs && !cpub_dtack_r;
     end
 end
 
+assign cpub_dtack_n = cpub_as_n ? 1'b1 : !(cpub_dtack_r || cpub_dtack_fallback);
+
+// =============================================================================
+// Interrupt Controller — IACK-based set/clear (community pattern)
+// VBL (scp_vblank_fall from TC0480SCP) → IRQ4 on CPU A and CPU B.
+// IPL latch: SET on vblank falling edge, CLEAR on CPU IACK cycle only.
+// This is the correct pattern per chips/COMMUNITY_PATTERNS.md Section 1.2.
+// Timer-based clear was WRONG: interrupt expired before pswI lowered from 7.
+// dblaxle: single IRQ4 per VBL; no IRQ6 (racingb IRQ6 deferred).
+// =============================================================================
+
+// IACK detection: FC[2:1:0] = 111 AND AS_N = 0 → CPU doing interrupt acknowledge
+wire inta_a_n = ~&{cpua_fc[2], cpua_fc[1], cpua_fc[0], ~cpua_as_n};
+wire inta_b_n = ~&{cpub_fc[2], cpub_fc[1], cpub_fc[0], ~cpub_as_n};
+
+// IPL latches — persistent until CPU acknowledges
+logic ipl_a_n_r, ipl_b_n_r;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        ipl_a_n_r <= 1'b1;   // inactive (active-low IPL → 1 = no interrupt)
+        ipl_b_n_r <= 1'b1;
+    end else begin
+        // CPU A: set on vblank falling edge, clear on IACK
+        if (!inta_a_n)        ipl_a_n_r <= 1'b1;  // IACK clears interrupt
+        else if (scp_vblank_fall) ipl_a_n_r <= 1'b0;  // VBlank sets interrupt
+
+        // CPU B: same pattern
+        if (!inta_b_n)        ipl_b_n_r <= 1'b1;
+        else if (scp_vblank_fall) ipl_b_n_r <= 1'b0;
+    end
+end
+
+// IPL synchronizer FFs — prevents Verilator scheduling late-sample
+logic ipl_a_sync, ipl_b_sync;
+always_ff @(posedge clk_sys) begin
+    ipl_a_sync <= ipl_a_n_r;
+    ipl_b_sync <= ipl_b_n_r;
+end
+
 // IRQ4: active-low IPL encoding = ~3'd4 = 3'b011
-assign cpua_ipl_n = ipl_a_active ? ~3'd4 : 3'b111;
-assign cpub_ipl_n = ipl_b_active ? ~3'd4 : 3'b111;
+// ipl_*_sync = 0 → interrupt active → drive IPL=4; 1 → no interrupt → IPL=7 (111)
+assign cpua_ipl_n = ipl_a_sync ? 3'b111 : ~3'd4;
+assign cpub_ipl_n = ipl_b_sync ? 3'b111 : ~3'd4;
 
 // =============================================================================
 // Video Sync / Blank Output

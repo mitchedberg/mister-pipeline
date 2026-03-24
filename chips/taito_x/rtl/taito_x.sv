@@ -97,6 +97,7 @@ module taito_x #(
     input  logic        cpu_as_n,       // address strobe (active low)
     output logic        cpu_dtack_n,    // data acknowledge (active low)
     output logic [2:0]  cpu_ipl_n,      // interrupt level (active-low encoded)
+    input  logic [2:0]  cpu_fc,         // function codes FC[2:0] from 68000 (for IACK detect)
 
     // ── Z80 Sound CPU Bus ─────────────────────────────────────────────────────
     input  logic [15:0] z80_addr,
@@ -682,32 +683,32 @@ assign cpu_dtack_n = cpu_as_n       ? 1'b1 :
 //
 // Gigandes: VBlank → 68000 IPL level 2 (active-low ~2 = 3'b101).
 //
-// Fix: IACK-based clear (replaces timer-based clear).
-// Community pattern (jotego/cave/neogeo): interrupt stays asserted until
-// CPU acknowledges (FC=111). Timer-based clear was WRONG: if pswI=7 during
-// init, the timer expires before the CPU can see the interrupt. IACK clear
-// holds the interrupt indefinitely until the CPU actually acknowledges it.
+// IACK-based clear (community pattern — jotego/cave/neogeo/va7deo ALL use this).
+// The interrupt is SET on VBlank rising edge and CLEARED only when the CPU
+// performs an Interrupt Acknowledge bus cycle (FC=111, ASn=0).
 //
-// Pattern: set int_vbl_n LOW on vblank rising edge, clear HIGH on vblank
-// falling edge. This ensures the interrupt persists through the entire init
-// phase when pswI=7. When the game lowers pswI, the next VBlank will be
-// acknowledged.
+// Why NOT timer-based or vblank-falling-edge clear:
+//   fx68k requires IPL stable for TWO consecutive phi2 edges (rIpl → iIpl pipeline).
+//   A time-based clear that fires before IACK can deassert the interrupt too early —
+//   particularly when pswI=7 during game init code. IACK-based clear guarantees
+//   the CPU has fully acknowledged the interrupt before the latch is released.
 //
 // Fix 2: Register IPL through synchronizer FF to ensure stable sampling
 // by fx68k's two-stage pipeline (rIpl → iIpl → iplStable check).
+
+// IACK detection: CPU asserts FC=111 with ASn=0 during interrupt acknowledge.
+// VPAn (wired in tb_top) triggers autovector response on this same condition.
+wire inta_n = ~&{cpu_fc[2], cpu_fc[1], cpu_fc[0], ~cpu_as_n};
 
 logic int_vbl_n;  // active-low VBlank interrupt (Gigandes level 2)
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n)
         int_vbl_n <= 1'b1;           // inactive (no interrupt)
+    else if (!inta_n)
+        int_vbl_n <= 1'b1;           // CLEAR on IACK (CPU has acknowledged)
     else if (vblank_rise)
         int_vbl_n <= 1'b0;           // SET on VBlank rising edge
-    // Hold until end of VBlank (falling edge) — guarantees the interrupt
-    // persists through init when pswI=7. When game lowers pswI, the
-    // next VBlank will be acknowledged.
-    else if (!vblank & vblank_r)     // vblank falling edge
-        int_vbl_n <= 1'b1;           // CLEAR at end of VBlank period
 end
 
 // Synchronizer FF: register IPL for stable sampling by fx68k

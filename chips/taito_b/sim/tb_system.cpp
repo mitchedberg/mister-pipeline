@@ -38,6 +38,7 @@
 // =============================================================================
 
 #include "Vtb_top.h"
+#include "Vtb_top_tb_top.h"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
@@ -97,6 +98,60 @@ struct FrameBuffer {
 };
 
 // =============================================================================
+// RAM Dump Helpers
+// =============================================================================
+// Write a 16-bit word as two bytes in 68000 big-endian order (MSB first).
+static inline void write_word_be(FILE* f, uint16_t w) {
+    uint8_t b[2] = { (uint8_t)(w >> 8), (uint8_t)(w & 0xFF) };
+    fwrite(b, 1, 2, f);
+}
+
+// Write N zero bytes.
+static inline void write_zeros(FILE* f, size_t n) {
+    static const uint8_t zero_buf[4096] = {};
+    while (n >= sizeof(zero_buf)) {
+        fwrite(zero_buf, 1, sizeof(zero_buf), f);
+        n -= sizeof(zero_buf);
+    }
+    if (n > 0)
+        fwrite(zero_buf, 1, n, f);
+}
+
+// Dump one frame's RAM state to binary file.
+// Format per frame: [4B LE frame#][32KB work RAM][8KB palette RAM]
+// Note: TAITO_B_PRESENT must be defined at compile time (via CFLAGS -DTAITO_B_PRESENT)
+// to enable the actual RAM dump. Without it, all regions write zeros.
+#define TAITO_B_PRESENT
+static void dump_frame_ram(FILE* f, uint32_t frame_num, Vtb_top* top) {
+    // Access the Verilator-generated tb_top sub-module that holds all internal state.
+    // (In Verilator 5.x, internal arrays migrated from rootp to tb_top.)
+    auto* r = top->tb_top;
+
+    // ── 4-byte LE frame number ───────────────────────────────────────────────
+    uint8_t frame_le[4] = {
+        (uint8_t)(frame_num & 0xFF),
+        (uint8_t)((frame_num >> 8) & 0xFF),
+        (uint8_t)((frame_num >> 16) & 0xFF),
+        (uint8_t)((frame_num >> 24) & 0xFF)
+    };
+    fwrite(frame_le, 1, 4, f);
+
+    // In isolation mode (no taito_b), write zeros for all regions to keep
+    // the binary format consistent.
+#ifdef TAITO_B_PRESENT
+    // Work RAM: 32KB = 16384 words at 0x600000-0x607FFF
+    for (int i = 0; i < 16384; i++)
+        write_word_be(f, (uint16_t)r->__PVT__u_taito_b__DOT__work_ram[i]);
+    // Palette RAM: 8KB = 4096 words at 0x200000-0x201FFF (TC0260DAR external palette)
+    for (int i = 0; i < 4096; i++)
+        write_word_be(f, (uint16_t)r->__PVT__u_taito_b__DOT__pal_ram[i]);
+#else
+    write_zeros(f, 32768);  // work RAM (16384 words × 2 bytes)
+    write_zeros(f, 8192);   // palette RAM (4096 words × 2 bytes)
+#endif
+}
+
+// =============================================================================
 // main
 // =============================================================================
 int main(int argc, char** argv) {
@@ -109,11 +164,25 @@ int main(int argc, char** argv) {
     const char* env_gfx    = getenv("ROM_GFX");
     const char* env_adpcm  = getenv("ROM_ADPCM");
     const char* env_vcd    = getenv("DUMP_VCD");
+    const char* env_ram_dump = getenv("RAM_DUMP");
 
     int n_frames = env_frames ? atoi(env_frames) : 30;
     if (n_frames < 1) n_frames = 1;
 
     fprintf(stderr, "Taito B (Nastar) simulation: %d frames\n", n_frames);
+
+    // ── Optional RAM dump file ───────────────────────────────────────────────
+    FILE* ram_dump_f = nullptr;
+    if (env_ram_dump) {
+        ram_dump_f = fopen(env_ram_dump, "wb");
+        if (!ram_dump_f) {
+            fprintf(stderr, "ERROR: cannot open RAM_DUMP file: %s\n", env_ram_dump);
+        } else {
+            fprintf(stderr, "RAM dump enabled: %s\n", env_ram_dump);
+            fprintf(stderr, "  Format: 4B frame# + 32KB wram + 8KB palette\n");
+            fprintf(stderr, "  (matches mame_ram_dump.lua layout for byte-by-byte comparison)\n");
+        }
+    }
 
     // ── Load ROM data ────────────────────────────────────────────────────────
     SdramModel sdram;
@@ -350,6 +419,32 @@ int main(int argc, char** argv) {
                             bus_cycles/1000, pal_wr_count, wram_wr_count, frame_num);
                 }
 
+                // Stuck-DTACK detector: if ASn=0 and DTACKn=1 for >10000 consecutive
+                // rising edges, report the stalling address. Only fires once per address.
+                {
+                    static uint64_t dtack_stall_start = 0;
+                    static uint32_t dtack_stall_addr  = 0xFFFFFFFF;
+                    static bool     dtack_stall_reported = false;
+                    if (!asn && top->dbg_cpu_dtack_n) {
+                        if (dtack_stall_start == 0) {
+                            dtack_stall_start = iter;
+                            dtack_stall_addr  = addr;
+                        } else if (!dtack_stall_reported &&
+                                   (iter - dtack_stall_start) > 10000) {
+                            dtack_stall_reported = true;
+                            fprintf(stderr,
+                                "*** STUCK DTACK: addr=%06X RW=%d iter=%lu bc=%d "
+                                "(stalled for %lu iters)\n",
+                                dtack_stall_addr, (int)rwn,
+                                (unsigned long)iter, bus_cycles,
+                                (unsigned long)(iter - dtack_stall_start));
+                        }
+                    } else {
+                        dtack_stall_start   = 0;
+                        dtack_stall_reported = false;
+                    }
+                }
+
                 // Detect CPU halt (double bus fault)
                 if (top->dbg_cpu_halted_n == 0 && iter > (uint64_t)RESET_ITERS + 100 &&
                     !halted_reported) {
@@ -397,6 +492,14 @@ int main(int argc, char** argv) {
                 if (fb.write_ppm(fname))
                     fprintf(stderr, "Frame %4d written: %s  (bus_cycles=%d)\n",
                             frame_num, fname, bus_cycles);
+
+                // ── Per-frame RAM dump (matches mame_ram_dump.lua format) ─────────
+                if (ram_dump_f) {
+                    dump_frame_ram(ram_dump_f, (uint32_t)frame_num, top);
+                    if ((frame_num % 10) == 0)
+                        fflush(ram_dump_f);
+                }
+
                 ++frame_num;
                 if (frame_num >= n_frames) done = true;
                 fb = FrameBuffer();
@@ -416,6 +519,11 @@ int main(int argc, char** argv) {
     if (vcd) {
         vcd->close();
         delete vcd;
+    }
+    if (ram_dump_f) {
+        fclose(ram_dump_f);
+        fprintf(stderr, "RAM dump file closed: %lu bytes written (%d frames)\n",
+                (unsigned long)(frame_num * (4 + 32768 + 8192)), frame_num);
     }
     top->final();
     delete top;

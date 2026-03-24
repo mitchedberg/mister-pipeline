@@ -177,8 +177,11 @@ logic prog_rom_cs;
 assign prog_rom_cs = (cpu_addr[23:18] == 6'b0) && !cpu_as_n;
 
 // Work RAM: 64KB at 0x0B0000–0x0BFFFF → A[23:16] == 8'h0B
+// EXCEPT: 0x0BB000–0x0BBFFF is NMK004 MCU I/O space (read-only, not writable to BRAM)
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:16] == WRAM_BASE) && !cpu_as_n;
+logic mcu_io_cs;
+assign mcu_io_cs = (cpu_addr[23:16] == WRAM_BASE) && (cpu_addr[15:12] == 4'hB) && !cpu_as_n;
+assign wram_cs = (cpu_addr[23:16] == WRAM_BASE) && !mcu_io_cs && !cpu_as_n;
 
 // I/O registers: 0x0C0000–0x0C001F → A[23:16]==8'h0C, A[15:5]==11'b0
 // (32 bytes of I/O at 0x0C0000-0x0C001F; cpu_addr[4:1] selects register word)
@@ -788,6 +791,8 @@ always_comb begin
         cpu_dout = prog_dtack_now ? prog_rom_data : prog_rom_data_r;
     end else if (!nmk_cs_n)
         cpu_dout = nmk_dout;
+    else if (mcu_io_cs)
+        cpu_dout = 16'h0000;   // MCU I/O space (0x0BB000–0x0BBFFF) — read-only, returns zero (MAME-compatible)
     else if (wram_cs)
         cpu_dout = wram_dout_r;
     else if (pal_cs)
@@ -827,7 +832,7 @@ logic dtack_r;
 // (FBNeo maps ROM with MAP_ROM which completes writes immediately with no effect).
 // Without this, CLR.W $0002 in the Thunder Dragon MCU-sync loop stalls forever.
 logic imm_cs;
-assign imm_cs = (wram_cs | pal_cs | io_cs | scroll_cs | bg_vram_cs | tx_vram_cs
+assign imm_cs = (wram_cs | mcu_io_cs | pal_cs | io_cs | scroll_cs | bg_vram_cs | tx_vram_cs
                  | (prog_rom_cs && !cpu_rw)) && !cpu_as_n;
 
 // Program ROM: combinational pulse when SDRAM data arrives THIS cycle.
@@ -877,8 +882,20 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
 end
 
 // IPL4 encoding: level 4 = ~4 = 3'b011 (active low)
-// Direct combinational assignment — no extra register that could initialize to 0 in Verilator.
-assign cpu_ipl_n = ipl4_active ? 3'b011 : 3'b111;
+// Synchronizer FF: register IPL output to prevent Verilator late-sample race.
+// fx68k samples IPL on enPhi2 through a two-stage pipeline (rIpl -> iIpl).
+// If cpu_ipl_n is combinational and Verilator evaluates it AFTER fx68k, the
+// sample arrives one cycle late and intPend never sets. Registered output
+// guarantees stable value before fx68k's enPhi2 sampling window.
+// (Community pattern — findings.md Fix 2, COMMUNITY_PATTERNS.md Section 1.2)
+logic [2:0] ipl_sync;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n)
+        ipl_sync <= 3'b111;   // inactive (all levels masked)
+    else
+        ipl_sync <= ipl4_active ? 3'b011 : 3'b111;
+end
+assign cpu_ipl_n = ipl_sync;
 
 // =============================================================================
 // Video Sync / Blank Output

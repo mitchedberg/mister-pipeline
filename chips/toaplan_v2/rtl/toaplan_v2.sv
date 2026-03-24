@@ -58,19 +58,56 @@ typedef struct packed {
 /* verilator lint_off SYNCASYNCNET */
 module toaplan_v2 #(
     // ── Address decode parameters (WORD addresses = byte_addr >> 1) ────────────
-    // GP9001 chip select: byte 0x400000–0x40FFFF → word base 0x200000
-    //   11-bit window: addr[10:0] are chip-relative (gp9001 addr input)
-    parameter logic [23:1] GP9001_BASE = 23'h200000,  // byte 0x400000 >> 1
-    // Palette RAM: byte 0x500000–0x5003FF → word base 0x280000
-    //   9-bit window (512 words = 1KB)
-    parameter logic [23:1] PALRAM_BASE = 23'h280000,  // byte 0x500000 >> 1
-    // I/O: byte 0x700000–0x700FFF → word base 0x380000
-    //   11-bit window
-    parameter logic [23:1] IO_BASE     = 23'h380000,  // byte 0x700000 >> 1
-    // Work RAM: byte 0x100000–0x10FFFF → word base 0x080000
-    //   15-bit window (32K words = 64KB)
-    parameter logic [23:1] WRAM_BASE   = 23'h080000,  // byte 0x100000 >> 1
-    parameter int WRAM_WORDS = 32768                    // 64KB / 2 = 32K words
+    //
+    // Two pre-defined address map configurations are documented below.
+    // Select by setting the DUAL_VDP parameter and passing the appropriate BASE
+    // constants when instantiating:
+    //
+    // CONFIG A — Truxton II (single GP9001, default):
+    //   GP9001 #0:  byte 0x400000–0x40FFFF → GP9001_BASE = 23'h200000
+    //   Palette:    byte 0x500000–0x5003FF → PALRAM_BASE = 23'h280000
+    //   I/O:        byte 0x700000–0x700FFF → IO_BASE     = 23'h380000
+    //   Work RAM:   byte 0x100000–0x10FFFF → WRAM_BASE   = 23'h080000
+    //   YM2151:     byte 0x600000–0x600001 (hardcoded decode, not a parameter)
+    //
+    // CONFIG B — Batsugun / Dogyuun / V-Five / Knuckle Bash / Snow Bros 2 (dual GP9001):
+    //   GP9001 #0:  byte 0x300000–0x30000D → GP9001_BASE  = 23'h180000  (word 0x300000>>1)
+    //   Palette:    byte 0x400000–0x400FFF → PALRAM_BASE  = 23'h200000  (word 0x400000>>1)
+    //   GP9001 #1:  byte 0x500000–0x50000D → GP9001_1_BASE= 23'h280000  (word 0x500000>>1)
+    //   I/O:        byte 0x200010–0x200019 → IO_BASE      = 23'h100008  (word 0x200010>>1)
+    //   Work RAM:   byte 0x100000–0x10FFFF → WRAM_BASE    = 23'h080000  (unchanged)
+    //   V25 shared: byte 0x210000–0x21FFFF → SHARED_BASE  = 23'h108000  (word 0x210000>>1)
+    //   Enable:     DUAL_VDP = 1
+    //
+    // NOTE: ALM budget concern (documented in .shared/findings.md TASK-202):
+    //   Single GP9001 ≈ 12K ALMs.  Dual GP9001 ≈ 24K ALMs.
+    //   toaplan_v2 already at 66% (≈27K of 41K ALMs) in CI run #23267780482.
+    //   Dual-VDP configuration will overflow the DE-10 Nano without optimization.
+    //   Options (see findings.md for full analysis):
+    //     A) Dedicated batsugun_arcade/ system with trimmed, shared-pipeline GP9001
+    //     B) Time-multiplexed single GP9001 with dual register banks (~50% ALM saving)
+    //     C) Larger FPGA target (not DE-10 Nano compatible)
+    //   This parameter + address decoder is the GROUNDWORK for option A or B.
+    //   It is synthesizable and correct but will not fit a single DE-10 Nano as-is.
+
+    // Select dual-VDP mode: 0 = Truxton II single VDP, 1 = Batsugun dual VDP
+    parameter bit          DUAL_VDP    = 0,
+
+    // GP9001 #0 chip select: see CONFIG A/B above
+    parameter logic [23:1] GP9001_BASE  = 23'h200000,  // CONFIG A default: byte 0x400000 >> 1
+    // GP9001 #1 chip select (only used when DUAL_VDP=1)
+    parameter logic [23:1] GP9001_1_BASE = 23'h280000, // CONFIG B: byte 0x500000 >> 1
+    // Palette RAM: see CONFIG A/B above
+    parameter logic [23:1] PALRAM_BASE  = 23'h280000,  // CONFIG A default: byte 0x500000 >> 1
+    // I/O: see CONFIG A/B above
+    parameter logic [23:1] IO_BASE      = 23'h380000,  // CONFIG A default: byte 0x700000 >> 1
+    // Work RAM: byte 0x100000–0x10FFFF → word base 0x080000 (same in both configs)
+    parameter logic [23:1] WRAM_BASE    = 23'h080000,  // byte 0x100000 >> 1
+    parameter int          WRAM_WORDS   = 32768,        // 64KB / 2 = 32K words
+    // V25 shared RAM (CONFIG B only; ignored when DUAL_VDP=0)
+    // byte 0x210000–0x21FFFF → word base 0x108000, 15-bit window
+    parameter logic [23:1] SHARED_BASE  = 23'h108000,  // byte 0x210000 >> 1
+    parameter int          SHARED_WORDS = 32768         // 64KB / 2 = 32K words
 
 ) (
     input  logic        clk_sys,
@@ -244,18 +281,51 @@ assign prog_rom_cs = (cpu_addr[23:19] == 5'b00000) && !cpu_as_n;
 logic wram_cs;
 assign wram_cs = (cpu_addr[23:WRAM_ABITS+1] == WRAM_BASE[23:WRAM_ABITS+1]) && !cpu_as_n;
 
-// GP9001: byte 0x400000–0x40FFFF → word 0x200000–0x2007FF
-//   11-bit chip-relative window (gp9001 addr[10:0])
+// GP9001 #0: chip-relative 11-bit window (addr[10:0] passed to gp9001 .addr port)
 logic gp9001_cs_n;
 assign gp9001_cs_n = !((cpu_addr[23:11] == GP9001_BASE[23:11]) && !cpu_as_n);
 
-// Palette RAM: byte 0x500000–0x5003FF → word 0x280000–0x2801FF (9-bit window)
+// GP9001 #1 (CONFIG B — Batsugun dual-VDP only):
+//   byte 0x500000–0x50000D → word 0x280000.  Only 7 word addresses used
+//   (the GP9001 INDIRECT access protocol uses offsets 0..6 within the window).
+//   Decode: addr[23:11] == GP9001_1_BASE[23:11]
+logic gp9001_1_cs_n;
+generate
+    if (DUAL_VDP) begin : gen_vdp1_cs
+        assign gp9001_1_cs_n = !((cpu_addr[23:11] == GP9001_1_BASE[23:11]) && !cpu_as_n);
+    end else begin : gen_vdp1_cs_tie
+        assign gp9001_1_cs_n = 1'b1;  // deasserted — no second VDP
+    end
+endgenerate
+
+// Palette RAM (window size differs between configs):
+//   CONFIG A: byte 0x500000–0x5003FF → word 0x280000, 9-bit (512 words = 1KB)
+//   CONFIG B: byte 0x400000–0x400FFF → word 0x200000, 11-bit (4096 words = 8KB)
+// Both configs use addr[23:9] comparison — adequate for CONFIG A; CONFIG B palette
+// is the full 0x400000 block (11-bit), but for chip select detection addr[23:9]
+// still uniquely identifies the range provided GP9001_1 and GP9001_0 differ at [23:11].
 logic palram_cs;
 assign palram_cs = (cpu_addr[23:9] == PALRAM_BASE[23:9]) && !cpu_as_n;
 
-// I/O: byte 0x700000–0x700FFF → word 0x380000–0x3807FF (11-bit window)
+// I/O:
+//   CONFIG A: byte 0x700000–0x700FFF → word 0x380000, 11-bit
+//   CONFIG B: byte 0x200010–0x200019 → word 0x100008, only 5 word addresses
+//             addr[23:11] comparison gives byte 0x200000–0x2007FF window;
+//             individual register decode uses addr[4:1] inside the window.
 logic io_cs;
 assign io_cs = (cpu_addr[23:11] == IO_BASE[23:11]) && !cpu_as_n;
+
+// V25 shared RAM (CONFIG B only): byte 0x210000–0x21FFFF → word 0x108000, 15-bit
+// Only instantiated/decoded when DUAL_VDP=1.  Stub returns open bus when DUAL_VDP=0.
+localparam int SHARED_ABITS = $clog2(SHARED_WORDS);  // 15
+logic shared_cs;
+generate
+    if (DUAL_VDP) begin : gen_shared_cs
+        assign shared_cs = (cpu_addr[23:SHARED_ABITS+1] == SHARED_BASE[23:SHARED_ABITS+1]) && !cpu_as_n;
+    end else begin : gen_shared_cs_tie
+        assign shared_cs = 1'b0;
+    end
+endgenerate
 
 // DEBUG: trace io_cs and address decode
 `ifndef SYNTHESIS
@@ -324,7 +394,7 @@ logic [19:0] bg_rom_addr_raw;    // from GP9001 Gate 3
 logic [7:0]  bg_rom_data_r;      // fed back to GP9001
 logic [3:0]  bg_layer_sel;       // one-hot layer select from GP9001
 
-logic [20:0] spr_rom_addr_raw;   // from GP9001 Gate 4 (21-bit byte address)
+logic [24:0] spr_rom_addr_raw;   // from GP9001 Gate 4 (25-bit byte address, bank-extended)
 logic        spr_rom_rd;         // GP9001 read strobe
 logic [7:0]  spr_rom_data_r;     // fed back to GP9001
 
@@ -380,7 +450,8 @@ logic [15:0] scan_dout_w;
 assign scan_addr_w = 10'h000;   // tie off debug port
 
 gp9001 #(
-    .NUM_LAYERS (2)    // Batsugun: 2 active BG layers (BG0 + BG1)
+    .NUM_LAYERS    (2), // Batsugun: 2 active BG layers (BG0 + BG1)
+    .OBJECTBANK_EN (0)  // Batsugun does NOT use object bank switching (Batrider/Bakraid only)
 ) u_gp9001 (
     .clk        (clk_sys),
     .rst_n      (reset_n),
@@ -447,6 +518,11 @@ gp9001 #(
     .bg_layer_sel   (bg_layer_sel),
     .vram_dout      (vram_dout_w),
 
+    // Object bank switching (disabled for Batsugun; OBJECTBANK_EN=0 above)
+    .obj_bank_wr   (1'b0),
+    .obj_bank_slot (3'h0),
+    .obj_bank_val  (4'h0),
+
     // Gate 4: Sprite rasterizer
     .scan_trigger      (scan_trigger_w),
     .current_scanline  (pix_vpos),
@@ -468,6 +544,282 @@ gp9001 #(
 assign spr_rd_addr_w = pix_hpos;
 
 // =============================================================================
+// GP9001 #1 — Second VDP (Batsugun / Dogyuun / dual-VDP games, DUAL_VDP=1 only)
+// =============================================================================
+//
+// ALM budget warning: see parameter comment block at top of module.
+// This block is entirely inside generate DUAL_VDP so it synthesises away when
+// DUAL_VDP=0, preserving 100% compatibility with the Truxton II configuration.
+//
+// VDP#1 uses the same GFX ROM SDRAM channel as VDP#0 (time-multiplexed in the
+// GFX ROM SDRAM bridge below).  The arbitration priority is:
+//   spr_rom_rd (VDP#0) > spr_rom_rd (VDP#1) > bg_rom (VDP#0) > bg_rom (VDP#1)
+// This avoids a dedicated second SDRAM channel at the cost of reduced fill rate
+// for VDP#1 tiles when VDP#0 sprite ROM is busy.  For Batsugun's GFX ROM layout
+// this is acceptable — the two VDPs share the same tile ROM data.
+//
+// VDP#1 data-bus output is ORed into cpu_din via the read mux below.
+
+// VDP#1 signal wires — declared in generate scope for Verilator compatibility
+logic [15:0] gp9001_1_dout;
+logic        gp9001_1_irq_sprite;
+
+// Gate 3/4/5 outputs from VDP#1
+logic [3:0]       bg_pix_valid_1_w;
+logic [3:0][7:0]  bg_pix_color_1_w;
+logic [3:0]       bg_pix_priority_1_w;
+logic [19:0]      bg_rom_addr_1_raw;
+logic [7:0]       bg_rom_data_1_r;
+logic [3:0]       bg_layer_sel_1;
+logic [15:0]      vram_dout_1_w;
+logic [24:0]      spr_rom_addr_1_raw;
+logic             spr_rom_rd_1;
+logic [7:0]       spr_rom_data_1_r;
+logic [8:0]       spr_rd_addr_1_w;
+logic [7:0]       spr_rd_color_1_w;
+logic             spr_rd_valid_1_w;
+logic             spr_rd_priority_1_w;
+logic             spr_render_done_1_w;
+logic [7:0]       final_color_1_w;
+logic             final_valid_1_w;
+
+/* verilator lint_off UNUSED */
+// VDP#1 register outputs (not consumed at integration level)
+sprite_entry_t    display_list_1_w [0:255];
+logic [7:0]       display_list_count_1_w;
+logic             display_list_ready_1_w;
+logic [7:0][15:0] scroll_1_w;
+logic [15:0]      scroll0_x_1_w, scroll0_y_1_w, scroll1_x_1_w, scroll1_y_1_w;
+logic [15:0]      scroll2_x_1_w, scroll2_y_1_w, scroll3_x_1_w, scroll3_y_1_w;
+logic [15:0]      rowscroll_ctrl_1_w, layer_ctrl_1_w, sprite_ctrl_1_w;
+logic [15:0]      layer_size_1_w, color_key_1_w, blend_ctrl_1_w;
+logic [1:0]       num_layers_active_1_w, bg0_priority_1_w, bg1_priority_1_w, bg23_priority_1_w;
+logic [3:0]       sprite_list_len_code_1_w;
+logic [1:0]       sprite_sort_mode_1_w, sprite_prefetch_mode_1_w;
+logic             sprite_en_1_w;
+logic [9:0]       scan_addr_1_w;
+logic [15:0]      scan_dout_1_w;
+/* verilator lint_on UNUSED */
+assign scan_addr_1_w = 10'h000;
+assign spr_rd_addr_1_w = pix_hpos;
+
+generate
+    if (DUAL_VDP) begin : gen_vdp1
+
+        gp9001 #(
+            .NUM_LAYERS    (2), // Batsugun VDP#1: 2 active BG layers
+            .OBJECTBANK_EN (0)
+        ) u_gp9001_1 (
+            .clk        (clk_sys),
+            .rst_n      (reset_n),
+
+            // CPU interface — chip-relative 11-bit word address
+            .addr       (cpu_addr[11:1]),
+            .din        (cpu_dout),
+            .dout       (gp9001_1_dout),
+            .cs_n       (gp9001_1_cs_n),
+            .rd_n       (cpu_rw  ? 1'b0 : 1'b1),
+            .wr_n       (!cpu_rw ? 1'b0 : 1'b1),
+
+            // Video timing — shared with VDP#0
+            .vsync      (~vsync_r),
+            .vblank     (vblank_r),
+
+            // Interrupt (VDP#1 sprite IRQ wired same as VDP#0 — both contribute to level-1)
+            .irq_sprite (gp9001_1_irq_sprite),
+
+            // Register outputs
+            .scroll             (scroll_1_w),
+            .scroll0_x          (scroll0_x_1_w),
+            .scroll0_y          (scroll0_y_1_w),
+            .scroll1_x          (scroll1_x_1_w),
+            .scroll1_y          (scroll1_y_1_w),
+            .scroll2_x          (scroll2_x_1_w),
+            .scroll2_y          (scroll2_y_1_w),
+            .scroll3_x          (scroll3_x_1_w),
+            .scroll3_y          (scroll3_y_1_w),
+            .rowscroll_ctrl     (rowscroll_ctrl_1_w),
+            .layer_ctrl         (layer_ctrl_1_w),
+            .num_layers_active  (num_layers_active_1_w),
+            .bg0_priority       (bg0_priority_1_w),
+            .bg1_priority       (bg1_priority_1_w),
+            .bg23_priority      (bg23_priority_1_w),
+            .sprite_ctrl        (sprite_ctrl_1_w),
+            .sprite_list_len_code (sprite_list_len_code_1_w),
+            .sprite_sort_mode   (sprite_sort_mode_1_w),
+            .sprite_prefetch_mode (sprite_prefetch_mode_1_w),
+            .layer_size         (layer_size_1_w),
+            .color_key          (color_key_1_w),
+            .blend_ctrl         (blend_ctrl_1_w),
+            .sprite_en          (sprite_en_1_w),
+            .scan_addr          (scan_addr_1_w),
+            .scan_dout          (scan_dout_1_w),
+
+            // Gate 2: Display list
+            .display_list       (display_list_1_w),
+            .display_list_count (display_list_count_1_w),
+            .display_list_ready (display_list_ready_1_w),
+
+            // Gate 3: Tilemap pixel pipeline
+            .hpos           (pix_hpos),
+            .vpos           (pix_vpos),
+            .hblank         (hblank_r),
+            .vblank_in      (vblank_r),
+            .bg_pix_valid   (bg_pix_valid_1_w),
+            .bg_pix_color   (bg_pix_color_1_w),
+            .bg_pix_priority (bg_pix_priority_1_w),
+            .bg_rom_addr    (bg_rom_addr_1_raw),
+            .bg_rom_data    (bg_rom_data_1_r),
+            .bg_layer_sel   (bg_layer_sel_1),
+            .vram_dout      (vram_dout_1_w),
+
+            // Object bank switching (disabled for Batsugun)
+            .obj_bank_wr   (1'b0),
+            .obj_bank_slot (3'h0),
+            .obj_bank_val  (4'h0),
+
+            // Gate 4: Sprite rasterizer
+            .scan_trigger      (scan_trigger_w),
+            .current_scanline  (pix_vpos),
+            .spr_rom_addr      (spr_rom_addr_1_raw),
+            .spr_rom_rd        (spr_rom_rd_1),
+            .spr_rom_data      (spr_rom_data_1_r),
+            .spr_rd_addr       (spr_rd_addr_1_w),
+            .spr_rd_color      (spr_rd_color_1_w),
+            .spr_rd_valid      (spr_rd_valid_1_w),
+            .spr_rd_priority   (spr_rd_priority_1_w),
+            .spr_render_done   (spr_render_done_1_w),
+
+            // Gate 5: VDP#1 internal priority mixer output
+            .final_color    (final_color_1_w),
+            .final_valid    (final_valid_1_w)
+        );
+
+    end else begin : gen_vdp1_stub
+        // Tie off all VDP#1 output signals when DUAL_VDP=0
+        assign gp9001_1_dout        = 16'hFFFF;
+        assign gp9001_1_irq_sprite  = 1'b0;
+        assign bg_pix_valid_1_w     = 4'b0000;
+        assign bg_pix_color_1_w     = '0;
+        assign bg_pix_priority_1_w  = 4'b0000;
+        assign bg_rom_addr_1_raw    = 20'b0;
+        assign bg_layer_sel_1       = 4'b0000;
+        assign vram_dout_1_w        = 16'hFFFF;
+        assign spr_rom_addr_1_raw   = 25'b0;
+        assign spr_rom_rd_1         = 1'b0;
+        assign spr_rd_color_1_w     = 8'h00;
+        assign spr_rd_valid_1_w     = 1'b0;
+        assign spr_rd_priority_1_w  = 1'b0;
+        assign spr_render_done_1_w  = 1'b0;
+        assign final_color_1_w      = 8'h00;
+        assign final_valid_1_w      = 1'b0;
+    end
+endgenerate
+
+// =============================================================================
+// Inter-VDP Priority Mixer (gp9001_priority_mix)
+// =============================================================================
+//
+// When DUAL_VDP=0: pass-through — VDP#0 final_color/final_valid used directly.
+// When DUAL_VDP=1: gp9001_priority_mix arbitrates the 10-layer (5+5) competition.
+//
+// The mixed_final_color / mixed_final_valid signals feed the palette RAM lookup
+// (replacing the direct use of final_color_w / final_valid_w below).
+
+logic [7:0] mixed_final_color;
+logic       mixed_final_valid;
+
+generate
+    if (DUAL_VDP) begin : gen_prio_mix
+        gp9001_priority_mix u_prio_mix (
+            // VDP#0 inputs
+            .vdp0_bg_valid  (bg_pix_valid_w),
+            .vdp0_bg_color  (bg_pix_color_w),
+            .vdp0_bg_prio   (bg_pix_priority_w),
+            .vdp0_spr_valid (spr_rd_valid_w),
+            .vdp0_spr_color (spr_rd_color_w),
+            .vdp0_spr_prio  (spr_rd_priority_w),
+            // VDP#1 inputs
+            .vdp1_bg_valid  (bg_pix_valid_1_w),
+            .vdp1_bg_color  (bg_pix_color_1_w),
+            .vdp1_bg_prio   (bg_pix_priority_1_w),
+            .vdp1_spr_valid (spr_rd_valid_1_w),
+            .vdp1_spr_color (spr_rd_color_1_w),
+            .vdp1_spr_prio  (spr_rd_priority_1_w),
+            // Output
+            .final_color    (mixed_final_color),
+            .final_valid    (mixed_final_valid)
+        );
+    end else begin : gen_prio_pass
+        // Single-VDP: use GP9001 Gate-5 output directly
+        assign mixed_final_color = final_color_w;
+        assign mixed_final_valid = final_valid_w;
+    end
+endgenerate
+
+// =============================================================================
+// V25 Shared RAM (DUAL_VDP=1 only) — 64KB BRAM at SHARED_BASE
+// =============================================================================
+//
+// The NEC V25 sound CPU communicates with the M68000 via a shared 64KB RAM.
+// In Batsugun, the V25 is not emulated (stub).  The shared RAM allows the
+// main CPU to write sound commands and read status without a response hang.
+// Reads return 0xFFFF (open-bus behavior) in the stub.
+//
+// When DUAL_VDP=0 shared_cs is always 0 so this block adds zero area.
+
+logic [15:0] shared_ram_dout;
+
+generate
+    if (DUAL_VDP) begin : gen_shared_ram
+        `ifndef QUARTUS
+        logic [15:0] shared_ram [0:SHARED_WORDS-1];
+        always_ff @(posedge clk_sys) begin
+            if (shared_cs && !cpu_rw) begin
+                if (!cpu_uds_n) shared_ram[cpu_addr[SHARED_ABITS:1]][15:8] <= cpu_dout[15:8];
+                if (!cpu_lds_n) shared_ram[cpu_addr[SHARED_ABITS:1]][ 7:0] <= cpu_dout[ 7:0];
+            end
+        end
+        always_ff @(posedge clk_sys) begin
+            if (shared_cs) shared_ram_dout <= shared_ram[cpu_addr[SHARED_ABITS:1]];
+        end
+        `else
+        // Synthesis: altsyncram SINGLE_PORT 64KB M10K
+        logic [15:0] shared_dout_raw;
+        altsyncram #(
+            .operation_mode         ("SINGLE_PORT"),
+            .width_a                (16),
+            .widthad_a              (SHARED_ABITS),
+            .numwords_a             (SHARED_WORDS),
+            .outdata_reg_a          ("CLOCK0"),
+            .clock_enable_input_a   ("BYPASS"),
+            .clock_enable_output_a  ("BYPASS"),
+            .intended_device_family ("Cyclone V"),
+            .lpm_type               ("altsyncram"),
+            .ram_block_type         ("M10K"),
+            .width_byteena_a        (2),
+            .power_up_uninitialized ("FALSE"),
+            .read_during_write_mode_port_a ("NEW_DATA_NO_NBE_READ")
+        ) shared_ram_inst (
+            .clock0     (clk_sys),
+            .address_a  (cpu_addr[SHARED_ABITS:1]),
+            .data_a     (cpu_dout),
+            .wren_a     (shared_cs && !cpu_rw),
+            .byteena_a  ({~cpu_uds_n, ~cpu_lds_n}),
+            .q_a        (shared_dout_raw),
+            .aclr0(1'b0), .addressstall_a(1'b0), .clocken0(1'b1), .clocken1(1'b1),
+            .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(1'b1)
+        );
+        always_ff @(posedge clk_sys) begin
+            if (shared_cs) shared_ram_dout <= shared_dout_raw;
+        end
+        `endif
+    end else begin : gen_shared_stub
+        assign shared_ram_dout = 16'hFFFF;
+    end
+endgenerate
+
+// =============================================================================
 // GFX ROM SDRAM Bridge — time-multiplexed BG tile + Sprite tile access
 // =============================================================================
 //
@@ -484,14 +836,20 @@ assign spr_rd_addr_w = pix_hpos;
 //   - Sprite tiles are appended after BG tiles; offset added externally
 //     via emu.sv (caller passes the correct SDRAM base in the ROM loader).
 //
-// Current implementation: round-robin request toggle per chip.
-// bg_rom_data: GP9001 Gate 3 byte fetch — select from 32-bit word
-// spr_rom_data: GP9001 Gate 4 byte fetch — select from 32-bit word
+// Arbitration priority (highest first):
+//   1. VDP#0 sprite ROM (spr_rom_rd)
+//   2. VDP#1 sprite ROM (spr_rom_rd_1, DUAL_VDP only)
+//   3. VDP#0 BG ROM (always requesting)
+//   4. VDP#1 BG ROM (bg_rom_addr_1_raw, DUAL_VDP only)
+//
+// Pending channel encoding (gfx_chan[1:0]):
+//   2'b00 = VDP#0 BG,  2'b01 = VDP#0 sprite
+//   2'b10 = VDP#1 BG,  2'b11 = VDP#1 sprite
 
 logic        gfx_pending;
 logic [21:0] gfx_pending_addr;
 logic [1:0]  gfx_pending_byte_sel;
-logic        gfx_is_sprite;   // 1=sprite request, 0=bg request
+logic [1:0]  gfx_chan;   // which channel is in-flight
 
 // Byte-lane mux (combinational, outside always_ff to avoid Verilator complaints)
 logic [7:0] gfx_byte_out;
@@ -510,32 +868,56 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
         gfx_pending          <= 1'b0;
         gfx_pending_addr     <= 22'b0;
         gfx_pending_byte_sel <= 2'b0;
-        gfx_is_sprite        <= 1'b0;
+        gfx_chan             <= 2'b00;
         bg_rom_data_r        <= 8'h00;
         spr_rom_data_r       <= 8'h00;
+        bg_rom_data_1_r      <= 8'h00;
+        spr_rom_data_1_r     <= 8'h00;
     end else begin
         if (!gfx_pending) begin
             if (spr_rom_rd) begin
-                // Sprite tile ROM request — higher priority
+                // VDP#0 sprite — highest priority
                 gfx_pending_addr     <= {1'b0, spr_rom_addr_raw[20:0]};
                 gfx_pending_byte_sel <= spr_rom_addr_raw[1:0];
-                gfx_is_sprite        <= 1'b1;
+                gfx_chan             <= 2'b01;
                 gfx_pending          <= 1'b1;
                 gfx_rom_req          <= ~gfx_rom_req;
+            end else if (DUAL_VDP && spr_rom_rd_1) begin
+                // VDP#1 sprite
+                gfx_pending_addr     <= {1'b0, spr_rom_addr_1_raw[20:0]};
+                gfx_pending_byte_sel <= spr_rom_addr_1_raw[1:0];
+                gfx_chan             <= 2'b11;
+                gfx_pending          <= 1'b1;
+                gfx_rom_req          <= ~gfx_rom_req;
+            end else if (DUAL_VDP) begin
+                // VDP#0 and VDP#1 BG — round-robin between them; simple even/odd by hpos LSB
+                if (!pix_hpos[0]) begin
+                    gfx_pending_addr     <= {2'b0, bg_rom_addr_raw};
+                    gfx_pending_byte_sel <= bg_rom_addr_raw[1:0];
+                    gfx_chan             <= 2'b00;
+                end else begin
+                    gfx_pending_addr     <= {2'b0, bg_rom_addr_1_raw};
+                    gfx_pending_byte_sel <= bg_rom_addr_1_raw[1:0];
+                    gfx_chan             <= 2'b10;
+                end
+                gfx_pending <= 1'b1;
+                gfx_rom_req <= ~gfx_rom_req;
             end else begin
-                // BG tile ROM request (GP9001 Gate 3 always requesting)
+                // Single-VDP: VDP#0 BG only
                 gfx_pending_addr     <= {2'b0, bg_rom_addr_raw};
                 gfx_pending_byte_sel <= bg_rom_addr_raw[1:0];
-                gfx_is_sprite        <= 1'b0;
+                gfx_chan             <= 2'b00;
                 gfx_pending          <= 1'b1;
                 gfx_rom_req          <= ~gfx_rom_req;
             end
         end else if (gfx_rom_req == gfx_rom_ack) begin
-            // SDRAM has returned data; latch selected byte lane
-            if (gfx_is_sprite)
-                spr_rom_data_r <= gfx_byte_out;
-            else
-                bg_rom_data_r  <= gfx_byte_out;
+            // SDRAM has returned data; route byte to correct destination
+            case (gfx_chan)
+                2'b00: bg_rom_data_r    <= gfx_byte_out;   // VDP#0 BG
+                2'b01: spr_rom_data_r   <= gfx_byte_out;   // VDP#0 sprite
+                2'b10: bg_rom_data_1_r  <= gfx_byte_out;   // VDP#1 BG
+                2'b11: spr_rom_data_1_r <= gfx_byte_out;   // VDP#1 sprite
+            endcase
             gfx_pending <= 1'b0;
         end
     end
@@ -644,7 +1026,7 @@ altsyncram #(
     .clock0(clk_sys), .clock1(clk_sys),
     .address_a(cpu_addr[9:1]),         .data_a(cpu_dout),
     .wren_a(palram_cs && !cpu_rw), .byteena_a({~cpu_uds_n, ~cpu_lds_n}),
-    .address_b({1'b0, final_color_w}), .q_b(palram_pix_raw),
+    .address_b({1'b0, mixed_final_color}), .q_b(palram_pix_raw),
     .wren_b(1'b0), .data_b(16'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
     .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
@@ -677,7 +1059,7 @@ end
 // Pixel-domain palette lookup
 logic [15:0] pal_entry_r;
 always_ff @(posedge clk_sys) begin
-    if (clk_pix) pal_entry_r <= palette_ram[{1'b0, final_color_w}];
+    if (clk_pix) pal_entry_r <= palette_ram[{1'b0, mixed_final_color}];
 end
 `endif
 
@@ -770,13 +1152,19 @@ assign prog_rom_addr = prog_req_addr_r;
 // =============================================================================
 // CPU Data Bus Read Mux
 // =============================================================================
-// Priority: GP9001 > palette RAM > I/O > YM2151 > WRAM > prog ROM > open bus
+// Priority (highest first):
+//   GP9001 #0  > GP9001 #1 (DUAL_VDP only) > palette RAM >
+//   shared RAM (DUAL_VDP only) > I/O > YM2151 > WRAM > prog ROM > open bus
 
 always_comb begin
     if (!gp9001_cs_n)
         cpu_din = gp9001_dout;
+    else if (!gp9001_1_cs_n)
+        cpu_din = gp9001_1_dout;                        // VDP#1 (FFFF when DUAL_VDP=0)
     else if (palram_cs)
         cpu_din = palram_cpu_dout;
+    else if (shared_cs)
+        cpu_din = shared_ram_dout;                      // V25 shared RAM (FFFF when DUAL_VDP=0)
     else if (io_cs)
         cpu_din = {8'hFF, io_dout_byte};
     else if (ym_cpu_cs)
@@ -803,7 +1191,9 @@ logic dtack_r;
 // Fallback: 2-cycle counter for open-bus cycles
 logic dtack_fallback_r;
 
-assign any_fast_cs = !gp9001_cs_n | palram_cs | io_cs | ym_cpu_cs | wram_cs;
+// Include VDP#1 and shared RAM in fast-CS set; both deassert when DUAL_VDP=0
+assign any_fast_cs = !gp9001_cs_n | !gp9001_1_cs_n | palram_cs | shared_cs
+                   | io_cs | ym_cpu_cs | wram_cs;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin

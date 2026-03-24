@@ -321,6 +321,7 @@ taito_x #(
     .cpu_as_n       (cpu_as_n),
     .cpu_dtack_n    (cpu_dtack_n),
     .cpu_ipl_n      (cpu_ipl_n),
+    .cpu_fc         ({fx_FC2, fx_FC1, fx_FC0}),
 
     // Z80 Sound CPU bus
     .z80_addr       (z80_addr_w),

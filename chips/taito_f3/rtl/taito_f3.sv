@@ -137,13 +137,12 @@ logic prog_rom_cs;
 assign prog_rom_cs = (cpu_addr[23:21] == 3'b000) && !cpu_as_n;
 
 // Main RAM: 0x400000–0x41FFFF (128KB) + mirror 0x420000–0x43FFFF
-// cpu_addr[23:17] == 7'b001_0000 → 0x400000–0x41FFFF
-// Mirror: ignore cpu_addr[17], so decode on [23:18]:
-//   byte 0x400000 = word 0x200000 → cpu_addr[23:18] == 6'b001_000
-//   byte 0x420000 = word 0x210000 → cpu_addr[23:18] == 6'b001_000 (same upper bits if A17 ignored)
-// Actually simpler: cpu_addr[23:18] == 6'b001_000 covers both 0x400000 and 0x420000.
+// cpu_addr = word address = byte >> 1.
+// byte 0x400000 → word 0x200000 → cpu_addr[23:18] = 0x200000>>17 = 0x10 = 6'b010_000
+// byte 0x420000 → word 0x210000 → cpu_addr[23:18] = 0x210000>>17 = 0x10 (same)
+// Using [23:18] == 6'b010_000 covers 0x400000–0x43FFFF (both halves).
 logic main_ram_cs;
-assign main_ram_cs = (cpu_addr[23:18] == 6'b001_000) && !cpu_as_n;
+assign main_ram_cs = (cpu_addr[23:18] == 6'b010_000) && !cpu_as_n;
 
 // Palette RAM (TC0650FDA, inside TC0630FDP): 0x440000–0x447FFF
 // cpu_addr[23:14] word == { 0x440000>>1 }[23:14] = { 0x220000 }[23:14] = 14'b00_1000_1000_00
@@ -162,10 +161,11 @@ logic timer_cs;
 assign timer_cs = (cpu_addr[23:2] == 22'h130000) && !cpu_as_n;
 
 // TC0630FDP video RAM: 0x600000–0x63FFFF (256KB)
-// cpu_addr[23:18] word == 0x600000>>1 = 0x300000 → [23:18] = 6'b110_000
-// 0x600000–0x63FFFF covers 256KB → [23:18] == 6'b11_0000 (top 6 bits)
+// cpu_addr = word address = byte >> 1.
+// byte 0x600000 → word 0x300000 → cpu_addr[23:18] = 0x300000>>17 = 0x18 = 6'b011_000
+// 0x600000–0x63FFFF (256KB) → [23:18] == 6'b011_000
 logic fdp_video_cs;
-assign fdp_video_cs = (cpu_addr[23:18] == 6'b110000) && !cpu_as_n;
+assign fdp_video_cs = (cpu_addr[23:18] == 6'b011_000) && !cpu_as_n;
 
 // TC0630FDP control registers: 0x660000–0x66001F
 // cpu_addr[23:5] == (0x660000>>1)[23:5] = 0x330000[23:5] = 19'h33000
@@ -177,9 +177,10 @@ logic fdp_cs;
 assign fdp_cs = fdp_video_cs | fdp_ctrl_cs;
 
 // MB8421 dual-port RAM: 0xC00000–0xC007FF (2KB)
-// cpu_addr[23:10] == (0xC00000>>1)[23:10] = 0x600000[23:10] = 14'h1800
+// cpu_addr = word address = byte >> 1.
+// byte 0xC00000 → word 0x600000 → cpu_addr[23:10] = 0x600000>>9 = 0x3000 = 14'h3000
 logic dpram_cs;
-assign dpram_cs = (cpu_addr[23:10] == 14'h1800) && !cpu_as_n;
+assign dpram_cs = (cpu_addr[23:10] == 14'h3000) && !cpu_as_n;
 
 // Sound CPU reset: 0xC80000 (assert) and 0xC80100 (deassert)
 // Word addr 0xC80000>>1 = 0x640000. cpu_addr[23:2] == 22'h320000
@@ -292,6 +293,7 @@ assign fda_cpu_cs = palette_cs && !cpu_as_n;
 
 tc0630fdp u_fdp (
     .clk             (clk_sys),
+    .pix_cen         (clk_pix),
     .async_rst_n     (reset_n),
 
     // CPU interface (16-bit, pixel-clock domain within FDP)
@@ -670,23 +672,35 @@ end
 // For correctness: use a toggle-handshake similar to GFX ROM bridges.
 
 logic       rom_pending;
+logic       rom_data_valid;  // set only after first real SDRAM round-trip
 logic [31:0] rom_data_r;
+// rom_data_addr: which sdr_addr rom_data_r was fetched for.
+// Used by rom_dtack to avoid presenting stale data for a new CPU address.
+// (Declared here; used in the DTACK section below.)
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
-        sdr_req      <= 1'b0;
-        rom_pending  <= 1'b0;
-        sdr_addr     <= 27'b0;
-        rom_data_r   <= 32'b0;
+        sdr_req       <= 1'b0;
+        rom_pending   <= 1'b0;
+        rom_data_valid <= 1'b0;
+        rom_data_addr  <= 27'hFFFFFFF;  // invalid sentinel
+        sdr_addr      <= 27'b0;
+        rom_data_r    <= 32'b0;
     end else begin
         if (prog_rom_cs && cpu_rw && !rom_pending && !cpu_as_n) begin
-            // New program ROM read: issue SDRAM request
-            sdr_addr    <= PROG_ROM_BASE + {4'b0, cpu_addr[22:1]};  // 32-bit word addr
-            sdr_req     <= ~sdr_req;
-            rom_pending <= 1'b1;
+            // New program ROM read: issue SDRAM request.
+            // cpu_addr[22:1] is the 16-bit word address (same as longword address
+            // when viewed as 27-bit sdr_addr, because cpu_addr is [23:1] so
+            // cpu_addr[22:1] is bits 22..1 of the word address, value-equivalent).
+            sdr_addr      <= PROG_ROM_BASE + {5'b0, cpu_addr[22:1]};
+            sdr_req       <= ~sdr_req;
+            rom_pending   <= 1'b1;
+            rom_data_valid <= 1'b0;  // invalidate while waiting for new data
         end else if (rom_pending && (sdr_req == sdr_ack)) begin
-            rom_data_r  <= sdr_data;
-            rom_pending <= 1'b0;
+            rom_data_r     <= sdr_data;
+            rom_data_addr  <= sdr_addr;   // remember which address was fetched
+            rom_pending    <= 1'b0;
+            rom_data_valid <= 1'b1;  // data is now valid for rom_data_addr
         end
     end
 end
@@ -734,9 +748,21 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
         dtack_r <= any_fast_cs;
 end
 
-// ROM DTACK: ready when SDRAM ack received
+// ROM DTACK: ready only when the cached data is for the CURRENT CPU address.
+// Problem: rom_data_valid remains 1 from the previous access.  On the very first
+// clock of a new ROM access, rom_dtack fires with stale data and TG68K latches
+// wrong data before the new SDRAM request can complete.
+// Fix: track which sdr_addr the current rom_data_r was fetched for.  DTACK only
+// asserts when the cached address matches the CPU's current SDRAM address.
+logic [26:0] rom_data_addr;   // sdr_addr at which rom_data_r was fetched
+
+// Current CPU SDRAM address (combinational, mirrors bridge formula)
+logic [26:0] cpu_sdr_addr_comb;
+assign cpu_sdr_addr_comb = PROG_ROM_BASE + {5'b0, cpu_addr[22:1]};
+
 logic rom_dtack;
-assign rom_dtack = prog_rom_cs && !rom_pending && (sdr_req == sdr_ack) && cpu_rw;
+assign rom_dtack = prog_rom_cs && !rom_pending && rom_data_valid && cpu_rw
+                   && (rom_data_addr == cpu_sdr_addr_comb);
 
 // Combined DTACK mux:
 //   FDP: use FDP's internal dtack (already 1-cycle registered internally)
@@ -855,8 +881,7 @@ assign vblank  = fdp_vblank;
 // =============================================================================
 /* verilator lint_off UNUSED */
 logic _unused;
-assign _unused = ^{clk_pix,
-                   fdp_rgb_out, fdp_pixel_valid, fdp_hpos, fdp_vpos,
+assign _unused = ^{fdp_rgb_out, fdp_pixel_valid, fdp_hpos, fdp_vpos,
                    fdp_pal_addr, fdp_pal_rd, fdp_pixel_valid_d,
                    cpu_reset_n_out, fio_eeprom_di, fio_eeprom_clk, fio_eeprom_cs,
                    snd_addr[15:11], snd_addr[0], snd_din[14:1]};

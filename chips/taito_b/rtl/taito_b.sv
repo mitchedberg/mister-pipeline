@@ -219,8 +219,14 @@ assign syt_mcs_n = !((cpu_addr[23:2] == SYT_BASE[23:2]) && !cpu_as_n);
 
 // Work RAM: parameterized window
 //   nastar byte 0x600000–0x607FFF → word 0x300000–0x303FFF (14-bit word addr)
+//
+// Note on [23:1] indexing: cpu_addr is declared logic [23:1], so index N corresponds
+// to bit (N-1) of the underlying value. To match a 2^WRAM_ABITS word window, we need
+// to compare bits above position WRAM_ABITS of the word address. In [23:1] notation,
+// the bit at index (WRAM_ABITS+1) corresponds to bit WRAM_ABITS of the word address.
+// Therefore the tag comparison must use [23:WRAM_ABITS+1], not [23:WRAM_ABITS].
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:WRAM_ABITS] == WRAM_BASE[23:WRAM_ABITS]) && !cpu_as_n;
+assign wram_cs = (cpu_addr[23:WRAM_ABITS+1] == WRAM_BASE[23:WRAM_ABITS+1]) && !cpu_as_n;
 
 // =============================================================================
 // TC0180VCU

@@ -30,6 +30,7 @@
 // =============================================================================
 
 #include "Vtb_top.h"
+#include "Vtb_top_tb_top.h"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
@@ -94,22 +95,63 @@ struct PixelCapture {
 };
 
 // =============================================================================
+// WRAM dump helpers (for gate-5 MAME comparison)
+// =============================================================================
+// Write a 16-bit value as two bytes, big-endian (matching MAME Lua dump format)
+static inline void write_word_be(FILE* f, uint16_t w) {
+    uint8_t b[2] = { (uint8_t)(w >> 8), (uint8_t)(w & 0xFF) };
+    fwrite(b, 1, 2, f);
+}
+
+// Dump the Gigandes work_ram snapshot to file f.
+//
+// Format matches MAME Lua dump_gigandes.lua: 64KB raw at byte offset 0xF00000.
+// MAME uses size=0x10000 (64KB), but only the first 16KB (0xF00000-0xF03FFF)
+// is mapped. Bytes 0x4000-0xFFFF in the dump are zero (unmapped).
+//
+// Verilator path: top->tb_top->__PVT__u_taito_x__DOT__work_ram[0..8191]
+// Each element is a 16-bit SData (big-endian in MAME dump).
+// 8192 words × 2 bytes = 16384 bytes of WRAM.
+// Padded with 49152 zero bytes to reach 65536 (64KB) total.
+static void dump_frame_wram(FILE* f, Vtb_top* top) {
+    auto* r = top->tb_top;
+    // Write 16KB WRAM (big-endian words)
+    for (int i = 0; i < 8192; i++)
+        write_word_be(f, (uint16_t)r->__PVT__u_taito_x__DOT__work_ram[i]);
+    // Pad to 64KB with zeros (unmapped region 0xF04000-0xF0FFFF)
+    static const uint8_t zeros[4096] = {};
+    for (int chunk = 0; chunk < 12; chunk++)   // 12 × 4096 = 49152 bytes
+        fwrite(zeros, 1, 4096, f);
+}
+
+// =============================================================================
 // main
 // =============================================================================
 int main(int argc, char** argv) {
     Verilated::commandArgs(argc, argv);
 
     // ── Configuration from environment ──────────────────────────────────────
-    const char* env_frames = getenv("N_FRAMES");
-    const char* env_prog   = getenv("ROM_PROG");
-    const char* env_z80    = getenv("ROM_Z80");
-    const char* env_gfx    = getenv("ROM_GFX");
-    const char* env_vcd    = getenv("DUMP_VCD");
+    const char* env_frames   = getenv("N_FRAMES");
+    const char* env_prog     = getenv("ROM_PROG");
+    const char* env_z80      = getenv("ROM_Z80");
+    const char* env_gfx      = getenv("ROM_GFX");
+    const char* env_vcd      = getenv("DUMP_VCD");
+    const char* env_ram_dump = getenv("RAM_DUMP");
 
     int n_frames = env_frames ? atoi(env_frames) : 30;
     if (n_frames < 1) n_frames = 1;
 
     fprintf(stderr, "Taito X simulation: %d frames\n", n_frames);
+
+    // ── Open RAM dump file (gate-5 WRAM comparison) ─────────────────────────
+    FILE* ram_dump_f = nullptr;
+    if (env_ram_dump) {
+        ram_dump_f = fopen(env_ram_dump, "wb");
+        if (!ram_dump_f)
+            fprintf(stderr, "ERROR: cannot open RAM_DUMP file: %s\n", env_ram_dump);
+        else
+            fprintf(stderr, "RAM dump enabled: %s\n", env_ram_dump);
+    }
 
     // ── Load ROM data ────────────────────────────────────────────────────────
     SdramModel sdram;
@@ -605,6 +647,10 @@ int main(int argc, char** argv) {
                     fprintf(stderr, "Frame %4d written: %s  (bus_cycles=%d)\n",
                             frame_num, fname, bus_cycles_c);
 
+                // Dump WRAM snapshot for gate-5 MAME comparison
+                if (ram_dump_f)
+                    dump_frame_wram(ram_dump_f, top);
+
                 ++frame_num;
                 if (frame_num >= n_frames) done = true;
                 fb = FrameBuffer();
@@ -626,6 +672,10 @@ int main(int argc, char** argv) {
     if (vcd) {
         vcd->close();
         delete vcd;
+    }
+    if (ram_dump_f) {
+        fclose(ram_dump_f);
+        fprintf(stderr, "RAM dump closed: %s\n", env_ram_dump);
     }
     top->final();
     delete top;
