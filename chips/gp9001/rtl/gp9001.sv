@@ -617,17 +617,17 @@ module gp9001 #(
 
                 S_SCAN: begin
                     if (slot_visible) begin
-                        display_list_r[scan_count] <= '{
-                            x:         slot_x,
-                            y:         slot_y,
-                            tile_num:  slot_tile,
-                            flip_x:    slot_flip_x,
-                            flip_y:    slot_flip_y,
-                            prio:      slot_prio,
-                            palette:   slot_palette,
-                            size:      slot_size,
-                            bank_slot: slot_bank_slot,
-                            valid:     1'b1
+                        display_list_r[scan_count] <= {
+                            slot_x,          // [40:32] x
+                            slot_y,          // [31:23] y
+                            slot_tile,       // [22:13] tile_num
+                            slot_flip_x,     // [12]    flip_x
+                            slot_flip_y,     // [11]    flip_y
+                            slot_prio,       // [10]    prio
+                            slot_palette,    // [9:6]   palette
+                            slot_size,       // [5:4]   size
+                            slot_bank_slot,  // [3:1]   bank_slot
+                            1'b1             // [0]     valid
                         };
                         scan_count <= scan_count + 8'd1;
                     end
