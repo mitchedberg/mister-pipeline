@@ -192,26 +192,33 @@ localparam int WRAM_ABITS = $clog2(WRAM_WORDS);   // 15
 // Video Timing Generator — 320×240 standard arcade
 // =============================================================================
 //
-// Horizontal: 320 active, 24 front porch, 32 sync, 40 back porch = 416 total
-// Vertical:   240 active, 12 front porch, 4  sync,  8 back porch = 264 total
+// From MAME toaplan2.cpp / truxton2.cpp:
+//   m_screen->set_raw(27_MHz_XTAL/4, 432, 0, 320, 262, 0, 240);
+//   Pixel clock: 27 MHz / 4 = 6.75 MHz
+//   HTOTAL = 432 (320 active + 112 blanking)
+//   VTOTAL = 262 (240 active + 22 blanking)
 //
-// These match the GP9001 internal timing used in MAME toaplan2.cpp.
-// Pixel clock enable (clk_pix) drives hpos/vpos advancement.
+// Blanking breakdown (standard arcade timings summing to MAME totals):
+//   Horizontal: 320 active, 8 front porch, 32 sync, 72 back porch = 432 total
+//   Vertical:   240 active, 8 front porch, 4  sync, 10 back porch = 262 total
+//
+// NOTE: The sim drives clk_pix using a fractional accumulator (27/128 per sys_clk)
+// to generate 6.75 MHz pixel clock from 32 MHz sys_clk.  See tb_system.cpp.
 //
 localparam int H_ACTIVE = 320;
-localparam int H_FP     = 24;
+localparam int H_FP     = 8;
 localparam int H_SYNC   = 32;
-localparam int H_BP     = 40;
-localparam int H_TOTAL  = H_ACTIVE + H_FP + H_SYNC + H_BP;   // 416
+localparam int H_BP     = 72;
+localparam int H_TOTAL  = H_ACTIVE + H_FP + H_SYNC + H_BP;   // 432
 
 localparam int V_ACTIVE = 240;
-localparam int V_FP     = 12;
+localparam int V_FP     = 8;
 localparam int V_SYNC   = 4;
-localparam int V_BP     = 8;
-localparam int V_TOTAL  = V_ACTIVE + V_FP + V_SYNC + V_BP;    // 264
+localparam int V_BP     = 10;
+localparam int V_TOTAL  = V_ACTIVE + V_FP + V_SYNC + V_BP;    // 262
 
-logic [8:0] hpos_r;    // 0..415
-logic [8:0] vpos_r;    // 0..263
+logic [8:0] hpos_r;    // 0..431
+logic [8:0] vpos_r;    // 0..261
 logic       hsync_r, vsync_r, hblank_r, vblank_r;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin

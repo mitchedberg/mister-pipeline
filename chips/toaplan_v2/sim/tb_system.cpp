@@ -25,13 +25,13 @@
 //   frame_NNNN.ppm — one PPM file per vertical frame (320×240)
 //
 // Video timing: 320×240 (internal to toaplan_v2)
-//   Horizontal: 320 active + 96 blanking = 416 total pixels/line
-//   Vertical:   240 active + 24 blanking = 264 total lines/frame
-//   At 32 MHz system clock, pixel clock divider = 4 → 8 MHz pixel clock
-//   Htotal = 416, Vtotal = 264 → ~73 Hz (pixel) / 60 Hz (frame)
-//   Actually: 32 MHz / (416 × 264) ≈ 291 Hz? No — at 8 MHz pixel clock:
-//   8 MHz / (416 × 264) ≈ 72.8 Hz...
-//   For Toaplan V2: sys_clk = 32 MHz, pix_clk = 8 MHz (CE every 4 sys clks)
+//   From MAME truxton2.cpp: set_raw(27_MHz_XTAL/4, 432, 0, 320, 262, 0, 240)
+//   Pixel clock: 27 MHz / 4 = 6.75 MHz (independent 27 MHz crystal on real PCB)
+//   Horizontal: 320 active + 112 blanking = 432 total pixels/line
+//   Vertical:   240 active + 22 blanking = 262 total lines/frame
+//   Frame rate: 6.75 MHz / (432 × 262) = 59.637 Hz
+//   Frame period: 432 × 262 × (128/27) / 32 MHz = 536,576 / 32 MHz = 16.768 ms
+//   Pixel clock generated via fractional accumulator (27/128 per 32 MHz sys_clk)
 // =============================================================================
 
 #include "Vtb_top.h"
@@ -50,17 +50,37 @@
 #include <cinttypes>
 
 // ── Video timing constants (Toaplan V2 / GP9001 standard 320×240) ───────────
-// Internal to toaplan_v2.sv — testbench only needs to count pixels for capture
+// From MAME toaplan2.cpp / truxton2.cpp:
+//   m_screen->set_raw(27_MHz_XTAL/4, 432, 0, 320, 262, 0, 240)
+//   Pixel clock: 27 MHz / 4 = 6.75 MHz
+//   HTOTAL = 432, VTOTAL = 262
+//
+// The M68000 runs at 16 MHz from a 32 MHz crystal (sys_clk / 2).
+// The pixel clock comes from an INDEPENDENT 27 MHz crystal (divided by 4).
+// These two clocks have no common integer ratio: 32/6.75 = 128/27.
+//
+// We use a FRACTIONAL ACCUMULATOR to generate clk_pix from 32 MHz sys_clk:
+//   accumulator += PIX_ACC_INC  (= 27)
+//   if accumulator >= PIX_ACC_MOD (= 128): fire pixel clock, subtract modulus
+//
+// This generates 6.75 MHz pixel clock (exact long-term frequency) from 32 MHz.
+// Frame period = 432 * 262 * (128/27) / 32 MHz = 536,576 / 32 MHz = 16.768 ms
+// exactly matching MAME's 59.637 Hz.
+//
 static constexpr int VID_H_ACTIVE  = 320;
 static constexpr int VID_V_ACTIVE  = 240;
-static constexpr int VID_H_TOTAL   = 416;
-static constexpr int VID_V_TOTAL   = 264;
+static constexpr int VID_H_TOTAL   = 432;   // MAME: 27MHz/4, htotal=432
+static constexpr int VID_V_TOTAL   = 262;   // MAME: vtotal=262
 
-// Pixel clock: one pixel every 4 system clocks (8 MHz from 32 MHz)
-static constexpr int PIX_DIV = 4;
+// Fractional pixel clock accumulator: fires at 6.75 MHz from 32 MHz sys_clk
+// 6.75 MHz / 32 MHz = 27/128
+static constexpr int PIX_ACC_INC = 27;
+static constexpr int PIX_ACC_MOD = 128;
 
-// Sound clock: Z80/YM2151 CE @ ~3.5 MHz from 32 MHz → every ~9 sys clocks
-// 32 MHz / 3.5 MHz ≈ 9.14 → use 9
+// Sound clock: Z80/YM2151 CE @ ~3.375 MHz from 27 MHz → 27 MHz / 8 = 3.375 MHz
+// From 32 MHz sys_clk: 32/3.375 ≈ 9.48 → use fractional: 8/81 per sys_clk
+// Simpler approximation: fire every 9-10 sys clocks (3.2-3.56 MHz, close enough)
+// 32 MHz / 3.375 MHz ≈ 9.48, use 9 for simplicity (3.56 MHz, +5% error)
 static constexpr int SND_DIV = 9;
 
 // =============================================================================
@@ -246,7 +266,7 @@ int main(int argc, char** argv) {
     // Video pixel counters (mirror toaplan_v2's internal timing)
     int      hcnt         = 0;   // [0, H_TOTAL)
     int      vcnt         = 0;   // [0, V_TOTAL)
-    int      pix_div_cnt  = 0;   // pixel clock divider
+    int      pix_acc      = 0;   // fractional pixel clock accumulator (fires at PIX_ACC_MOD)
     int      snd_div_cnt  = 0;   // sound clock divider
 
     // Frame buffer and pixel capture
@@ -330,10 +350,11 @@ int main(int argc, char** argv) {
             top->enPhi2 = phi_toggle ? 1 : 0;
             phi_toggle  = !phi_toggle;
 
-            // Pixel clock: 1-cycle pulse every PIX_DIV sys clocks
-            ++pix_div_cnt;
-            if (pix_div_cnt >= PIX_DIV) {
-                pix_div_cnt = 0;
+            // Pixel clock: fractional accumulator generating 6.75 MHz from 32 MHz
+            // Ratio = 6.75/32 = 27/128 → accumulate 27 per sys_clk, fire at 128
+            pix_acc += PIX_ACC_INC;
+            if (pix_acc >= PIX_ACC_MOD) {
+                pix_acc -= PIX_ACC_MOD;
                 top->clk_pix = 1;
 
                 // Advance our pixel counters (mirrors toaplan_v2 internal)
