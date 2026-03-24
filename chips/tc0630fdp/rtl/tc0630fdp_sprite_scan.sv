@@ -113,8 +113,12 @@ logic  [8:0] emit_v;        // current scanline (absolute, V_START..V_END)
 logic  [8:0] emit_v_end;    // inclusive end scanline
 
 // Local slot counters (shadow of scount BRAM — avoids read-latency issues)
-// 232 entries × 7 bits — synthesizes to 232×7 flip-flops
+// 232 entries × 7 bits — uses MLAB for ALM savings (async read, sync write)
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [6:0] scan_slot [0:255];  // rounded to 256 for MLAB efficiency
+`else
 logic  [6:0] scan_slot [0:NSCANS-1];
+`endif
 
 // ---------------------------------------------------------------------------
 // Block group state (Step 10)
@@ -153,7 +157,12 @@ end
 // Use sx_offset = (x_no * (9'h100 - anchor_x_zoom) * 16) >> 8
 //              = x_no * (9'h100 - anchor_x_zoom) >> 4   (same as * 16 / 256)
 logic  [8:0] blk_scale;
+`ifdef QUARTUS
+(* multstyle = "dsp" *) logic [12:0] blk_sx_offset;
+(* multstyle = "dsp" *) logic [12:0] blk_sy_offset;
+`else
 logic [12:0] blk_sx_offset, blk_sy_offset;
+`endif
 logic [11:0] blk_sx, blk_sy;
 
 always_comb begin

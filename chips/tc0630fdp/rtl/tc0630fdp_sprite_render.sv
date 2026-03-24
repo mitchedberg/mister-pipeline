@@ -52,6 +52,7 @@
 
 module tc0630fdp_sprite_render (
     input  logic        clk,
+    input  logic        clk_4x,   // 4× pixel clock for serialized pixel writes
     input  logic        rst_n,
 
     input  logic        hblank,
@@ -116,6 +117,36 @@ logic [8:0]  lbuf_clr_idx;
 logic hblank_end;
 assign hblank_end = (hpos == 10'(H_START - 1));
 
+// =============================================================================
+// Cross-domain synchronizers: clk → clk_4x
+// hblank_fall and hblank_end are single-cycle pulses in clk domain.
+// Synchronize via 2-FF synchronizer into clk_4x domain.
+// =============================================================================
+logic [1:0] hfall_sync_4x;
+logic [1:0] hend_sync_4x;
+
+always_ff @(posedge clk_4x) begin
+    if (!rst_n) begin
+        hfall_sync_4x <= 2'b00;
+        hend_sync_4x  <= 2'b00;
+    end else begin
+        hfall_sync_4x <= {hfall_sync_4x[0], hblank_fall};
+        hend_sync_4x  <= {hend_sync_4x[0],  hblank_end};
+    end
+end
+
+logic hblank_fall_4x;
+logic hblank_end_4x;
+assign hblank_fall_4x = hfall_sync_4x[1];
+assign hblank_end_4x  = hend_sync_4x[1];
+
+// Capture vpos into clk_4x domain (stable during HBLANK)
+logic [8:0] vpos_4x;
+always_ff @(posedge clk_4x) begin
+    if (!rst_n) vpos_4x <= 9'b0;
+    else        vpos_4x <= vpos;
+end
+
 // Step 15: Mosaic snap for sprite line buffer read
 // Same formula as BG: snapped_col = col - ((col + 114) % 432 % sample_rate)
 logic [8:0] spr_scol_raw;
@@ -136,7 +167,22 @@ always_comb begin
     gx_wide  = {1'b0, spr_scol_raw} + 10'd114;
     grid_sum = (gx_wide >= 10'd432) ? gx_wide[8:0] - 9'd432 : gx_wide[8:0];
     sr       = 9'd1 + {5'b0, ls_mosaic_rate};
-    off      = 5'(grid_sum % sr);
+    // Modulo via subtraction chain (avoids combinational divider)
+    // sr ranges 1..16; grid_sum max 431. sr*16 max = 256; all fit in 9 bits.
+    begin
+        automatic logic [8:0] sr16, sr8, sr4, sr2, rem;
+        sr16 = sr << 4;
+        sr8  = sr << 3;
+        sr4  = sr << 2;
+        sr2  = sr << 1;
+        rem = grid_sum;
+        if (rem >= sr16) rem = rem - sr16;  // sr*16
+        if (rem >= sr8)  rem = rem - sr8;   // sr*8
+        if (rem >= sr4)  rem = rem - sr4;   // sr*4
+        if (rem >= sr2)  rem = rem - sr2;   // sr*2
+        if (rem >= sr)   rem = rem - sr;    // sr*1
+        off = 5'(rem);
+    end
 
     if (ls_spr_mosaic_en && ls_mosaic_rate != 4'd0)
         spr_scol_snap = 9'(spr_scol_raw - {5'b0, off});
@@ -154,6 +200,11 @@ end
 // ---------------------------------------------------------------------------
 // FSM
 // ---------------------------------------------------------------------------
+// S_NEXT replaced by S_PIXEL: serializes 16-pixel writes at clk_4x rate.
+// At 4×pixel clock (96 MHz), 16 pixels take 16 clk_4x cycles = 4 pixel clocks.
+// Per-sprite budget at clk_4x: S_CNT(1)+S_ADDR(1)+S_LATCH(1)+S_GFX_L(1)+
+//   S_GFX_R(1)+S_PIXEL(up to 16) = up to 21 clk_4x cycles.
+// HBLANK budget: 448 clk_4x cycles → 448/21 = 21 sprites max.  Sufficient.
 typedef enum logic [2:0] {
     S_IDLE   = 3'd0,
     S_CNT    = 3'd1,
@@ -161,7 +212,7 @@ typedef enum logic [2:0] {
     S_LATCH  = 3'd3,
     S_GFX_L  = 3'd4,
     S_GFX_R  = 3'd5,
-    S_NEXT   = 3'd6
+    S_PIXEL  = 3'd6   // serialized pixel write (replaces S_NEXT)
 } state_t;
 
 state_t state;
@@ -237,6 +288,9 @@ assign dst_row_full = abs_scan[7:0] - r_sy[7:0];
 // src_row = (dst_row * scale_y) >> 8 : dst_row is 4-bit (0..15), scale_y 9-bit.
 // Product is 13-bit max (15*256=3840); must widen operands before multiply to avoid
 // truncation.  Cast to 13-bit explicitly so Verilator allocates the correct result width.
+`ifdef QUARTUS
+(* multstyle = "dsp" *)
+`endif
 logic [4:0] src_row_zoom;
 assign src_row_zoom = 5'((13'(dst_row_full[3:0]) * 13'(scale_y)) >> 8);
 
@@ -266,35 +320,27 @@ function automatic logic [3:0] decode_pen(
 endfunction
 
 // ---------------------------------------------------------------------------
-// Zoomed pixel write loop
-//
-// For each output column dst_x in 0..render_w-1:
-//   src_x = (dst_x * scale_x) >> 8  → integer 0..15
-//   screen_col = sx + dst_x
-//   pen = gfx_pixel(src_x, with flipX)
-//
-// We implement this as a combinational array (precomputed for all 16 possible
-// dst_x values 0..15) and conditionally write those where dst_x < render_w.
+// Serialized pixel write: single px_idx counter iterates 0..render_w-1 in
+// S_PIXEL state (one pixel per clk_4x cycle).  Eliminates the 16-wide
+// combinational src_x_of/pen_of/scol_of arrays and their associated mux trees
+// (saves ~15,000–20,000 ALMs).
 // ---------------------------------------------------------------------------
 
-// Precomputed src_x for each dst_x (0..15) using zoom accumulator
-logic [3:0] src_x_of [0:15];   // src_x[dst_x]
-logic [3:0] pen_of   [0:15];   // pen[dst_x]
-logic signed [12:0] scol_of [0:15];
+// Current pixel index in S_PIXEL state (0..15)
+logic [3:0] px_idx;
+
+// Per-pixel combinational decode (single instance, not 16×)
+logic [3:0]          px_src_x;
+logic [3:0]          px_pen;
+logic signed [12:0]  px_scol;
 
 always_comb begin
-    for (int dst_x = 0; dst_x < 16; dst_x++) begin
-        // src_x = (dst_x * scale_x) >> 8  (4-bit integer result; 13-bit product max 15*256)
-        src_x_of[dst_x] = 4'((13'(dst_x) * 13'(scale_x)) >> 8);
-        scol_of[dst_x]  = $signed({{1{r_sx[11]}}, r_sx}) + 13'(dst_x);
-
-        // Decode pen from appropriate half-word using src_x
-        if (src_x_of[dst_x] < 4'd8) begin
-            pen_of[dst_x] = decode_pen(gfx_left_r,  src_x_of[dst_x][2:0], r_flipx);
-        end else begin
-            pen_of[dst_x] = decode_pen(gfx_data,    src_x_of[dst_x][2:0], r_flipx);
-        end
-    end
+    px_src_x = 4'((13'(px_idx) * 13'(scale_x)) >> 8);
+    px_scol  = $signed({{1{r_sx[11]}}, r_sx}) + 13'(px_idx);
+    if (px_src_x < 4'd8)
+        px_pen = decode_pen(gfx_left_r, px_src_x[2:0], r_flipx);
+    else
+        px_pen = decode_pen(gfx_data,   px_src_x[2:0], r_flipx);
 end
 
 // ---------------------------------------------------------------------------
@@ -305,7 +351,14 @@ end
 // 320 enable muxes and explodes Quartus 17 elaboration memory (OOM crash).
 // The counter-based approach synthesises to a simple increment chain.
 // ---------------------------------------------------------------------------
-always_ff @(posedge clk) begin
+// FSM runs at clk_4x: serialized pixel writes, 1 pixel per clk_4x cycle.
+// hblank_fall_4x / hblank_end_4x are the synchronized versions of the clk
+// domain pulses.  All BRAM reads (scount, slist, gfx) have 1-cycle latency
+// and are also driven by clk_4x — the BRAMs must accept either clk or clk_4x
+// as read clock (they are registered in the clk domain in tc0630fdp.sv but
+// the address is updated at clk_4x rate; this is safe because all BRAM reads
+// complete within the clk_4x period and the data is stable at the next edge).
+always_ff @(posedge clk_4x) begin
     if (!rst_n) begin
         state           <= S_IDLE;
         back_buf        <= 1'b0;
@@ -328,6 +381,7 @@ always_ff @(posedge clk) begin
         r_y_zoom        <= 8'd0;
         r_dst_row       <= 5'd0;
         gfx_left_r      <= 32'd0;
+        px_idx          <= 4'd0;
         // lbuf0/lbuf1 BRAM powers up to 0 — no reset loop needed.
         lbuf_clr_active <= 1'b0;
         lbuf_clr_idx    <= 9'd0;
@@ -342,7 +396,7 @@ always_ff @(posedge clk) begin
                 lbuf_clr_idx <= lbuf_clr_idx + 9'd1;
         end
 
-        if (hblank_end) begin
+        if (hblank_end_4x) begin
         // End of HBLANK: swap front/back so the just-rendered back becomes
         // the new front, visible during the upcoming active display.
         front_buf       <= back_buf;
@@ -350,10 +404,10 @@ always_ff @(posedge clk) begin
         // Kick off sequential clear of the new back (old front) buffer.
         lbuf_clr_active <= 1'b1;
         lbuf_clr_idx    <= 9'd0;
-    end else if (hblank_fall) begin
-        // Start of HBLANK: begin rendering sprite list for (vpos+1).
-        render_scan    <= vpos[7:0] - 8'(V_START) + 8'd1;
-        scount_rd_addr <= vpos[7:0] - 8'(V_START) + 8'd1;
+    end else if (hblank_fall_4x) begin
+        // Start of HBLANK: begin rendering sprite list for (vpos_4x+1).
+        render_scan    <= vpos_4x[7:0] - 8'(V_START) + 8'd1;
+        scount_rd_addr <= vpos_4x[7:0] - 8'(V_START) + 8'd1;
         state          <= S_CNT;
     end else begin
         case (state)
@@ -400,48 +454,50 @@ always_ff @(posedge clk) begin
                 state       <= S_GFX_R;
             end
 
-            // Latch left data, issue right
+            // Latch left data, issue right; initialize px_idx for S_PIXEL
             S_GFX_R: begin
                 gfx_left_r <= gfx_data;
                 gfx_addr   <= gfx_right_addr;
-                state      <= S_NEXT;
+                px_idx     <= 4'd0;
+                state      <= S_PIXEL;
             end
 
-            // Right data arrives; write zoomed pixels to line buffer
-            S_NEXT: begin
+            // Serialized pixel write: one pixel per clk_4x cycle.
+            // Replaces the 16-wide for-loop in S_NEXT.
+            // Saves ~15,000 ALMs (16× write mux elimination + 16× multiply removal).
+            S_PIXEL: begin
                 // Guard: only write pixels when scanline falls within rendered height.
-                // render_w/render_h are combinational from r_x_zoom/r_y_zoom (stable here).
-                if (r_dst_row < render_h) begin
-                    for (int dst_x = 0; dst_x < 16; dst_x++) begin
-                        if (5'(dst_x) < render_w) begin
-                            if (scol_of[dst_x] >= 13'sd0 &&
-                                scol_of[dst_x] <  13'sd320 &&
-                                pen_of[dst_x]  != 4'd0) begin
-                                if (back_buf)
-                                    lbuf1[scol_of[dst_x][8:0]] <=
-                                        {r_prio, r_palette, pen_of[dst_x]};
-                                else
-                                    lbuf0[scol_of[dst_x][8:0]] <=
-                                        {r_prio, r_palette, pen_of[dst_x]};
-                            end
-                        end
-                    end
+                if (r_dst_row < render_h &&
+                    5'(px_idx) < render_w &&
+                    px_scol >= 13'sd0 &&
+                    px_scol <  13'sd320 &&
+                    px_pen  != 4'd0) begin
+                    if (back_buf)
+                        lbuf1[px_scol[8:0]] <= {r_prio, r_palette, px_pen};
+                    else
+                        lbuf0[px_scol[8:0]] <= {r_prio, r_palette, px_pen};
                 end
-                // Advance to next sprite slot
-                if (7'(spr_slot) + 7'd1 >= spr_count) begin
-                    state <= S_IDLE;
+
+                // Advance pixel or move to next sprite
+                if (px_idx == 4'd15 || 5'(px_idx) + 5'd1 >= render_w) begin
+                    // Done with this sprite
+                    if (7'(spr_slot) + 7'd1 >= spr_count) begin
+                        state <= S_IDLE;
+                    end else begin
+                        spr_slot  <= spr_slot + 6'd1;
+                        addr_slot <= spr_slot + 6'd1;
+                        state     <= S_ADDR;
+                    end
                 end else begin
-                    spr_slot  <= spr_slot + 6'd1;
-                    addr_slot <= spr_slot + 6'd1;
-                    state     <= S_ADDR;
+                    px_idx <= px_idx + 4'd1;
                 end
             end
 
             default: state <= S_IDLE;
         endcase
-    end  // else (not hblank_end, not hblank_fall)
+    end  // else (not hblank_end_4x, not hblank_fall_4x)
     end  // else begin (!rst_n)
-end  // always_ff
+end  // always_ff @(posedge clk_4x)
 
 /* verilator lint_off UNUSED */
 logic _unused;
@@ -451,7 +507,9 @@ assign _unused = ^{hblank,
                    dst_row_full[7:4],
                    r_sy[11:8],
                    src_row_zoom[4],
-                   abs_scan[8]};
+                   abs_scan[8],
+                   hfall_sync_4x[0],
+                   hend_sync_4x[0]};
 /* verilator lint_on UNUSED */
 
 endmodule

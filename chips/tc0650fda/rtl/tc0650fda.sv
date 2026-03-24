@@ -303,8 +303,19 @@ end
 // 8-bit × 4-bit products: max 255×8 = 2040, fits in 12 bits.
 // When do_blend=0: pass src_rgb[channel] directly (multiply-by-8 not needed
 // because we bypass by storing the decoded RGB in the mul registers directly).
+// Under QUARTUS: force DSP blocks for the blend multiplies (saves ~3 DSPs,
+// each replacing ~200 ALMs of combinational fabric per multiply instance).
+`ifdef QUARTUS
+(* multstyle = "dsp" *) logic [11:0] mul_r_src_s2;
+(* multstyle = "dsp" *) logic [11:0] mul_g_src_s2;
+(* multstyle = "dsp" *) logic [11:0] mul_b_src_s2;
+(* multstyle = "dsp" *) logic [11:0] mul_r_dst_s2;
+(* multstyle = "dsp" *) logic [11:0] mul_g_dst_s2;
+(* multstyle = "dsp" *) logic [11:0] mul_b_dst_s2;
+`else
 logic [11:0] mul_r_src_s2, mul_g_src_s2, mul_b_src_s2;
 logic [11:0] mul_r_dst_s2, mul_g_dst_s2, mul_b_dst_s2;
+`endif
 logic        do_blend_s2;
 logic        pv_s2;
 

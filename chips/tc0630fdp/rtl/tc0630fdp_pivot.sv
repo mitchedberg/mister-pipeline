@@ -157,7 +157,11 @@ end
 `endif
 
 // Line buffer 320 × 8-bit
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [7:0] linebuf [0:319];
+`else
 logic [7:0] linebuf [0:319];
+`endif
 
 // Screen column read-out
 logic [9:0] screen_col_rd;

@@ -544,6 +544,10 @@ always_comb begin
 end
 
 // ── Alpha blend computation ────────────────────────────────────────────────────
+// blend_rgb_out: legacy simulation output — TC0650FDA provides actual video.
+// Under QUARTUS this is dead logic; guard it away to save ~3,000-5,000 ALMs
+// (12 multiplies + associated mux/compare/shift trees).
+`ifndef QUARTUS
 // Formula: out = clamp(src * A_src/8 + dst * A_dst/8, 0, 255)
 // A_src / A_dst are 4-bit (0–8).
 // 8-bit color * 4-bit coeff = 12-bit product; sum = 13-bit; saturate to 8-bit.
@@ -603,6 +607,10 @@ always_ff @(posedge clk) begin
         endcase
     end
 end
+`else
+// QUARTUS: blend_rgb_out unused; TC0650FDA provides actual video output.
+assign blend_rgb_out = 24'b0;
+`endif
 
 // =============================================================================
 // TC0650FDA blend interface outputs
@@ -610,7 +618,10 @@ end
 // Per-column destination palette buffer: stores the src_pal output for each
 // active display column so that the next frame can use it as dst_pal (the
 // previously rendered pixel at the same screen position).
+// Under QUARTUS: use M10K BRAM (saves ~3,000 ALMs vs FF array + decode tree).
+`ifndef QUARTUS
 logic [12:0] dst_pal_buf [0:319];
+`endif
 
 // Registered column index (tracks screen_x_9 one cycle after the combinational
 // priority outputs — matches the registered src_pal timing).
@@ -650,6 +661,13 @@ always_comb begin
 end
 
 // Register all TC0650FDA outputs on posedge clk (1 cycle after sub-stage B).
+`ifdef QUARTUS
+// dst_pal read comes from M10K port B (synchronous, registered output).
+// The M10K read has exactly 1 cycle latency so we read from dst_pal_bram_q
+// which is already the registered result — no extra FF needed here.
+logic [12:0] dst_pal_bram_q;
+`endif
+
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         src_pal         <= 13'b0;
@@ -661,7 +679,11 @@ always_ff @(posedge clk) begin
         screen_col_r    <= 9'b0;
     end else begin
         src_pal         <= {win_pal, win_pen};
+`ifdef QUARTUS
+        dst_pal         <= (screen_x_9_d < 9'd320) ? dst_pal_bram_q : 13'b0;
+`else
         dst_pal         <= (screen_x_9_d < 9'd320) ? dst_pal_buf[screen_x_9_d] : 13'b0;
+`endif
         src_blend       <= win_src_coeff;
         dst_blend       <= win_dst_coeff;
         do_blend        <= win_do_blend_c;
@@ -674,10 +696,57 @@ end
 // The write uses screen_col_r (the column registered alongside src_pal) so the
 // write address matches the registered output.  Only write during active display
 // (pixel_valid_out guards against writing stale data during blanking).
+`ifndef QUARTUS
 always_ff @(posedge clk) begin
     if (pixel_valid_out && screen_col_r < 9'd320)
         dst_pal_buf[screen_col_r] <= src_pal;
 end
+`else
+// QUARTUS: dst_pal_buf implemented as M10K dual-port BRAM.
+// Port A (write): address=screen_col_r, data=src_pal, wren=pixel_valid_out
+// Port B (read):  address=screen_x_9_d, q=dst_pal_bram_q (1-cycle latency)
+// This saves ~3,000 ALMs vs 320×13 FF array with address-decode trees.
+altsyncram #(
+    .operation_mode         ("DUAL_PORT"),
+    .width_a                (13),
+    .widthad_a              (9),
+    .numwords_a             (512),
+    .width_b                (13),
+    .widthad_b              (9),
+    .numwords_b             (512),
+    .outdata_reg_b          ("CLOCK1"),
+    .address_reg_b          ("CLOCK1"),
+    .rdcontrol_reg_b        ("CLOCK1"),
+    .indata_aclr_a          ("NONE"),
+    .wrcontrol_aclr_a       ("NONE"),
+    .address_aclr_a         ("NONE"),
+    .address_aclr_b         ("NONE"),
+    .outdata_aclr_b         ("NONE"),
+    .read_during_write_mode_mixed_ports ("DONT_CARE"),
+    .lpm_type               ("altsyncram"),
+    .intended_device_family ("Cyclone V")
+) dst_pal_buf_m10k (
+    .clock0     (clk),
+    .clock1     (clk),
+    .address_a  (screen_col_r),
+    .data_a     (src_pal),
+    .wren_a     (pixel_valid_out && screen_col_r < 9'd320),
+    .address_b  (screen_x_9_d),
+    .q_b        (dst_pal_bram_q),
+    // Unused ports
+    .aclr0      (1'b0),
+    .aclr1      (1'b0),
+    .addressstall_a (1'b0),
+    .addressstall_b (1'b0),
+    .byteena_a  (1'b1),
+    .clocken0   (1'b1),
+    .clocken1   (1'b1),
+    .data_b     ({13{1'b1}}),
+    .rden_b     (1'b1),
+    .wren_b     (1'b0),
+    .q_a        ()
+);
+`endif
 
 // ── Suppress unused-signal warnings ──────────────────────────────────────────
 /* verilator lint_off UNUSED */
