@@ -142,3 +142,4 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_
 # gp9001 concat fix
 # genvar+automatic fix
 # force trigger 1774362100
+# permanent gp9001 fix 1774363685
