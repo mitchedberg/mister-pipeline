@@ -254,18 +254,20 @@ end
 logic [8:0] snap_col [0:3];
 
 generate
-    for (genvar gi = 0; gi < 4; gi++) begin : gen_snap
+genvar gi;
+generate
+    for (gi = 0; gi < 4; gi++) begin : gen_snap
         always_comb begin
-            automatic logic [9:0] gx_wide;
-            automatic logic [8:0] grid_sum;
-            automatic logic [8:0] sr;
-            automatic logic [4:0] off;
+            logic [9:0] gx_wide;
+            logic [8:0] grid_sum;
+            logic [8:0] sr;
+            logic [4:0] off;
 
             gx_wide  = {1'b0, scol_c} + 10'd114;
             grid_sum = (gx_wide >= 10'd432) ? gx_wide[8:0] - 9'd432 : gx_wide[8:0];
             sr       = 9'd1 + {5'b0, ls_mosaic_rate};
             begin
-                automatic logic [8:0] sr16, sr8, sr4, sr2, rem;
+                logic [8:0] sr16, sr8, sr4, sr2, rem;
                 sr16 = sr << 4;
                 sr8  = sr << 3;
                 sr4  = sr << 2;
@@ -342,7 +344,9 @@ generate
 endgenerate
 
 generate
-    for (genvar gi2 = 0; gi2 < 4; gi2++) begin : gen_bg_out
+genvar gi2;
+generate
+    for (gi2 = 0; gi2 < 4; gi2++) begin : gen_bg_out
         assign bg_pixel[gi2] = lb_rdata[gi2];
     end
 endgenerate
@@ -359,7 +363,9 @@ always_ff @(posedge clk_4x) begin
 end
 
 generate
-    for (genvar gi2 = 0; gi2 < 4; gi2++) begin : gen_bg_out
+genvar gi2;
+generate
+    for (gi2 = 0; gi2 < 4; gi2++) begin : gen_bg_out
         assign bg_pixel[gi2] = linebuf[gi2][snap_col[gi2]];
     end
 endgenerate
