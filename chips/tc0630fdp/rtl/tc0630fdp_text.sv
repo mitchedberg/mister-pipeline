@@ -164,7 +164,11 @@ end
 // =============================================================================
 // Line buffer: 320 × 9-bit {color[4:0], pen[3:0]}
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [8:0] linebuf [0:319];
+`else
 logic [8:0] linebuf [0:319];
+`endif
 
 // Screen-column index, clamped to [0..319]
 logic [9:0] screen_col;

@@ -940,7 +940,11 @@ assign pvt_engine_q = pivot_ram[pvt_engine_rd_addr];
 // 7-bit to hold values 0..64 (max 64 sprites per scanline).
 // Written by scanner, read by renderer.
 // =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [6:0] scount_ram [0:255];  // 256 for MLAB power-of-2 efficiency
+`else
 logic [ 6:0] scount_ram [0:231];
+`endif
 
 // Scanner write port
 logic        scan_scount_wr;
@@ -1291,6 +1295,7 @@ tc0630fdp_sprite_scan u_sprite_scan (
 // =============================================================================
 tc0630fdp_sprite_render u_sprite_render (
     .clk               (clk),
+    .clk_4x            (clk_4x),
     .rst_n             (rst_n),
     .hblank            (hblank),
     .hblank_fall       (hblank_fall),

@@ -261,7 +261,22 @@ generate
             gx_wide  = {1'b0, scol_c} + 10'd114;
             grid_sum = (gx_wide >= 10'd432) ? gx_wide[8:0] - 9'd432 : gx_wide[8:0];
             sr       = 9'd1 + {5'b0, ls_mosaic_rate};
-            off      = 5'(grid_sum % sr);
+            // Modulo via subtraction chain (avoids combinational divider, ~1500 ALMs each)
+            // sr ranges 1..16; grid_sum max 431. sr*16 max = 256, all fit in 9 bits.
+            begin
+                automatic logic [8:0] sr16, sr8, sr4, sr2, rem;
+                sr16 = sr << 4;
+                sr8  = sr << 3;
+                sr4  = sr << 2;
+                sr2  = sr << 1;
+                rem = grid_sum;
+                if (rem >= sr16) rem = rem - sr16;  // sr*16
+                if (rem >= sr8)  rem = rem - sr8;   // sr*8
+                if (rem >= sr4)  rem = rem - sr4;   // sr*4
+                if (rem >= sr2)  rem = rem - sr2;   // sr*2
+                if (rem >= sr)   rem = rem - sr;    // sr*1
+                off = 5'(rem);
+            end
 
             if (ls_mosaic_en[gi] && ls_mosaic_rate != 4'd0)
                 snap_col = 9'(scol_c - {5'b0, off});
@@ -277,6 +292,9 @@ endgenerate
 // Fetch geometry: Y zoom computation for current layer.
 // =============================================================================
 /* verilator lint_off UNUSED */
+`ifdef QUARTUS
+(* multstyle = "dsp" *)
+`endif
 logic [16:0] cy_zoomed_w;
 /* verilator lint_on UNUSED */
 logic [ 3:0] fetch_py;
