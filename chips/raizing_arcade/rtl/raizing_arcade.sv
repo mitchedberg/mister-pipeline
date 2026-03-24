@@ -348,7 +348,8 @@ logic [15:0] sram_m68k_dout;
 logic [7:0]  sram_z80_dout;
 
 `ifdef QUARTUS
-// TRUE_DUAL_PORT altsyncram: Port A = 68K, Port B = Z80.
+// TRUE_DUAL_PORT altsyncram: Port A = 68K (write+read), Port B = Z80 (write+read).
+// Both ports share the same single clock (clock0 = clock1 = clk).
 // Z80 writes use byteena_b derived from z80_addr[0] (byte-lane select).
 logic [15:0] sram_raw_a, sram_raw_b;
 
@@ -356,8 +357,8 @@ altsyncram #(
     .operation_mode            ("BIDIR_DUAL_PORT"),
     .width_a                   (16), .widthad_a (SRAM_ABITS), .numwords_a (SRAM_WORDS),
     .width_b                   (16), .widthad_b (SRAM_ABITS), .numwords_b (SRAM_WORDS),
-    .outdata_reg_a             ("CLOCK0"), .outdata_reg_b ("CLOCK0"),
-    .address_reg_b             ("CLOCK0"),
+    .outdata_reg_a             ("CLOCK0"), .outdata_reg_b ("CLOCK1"),
+    .address_reg_b             ("CLOCK1"),
     .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
     .clock_enable_output_a     ("BYPASS"), .clock_enable_output_b ("BYPASS"),
     .intended_device_family    ("Cyclone V"),
@@ -369,6 +370,7 @@ altsyncram #(
     .read_during_write_mode_port_b      ("NEW_DATA_NO_NBE_READ")
 ) shared_ram_inst (
     .clock0     (clk),
+    .clock1     (clk),   // Port B uses clock1 (tied to same clock)
     // Port A: 68K (word-wide with byte enables)
     .address_a  (cpu_addr[SRAM_ABITS:1]),
     .data_a     (cpu_dout),
