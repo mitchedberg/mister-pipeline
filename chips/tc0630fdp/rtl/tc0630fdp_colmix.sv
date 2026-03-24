@@ -232,7 +232,9 @@ end
 logic [3:0][3:0]  pf_pen;
 logic [3:0][8:0]  pf_pal;
 logic [3:0][4:0]  pf_prio;
+/* verilator lint_off UNUSEDSIGNAL */
 logic [3:0][1:0]  pf_bmode;
+/* verilator lint_on UNUSEDSIGNAL */
 
 generate
     for (gi = 0; gi < 4; gi++) begin : gen_pf_fields
@@ -245,7 +247,9 @@ endgenerate
 
 logic [4:0]  spr_prio5;
 logic [8:0]  spr_pal9;
+/* verilator lint_off UNUSEDSIGNAL */
 logic [3:0]  spr_pen;
+/* verilator lint_on UNUSEDSIGNAL */
 logic [1:0]  spr_bmode;
 
 assign spr_prio5 = {1'b0, spr_prio_val};
@@ -253,9 +257,13 @@ assign spr_pal9  = {3'b0, spr_pixel[9:4]};
 assign spr_pen   = spr_pen_clipped;
 assign spr_bmode = spr_blend_val;
 
+/* verilator lint_off UNUSEDSIGNAL */
 logic [3:0]  text_pen_w;
+/* verilator lint_on UNUSEDSIGNAL */
 logic [4:0]  text_color;
+/* verilator lint_off UNUSEDSIGNAL */
 logic [8:0]  text_pal9;
+/* verilator lint_on UNUSEDSIGNAL */
 
 assign text_pen_w = text_pixel[3:0];
 assign text_color = text_pixel[8:4];

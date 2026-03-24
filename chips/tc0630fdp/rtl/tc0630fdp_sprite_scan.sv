@@ -113,11 +113,53 @@ logic  [8:0] emit_v;        // current scanline (absolute, V_START..V_END)
 logic  [8:0] emit_v_end;    // inclusive end scanline
 
 // Local slot counters (shadow of scount BRAM — avoids read-latency issues)
-// 232 entries × 7 bits — uses MLAB for ALM savings (async read, sync write)
+// 232 entries × 7 bits.  Explicit altsyncram (MLAB) megafunction forces MLAB
+// block type in Quartus 17.0 Lite (ramstyle attribute is ignored by that tool).
+//   Dual-port: port A = sync write (clk), port B = async read (UNREGISTERED).
+//   Depth rounded to 256 for MLAB-word alignment (min addressable unit).
+
+// Write-port signals (driven combinationally, captured by altsyncram on clk edge)
+logic       ss_wen;
+logic [7:0] ss_waddr;
+logic [6:0] ss_wdata;
+// Read-port signal (async, from port B)
+logic [6:0] ss_rdata;
+
 `ifdef QUARTUS
-(* ramstyle = "MLAB" *) logic [6:0] scan_slot [0:255];  // rounded to 256 for MLAB efficiency
+altsyncram #(
+    .width_a            (7),
+    .widthad_a          (8),
+    .numwords_a         (256),
+    .width_b            (7),
+    .widthad_b          (8),
+    .numwords_b         (256),
+    .operation_mode     ("DUAL_PORT"),
+    .ram_block_type     ("MLAB"),
+    .outdata_reg_a      ("UNREGISTERED"),
+    .outdata_reg_b      ("UNREGISTERED"),
+    .read_during_write_mode_mixed_ports ("DONT_CARE"),
+    .intended_device_family ("Cyclone V")
+) u_scan_slot (
+    .clock0    (clk),
+    .address_a (ss_waddr),
+    .data_a    (ss_wdata),
+    .wren_a    (ss_wen),
+    .address_b (emit_scan),
+    .q_b       (ss_rdata),
+    // unused ports
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_a(1'b1), .byteena_b(1'b1), .clock1(1'b0), .clocken0(1'b1),
+    .clocken1(1'b1), .clocken2(1'b1), .clocken3(1'b1),
+    .data_b({7{1'b1}}), .eccstatus(), .q_a(), .rden_a(1'b1), .rden_b(1'b1),
+    .wren_b(1'b0)
+);
 `else
-logic  [6:0] scan_slot [0:NSCANS-1];
+// Simulation: plain register array with async read
+logic [6:0] scan_slot [0:255];
+always_ff @(posedge clk) begin
+    if (ss_wen) scan_slot[ss_waddr] <= ss_wdata;
+end
+assign ss_rdata = scan_slot[emit_scan];
 `endif
 
 // ---------------------------------------------------------------------------
@@ -157,19 +199,52 @@ end
 // Use sx_offset = (x_no * (9'h100 - anchor_x_zoom) * 16) >> 8
 //              = x_no * (9'h100 - anchor_x_zoom) >> 4   (same as * 16 / 256)
 logic  [8:0] blk_scale;
-`ifdef QUARTUS
-(* multstyle = "dsp" *) logic [12:0] blk_sx_offset;
-(* multstyle = "dsp" *) logic [12:0] blk_sy_offset;
-`else
-logic [12:0] blk_sx_offset, blk_sy_offset;
-`endif
+logic [12:0] blk_sx_offset;
+logic [12:0] blk_sy_offset;
 logic [11:0] blk_sx, blk_sy;
 
+// Block grid offset computation: x_no * scale >> 4 (13-bit result).
+// Explicit lpm_mult (combinational, pipeline=0) forces DSP block use in
+// Quartus 17.0 Lite.  multstyle attribute is ignored by that tool.
+`ifdef QUARTUS
+logic [12:0] blk_sx_prod, blk_sy_prod;
+lpm_mult #(
+    .lpm_widtha         (4),
+    .lpm_widthb         (9),
+    .lpm_widthp         (13),
+    .lpm_representation ("UNSIGNED"),
+    .lpm_pipeline       (0)
+) u_blk_sx_mult (
+    .dataa  (block_x_no),
+    .datab  (blk_scale),
+    .result (blk_sx_prod),
+    .clock  (1'b0), .clken(1'b0), .aclr(1'b0), .sum({13{1'b0}})
+);
+lpm_mult #(
+    .lpm_widtha         (4),
+    .lpm_widthb         (9),
+    .lpm_widthp         (13),
+    .lpm_representation ("UNSIGNED"),
+    .lpm_pipeline       (0)
+) u_blk_sy_mult (
+    .dataa  (block_y_no),
+    .datab  (blk_scale),
+    .result (blk_sy_prod),
+    .clock  (1'b0), .clken(1'b0), .aclr(1'b0), .sum({13{1'b0}})
+);
+`endif
+
 always_comb begin
-    blk_scale     = 9'h100 - {1'b0, anchor_x_zoom};
+    blk_scale = 9'h100 - {1'b0, anchor_x_zoom};
+`ifdef QUARTUS
+    // Use lpm_mult outputs (already computed above)
+    blk_sx_offset = blk_sx_prod >> 4;
+    blk_sy_offset = blk_sy_prod >> 4;
+`else
     // x_no * scale * 16 >> 8  =  x_no * scale >> 4
     blk_sx_offset = 13'(13'(block_x_no) * 13'(blk_scale)) >> 4;
     blk_sy_offset = 13'(13'(block_y_no) * 13'(blk_scale)) >> 4;
+`endif
     blk_sx = 12'(12'(anchor_sx) + blk_sx_offset[11:0]);
     blk_sy = 12'(12'(anchor_sy) + blk_sy_offset[11:0]);
 end
@@ -248,12 +323,50 @@ end
 logic [7:0] emit_scan;
 assign emit_scan = emit_v[7:0] - 8'(V_START);
 
-// Current slot for emit_scan (from local shadow)
+// Current slot for emit_scan (from local shadow via altsyncram port B async read)
 logic [6:0] cur_slot;
-assign cur_slot = scan_slot[emit_scan];
+assign cur_slot = ss_rdata;
 
 // scount read: scanner doesn't read scount itself; drive to 0
 assign scount_rd_addr = 8'd0;
+
+// ---------------------------------------------------------------------------
+// Combinational write-port drivers for scan_slot altsyncram instance.
+// The FSM signals which entry to write each cycle; altsyncram captures on clk edge.
+// ---------------------------------------------------------------------------
+always_comb begin
+    ss_wen   = 1'b0;
+    ss_waddr = 8'd0;
+    ss_wdata = 7'd0;
+
+    case (state)
+        S_IDLE: begin
+            if (vblank_rise) begin
+                ss_wen   = 1'b1;
+                ss_waddr = 8'd0;
+                ss_wdata = 7'd0;
+            end
+        end
+        S_CLEAR: begin
+            ss_wen = 1'b1;
+            if (clear_cnt == 8'(NSCANS - 2)) begin
+                ss_waddr = 8'(NSCANS - 1);
+            end else begin
+                ss_waddr = clear_cnt + 8'd1;
+            end
+            ss_wdata = 7'd0;
+        end
+        S_EMIT: begin
+            if (emit_v < 9'(V_END) && emit_v <= emit_v_end &&
+                cur_slot <= 7'(MAX_SLOT)) begin
+                ss_wen   = 1'b1;
+                ss_waddr = emit_scan;
+                ss_wdata = cur_slot + 7'd1;
+            end
+        end
+        default: begin end
+    endcase
+end
 
 // ---------------------------------------------------------------------------
 // FSM (single always_ff)
@@ -292,10 +405,7 @@ always_ff @(posedge clk) begin
             // ─ Idle: wait for VBLANK ─────────────────────────────────────
             S_IDLE: begin
                 if (vblank_rise) begin
-                    // scan_slot[0] cleared here; [1..NSCANS-1] cleared in S_CLEAR.
-                    // (Distributes 232-entry clear across S_CLEAR cycles — avoids
-                    //  Quartus 17 Error 10028 from the 232-iteration for-loop.)
-                    scan_slot[8'd0] <= 7'd0;
+                    // scan_slot write driven combinationally (ss_wen/waddr/wdata above).
                     clear_cnt      <= 8'd0;
                     scount_wr      <= 1'b1;
                     scount_wr_addr <= 8'd0;
@@ -308,13 +418,13 @@ always_ff @(posedge clk) begin
             end
 
             // ─ Clear scount BRAM + scan_slot (one entry per cycle) ───────
+            // scan_slot write driven combinationally (ss_wen/waddr/wdata above).
             S_CLEAR: begin
                 if (clear_cnt == 8'(NSCANS - 2)) begin
                     // Write entry NSCANS-1, then done
                     scount_wr      <= 1'b1;
                     scount_wr_addr <= 8'(NSCANS - 1);
                     scount_wr_data <= 7'd0;
-                    scan_slot[8'(NSCANS - 1)] <= 7'd0;  // last scan_slot entry
                     // Start walk — issue address for word 0 of sprite 0
                     spr_idx        <= 10'd0;
                     spr_rd_addr    <= 15'd0;  // sprite 0, word 0
@@ -324,7 +434,6 @@ always_ff @(posedge clk) begin
                     scount_wr      <= 1'b1;
                     scount_wr_addr <= clear_cnt + 8'd1;
                     scount_wr_data <= 7'd0;
-                    scan_slot[clear_cnt + 8'd1] <= 7'd0;  // parallel scan_slot clear
                 end
             end
 
@@ -395,7 +504,8 @@ always_ff @(posedge clk) begin
             end
 
             // ─ Emit: write sprite to per-scanline list ────────────────────
-            // One scanline per cycle; uses local scan_slot[] shadow
+            // One scanline per cycle; uses local scan_slot[] shadow (via ss_rdata).
+            // scan_slot write driven combinationally (ss_wen/waddr/wdata above).
             S_EMIT: begin
                 if (emit_v >= 9'(V_END) || emit_v > emit_v_end) begin
                     state <= S_NEXT;
@@ -409,9 +519,7 @@ always_ff @(posedge clk) begin
                         scount_wr      <= 1'b1;
                         scount_wr_addr <= emit_scan;
                         scount_wr_data <= cur_slot + 7'd1;
-
-                        // Update local shadow
-                        scan_slot[emit_scan] <= cur_slot + 7'd1;
+                        // scan_slot shadow update: driven combinationally above
                     end
 
                     emit_v <= emit_v + 9'd1;

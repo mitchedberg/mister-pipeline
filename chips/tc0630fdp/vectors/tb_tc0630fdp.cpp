@@ -555,7 +555,8 @@ static void check_text_over_bg(int target_vpos, int screen_col,
 
     // Step 4: sample both layer outputs
     int got_text = (int)dut->text_pixel_out & 0x1FF;
-    int got_bg   = (int)dut->bg_pixel_out[0] & 0x1FFF;
+    // bg_pixel_out is packed [3:0][12:0] → 52-bit VL_OUT64; extract lane 0 from bits[12:0]
+    int got_bg   = (int)(dut->bg_pixel_out >> (0 * 13)) & 0x1FFF;
 
     check(got_text == (exp_text & 0x1FF),
           note + " [text]",   got_text, exp_text & 0x1FF);
@@ -607,14 +608,8 @@ static void check_bg_pixel(int target_vpos, int screen_col, int plane,
     }
 
     dut->eval();
-    int got = 0;
-    switch (plane) {
-        case 0: got = (int)dut->bg_pixel_out[0] & 0x1FFF; break;
-        case 1: got = (int)dut->bg_pixel_out[1] & 0x1FFF; break;
-        case 2: got = (int)dut->bg_pixel_out[2] & 0x1FFF; break;
-        case 3: got = (int)dut->bg_pixel_out[3] & 0x1FFF; break;
-        default: got = 0; break;
-    }
+    // bg_pixel_out is packed [3:0][12:0] → 52-bit VL_OUT64; lane N at bits[(N+1)*13-1 : N*13]
+    int got = (int)(dut->bg_pixel_out >> (plane * 13)) & 0x1FFF;
     check(got == (exp_pixel & 0x1FFF), note, got, exp_pixel & 0x1FFF);
 }
 
