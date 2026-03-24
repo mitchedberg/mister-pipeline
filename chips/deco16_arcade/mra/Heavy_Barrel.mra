@@ -1,0 +1,98 @@
+<!--
+    Heavy Barrel (1987) — Data East
+    MiSTer ROM descriptor for DECO16 (dec0) core
+
+    Hardware:
+      MC68000 @ 10 MHz
+      M6502 (RP65C02A) audio CPU @ 1.5 MHz
+      Intel i8751 security MCU
+      BAC06 x3 tile generators
+      MXC06 sprite generator
+      12-way rotary joystick (uPD4701 encoder at 0x300000/0x300008)
+      YM2203 OPN + YM3812 OPL2 + OKI M6295 ADPCM
+
+    MAME driver: dataeast/dec0.cpp, set: hbarrel
+    ROM CRCs from MAME 0.245
+    Jotego coverage: YES (jtninja core) — this MRA is for the pipeline core
+
+    Special input: 12-way rotary joystick encoded as 16-bit one-hot value.
+    Core must read uPD4701 from 0x300000 (P1) and 0x300008 (P2).
+-->
+<misterromdescription>
+    <name>Heavy Barrel</name>
+    <setname>hbarrel</setname>
+    <rbf>DECO16</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Lives"      bits="0,1"  values="3,4,5,2"/>
+        <dip name="Difficulty" bits="2,3"  values="Normal,Hard,Easy,Very Hard"/>
+        <dip name="Demo Sound" bits="8,8"  values="On,Off"/>
+    </switches>
+
+    <!-- CPU Program ROM (384KB, byte-interleaved) -->
+    <rom index="0" zip="hbarrel.zip" md5="None">
+        <interleave output="16">
+            <part name="eb12.3c" crc="0dcd3b93" map="10"/>
+            <part name="eb11.3a" crc="ec7b37ce" map="01"/>
+        </interleave>
+        <interleave output="16">
+            <part name="eb14.4c" crc="5c8c87e6" map="10"/>
+            <part name="eb13.4a" crc="02f45c8d" map="01"/>
+        </interleave>
+        <interleave output="16">
+            <part name="eb16.6c" crc="f49bb2f8" map="10"/>
+            <part name="eb15.6a" crc="5b6aff27" map="01"/>
+        </interleave>
+    </rom>
+
+    <!-- GFX1 — char tiles (BAC06[0]) -->
+    <rom index="1" zip="hbarrel.zip" md5="None">
+        <part name="eb01.7a" crc="9f7f9be6"/>
+    </rom>
+
+    <!-- GFX2 — BG1 tiles (BAC06[1]) -->
+    <rom index="2" zip="hbarrel.zip" md5="None">
+        <interleave output="16">
+            <part name="eb04.14a" crc="7ca25e37" map="10"/>
+            <part name="eb03.12a" crc="7a0e0f6d" map="01"/>
+        </interleave>
+    </rom>
+
+    <!-- GFX3 — BG2 tiles (BAC06[2]) -->
+    <rom index="3" zip="hbarrel.zip" md5="None">
+        <interleave output="16">
+            <part name="eb08.14c" crc="d5ca77fe" map="10"/>
+            <part name="eb06.12c" crc="ced3a6be" map="01"/>
+        </interleave>
+        <interleave output="16">
+            <part name="eb09.16c" crc="ac34a033" map="10"/>
+            <part name="eb07.14c" crc="d9cd9ef0" map="01"/>
+        </interleave>
+    </rom>
+
+    <!-- Sprites — MXC06 -->
+    <rom index="4" zip="hbarrel.zip" md5="None">
+        <interleave output="32">
+            <part name="eb19.11a" crc="2e95beb9" map="0001"/>
+            <part name="eb18.9a"  crc="47e34f79" map="0010"/>
+            <part name="eb17.8a"  crc="82a4a9e3" map="0100"/>
+        </interleave>
+    </rom>
+
+    <!-- Audio CPU ROM (M6502) -->
+    <rom index="5" zip="hbarrel.zip" md5="None">
+        <part name="eb02.2b" crc="3e73c907" offset="0x8000"/>
+    </rom>
+
+    <!-- OKI ADPCM samples -->
+    <rom index="6" zip="hbarrel.zip" md5="None">
+        <part name="eb20.16a" crc="acacf9f2"/>
+    </rom>
+
+    <!-- DIP switches -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

@@ -1,0 +1,48 @@
+<misterromdescription>
+    <name>Multi Champ Deluxe</name>
+    <setname>mchampdx</setname>
+    <rbf>esd_arcade</rbf>
+    <mameversion>0.245</mameversion>
+    <year>1999</year>
+    <manufacturer>ESD</manufacturer>
+    <category>Misc</category>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>horizontal</rotation>
+    <region>World</region>
+    <resolution>320x224</resolution>
+    <!-- Note: Uses mchampdx_map:
+         0x000000-0x07FFFF  Program ROM
+         0x200000-0x20FFFF  Work RAM  (different from multchmp!)
+         0x300000-0x33FFFF  BG VRAM
+         0x400000-0x400FFF  Palette RAM
+         0x500000-0x50000F  I/O (EEPROM variant)
+         0x600000-0x6007FF  Sprite RAM
+         0x700000-0x70000F  Video attributes
+         This map variant requires separate RTL configuration. -->
+    <rom index="0" zip="mchampdx.zip" type="merged" md5="None">
+        <!-- 68000 Program ROM -->
+        <part name="ver0106_esd2.cu02" crc="ea98b3fd"/>
+        <part name="ver0106_esd1.cu03" crc="c6e4546b"/>
+
+        <!-- Z80 Sound ROM -->
+        <part name="esd3.su06" crc="1b22568c"/>
+
+        <!-- OKI M6295 Samples -->
+        <part name="esd4.su10" crc="2fbe94ab"/>
+
+        <!-- Sprites (16x16x5bpp, large flash ROMs):
+             ROM_LOAD pairs + extra ROM at 0x400000 -->
+        <part name="ver0106_ju02.bin" crc="b27a4977"/>
+        <part name="ver0106_ju01.bin" crc="55841d90"/>
+        <part name="ver0106_esd5.ju07" crc="7a3ac887"/>
+
+        <!-- BG Tiles (16x16x8bpp, two 2MB ROMs): -->
+        <part name="rom.fu35" crc="ba46f3dc"/>
+        <part name="rom.fu34" crc="2895cf09"/>
+    </rom>
+    <switches page_id="1" page_name="Switches" base="16" default="FF,FF">
+        <!-- Uses EEPROM -->
+        <dip bits="0" name="Test" ids="Off,On"/>
+    </switches>
+</misterromdescription>

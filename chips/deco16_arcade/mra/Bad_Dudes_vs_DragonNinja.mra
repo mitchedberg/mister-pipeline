@@ -1,0 +1,112 @@
+<!--
+    Bad Dudes vs. DragonNinja (1988) — Data East
+    MiSTer ROM descriptor for DECO16 (dec0) core
+
+    Hardware:
+      MC68000 @ 10 MHz
+      M6502 (RP65C02A) audio CPU @ 1.5 MHz
+      Intel i8751 security MCU
+      BAC06 x3 tile generators (8x8 text + 16x16 BG x2)
+      MXC06 sprite generator
+      YM2203 OPN @ 1.5 MHz
+      YM3812 OPL2 @ 3.0 MHz
+      OKI M6295 ADPCM @ 1.0 MHz
+
+    MAME driver: dataeast/dec0.cpp, set: baddudes
+    ROM CRCs from MAME 0.245
+    Jotego coverage: YES (jtninja core) — this MRA is for the pipeline core
+
+    NOTE: This core covers dec0 family (BAC06 + MXC06 video).
+    Video subsystem (BAC06 tile gen, MXC06 sprite gen) is scaffolded;
+    cpu-boots from ROM. Full video requires BAC06/MXC06 RTL implementation.
+
+    SDRAM layout (proposed — dec0 5-channel):
+      Bank 0 @ 0x000000  maincpu (68000 program ROM, 384KB)
+      Bank 1 @ 0x060000  gfx1 (BAC06[0] char tile ROM)
+      Bank 2 @ 0x080000  gfx2 (BAC06[1] BG1 tile ROM)
+      Bank 3 @ 0x100000  gfx3 (BAC06[2] BG2 tile ROM)
+      Bank 4 @ 0x200000  sprites (MXC06 sprite ROM)
+      Bank 5 @ 0x280000  audiocpu (M6502 sound ROM, 32KB)
+      Bank 6 @ 0x290000  oki (OKI M6295 ADPCM samples)
+-->
+<misterromdescription>
+    <name>Bad Dudes vs. DragonNinja</name>
+    <setname>baddudes</setname>
+    <rbf>DECO16</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Coinage"    bits="0,1"  values="1 Coin/1 Credit,2 Coins/1 Credit,1 Coin/2 Credits,Free Play"/>
+        <dip name="Lives"      bits="2,3"  values="3,4,5,2"/>
+        <dip name="Difficulty" bits="4,5"  values="Normal,Hard,Easy,Very Hard"/>
+        <dip name="Demo Sound" bits="8,8"  values="On,Off"/>
+    </switches>
+
+    <!-- CPU Program ROM (384KB, byte-interleaved 68000 pairs) -->
+    <!-- Even bytes (D15:D8) from .3C/.4C/.6C, odd bytes (D7:D0) from .3A/.4A/.6A -->
+    <rom index="0" zip="baddudes.zip" md5="None">
+        <interleave output="16">
+            <part name="de-0-b.3c" crc="41a5a27d" map="10"/>
+            <part name="de-0-b.3a" crc="5858372c" map="01"/>
+        </interleave>
+        <interleave output="16">
+            <part name="de-1-b.4c" crc="f7a7df58" map="10"/>
+            <part name="de-1-b.4a" crc="d5b953b5" map="01"/>
+        </interleave>
+        <interleave output="16">
+            <part name="de-2-b.6c" crc="7cb99845" map="10"/>
+            <part name="de-2-b.6a" crc="e1b5aa2c" map="01"/>
+        </interleave>
+    </rom>
+
+    <!-- GFX1 — BAC06[0] char tiles (8x8 text layer) -->
+    <rom index="1" zip="baddudes.zip" md5="None">
+        <part name="dm-0.7a" crc="1a3e0096"/>
+    </rom>
+
+    <!-- GFX2 — BAC06[1] BG1 tiles (16x16 background layer 1) -->
+    <rom index="2" zip="baddudes.zip" md5="None">
+        <interleave output="16">
+            <part name="dm-3.14a" crc="6d1ab140" map="10"/>
+            <part name="dm-2.12a" crc="d7e657f4" map="01"/>
+        </interleave>
+        <interleave output="16">
+            <part name="dm-5.14c" crc="8c6d0200" map="10"/>
+            <part name="dm-4.12c" crc="c6c9e20f" map="01"/>
+        </interleave>
+    </rom>
+
+    <!-- GFX3 — BAC06[2] BG2 tiles (16x16 background layer 2) -->
+    <rom index="3" zip="baddudes.zip" md5="None">
+        <interleave output="16">
+            <part name="dm-7.12e" crc="5261b239" map="10"/>
+            <part name="dm-6.12c" crc="c8e26e7c" map="01"/>
+        </interleave>
+    </rom>
+
+    <!-- Sprites — MXC06 sprite ROM -->
+    <rom index="4" zip="baddudes.zip" md5="None">
+        <interleave output="32">
+            <part name="da-6.11a" crc="f3d2f4d6" map="0001"/>
+            <part name="da-5.9a"  crc="4b39b072" map="0010"/>
+            <part name="da-4.8a"  crc="a7d1e8e7" map="0100"/>
+            <part name="da-3.7a"  crc="b4c8b15e" map="1000"/>
+        </interleave>
+    </rom>
+
+    <!-- Audio CPU ROM (M6502, 32KB at 0x8000) -->
+    <rom index="5" zip="baddudes.zip" md5="None">
+        <part name="de-s0.2b" crc="cd7f0429" offset="0x8000"/>
+    </rom>
+
+    <!-- OKI M6295 ADPCM samples -->
+    <rom index="6" zip="baddudes.zip" md5="None">
+        <part name="de-v0.16a" crc="4b5e8b2e"/>
+    </rom>
+
+    <!-- DIP switches -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

@@ -1,0 +1,61 @@
+<misterromdescription>
+    <name>Multi Champ</name>
+    <setname>multchmpk</setname>
+    <rbf>esd_arcade</rbf>
+    <mameversion>0.245</mameversion>
+    <year>1998</year>
+    <manufacturer>ESD</manufacturer>
+    <category>Misc</category>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>horizontal</rotation>
+    <region>Korea</region>
+    <resolution>320x224</resolution>
+    <rom index="0" zip="multchmpk.zip" type="merged" md5="None">
+        <!-- 68000 Program ROM: interleaved pair at 0x000000, 512KB total -->
+        <!-- multichmp.u02 = even bytes, multchmp.u03 = odd bytes -->
+        <part name="multchmp.u02" crc="7da8c0df"/>
+        <part name="multchmp.u03" crc="5dc62799"/>
+
+        <!-- Z80 Sound ROM: 256KB at prog_rom end, or separate index -->
+        <!-- Loaded after main program in our SDRAM layout -->
+        <part name="esd3.su06" crc="7c178bd7"/>
+
+        <!-- OKI M6295 Samples -->
+        <part name="esd4.su10" crc="6e741fcd"/>
+
+        <!-- Sprites (16x16x5bpp, 5 ROMs interleaved): -->
+        <!-- hedpanic_sprite_16x16x5 layout: -->
+        <!--   planes: {RGN_FRAC(2,3), RGN_FRAC(0,3), RGN_FRAC(0,3)+8, RGN_FRAC(1,3), RGN_FRAC(1,3)+8} -->
+        <!-- ROM_LOAD16_BYTE pairs: -->
+        <part name="multchmp.u39" crc="51f01067"/>
+        <part name="multchmp.u38" crc="88e252e8"/>
+        <part name="multchmp.u37" crc="b1ae7f08"/>
+        <part name="multchmp.u36" crc="d8f06fa8"/>
+        <part name="multchmp.u35" crc="9d1590a6"/>
+
+        <!-- BG Tiles (16x16x8bpp, 4 ROMs interleaved ROM_LOAD32_BYTE): -->
+        <part name="multchmp.u31" crc="b1e4e9e3"/>
+        <part name="multchmp.u29" crc="01bd1399"/>
+        <part name="multchmp.u33" crc="e4c0ec96"/>
+        <part name="multchmp.u27" crc="dc42704e"/>
+        <part name="multchmp.u32" crc="f05cb5b4"/>
+        <part name="multchmp.u30" crc="c6b4cc18"/>
+        <part name="multchmp.u34" crc="bffaaccc"/>
+        <part name="multchmp.u28" crc="449991fa"/>
+    </rom>
+    <switches page_id="1" page_name="Switches" base="16" default="FF,FF">
+        <!-- SW1 -->
+        <dip bits="0" name="Test" ids="Off,On"/>
+        <dip bits="1" name="Coinage Type" ids="Type1,Type2"/>
+        <dip bits="2" name="Demo Sounds" ids="On,Off"/>
+        <dip bits="3" name="Flip Screen" ids="Off,On"/>
+        <dip bits="5,4" name="Coin A" ids="1C-1C,2C-1C,2C-3C,Free Play"/>
+        <dip bits="7,6" name="Coin B" ids="1C-1C,2C-1C,1C-2C,1C-6C"/>
+        <!-- SW2 -->
+        <dip bits="9,8" name="Difficulty" ids="Normal,Easy,Hard,Hardest"/>
+        <dip bits="11,10" name="Lives" ids="3,2,4,5"/>
+        <dip bits="12" name="Selectable Games" ids="3,4"/>
+        <dip bits="13" name="Free Play" ids="Off,On"/>
+    </switches>
+</misterromdescription>

@@ -1,0 +1,69 @@
+# =============================================================================
+# ESD 16-bit Arcade Core — QIP File (Quartus Source Files)
+# =============================================================================
+#
+# Add core-specific RTL files here.
+# System framework files (sys.qip) are sourced from sys/sys.tcl.
+#
+# WARNING: Do not add files through Quartus IDE — edit this file directly!
+#
+# =============================================================================
+
+# =========================================================================
+# TOP-LEVEL EMU WRAPPER
+# =========================================================================
+
+set_global_assignment -name SYSTEMVERILOG_FILE emu.sv
+
+# =========================================================================
+# PLL (Phase-Locked Loop)
+# =========================================================================
+
+set_global_assignment -name QIP_FILE rtl/pll.qip
+
+# =========================================================================
+# ESD ARCADE CORE (Main Integration)
+# =========================================================================
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/esd_arcade.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/esd_video.sv
+
+# =========================================================================
+# MC68000 CPU CORE (fx68k)
+# =========================================================================
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/fx68k.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/fx68kAlu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/uaddrPla.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/rtl/fx68k_adapter.sv
+
+# =========================================================================
+# Z80 SOUND CPU (T80s)
+# =========================================================================
+
+set_global_assignment -name VERILOG_FILE ../rtl/t80/T80s.v
+
+# =========================================================================
+# SOUND CHIPS
+# =========================================================================
+
+# jt6295 — OKI M6295 ADPCM (reuse from nmk_arcade vendor directory)
+set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt6295/jt6295.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt6295/jt6295_timing.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt6295/jt6295_rom.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt6295/jt6295_ctrl.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt6295/jt6295_adpcm.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt6295/jt6295_acc.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt6295/jt6295_serial.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt6295/jt6295_sh_rst.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt6295/jt12_interpol.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/audio/jt6295/jt12_comb.v
+
+# jt51 — YM3812 / OPL2 equivalent (use jt51 as base, or jtframe ym3812 wrapper)
+# Note: YM3812 is OPL2. jt51 covers OPM (YM2151). For OPL2, use jtfm from jtframe.
+# Placeholder: use silence stub until vendor OPL2 core is identified.
+# TODO: Integrate jtframe's jtfm (jtopl) for YM3812 emulation.
+
+# =============================================================================
+# END OF FILES.QIP
+# =============================================================================

@@ -1,0 +1,2 @@
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) deco16_arcade_top.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/deco16_arcade.sv]

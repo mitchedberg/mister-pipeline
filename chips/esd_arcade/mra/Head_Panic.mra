@@ -1,0 +1,48 @@
+<misterromdescription>
+    <name>Head Panic</name>
+    <setname>hedpanic</setname>
+    <rbf>esd_arcade</rbf>
+    <mameversion>0.245</mameversion>
+    <year>1999</year>
+    <manufacturer>ESD</manufacturer>
+    <category>Platform</category>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>horizontal</rotation>
+    <region>World</region>
+    <resolution>320x224</resolution>
+    <!-- Note: Uses hedpanic_map (different from multchmp_map):
+         0x000000-0x07FFFF  Program ROM
+         0x100000-0x10FFFF  Work RAM
+         0x800000-0x800FFF  Palette RAM
+         0x900000-0x9007FF  Sprite RAM
+         0xA00000-0xA3FFFF  BG VRAM
+         0xB00000-0xB0000F  Video attributes
+         0xC00000-0xC0000F  I/O (EEPROM variant)
+         0xD00008-0xD00009  Platform write (protection)
+         This map variant requires separate RTL configuration. -->
+    <rom index="0" zip="hedpanic.zip" type="merged" md5="None">
+        <!-- 68000 Program ROM -->
+        <part name="esd2.cu03" crc="7c7be3bb"/>
+        <part name="esd1.cu02" crc="42405e9d"/>
+
+        <!-- Z80 Sound ROM -->
+        <part name="esd3.su06" crc="a88d4424"/>
+
+        <!-- OKI M6295 Samples -->
+        <part name="esd4.su10" crc="3c11c590"/>
+
+        <!-- Sprites (16x16x5bpp): -->
+        <part name="esd7.ju02" crc="055d525f"/>
+        <part name="esd6.ju01" crc="5858372c"/>
+        <part name="esd5.ju07" crc="bd785921"/>
+
+        <!-- BG Tiles (16x16x8bpp): -->
+        <part name="esd8.fu35" crc="23aceb4f"/>
+        <part name="esd9.fu34" crc="76b46cd2"/>
+    </rom>
+    <switches page_id="1" page_name="Switches" base="16" default="FF,FF">
+        <!-- Uses EEPROM for settings — DIP stubs only -->
+        <dip bits="0" name="Test" ids="Off,On"/>
+    </switches>
+</misterromdescription>

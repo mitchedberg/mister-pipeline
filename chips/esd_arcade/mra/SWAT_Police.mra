@@ -1,0 +1,51 @@
+<misterromdescription>
+    <name>SWAT Police</name>
+    <setname>swatpolc</setname>
+    <rbf>esd_arcade</rbf>
+    <mameversion>0.245</mameversion>
+    <year>2001</year>
+    <manufacturer>ESD</manufacturer>
+    <category>Platform</category>
+    <players>2</players>
+    <joystick>8-way</joystick>
+    <rotation>horizontal</rotation>
+    <region>World</region>
+    <resolution>320x224</resolution>
+    <!-- Note: Uses tangtang_map (same as Deluxe 5 / Tang Tang):
+         0x000000-0x07FFFF  Program ROM
+         0x700000-0x70FFFF  Work RAM
+         0x100000-0x100FFF  Palette RAM
+         0x200000-0x2007FF  Sprite RAM
+         0x300000-0x33FFFF  BG VRAM
+         0x400000-0x40000F  Video attributes
+         0x500000-0x50000F  I/O (EEPROM variant)
+         0x600008-0x600009  Platform write (protection)
+         Uses 3-button joystick. -->
+    <rom index="0" zip="swatpolc.zip" type="merged" md5="None">
+        <!-- 68000 Program ROM: 2 x 256KB, interleaved even/odd -->
+        <part name="esd.cu02" crc="29e0c126"/>
+        <part name="esd.cu03" crc="1070208b"/>
+
+        <!-- Z80 Sound ROM: 256KB -->
+        <part name="esd3.su06" crc="80e97dbe"/>
+
+        <!-- OKI M6295 Samples: 256KB -->
+        <part name="at27c020.su10" crc="c43efec2"/>
+
+        <!-- Sprites (16x16x5bpp): 5 x 512KB ROM_LOAD16_BYTE pairs -->
+        <part name="esd4.ju06" crc="bde1b130"/>
+        <part name="esd3.ju05" crc="e8d9c092"/>
+        <part name="esd2.ju04" crc="9c1752f2"/>
+        <part name="esd1.ju03" crc="17fcc5e7"/>
+        <part name="esd5.ju07" crc="d2c27f03"/>
+
+        <!-- BG Tiles (16x16x8bpp): 2 x 2MB ROM_LOAD32_WORD interleaved -->
+        <part name="fu35" crc="c55897c5"/>
+        <part name="fu34" crc="7117a6a2"/>
+    </rom>
+    <switches page_id="1" page_name="Switches" base="16" default="FF,FF">
+        <!-- Uses EEPROM for most settings -->
+        <dip bits="0" name="Service" ids="Off,On"/>
+        <dip bits="6" name="Test Mode" ids="Off,On"/>
+    </switches>
+</misterromdescription>
