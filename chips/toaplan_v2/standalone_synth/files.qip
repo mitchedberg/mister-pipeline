@@ -2,3 +2,4 @@ set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) t
 set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/toaplan_v2.sv]
 set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/sdram_b.sv]
 set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) ../rtl/t80/T80s.v]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../../gp9001/rtl/gp9001.sv]
