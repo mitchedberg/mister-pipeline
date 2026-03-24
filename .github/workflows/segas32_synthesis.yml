@@ -26,10 +26,10 @@ jobs:
 
       - name: Add swap space for Quartus
         run: |
-          sudo fallocate -l 8G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
+          sudo fallocate -l 8G /mnt/quartus_swap
+          sudo chmod 600 /mnt/quartus_swap
+          sudo mkswap /mnt/quartus_swap
+          sudo swapon /mnt/quartus_swap
           echo "Swap enabled:"
           free -h
 
