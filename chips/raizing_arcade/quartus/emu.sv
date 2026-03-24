@@ -325,8 +325,30 @@ pll u_pll
     .locked   (pll_locked)
 );
 
-// SDRAM clock pin driven directly from PLL output
-assign SDRAM_CLK = clk_sdram;
+// SDRAM clock pin driven via altddio_out DDR buffer (required on Cyclone V).
+// Direct assign SDRAM_CLK creates a multi-driver conflict; altddio_out is the
+// mandatory community pattern — every MiSTer core uses this exact construct.
+altddio_out #(
+    .intended_device_family("Cyclone V"),
+    .extend_oe_disable("OFF"),
+    .invert_output("OFF"),
+    .lpm_hint("UNUSED"),
+    .lpm_type("altddio_out"),
+    .oe_reg("UNREGISTERED"),
+    .power_up_high("OFF"),
+    .width(1)
+) sdramclk_ddr (
+    .datain_h(1'b0),
+    .datain_l(1'b1),
+    .outclock(clk_sdram),
+    .dataout(SDRAM_CLK),
+    .aclr(1'b0),
+    .aset(1'b0),
+    .oe(1'b1),
+    .outclocken(1'b1),
+    .sclr(1'b0),
+    .sset(1'b0)
+);
 
 //////////////////////////////////////////////////////////////////
 // Reset
