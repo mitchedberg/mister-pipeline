@@ -1,0 +1,56 @@
+<!--
+    Strike Gunner S.T.G (1991) — Seta
+    MiSTer ROM descriptor for SETA 1 core
+
+    Manufacturer: Athena / Tecmo
+    MAME driver: seta/seta.cpp
+    ROM set CRCs verified from MAME 0.245
+-->
+<misterromdescription>
+    <name>Strike Gunner S.T.G</name>
+    <setname>strike_gunner_s.t.g</setname>
+    <rbf>SETA1</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Coinage"     ids="0,0" bits="0,1" values="1 Coin/1 Credit,2 Coins/1 Credit,1 Coin/2 Credits,Free Play"/>
+        <dip name="Lives"       ids="0,0" bits="2,3" values="3,4,5,2"/>
+        <dip name="Difficulty"  ids="0,0" bits="4,5" values="Normal,Hard,Easy,Very Hard"/>
+        <dip name="Demo Sound"  ids="1,1" bits="0,0" values="On,Off"/>
+        <dip name="Screen Flip" ids="1,1" bits="1,1" values="Normal,Flipped"/>
+    </switches>
+
+    <!-- CPU Program ROM (524288 bytes) -->
+    <rom index="0" zip="strike_gunner_s.t.g.zip" md5="None">
+        <interleave output="16">
+            <part name="att01003.u27" crc="7a640a93" map="10"/>
+            <part name="att01001.u9" crc="4fa88ad3" map="01"/>
+            <part name="att01004.u33" crc="bbd45ca1" map="01"/>
+            <part name="att01002.u17" crc="2f8fd80c" map="01"/>
+        </interleave>
+    </rom>
+
+    <!-- Sprite/Graphics ROM (1048576 bytes) -->
+    <rom index="1" zip="strike_gunner_s.t.g.zip" md5="None">
+        <part name="att01006.u32" crc="6ad78ea2"/>
+        <part name="att01005.u26" crc="a347ff00"/>
+    </rom>
+
+    <!-- Tile ROM (1048576 bytes) -->
+    <rom index="2" zip="strike_gunner_s.t.g.zip" md5="None">
+        <part name="att01008.u39" crc="20c47457"/>
+        <part name="att01007.u42" crc="ac975544"/>
+    </rom>
+
+    <!-- X1-010 Sound ROM (1048576 bytes) -->
+    <rom index="3" zip="strike_gunner_s.t.g.zip" md5="None">
+        <part name="att01009.u47" crc="4276b58d"/>
+        <part name="att01010.u55" crc="fffb2f53"/>
+    </rom>
+
+    <!-- DIP switches (index 254) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

@@ -1,0 +1,55 @@
+<!--
+    Jockey Club (v1.18) (1990) — Seta
+    MiSTer ROM descriptor for SETA 1 core
+
+    Manufacturer: Seta (Visco license)
+    MAME driver: seta/seta.cpp
+    ROM set CRCs verified from MAME 0.245
+-->
+<misterromdescription>
+    <name>Jockey Club (v1.18)</name>
+    <setname>jockey_club_(v1.18)</setname>
+    <rbf>SETA1</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Coinage"     ids="0,0" bits="0,1" values="1 Coin/1 Credit,2 Coins/1 Credit,1 Coin/2 Credits,Free Play"/>
+        <dip name="Lives"       ids="0,0" bits="2,3" values="3,4,5,2"/>
+        <dip name="Difficulty"  ids="0,0" bits="4,5" values="Normal,Hard,Easy,Very Hard"/>
+        <dip name="Demo Sound"  ids="1,1" bits="0,0" values="On,Off"/>
+        <dip name="Screen Flip" ids="1,1" bits="1,1" values="Normal,Flipped"/>
+    </switches>
+
+    <!-- CPU Program ROM (655360 bytes) -->
+    <rom index="0" zip="jockey_club_(v1.18).zip" md5="None">
+        <part name="ya_007_002.u23" crc="c499bf4d"/>
+        <part name="ya_007_003.u33" crc="e7b0677e"/>
+        <part name="ya-002-001.u18" crc="dd108016"/>
+    </rom>
+
+    <!-- Sprite/Graphics ROM (2097152 bytes) -->
+    <rom index="1" zip="jockey_club_(v1.18).zip" md5="None">
+        <part name="ya-001-007-t77.u27" crc="2dc7a294"/>
+        <part name="ya-001-006-t76.u22" crc="bfae01a5"/>
+        <part name="ya-001-005-t75.u17" crc="4a6c804b"/>
+        <part name="ya-001-004-t74.u10" crc="eb74d2e0"/>
+    </rom>
+
+    <!-- Tile ROM (524288 bytes) -->
+    <rom index="2" zip="jockey_club_(v1.18).zip" md5="None">
+        <part name="ya-001-008-t59.u35" crc="4b890f83"/>
+        <part name="ya-001-009-t60.u41" crc="caa5e3c1"/>
+    </rom>
+
+    <!-- X1-010 Sound ROM (1048576 bytes) -->
+    <rom index="3" zip="jockey_club_(v1.18).zip" md5="None">
+        <part name="ya-001-013.u71" crc="2bccaf47"/>
+        <part name="ya-001-012.u64" crc="a8015ce6"/>
+    </rom>
+
+    <!-- DIP switches (index 254) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

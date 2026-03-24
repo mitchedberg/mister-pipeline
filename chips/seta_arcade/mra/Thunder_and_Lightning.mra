@@ -1,0 +1,50 @@
+<!--
+    Thunder &amp; Lightning (set 1) (1990) — Seta
+    MiSTer ROM descriptor for SETA 1 core
+
+    Manufacturer: Seta
+    MAME driver: seta/seta.cpp
+    ROM set CRCs verified from MAME 0.245
+-->
+<misterromdescription>
+    <name>Thunder &amp; Lightning (set 1)</name>
+    <setname>thunder_and_lightning_(set_1)</setname>
+    <rbf>SETA1</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Coinage"     ids="0,0" bits="0,1" values="1 Coin/1 Credit,2 Coins/1 Credit,1 Coin/2 Credits,Free Play"/>
+        <dip name="Lives"       ids="0,0" bits="2,3" values="3,4,5,2"/>
+        <dip name="Difficulty"  ids="0,0" bits="4,5" values="Normal,Hard,Easy,Very Hard"/>
+        <dip name="Demo Sound"  ids="1,1" bits="0,0" values="On,Off"/>
+        <dip name="Screen Flip" ids="1,1" bits="1,1" values="Normal,Flipped"/>
+    </switches>
+
+    <!-- CPU Program ROM (65536 bytes) -->
+    <rom index="0" zip="thunder_and_lightning_(set_1).zip" md5="None">
+        <interleave output="16">
+            <part name="m4" crc="1e6b9462" map="10"/>
+            <part name="m5" crc="7e82793e" map="01"/>
+        </interleave>
+    </rom>
+
+    <!-- Sprite/Graphics ROM (524288 bytes) -->
+    <rom index="1" zip="thunder_and_lightning_(set_1).zip" md5="None">
+        <part name="t17" crc="599a632a"/>
+        <part name="t16" crc="3aeef91c"/>
+        <part name="t15" crc="b97a7b56"/>
+        <part name="t14" crc="79c707be"/>
+    </rom>
+
+    <!-- X1-010 Sound ROM (1048576 bytes) -->
+    <rom index="2" zip="thunder_and_lightning_(set_1).zip" md5="None">
+        <part name="r28" crc="a043615d"/>
+        <part name="r27" crc="cb8425a3"/>
+    </rom>
+
+    <!-- DIP switches (index 254) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

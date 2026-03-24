@@ -679,6 +679,9 @@ wire        cpu_as_n;
 wire        cpu_dtack_n;
 wire [2:0]  cpu_ipl_n;
 wire        cpu_reset_n_out;
+wire [2:0]  cpu_fc;       // function codes — needed by kaneko_arcade for IACK decode
+wire        cpu_inta_n;   // IACK strobe from adapter (kaneko_arcade derives its own internally)
+wire        cpu_halted_n; // double-bus-fault indicator (diagnostic only)
 
 fx68k_adapter u_cpu (
     .clk            (clk_sys),
@@ -694,7 +697,10 @@ fx68k_adapter u_cpu (
     .cpu_as_n       (cpu_as_n),
     .cpu_dtack_n    (cpu_dtack_n),
     .cpu_ipl_n      (cpu_ipl_n),
-    .cpu_reset_n_out(cpu_reset_n_out)
+    .cpu_reset_n_out(cpu_reset_n_out),
+    .cpu_inta_n     (cpu_inta_n),
+    .cpu_fc         (cpu_fc),
+    .cpu_halted_n   (cpu_halted_n)
 );
 
 // prog_rom_addr from kaneko_arcade core drives SDRAM CH1 address.
@@ -719,6 +725,7 @@ kaneko_arcade u_kaneko_arcade
     .cpu_as_n    (cpu_as_n),
     .cpu_dtack_n (cpu_dtack_n),
     .cpu_ipl_n   (cpu_ipl_n),
+    .cpu_fc      (cpu_fc),        // function codes for level-specific IACK decode
 
     // ── Program ROM (SDRAM CH1) ───────────────────────────────────────────────
     .prog_rom_addr (prog_rom_addr_w),

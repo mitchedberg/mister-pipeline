@@ -1,0 +1,72 @@
+<!--
+    Dragon Unit / Castle of Dragon (1989) — Seta
+    MiSTer ROM descriptor for SETA 1 core
+
+    Manufacturer: Athena / Seta
+    MAME driver: seta/seta.cpp
+    ROM set CRCs verified from MAME 0.245
+-->
+<misterromdescription>
+    <name>Dragon Unit / Castle of Dragon</name>
+    <setname>dragon_unit___castle_of_dragon</setname>
+    <rbf>SETA1</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Coinage"     ids="0,0" bits="0,1" values="1 Coin/1 Credit,2 Coins/1 Credit,1 Coin/2 Credits,Free Play"/>
+        <dip name="Lives"       ids="0,0" bits="2,3" values="3,4,5,2"/>
+        <dip name="Difficulty"  ids="0,0" bits="4,5" values="Normal,Hard,Easy,Very Hard"/>
+        <dip name="Demo Sound"  ids="1,1" bits="0,0" values="On,Off"/>
+        <dip name="Screen Flip" ids="1,1" bits="1,1" values="Normal,Flipped"/>
+    </switches>
+
+    <!-- CPU Program ROM (262144 bytes) -->
+    <rom index="0" zip="dragon_unit___castle_of_dragon.zip" md5="None">
+        <interleave output="16">
+            <part name="prg-e.bin" crc="728447df" map="10"/>
+            <part name="prg-o.bin" crc="b2f58ecf" map="01"/>
+        </interleave>
+    </rom>
+
+    <!-- Sprite/Graphics ROM (1048576 bytes) -->
+    <rom index="1" zip="dragon_unit___castle_of_dragon.zip" md5="None">
+        <part name="obj-2.bin" crc="d7f6ab5a"/>
+        <part name="obj-1.bin" crc="53a95b13"/>
+        <part name="obj-6.bin" crc="80b801f7"/>
+        <part name="obj-5.bin" crc="6b87bc20"/>
+        <part name="obj-4.bin" crc="60d17771"/>
+        <part name="obj-3.bin" crc="0bccd4d5"/>
+        <part name="obj-8.bin" crc="826c1543"/>
+        <part name="obj-7.bin" crc="cbaa7f6a"/>
+    </rom>
+
+    <!-- Tile ROM (1048576 bytes) -->
+    <rom index="2" zip="dragon_unit___castle_of_dragon.zip" md5="None">
+        <part name="scr-1o.bin" crc="671525db"/>
+        <part name="scr-1e.bin" crc="dc9cd8c9"/>
+        <part name="scr-2o.bin" crc="2a3f2ed8"/>
+        <part name="scr-2e.bin" crc="b6126b41"/>
+        <part name="scr-3o.bin" crc="4d33a92d"/>
+        <part name="scr-3e.bin" crc="1592b8c2"/>
+        <part name="scr-4o.bin" crc="79a0aa61"/>
+        <part name="scr-4e.bin" crc="8201681c"/>
+    </rom>
+
+    <!-- X1-010 Sound ROM (1048576 bytes) -->
+    <rom index="3" zip="dragon_unit___castle_of_dragon.zip" md5="None">
+        <part name="snd-1.bin" crc="8f47bd0d"/>
+        <part name="snd-2.bin" crc="65c40ef5"/>
+        <part name="snd-3.bin" crc="71fbd54e"/>
+        <part name="snd-4.bin" crc="ac50133f"/>
+        <part name="snd-5.bin" crc="70652f2c"/>
+        <part name="snd-6.bin" crc="10a1039d"/>
+        <part name="snd-7.bin" crc="decbc8b0"/>
+        <part name="snd-8.bin" crc="3ac51bee"/>
+    </rom>
+
+    <!-- DIP switches (index 254) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

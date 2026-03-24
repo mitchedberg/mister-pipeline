@@ -2327,3 +2327,45 @@ Successfully rebuilt the SETA 1 Verilator simulation with Blandia ROM and ran it
 **Status:** FAILED
 **Session:** bc7634b8-3429-42bb-8e0b-08173e00e422
 **Result excerpt:** 
+
+## 2026-03-24T21:48:28Z — Factory → Log: TASK-100
+**Status:** SUCCESS
+**Session:** bcb128d9-f7b3-4c37-b4d3-84f50d76bae9
+**Result excerpt:** ## TASK-100 Complete ✅
+
+### What was found & fixed
+
+The NMK arcade IPL logic in `nmk_arcade.sv` was already correctly using the IACK-based set/clear latch pattern — but there was a **wiring gap** causing the IACK signal to never reach the latch:
+
+1. **`fx68k_adapter.sv`** — computed `inta_n` internally but never exposed it as an output port
+2. **`emu.sv`** — never declared `wire cpu_inta_n` or connected it, so the input defaulted to `0` (always-asserted IACK), silently clearing the IPL on the sa
+
+## 2026-03-24T21:50:03Z — Factory → Log: TASK-103
+**Status:** SUCCESS
+**Session:** 624ed1b9-744f-42bd-b7c6-ce499769dbe7
+**Result excerpt:** **TASK-103 complete.** Here's what was done:
+
+## Summary
+
+**Problem found:** 14 standalone synthesis SDC files were missing mandatory fx68k and T80 multicycle timing constraints. Without these, Quartus produces false timing violations on fx68k instruction decode paths (`Ir → microAddr/nanoAddr`), which can cause synthesis to fail timing closure unnecessarily.
+
+**14 files updated** — all `standalone_synth/standalone.sdc` files in:
+- `kaneko_arcade`, `nmk_arcade`, `psikyo_arcade`
+- `taito_b`, `tai
+
+## 2026-03-24T21:52:09Z — Factory → Log: TASK-104
+**Status:** SUCCESS
+**Session:** ec21197b-822e-43d1-88f8-850ad81ac4e6
+**Result excerpt:** This is the eighth run of the same `check_rtl.sh kaneko_arcade` lint check — the result is identical to all previous runs: **all 10 checks pass, exit code 0, safe to synthesize.**
+
+The worker agent's background task queue for TASK-104 appears to still be draining. If further notifications arrive for this same check, the answer will be the same — no new information is being produced.
+
+## 2026-03-24T21:54:14Z — Factory → Log: TASK-102
+**Status:** SUCCESS
+**Session:** 94535f1b-6083-4b64-86f9-e6d13a5269d0
+**Result excerpt:** ## TASK-102 Complete ✅
+
+The agent found that the timer-based IPL issue in `psikyo_arcade.sv` was actually a **wiring omission** — the `cpu_inta_n` signal was never connected through the design layers. Here's what was fixed:
+
+### Root Cause
+The `cpu_inta_n` (IACK) signal existed in `psikyo_arcade.sv` with the correct set/clear latch pattern, but was **never wired up** through the system — causing it to default to `0` (permanently asserted) in simulation, which cleared the IPL latch every clock cy

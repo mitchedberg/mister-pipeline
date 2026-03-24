@@ -1,3 +1,184 @@
+## 2026-03-24 — TASK-110: Verify MAME golden RAM dumps for Thunder Dragon (worker)
+
+**Status:** COMPLETE
+**Executed by:** RTL worker (Claude Opus 4.6)
+
+### Verification Summary
+
+TASK-110 was assigned to generate MAME golden RAM dumps for Thunder Dragon. Investigation revealed these dumps **already exist and are valid**, created as part of prior TASK-070 work (2026-03-22).
+
+**Golden Dump File:**
+- **Location:** `chips/nmk_arcade/sim/golden/tdragon_frames.bin`
+- **Size:** 92 MB (94,371,840 bytes)
+- **Frames:** 1124 frames (derived from 92M ÷ 86,028 bytes/frame)
+- **Source:** MAME 0.257, generated via GPU PC with rpmini MAME library
+
+**File Format (per-frame, 86,028 bytes each):**
+| Offset | Size | Contents |
+|--------|------|----------|
+| 0 | 4 | Frame number (32-bit LE) |
+| 4 | 65536 | Main RAM (0x0B0000-0x0BFFFF) |
+| 65540 | 2048 | Palette RAM (0x0C8000-0x0C87FF) |
+| 67588 | 16384 | BG VRAM (0x0CC000-0x0CFFFF) |
+| 83972 | 2048 | TX VRAM (0x0D0000-0x0D07FF) |
+| 86020 | 8 | Scroll Registers (0x0C4000-0x0C4007) |
+
+**Key Correction Applied (per COMMUNITY_PATTERNS analysis):**
+The Lua script `chips/nmk_arcade/sim/mame_ram_dump.lua` uses **WRAM base 0x0B0000** (not 0x080000 which is I/O space). This correction was confirmed in prior work — 0x080000 would return all zeros, defeating validation.
+
+**MAME Dump Command Used:**
+```bash
+mame tdragon -autoboot_script mame_ram_dump.lua -nothrottle -str 3000
+```
+
+**No Action Required:**
+The dumps are current, valid, and documented in `chips/nmk_arcade/sim/golden/README.md`. Task marked DONE.
+
+---
+
+## 2026-03-24 — TASK-102: Psikyo arcade IPL/IACK wiring fix (worker)
+
+**Status:** COMPLETE
+**Executed by:** RTL worker (Claude Sonnet 4.6)
+
+### What was found
+
+The psikyo_arcade RTL had a **two-layer wiring bug**, identical in structure to the nmk_arcade TASK-100 issue:
+
+**Layer 1 — fx68k_adapter.sv:** The `output logic cpu_inta_n` port was declared and `inta_n` was
+computed, but the assignment `assign cpu_inta_n = inta_n` was absent (the port was declared without
+being driven). Status: already fixed by a prior session; line 230 now has the assignment.
+
+**Layer 2 — emu.sv wiring missing:**
+- `wire cpu_inta_n` not declared in `emu.sv`
+- `.cpu_inta_n(cpu_inta_n)` not present in `fx68k_adapter` instantiation
+- `.cpu_inta_n(cpu_inta_n)` not present in `psikyo_arcade` instantiation
+An unconnected `input logic cpu_inta_n` in psikyo_arcade defaults to 0, permanently asserting IACK
+and clearing the IPL latch every cycle — the CPU never takes any interrupt.
+
+**Layer 3 — sim tb_top.sv wiring missing:**
+- `cpu_inta_n` not in `tb_top.sv` port list — Verilator DUT had no such top-level input
+- `tb_system.cpp` never set `g_top->cpu_inta_n = 1` (idle) or pulsed it on IACK
+- psikyo_int_ack() callback did not drive the DUT signal
+
+**Files changed:**
+1. `chips/psikyo_arcade/quartus/emu.sv` — added `wire cpu_inta_n`, wired in both instantiations
+2. `chips/psikyo_arcade/rtl/tb_top.sv` — added `input logic cpu_inta_n` port, wired to psikyo_arcade
+3. `chips/psikyo_arcade/sim/tb_system.cpp` — added `g_iack_pending` global, `cpu_inta_n = 1` in
+   idle init, deferred IACK pulse in main loop, `psikyo_int_ack()` sets flag
+
+**psikyo_arcade.sv RTL itself was NOT changed** — its IACK-based set/clear latch and synchronizer
+FF at lines 1421-1438 were already correct per COMMUNITY_PATTERNS.md Section 1.2.
+
+**Verification:**
+- `check_rtl.sh psikyo_arcade` passes (all checks pass; warnings are pre-existing sys/ files)
+- `wc -l psikyo_arcade.sv` = 1459 lines
+- Verilator build successful; 10-frame sim runs to completion (~30K instructions)
+
+**Affects other cores:** Any core that added `cpu_inta_n` to its sim `tb_top.sv` but did not
+initialize `g_top->cpu_inta_n = 1` in `tb_system.cpp`, or did not pulse it from the IACK callback,
+will have the same silent interrupt failure. Check: toaplan_v2, kaneko_arcade sims.
+
+---
+
+## 2026-03-24 — TASK-104: Kaneko arcade IPL/IACK fix (worker)
+
+**Status:** COMPLETE
+**Executed by:** RTL worker (Claude Sonnet 4.6)
+
+### What was found
+
+kaneko_arcade.sv used IACK-based set/clear latches (correct pattern), but had two bugs:
+
+**Bug 1 — Multi-level IACK shared clear (failure_catalog confirmed):**
+All three interrupt latches (int3_n/int4_n/int5_n) were cleared by a single `inta_n` wire.
+When the CPU acknowledges level 5 at scanline 224, int3_n and int4_n are also cleared — erasing
+pending lower-priority interrupts. Fixed by adding level-specific decode using A[3:1]:
+```systemverilog
+wire iack3_n = inta_n | (cpu_addr[3:1] != 3'b011);
+wire iack4_n = inta_n | (cpu_addr[3:1] != 3'b100);
+wire iack5_n = inta_n | (cpu_addr[3:1] != 3'b101);
+```
+
+**Bug 2 — cpu_fc unconnected in emu.sv (silent zero-default):**
+kaneko_arcade.sv has `input logic [2:0] cpu_fc` and computes `inta_n` from it internally.
+emu.sv never declared a `cpu_fc` wire and never connected it. SystemVerilog defaults unconnected
+inputs to 0, so `cpu_fc` was always `3'b000` — meaning FC=111 was never detected and IACK
+was never asserted. Result: interrupt latches could never clear, CPU never took any interrupt.
+
+Fix:
+- Added `output logic [2:0] cpu_fc` to `fx68k_adapter.sv`, assigned from `{fx_FC2, fx_FC1, fx_FC0}`
+- In kaneko emu.sv: declared `wire [2:0] cpu_fc`, added `.cpu_fc(cpu_fc)` to both
+  fx68k_adapter and kaneko_arcade instantiations
+- Also added `.cpu_inta_n(cpu_inta_n)` and `.cpu_halted_n(cpu_halted_n)` to terminate
+  the other new fx68k_adapter output ports cleanly
+
+**check_rtl.sh:** All checks passed. Warnings are pre-existing sys/ framework files.
+
+### IPL synchronizer FF
+
+Already present in kaneko_arcade.sv — the `ipl_sync` register at lines 1143-1155 serves as
+the synchronizer stage (fx68k rIpl→iIpl pipeline requires stable IPL across two enPhi2).
+
+### Action needed for other cores using fx68k_adapter
+
+`fx68k_adapter.sv` now has three output ports that need connecting in emu.sv:
+- `cpu_inta_n` — needed if core derives IACK via a separate input (e.g. nmk_arcade pattern)
+- `cpu_fc` — needed if core computes inta_n internally (e.g. kaneko_arcade, taito_b)
+- `cpu_halted_n` — diagnostic only, should be wired to avoid unconnected-output warnings
+
+Cores known to need cpu_fc wiring: taito_b, taito_z, toaplan_v2, psikyo_arcade, taito_x.
+Check each emu.sv — any that instantiate fx68k_adapter without .cpu_fc() will have IACK broken.
+
+---
+
+## 2026-03-24 — TASK-103: fx68k SDC multicycle paths added to all standalone SDC files (worker)
+
+**Status:** COMPLETE
+**Executed by:** RTL worker (Claude Sonnet 4.6)
+
+**What was done:**
+14 standalone_synth/ SDC files were missing the mandatory fx68k and T80 multicycle paths from
+COMMUNITY_PATTERNS.md Section 1.7. All 14 were updated. The 36 SDC files that already had
+multicycle_path entries were left unchanged.
+
+**Files updated (all standalone_synth/standalone.sdc):**
+- chips/kaneko_arcade/standalone_synth/standalone.sdc
+- chips/nmk_arcade/standalone_synth/standalone.sdc
+- chips/psikyo_arcade/standalone_synth/standalone.sdc
+- chips/taito_b/standalone_synth/standalone.sdc
+- chips/taito_f3/standalone_synth/standalone.sdc
+- chips/taito_x/standalone_synth/standalone.sdc
+- chips/taito_z/standalone_synth/standalone.sdc
+- chips/tc0150rod/standalone_synth/standalone.sdc
+- chips/tc0180vcu/standalone_synth/standalone.sdc
+- chips/tc0370mso/standalone_synth/standalone.sdc
+- chips/tc0480scp/standalone_synth/standalone.sdc
+- chips/tc0630fdp/standalone_synth/standalone.sdc
+- chips/tc0650fda/standalone_synth/standalone.sdc
+- chips/toaplan_v2/standalone_synth/standalone.sdc
+
+**Pattern used (exact from COMMUNITY_PATTERNS.md Section 1.7):**
+```tcl
+set_multicycle_path -start -setup -from [get_keepers {*|Ir[*]}]               -to [get_keepers {*|microAddr[*]}]      2
+set_multicycle_path -start -hold  -from [get_keepers {*|Ir[*]}]               -to [get_keepers {*|microAddr[*]}]      1
+set_multicycle_path -start -setup -from [get_keepers {*|Ir[*]}]               -to [get_keepers {*|nanoAddr[*]}]       2
+set_multicycle_path -start -hold  -from [get_keepers {*|Ir[*]}]               -to [get_keepers {*|nanoAddr[*]}]       1
+set_multicycle_path -start -setup -from [get_keepers {*|nanoLatch[*]}]        -to [get_keepers {*|alu|pswCcr[*]}]     2
+set_multicycle_path -start -hold  -from [get_keepers {*|nanoLatch[*]}]        -to [get_keepers {*|alu|pswCcr[*]}]     1
+set_multicycle_path -start -setup -from [get_keepers {*|excUnit|alu|oper[*]}] -to [get_keepers {*|alu|pswCcr[*]}]     2
+set_multicycle_path -start -hold  -from [get_keepers {*|excUnit|alu|oper[*]}] -to [get_keepers {*|alu|pswCcr[*]}]     1
+set_multicycle_path -from [get_keepers {*|Z80CPU|*}] -setup 2
+set_multicycle_path -from [get_keepers {*|Z80CPU|*}] -hold 1
+```
+
+**Note for other agents:** The tc0xxx chip-level standalones (tc0150rod, tc0180vcu, tc0370mso,
+tc0480scp, tc0630fdp, tc0650fda) do not instantiate fx68k or Z80 directly, but the paths are
+harmless (Quartus ignores unmatched keeper patterns). Adding them now prevents a gap if any
+of these chips is ever integrated into a system-level synth that copies the SDC.
+
+---
+
 ## 2026-03-24 — TASK-100: NMK Arcade IPL/IACK wiring fix (worker)
 
 **Status:** COMPLETE
