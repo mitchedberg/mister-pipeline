@@ -137,3 +137,4 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:sys/build_id.tcl"
 
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 # [touch to re-trigger CI after toaplan_v2/gp9001 BRAM attribute OOM fixes]
+# gp9001 fix ade4f9e
