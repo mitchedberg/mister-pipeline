@@ -81,6 +81,7 @@
 //
 // =============================================================================
 
+/* verilator lint_off UNUSEDPARAM */
 module batrider_arcade #(
     parameter int CLK_FREQ_HZ     = 96_000_000,
     parameter bit IS_BAKRAID       = 0          // 1 = Battle Bakraid (different ROMs/regs)
@@ -209,7 +210,9 @@ module batrider_arcade #(
 
     // Inputs from 68K address decoder (wired internally in this scaffold)
     logic        objbank_cs;        // 0x500000–0x50000F chip select
-    logic [3:1]  cpu_addr_objbank;  // CPU address bits [3:1] (word address within bank region)
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic [3:1]  cpu_addr_objbank;  // CPU address bits [3:1] (word address within bank region; [3] unused in scaffold)
+    /* verilator lint_on UNUSEDSIGNAL */
     logic [7:0]  cpu_din_lo;        // CPU low byte (drives bank slots 2*offset, 2*offset+1)
 
     // Two-cycle sequencer: issue slot-A then slot-B on consecutive cycles
@@ -320,6 +323,8 @@ module batrider_arcade #(
     // 0xE006 are not connected.  IS_BAKRAID parameter suppresses the GAL.
     // =========================================================================
 
+    /* verilator lint_off UNDRIVEN */
+    /* verilator lint_off UNUSEDSIGNAL */
     logic       z80_gal_bank_wr;       // Z80 write strobe for gal_oki_bank
     logic [1:0] z80_gal_bank_addr;     // port offset (0=e004, 1=e005, 2=e006)
     logic [7:0] z80_gal_bank_din;      // Z80 data
@@ -327,6 +332,7 @@ module batrider_arcade #(
     logic [21:0] oki_rom_addr_out;     // to SDRAM (if present)
     logic [7:0][3:0] oki_bank_regs;    // debug
 
+    /* verilator lint_off MODMISSING */
     generate
         if (!IS_BAKRAID) begin : gen_gal_bank
             gal_oki_bank u_gal_oki_bank (
@@ -344,6 +350,9 @@ module batrider_arcade #(
             assign oki_bank_regs = '0;
         end
     endgenerate
+    /* verilator lint_on MODMISSING */
+    /* verilator lint_on UNUSEDSIGNAL */
+    /* verilator lint_on UNDRIVEN */
 
     // =========================================================================
     // Z80 audio bank register (same mechanism as bgaregga)
@@ -371,6 +380,8 @@ module batrider_arcade #(
     //  mirrors mean both work.  We use the batrider-specific mapping.)
     // =========================================================================
 
+    /* verilator lint_off UNDRIVEN */
+    /* verilator lint_off UNUSEDSIGNAL */
     // Z80→YMZ280B bus signals (from Z80 address decoder in full impl)
     logic        ymz_cs_n;     // chip select (active-low)
     logic        ymz_a0;       // address bit 0: 0=addr port, 1=data port
@@ -389,6 +400,7 @@ module batrider_arcade #(
     logic [15:0] ymz_audio_r;
     logic        ymz_irq_n;
 
+    /* verilator lint_off MODMISSING */
     ymz280b u_ymz280b (
         .clk        (clk),
         .rst_n      (rst_n),
@@ -408,6 +420,9 @@ module batrider_arcade #(
         .audio_r    (ymz_audio_r),
         .irq_n      (ymz_irq_n)
     );
+    /* verilator lint_on MODMISSING */
+    /* verilator lint_on UNUSEDSIGNAL */
+    /* verilator lint_on UNDRIVEN */
 
     // =========================================================================
     // Output assignments — safe defaults for scaffold stage
@@ -481,7 +496,7 @@ module batrider_arcade #(
         oki_bank_regs,
         oki_rom_addr_out,
         objbank_cs,
-        IS_BAKRAID[0]
+        IS_BAKRAID
     };
     /* verilator lint_on UNUSEDSIGNAL */
 

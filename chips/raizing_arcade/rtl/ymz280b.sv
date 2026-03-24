@@ -96,7 +96,9 @@ module ymz280b (
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             reg_addr <= 8'h00;
+            /* verilator lint_off UNUSEDLOOP */
             for (int i = 0; i < 256; i++) regs[i] <= 8'h00;
+            /* verilator lint_on UNUSEDLOOP */
         end else if (!z80_cs_n && !z80_wr_n) begin
             if (!z80_a0) begin
                 // Port 0x84: write to address register
