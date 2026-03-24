@@ -261,173 +261,201 @@ assign text_pen_w = text_pixel[3:0];
 assign text_color = text_pixel[8:4];
 assign text_pal9  = {4'b0, text_color};
 
-// ── Rolling arbitration with blend tracking ───────────────────────────────────
-// Each stage tracks: (win_prio5, win_pal9, win_pen4, dst_pal9, blend_mode)
-// win_pal9   = src palette index (winning layer)
-// dst_pal9   = destination palette index (what was below the blend layer)
-// blend_mode = 2-bit: 00=opaque, 01=blend A, 10=blend B, 11=opaque
-//              (01 and 10 use different coefficient pairs; 11 same as 00)
+// =============================================================================
+// Phase 5: Pipelined compositor — 2-stage registered arbitration to reduce
+// combinational depth.  Original 6-deep cascade (PF0→PF1→PF2→PF3→SPR→PVT→TXT)
+// is split into:
+//   Sub-stage A (combinational): PF0 vs PF1  → pipeline register p01_*
+//                                 PF2 vs PF3  → pipeline register p23_*
+//                                 SPR/PVT/TXT → 1-cycle delay registers
+//   Sub-stage B (combinational, next cycle): p01 vs p23 → vs spr → vs pvt → vs txt → win_*
+//   Final register: colmix_pixel_out = {win_pal, win_pen}  (+1 cycle total latency)
+//
+// Net latency: +1 pixel clock cycle on top of existing 1-cycle register.
+// All downstream consumers (pal_addr_src/dst, blend pipeline, TC0650FDA) are
+// driven from sub-stage B combinational nets and are self-consistent.
+// =============================================================================
 
-// Stage outputs: after PF0
-logic [4:0]  w0_prio; logic [8:0] w0_pal; logic [3:0] w0_pen;
-logic [8:0]  w0_dst;  logic [1:0] w0_bmode;
-// after PF1
-logic [4:0]  w1_prio; logic [8:0] w1_pal; logic [3:0] w1_pen;
-logic [8:0]  w1_dst;  logic [1:0] w1_bmode;
-// after PF2
-logic [4:0]  w2_prio; logic [8:0] w2_pal; logic [3:0] w2_pen;
-logic [8:0]  w2_dst;  logic [1:0] w2_bmode;
-// after PF3
-logic [4:0]  w3_prio; logic [8:0] w3_pal; logic [3:0] w3_pen;
-logic [8:0]  w3_dst;  logic [1:0] w3_bmode;
-// after sprite
-logic [4:0]  w4_prio; logic [8:0] w4_pal; logic [3:0] w4_pen;
-logic [8:0]  w4_dst;  logic [1:0] w4_bmode;
-// after pivot (Step 16)
-logic [4:0]  w4p_prio; logic [8:0] w4p_pal; logic [3:0] w4p_pen;
-logic [8:0]  w4p_dst;  logic [1:0] w4p_bmode;
-// final (after text)
+// ── Sub-stage A: PF0 vs PF1 (combinational) ──────────────────────────────────
+logic [4:0]  a01_prio; logic [8:0] a01_pal; logic [3:0] a01_pen;
+logic [8:0]  a01_dst;  logic [1:0] a01_bmode;
+
+always_comb begin
+    automatic logic [4:0] w0p; automatic logic [8:0] w0l; automatic logic [3:0] w0n;
+    automatic logic [8:0] w0d; automatic logic [1:0] w0b;
+    if (pf_pen[0] != 4'd0) begin
+        w0p = pf_prio[0]; w0l = pf_pal[0]; w0n = pf_pen[0]; w0d = 9'b0; w0b = 2'b00;
+    end else begin
+        w0p = 5'd0; w0l = 9'd0; w0n = 4'd0; w0d = 9'd0; w0b = 2'b00;
+    end
+    if (pf_pen[1] != 4'd0 && (w0n == 4'd0 || pf_prio[1] > w0p)) begin
+        a01_prio = pf_prio[1]; a01_pal = pf_pal[1]; a01_pen = pf_pen[1];
+        if ((pf_bmode[1] == 2'b01 || pf_bmode[1] == 2'b10) && w0n != 4'd0) begin
+            a01_dst = w0l; a01_bmode = pf_bmode[1];
+        end else begin
+            a01_dst = 9'b0; a01_bmode = 2'b00;
+        end
+    end else begin
+        a01_prio = w0p; a01_pal = w0l; a01_pen = w0n; a01_dst = w0d; a01_bmode = w0b;
+    end
+end
+
+// ── Sub-stage A: PF2 vs PF3 (combinational) ──────────────────────────────────
+logic [4:0]  a23_prio; logic [8:0] a23_pal; logic [3:0] a23_pen;
+logic [8:0]  a23_dst;  logic [1:0] a23_bmode;
+
+always_comb begin
+    automatic logic [4:0] w2p; automatic logic [8:0] w2l; automatic logic [3:0] w2n;
+    automatic logic [8:0] w2d; automatic logic [1:0] w2b;
+    if (pf_pen[2] != 4'd0) begin
+        w2p = pf_prio[2]; w2l = pf_pal[2]; w2n = pf_pen[2]; w2d = 9'b0; w2b = 2'b00;
+    end else begin
+        w2p = 5'd0; w2l = 9'd0; w2n = 4'd0; w2d = 9'd0; w2b = 2'b00;
+    end
+    if (pf_pen[3] != 4'd0 && (w2n == 4'd0 || pf_prio[3] > w2p)) begin
+        a23_prio = pf_prio[3]; a23_pal = pf_pal[3]; a23_pen = pf_pen[3];
+        if ((pf_bmode[3] == 2'b01 || pf_bmode[3] == 2'b10) && w2n != 4'd0) begin
+            a23_dst = w2l; a23_bmode = pf_bmode[3];
+        end else begin
+            a23_dst = 9'b0; a23_bmode = 2'b00;
+        end
+    end else begin
+        a23_prio = w2p; a23_pal = w2l; a23_pen = w2n; a23_dst = w2d; a23_bmode = w2b;
+    end
+end
+
+// ── Sub-stage A pipeline registers ───────────────────────────────────────────
+// Register PF01/PF23 sub-winners and delay all other inputs by 1 cycle.
+logic [4:0]  p01_prio; logic [8:0] p01_pal; logic [3:0] p01_pen;
+logic [8:0]  p01_dst;  logic [1:0] p01_bmode;
+logic [4:0]  p23_prio; logic [8:0] p23_pal; logic [3:0] p23_pen;
+logic [8:0]  p23_dst;  logic [1:0] p23_bmode;
+// Delayed sprite signals (1 cycle) for sub-stage B alignment
+logic [4:0]  spr_prio5_d;
+logic [8:0]  spr_pal9_d;
+logic [3:0]  spr_pen_d;
+logic [1:0]  spr_bmode_d;
+// Delayed pivot/text pixels
+logic [7:0]  pivot_pixel_d;
+logic        ls_pivot_blend_d;
+logic [8:0]  text_pixel_d;
+// Delayed blend coefficients (aligned with sub-stage B win_bmode)
+logic [3:0]  a_src_d, a_dst_d, b_src_d, b_dst_d;
+// Delayed pixel_valid and hpos for TC0650FDA timing
+logic        pixel_valid_d;
+logic [9:0]  hpos_d;
+
+always_ff @(posedge clk) begin
+    if (!rst_n) begin
+        p01_prio <= 5'b0;  p01_pal <= 9'b0;  p01_pen <= 4'b0;
+        p01_dst  <= 9'b0;  p01_bmode <= 2'b0;
+        p23_prio <= 5'b0;  p23_pal <= 9'b0;  p23_pen <= 4'b0;
+        p23_dst  <= 9'b0;  p23_bmode <= 2'b0;
+        spr_prio5_d     <= 5'b0;
+        spr_pal9_d      <= 9'b0;
+        spr_pen_d       <= 4'b0;
+        spr_bmode_d     <= 2'b0;
+        pivot_pixel_d   <= 8'b0;
+        ls_pivot_blend_d<= 1'b0;
+        text_pixel_d    <= 9'b0;
+        a_src_d         <= 4'd8;
+        a_dst_d         <= 4'd0;
+        b_src_d         <= 4'd8;
+        b_dst_d         <= 4'd0;
+        pixel_valid_d   <= 1'b0;
+        hpos_d          <= 10'b0;
+    end else begin
+        p01_prio <= a01_prio;  p01_pal <= a01_pal;  p01_pen <= a01_pen;
+        p01_dst  <= a01_dst;   p01_bmode <= a01_bmode;
+        p23_prio <= a23_prio;  p23_pal <= a23_pal;  p23_pen <= a23_pen;
+        p23_dst  <= a23_dst;   p23_bmode <= a23_bmode;
+        spr_prio5_d     <= spr_prio5;
+        spr_pal9_d      <= spr_pal9;
+        spr_pen_d       <= spr_pen_clipped;
+        spr_bmode_d     <= spr_bmode;
+        pivot_pixel_d   <= pivot_pixel;
+        ls_pivot_blend_d<= ls_pivot_blend;
+        text_pixel_d    <= text_pixel;
+        a_src_d         <= ls_a_src;
+        a_dst_d         <= ls_a_dst;
+        b_src_d         <= ls_b_src;
+        b_dst_d         <= ls_b_dst;
+        pixel_valid_d   <= pixel_valid;
+        hpos_d          <= hpos;
+    end
+end
+
+// ── Sub-stage B: p01 vs p23 → spr → pvt → txt → win_* (combinational) ────────
 logic [4:0]  win_prio;
 logic [8:0]  win_pal;
 logic [3:0]  win_pen;
 logic [8:0]  win_dst;
 logic [1:0]  win_bmode;
 
-// PF0 — first layer, no dst yet (pen=0 = no winner)
 always_comb begin
-    if (pf_pen[0] != 4'd0) begin
-        w0_prio  = pf_prio[0];
-        w0_pal   = pf_pal[0];
-        w0_pen   = pf_pen[0];
-        // First layer: nothing beneath, no blend possible
-        w0_dst   = 9'b0;
-        w0_bmode = 2'b00;
-    end else begin
-        w0_prio = 5'd0; w0_pal = 9'd0; w0_pen = 4'd0;
-        w0_dst  = 9'd0; w0_bmode = 2'b00;
-    end
-end
+    automatic logic [4:0] wm_prio; automatic logic [8:0] wm_pal; automatic logic [3:0] wm_pen;
+    automatic logic [8:0] wm_dst;  automatic logic [1:0] wm_bmode;
+    automatic logic [4:0] ws_prio; automatic logic [8:0] ws_pal; automatic logic [3:0] ws_pen;
+    automatic logic [8:0] ws_dst;  automatic logic [1:0] ws_bmode;
+    automatic logic [4:0] wp_prio; automatic logic [8:0] wp_pal; automatic logic [3:0] wp_pen;
+    automatic logic [8:0] wp_dst;  automatic logic [1:0] wp_bmode;
+    automatic logic [3:0] pvt_pen_b;  automatic logic [8:0] pvt_pal9_b;
+    automatic logic [3:0] txt_pen_b;  automatic logic [4:0] txt_col_b;
+    automatic logic [8:0] txt_pal9_b;
 
-// PF1
-always_comb begin
-    if (pf_pen[1] != 4'd0 && (w0_pen == 4'd0 || pf_prio[1] > w0_prio)) begin
-        w1_prio  = pf_prio[1];
-        w1_pal   = pf_pal[1];
-        w1_pen   = pf_pen[1];
-        // Blend mode 01 or 10 when there is an existing opaque pixel below
-        if ((pf_bmode[1] == 2'b01 || pf_bmode[1] == 2'b10) && w0_pen != 4'd0) begin
-            w1_dst   = w0_pal;
-            w1_bmode = pf_bmode[1];
+    // Merge p01 vs p23
+    if (p23_pen != 4'd0 && (p01_pen == 4'd0 || p23_prio > p01_prio)) begin
+        wm_prio = p23_prio; wm_pal = p23_pal; wm_pen = p23_pen;
+        if ((p23_bmode == 2'b01 || p23_bmode == 2'b10) && p23_dst != 9'b0) begin
+            wm_dst = p23_dst; wm_bmode = p23_bmode;   // PF3 beat PF2 within pair
+        end else if ((p23_bmode == 2'b01 || p23_bmode == 2'b10) && p01_pen != 4'd0) begin
+            wm_dst = p01_pal; wm_bmode = p23_bmode;   // PF23 winner blends against PF01
         end else begin
-            w1_dst   = 9'b0;
-            w1_bmode = 2'b00;
+            wm_dst = 9'b0; wm_bmode = 2'b00;
         end
     end else begin
-        w1_prio = w0_prio; w1_pal = w0_pal; w1_pen = w0_pen;
-        w1_dst  = w0_dst;  w1_bmode = w0_bmode;
+        wm_prio = p01_prio; wm_pal = p01_pal; wm_pen = p01_pen;
+        wm_dst  = p01_dst;  wm_bmode = p01_bmode;
     end
-end
 
-// PF2
-always_comb begin
-    if (pf_pen[2] != 4'd0 && (w1_pen == 4'd0 || pf_prio[2] > w1_prio)) begin
-        w2_prio  = pf_prio[2];
-        w2_pal   = pf_pal[2];
-        w2_pen   = pf_pen[2];
-        if ((pf_bmode[2] == 2'b01 || pf_bmode[2] == 2'b10) && w1_pen != 4'd0) begin
-            w2_dst   = w1_pal;
-            w2_bmode = pf_bmode[2];
+    // Sprite (wins on tie >=)
+    if (spr_pen_d != 4'd0 && (wm_pen == 4'd0 || spr_prio5_d >= wm_prio)) begin
+        ws_prio = spr_prio5_d; ws_pal = spr_pal9_d; ws_pen = spr_pen_d;
+        if ((spr_bmode_d == 2'b01 || spr_bmode_d == 2'b10) && wm_pen != 4'd0) begin
+            ws_dst = wm_pal; ws_bmode = spr_bmode_d;
         end else begin
-            w2_dst   = 9'b0;
-            w2_bmode = 2'b00;
+            ws_dst = 9'b0; ws_bmode = 2'b00;
         end
     end else begin
-        w2_prio = w1_prio; w2_pal = w1_pal; w2_pen = w1_pen;
-        w2_dst  = w1_dst;  w2_bmode = w1_bmode;
+        ws_prio = wm_prio; ws_pal = wm_pal; ws_pen = wm_pen;
+        ws_dst  = wm_dst;  ws_bmode = wm_bmode;
     end
-end
 
-// PF3
-always_comb begin
-    if (pf_pen[3] != 4'd0 && (w2_pen == 4'd0 || pf_prio[3] > w2_prio)) begin
-        w3_prio  = pf_prio[3];
-        w3_pal   = pf_pal[3];
-        w3_pen   = pf_pen[3];
-        if ((pf_bmode[3] == 2'b01 || pf_bmode[3] == 2'b10) && w2_pen != 4'd0) begin
-            w3_dst   = w2_pal;
-            w3_bmode = pf_bmode[3];
+    // Pivot — fixed priority 8
+    pvt_pen_b  = pivot_pixel_d[3:0];
+    pvt_pal9_b = {5'b0, pivot_pixel_d[7:4]};
+    if (pvt_pen_b != 4'd0 && (ws_pen == 4'd0 || 5'd8 > ws_prio)) begin
+        wp_prio = 5'd8; wp_pal = pvt_pal9_b; wp_pen = pvt_pen_b;
+        if (ls_pivot_blend_d && ws_pen != 4'd0) begin
+            wp_dst = ws_pal; wp_bmode = 2'b01;
         end else begin
-            w3_dst   = 9'b0;
-            w3_bmode = 2'b00;
+            wp_dst = 9'b0; wp_bmode = 2'b00;
         end
     end else begin
-        w3_prio = w2_prio; w3_pal = w2_pal; w3_pen = w2_pen;
-        w3_dst  = w2_dst;  w3_bmode = w2_bmode;
+        wp_prio = ws_prio; wp_pal = ws_pal; wp_pen = ws_pen;
+        wp_dst  = ws_dst;  wp_bmode = ws_bmode;
     end
-end
 
-// Sprite — wins on tie (>=) over PF at same priority
-always_comb begin
-    if (spr_pen != 4'd0 && (w3_pen == 4'd0 || spr_prio5 >= w3_prio)) begin
-        w4_prio  = spr_prio5;
-        w4_pal   = spr_pal9;
-        w4_pen   = spr_pen;
-        if ((spr_bmode == 2'b01 || spr_bmode == 2'b10) && w3_pen != 4'd0) begin
-            w4_dst   = w3_pal;
-            w4_bmode = spr_bmode;
-        end else begin
-            w4_dst   = 9'b0;
-            w4_bmode = 2'b00;
-        end
+    // Text — always opaque, always wins
+    txt_pen_b  = text_pixel_d[3:0];
+    txt_col_b  = text_pixel_d[8:4];
+    txt_pal9_b = {4'b0, txt_col_b};
+    if (txt_pen_b != 4'd0) begin
+        win_prio = 5'd16; win_pal = txt_pal9_b; win_pen = txt_pen_b;
+        win_dst  = 9'b0;  win_bmode = 2'b00;
     end else begin
-        w4_prio = w3_prio; w4_pal = w3_pal; w4_pen = w3_pen;
-        w4_dst  = w3_dst;  w4_bmode = w3_bmode;
-    end
-end
-
-// Pivot — fixed priority 8, opaque or blend A based on ls_pivot_blend
-// palette for pivot: {4'b0, color[3:0]} = {4'b0, pivot_pixel[7:4]} = 9'h000 (color always 0)
-// (color is always 0 per MAME pivot_tile_info)
-logic [3:0] pvt_pen_w;
-logic [8:0] pvt_pal9_w;
-assign pvt_pen_w  = pivot_pixel[3:0];
-assign pvt_pal9_w = {5'b0, pivot_pixel[7:4]};
-
-always_comb begin
-    if (pvt_pen_w != 4'd0 && (w4_pen == 4'd0 || 5'd8 > w4_prio)) begin
-        w4p_prio  = 5'd8;
-        w4p_pal   = pvt_pal9_w;
-        w4p_pen   = pvt_pen_w;
-        if (ls_pivot_blend && w4_pen != 4'd0) begin
-            w4p_dst   = w4_pal;
-            w4p_bmode = 2'b01;  // blend A
-        end else begin
-            w4p_dst   = 9'b0;
-            w4p_bmode = 2'b00;
-        end
-    end else begin
-        w4p_prio  = w4_prio;
-        w4p_pal   = w4_pal;
-        w4p_pen   = w4_pen;
-        w4p_dst   = w4_dst;
-        w4p_bmode = w4_bmode;
-    end
-end
-
-// Text — always opaque, always wins
-always_comb begin
-    if (text_pen_w != 4'd0) begin
-        win_prio  = 5'd16;
-        win_pal   = text_pal9;
-        win_pen   = text_pen_w;
-        win_dst   = 9'b0;
-        win_bmode = 2'b00;
-    end else begin
-        win_prio  = w4p_prio;
-        win_pal   = w4p_pal;
-        win_pen   = w4p_pen;
-        win_dst   = w4p_dst;
-        win_bmode = w4p_bmode;
+        win_prio = wp_prio; win_pal = wp_pal; win_pen = wp_pen;
+        win_dst  = wp_dst;  win_bmode = wp_bmode;
     end
 end
 
@@ -437,9 +465,6 @@ logic _unused_winprio;
 assign _unused_winprio = ^win_prio;
 /* verilator lint_on UNUSED */
 
-// Decode whether any blend is active (01 or 10).
-// Used in comments/documentation; suppressed since blend dispatch is done
-// directly via win_bmode in the pipeline register.
 /* verilator lint_off UNUSED */
 logic win_do_blend;
 /* verilator lint_on UNUSED */
@@ -454,17 +479,8 @@ always_ff @(posedge clk) begin
 end
 
 // ── Palette address outputs ────────────────────────────────────────────────────
-// pal_addr_src: lookup the winning (src) palette color.
-// pal_addr_dst: lookup the blend destination palette color.
-// Both are 13-bit: {palette[8:0], pen_lsb} — the palette RAM stores one color
-// per entry; pen index selects within a 16-color group.
-// For blend, we use pen=0 within the dst palette to get the base color.
-//
-// NOTE: palette index in colmix_pixel_out is {win_pal[8:0], win_pen[3:0]} = 13 bits.
-// The palette RAM address space is 13 bits = 8192 entries.
-// pal_addr_src = {win_pal[8:0], win_pen[3:0]} (full 13-bit address)
-// pal_addr_dst = {win_dst[8:0], 4'b0} (base of the dst palette line)
-
+// Driven from sub-stage B combinational nets (1 cycle later than original).
+// Palette BRAM registers them → pal_rdata_src/dst arrive 1 cycle after win_*.
 assign pal_addr_src = {win_pal, win_pen};    // 9+4 = 13 bits
 assign pal_addr_dst = {win_dst, 4'b0};       // 9+4 = 13 bits
 
@@ -480,6 +496,8 @@ assign pal_addr_dst = {win_dst, 4'b0};       // 9+4 = 13 bits
 //   - Register into blend_rgb_out
 
 // Stage 0 pipeline registers
+// Blend coefficients (a_src_d etc.) are already 1-cycle delayed in sub-stage A
+// registers, keeping them aligned with win_bmode from sub-stage B.
 logic [1:0]  blend_mode_r;   // registered blend mode (00=opaque, 01=A, 10=B, 11=opaque)
 logic [ 3:0] a_src_r;
 logic [ 3:0] a_dst_r;
@@ -495,10 +513,10 @@ always_ff @(posedge clk) begin
         b_dst_r      <= 4'd0;
     end else begin
         blend_mode_r <= win_bmode;
-        a_src_r      <= ls_a_src;
-        a_dst_r      <= ls_a_dst;
-        b_src_r      <= ls_b_src;
-        b_dst_r      <= ls_b_dst;
+        a_src_r      <= a_src_d;   // 1-cycle delayed, aligned with sub-stage B
+        a_dst_r      <= a_dst_d;
+        b_src_r      <= b_src_d;
+        b_dst_r      <= b_dst_d;
     end
 end
 
@@ -598,8 +616,8 @@ logic [12:0] dst_pal_buf [0:319];
 // priority outputs — matches the registered src_pal timing).
 logic [8:0] screen_col_r;
 
-// Combinational blend coefficient and do_blend signals (derived from win_bmode
-// and the A/B coefficient inputs, same logic as the blend pipeline above).
+// Combinational blend coefficients for TC0650FDA: use delayed coefficients
+// (a_src_d etc.) which are aligned with sub-stage B win_bmode.
 logic [3:0] win_src_coeff;
 logic [3:0] win_dst_coeff;
 logic       win_do_blend_c;
@@ -608,25 +626,30 @@ always_comb begin
     win_do_blend_c = (win_bmode == 2'b01) || (win_bmode == 2'b10);
     case (win_bmode)
         2'b01: begin
-            // Normal blend A
-            win_src_coeff = ls_a_src;
-            win_dst_coeff = ls_a_dst;
+            win_src_coeff = a_src_d;   // aligned with sub-stage B
+            win_dst_coeff = a_dst_d;
         end
         2'b10: begin
-            // Reverse blend B
-            win_src_coeff = ls_b_src;
-            win_dst_coeff = ls_b_dst;
+            win_src_coeff = b_src_d;
+            win_dst_coeff = b_dst_d;
         end
         default: begin
-            // Opaque (00 or 11): full src, zero dst
             win_src_coeff = 4'd8;
             win_dst_coeff = 4'd0;
         end
     endcase
 end
 
-// Register all TC0650FDA outputs on posedge clk (1 cycle after combinational
-// priority resolution, same pipeline stage as colmix_pixel_out).
+// Delayed screen_x_9 (1 cycle, for TC0650FDA dst_pal_buf lookup aligned with sub-stage B)
+logic [8:0] screen_x_9_d;
+always_comb begin
+    if (hpos_d >= 10'(COLMIX_H_START))
+        screen_x_9_d = 9'(hpos_d - 10'(COLMIX_H_START));
+    else
+        screen_x_9_d = 9'b0;
+end
+
+// Register all TC0650FDA outputs on posedge clk (1 cycle after sub-stage B).
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         src_pal         <= 13'b0;
@@ -637,15 +660,13 @@ always_ff @(posedge clk) begin
         pixel_valid_out <= 1'b0;
         screen_col_r    <= 9'b0;
     end else begin
-        // src_pal: winning palette index (same as pal_addr_src)
         src_pal         <= {win_pal, win_pen};
-        // dst_pal: previous frame's rendered palette index at this column
-        dst_pal         <= (screen_x_9 < 9'd320) ? dst_pal_buf[screen_x_9] : 13'b0;
+        dst_pal         <= (screen_x_9_d < 9'd320) ? dst_pal_buf[screen_x_9_d] : 13'b0;
         src_blend       <= win_src_coeff;
         dst_blend       <= win_dst_coeff;
         do_blend        <= win_do_blend_c;
-        pixel_valid_out <= pixel_valid;
-        screen_col_r    <= screen_x_9;
+        pixel_valid_out <= pixel_valid_d;  // 1-cycle delayed
+        screen_col_r    <= screen_x_9_d;
     end
 end
 
@@ -661,10 +682,10 @@ end
 // ── Suppress unused-signal warnings ──────────────────────────────────────────
 /* verilator lint_off UNUSED */
 logic _unused_colmix;
-// vpos/pixel_valid: timing inputs not needed in pure combinational pipeline
-// win_dst: used in blend tracking but Verilator sees the intermediate net as unused
+// vpos: timing input not needed in compositor
+// win_dst: used in blend tracking but Verilator sees intermediate net as unused
 // pal_rdata[3:0]: palette format has don't-care bits[3:0] (color uses bits[15:4] only)
-assign _unused_colmix = ^{vpos, pixel_valid, win_dst,
+assign _unused_colmix = ^{vpos, win_dst,
                            pal_rdata_src[3:0], pal_rdata_dst[3:0]};
 /* verilator lint_on UNUSED */
 
