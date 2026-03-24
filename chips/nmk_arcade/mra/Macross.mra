@@ -1,0 +1,71 @@
+<!--
+    Super Spacefortress Macross (1992) — Banpresto / NMK
+    MiSTer ROM descriptor for NMK16 core
+
+    Hardware:
+      MC68000 @ 8 MHz
+      NMK004 MCU (sound controller)
+      OKI M6295 x2 (ADPCM)
+      YM2203 FM
+
+    MAME driver: nmk16.cpp, set: macross
+    ROM set CRCs from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 512KB)
+      0x0C0000   Sprite ROM (2MB)
+      0x1C0000   BG tile ROM (512KB bgtile + 128KB fgtile)
+      0x200000   ADPCM ROM bank 0 (512KB, oki1)
+      0x280000   ADPCM ROM bank 1 (512KB, oki2)
+      0x300000   NMK004 MCU ROM (64KB, nmk004)
+-->
+<misterromdescription>
+  <name>Super Spacefortress Macross</name>
+  <setname>macross</setname>
+  <rbf>NMK16</rbf>
+  <mameversion>0.245</mameversion>
+
+  <switches default="FF,FF">
+    <dip name="Coinage"     ids="0,0" bits="0,1" values="1 Coin/1 Credit,2 Coins/1 Credit,1 Coin/2 Credits,Free Play"/>
+    <dip name="Lives"       ids="0,0" bits="2,3" values="3,4,5,2"/>
+    <dip name="Difficulty"  ids="0,0" bits="4,5" values="Normal,Hard,Easy,Very Hard"/>
+    <dip name="Demo Sound"  ids="1,1" bits="0,0" values="On,Off"/>
+  </switches>
+
+  <!-- CPU Program ROM (512KB) — loaded at SDRAM 0x000000 -->
+  <rom index="0" zip="macross.zip" md5="None">
+    <part name="921a03" crc="33318d55" offset="0x000000" length="0x080000"/>
+  </rom>
+
+  <!-- Sprite ROM (2MB) — loaded at SDRAM 0x0C0000 -->
+  <rom index="1" zip="macross.zip" md5="None">
+    <part name="921a07" crc="7d2bf112" offset="0x000000" length="0x200000"/>
+  </rom>
+
+  <!-- BG/FG Tile ROM — loaded at SDRAM 0x1C0000 -->
+  <rom index="2" zip="macross.zip" md5="None">
+    <part name="921a04" crc="4002e4bb" offset="0x000000" length="0x200000"/>
+    <part name="921a01" crc="bbd8242d" offset="0x200000" length="0x020000"/>
+  </rom>
+
+  <!-- ADPCM ROM bank 0 (512KB, oki1) — loaded at SDRAM 0x200000 -->
+  <rom index="3" zip="macross.zip" md5="None">
+    <part name="921a05" crc="d5a1eddd" offset="0x000000" length="0x080000"/>
+  </rom>
+
+  <!-- ADPCM ROM bank 1 (512KB, oki2) — loaded at SDRAM 0x280000 -->
+  <rom index="4" zip="macross.zip" md5="None">
+    <part name="921a06" crc="89461d0f" offset="0x000000" length="0x080000"/>
+  </rom>
+
+  <!-- NMK004 MCU ROM (64KB) — loaded at SDRAM 0x300000 -->
+  <rom index="5" zip="macross.zip" md5="None">
+    <part name="921a02" crc="77c082c7" offset="0x000000" length="0x010000"/>
+  </rom>
+
+  <!-- DIP switches (index 0xFE) -->
+  <rom index="254">
+    <part>FF FF</part>
+  </rom>
+
+</misterromdescription>

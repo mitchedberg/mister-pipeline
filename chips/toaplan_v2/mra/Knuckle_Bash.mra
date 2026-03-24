@@ -1,0 +1,80 @@
+<!--
+    Knuckle Bash (1993) — Toaplan
+    MiSTer ROM descriptor for Toaplan V2 core (dual GP9001 variant)
+
+    Hardware:
+      MC68000 @ 16 MHz
+      NEC V25 @ 16 MHz (sound CPU)
+      GP9001 VDP #0 + GP9001 VDP #1 (DUAL graphics processors)
+      YM2151 + OKI M6295 audio
+
+    IMPORTANT: Knuckle Bash uses DUAL GP9001 VDPs.
+    This MRA requires the toaplan_v2 core with dual-VDP support enabled.
+    See TASK-202 (chips/toaplan_v2/HARDWARE.md) for dual-VDP implementation status.
+
+    Memory map follows batsugun_state::batsugun_68k_mem pattern:
+      0x300000-0x30000D  GP9001 VDP #0 registers
+      0x400000-0x400FFF  Palette RAM
+      0x500000-0x50000D  GP9001 VDP #1 registers
+
+    ROM set: knuckbsh / knuckbshj (from MAME 0.245)
+    Parent: knuckbsh
+    Manufacturer: Toaplan
+
+    NOTE: ROM CRCs below are PLACEHOLDER values.
+    MUST VERIFY with: mame -listxml knuckbsh
+    The core developer must run 'mame -romident knuckbsh' against the actual ROM set
+    before deploying this MRA in production.
+
+    Known ROM files for knuckbsh (verify names/CRCs against mame -listxml):
+      tp024_1.u64   68K program ROM (512KB)
+      tp024_2.w30   ADPCM ROM (256KB)
+      tp024_3.w92   GP9001 #0 GFX ROM (1MB)
+      tp024_4.w93   GP9001 #0 GFX ROM (1MB)
+      tp024_5.w16   GP9001 #1 GFX ROM (2MB)
+      tp024_6.w17   GP9001 #1 GFX ROM (2MB)
+
+    PLACEHOLDER MRA — CRCs require verification before production use.
+-->
+
+<misterromdescription>
+    <name>Knuckle Bash</name>
+    <setname>knuckbsh</setname>
+    <rbf>toaplan_v2</rbf>
+
+    <!-- DIP switches — defaults from MAME knuckbsh driver -->
+    <nvram index="2" size="2"/>
+
+    <!-- Program ROM (68K CPU, index 0x00) -->
+    <!-- SDRAM byte offset 0x000000 -->
+    <!-- IMPORTANT: CRC below is a placeholder. Verify with: mame -listxml knuckbsh -->
+    <rom index="0" zip="knuckbsh.zip" md5="None" type="merged">
+        <!-- CPU program ROM — Knuckle Bash, 512KB -->
+        <part name="tp024_1.u64" crc="VERIFY_CRC"/>
+    </rom>
+
+    <!-- GFX ROMs — GP9001 #0 + GP9001 #1 tile data (index 0x01) -->
+    <!-- SDRAM byte offset 0x100000 -->
+    <!-- Same layout as Dogyuun: #0 tiles at 0x100000, #1 tiles follow -->
+    <rom index="1" zip="knuckbsh.zip" md5="None" type="merged">
+        <!-- GP9001 #0 GFX data — CRC PLACEHOLDER -->
+        <part name="tp024_3.w92" crc="VERIFY_CRC"/>   <!-- 1MB -->
+        <part name="tp024_4.w93" crc="VERIFY_CRC"/>   <!-- 1MB -->
+        <!-- GP9001 #1 GFX data — CRC PLACEHOLDER -->
+        <part name="tp024_5.w16" crc="VERIFY_CRC"/>   <!-- 2MB -->
+        <part name="tp024_6.w17" crc="VERIFY_CRC"/>   <!-- 2MB -->
+    </rom>
+
+    <!-- ADPCM ROM (OKI M6295 sample data, index 0x02) -->
+    <!-- SDRAM byte offset 0x700000 -->
+    <rom index="2" zip="knuckbsh.zip" md5="None" type="merged">
+        <part name="tp024_2.w30" crc="VERIFY_CRC"/>    <!-- 256KB -->
+    </rom>
+
+    <!-- DIP switch defaults (index 0xFE) -->
+    <rom index="254">
+        <!-- DSW1: all OFF = factory defaults -->
+        <part>00 00</part>
+    </rom>
+
+</misterromdescription>

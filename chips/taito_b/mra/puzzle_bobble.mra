@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Puzzle Bobble (Japan, B-System) — Taito B System, 1994
+  MC68000 @ 16 MHz, Z80 @ 4 MHz, YM2610B @ 8 MHz
+  TC0180VCU tilemap + sprites, TC0140SYT sound comm
+
+  MAME set: pbobble (src/mame/taito/taito_b.cpp)
+  Note: This is the B-System PCB version of Puzzle Bobble (not the F2 version).
+
+  SDRAM layout (byte addresses):
+    0x000000  CPU program ROM (maincpu, 512KB interleaved)
+    0x080000  Z80 audio program (audiocpu, 128KB)
+    0x100000  TC0180VCU GFX ROM (1MB)
+    0x200000  ADPCM-A samples (1MB)
+
+  ROM CRCs from MAME pbobble set.
+-->
+<misterromdescription>
+  <name>Puzzle Bobble</name>
+  <setname>pbobble</setname>
+  <rbf>taito_b</rbf>
+  <mameversion>0245</mameversion>
+  <year>1994</year>
+  <manufacturer>Taito</manufacturer>
+  <category>Puzzle</category>
+  <buttons names="Fire,Start,Coin" default="A,Start,Select"/>
+
+  <!-- CPU program ROM (maincpu, interleaved) + Z80 audio -->
+  <rom index="0" zip="pbobble.zip" type="merged" md5="None">
+    <part name="pb-ic18.ic18" crc="5de14f49" offset="0x000000" length="0x040000"/>
+    <part name="pb-ic2.ic2"   crc="2abe07d1" offset="0x000001" length="0x040000"/>
+    <!-- Z80 audio ROM at 0x080000 -->
+    <part name="pb-ic27.ic27" crc="26efa4c4" offset="0x080000" length="0x020000"/>
+  </rom>
+
+  <!-- TC0180VCU GFX ROM (1MB) -->
+  <!-- Loaded to SDRAM offset 0x100000 -->
+  <rom index="1" zip="pbobble.zip" type="merged" md5="None">
+    <part name="pb-ic14.ic14" crc="55f90ea4" offset="0x000000" length="0x080000"/>
+    <part name="pb-ic9.ic9"   crc="3253aac9" offset="0x080000" length="0x080000"/>
+  </rom>
+
+  <!-- ADPCM-A samples (1MB) -->
+  <!-- Loaded to SDRAM offset 0x200000 -->
+  <rom index="2" zip="pbobble.zip" type="merged" md5="None">
+    <part name="pb-ic15.ic15" crc="0840cbc4" offset="0x000000" length="0x100000"/>
+  </rom>
+
+  <!-- DIP switch defaults -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>

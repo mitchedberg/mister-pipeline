@@ -1,0 +1,64 @@
+<!--
+    B.Rap Boys (World) — Kaneko16, 1992
+    MiSTer MRA file for Kaneko16 core
+
+    MAME driver: kaneko16.cpp, set: brapboys
+    MC68000 @ 12 MHz, Z80 @ 4 MHz, YM2151 audio, OKI M6295 x2
+
+    SDRAM layout:
+      0x000000 – 0x03FFFF   256KB  CPU program ROM  (maincpu, ioctl_index 0x00)
+      0x100000 – 0x6FFFFF   6MB    GFX ROM: sprites + tilemap (ioctl_index 0x01)
+      0x800000 – 0xEFFFFF   ~3.5MB OKI sample ROMs  (ioctl_index 0x02)
+
+    ROM CRCs from MAME brapboys set.
+-->
+<misterromdescription>
+
+  <name>B.Rap Boys</name>
+  <setname>brapboys</setname>
+  <mameversion>0250</mameversion>
+  <rbf>Kaneko16</rbf>
+
+  <!-- CPU program ROM: 68000, interleaved upper/lower byte -->
+  <rom index="0" zip="brapboys.zip" md5="Unknown">
+    <part name="rb-030.01.u61" crc="ccbe9a53" offset="0x000000" length="0x020000"/>
+    <part name="rb-031.01.u62" crc="c72b8dda" offset="0x000001" length="0x020000"/>
+  </rom>
+
+  <!-- GFX ROM: kan_spr sprites + view2_0 tilemap -->
+  <rom index="1" zip="brapboys.zip" md5="Unknown">
+    <part name="rb-020.u100" crc="ce220d38" offset="0x000000" length="0x100000"/>
+    <part name="rb-021.u76"  crc="74001407" offset="0x100000" length="0x100000"/>
+    <part name="rb-022.u77"  crc="cb3f42dc" offset="0x200000" length="0x100000"/>
+    <part name="rb-023.u78"  crc="0e6530c5" offset="0x300000" length="0x100000"/>
+    <part name="rb-024.u79"  crc="65fa6447" offset="0x400000" length="0x080000"/>
+    <part name="rb-025.01.u80" crc="36cd6b90" offset="0x480000" length="0x040000"/>
+    <!-- VIEW2 tilemap ROMs -->
+    <part name="rb-010.u65"  crc="ffd73f87" offset="0x500000" length="0x100000"/>
+    <part name="rb-011.u66"  crc="d9325f78" offset="0x600000" length="0x100000"/>
+    <part name="rb-012.u67"  crc="bfdbe0d1" offset="0x700000" length="0x100000"/>
+    <part name="rb-013.u68"  crc="28c37fe8" offset="0x800000" length="0x100000"/>
+  </rom>
+
+  <!-- OKI M6295 sample ROMs -->
+  <rom index="2" zip="brapboys.zip" md5="Unknown">
+    <part name="rb-000.u43"    crc="58ad1a62" offset="0x000000" length="0x080000"/>
+    <part name="rb-003.00.u101" crc="2cac25d7" offset="0x080000" length="0x080000"/>
+    <part name="rb-001.u44"    crc="7cf774b3" offset="0x100000" length="0x100000"/>
+    <part name="rb-002.u45"    crc="e4b30444" offset="0x200000" length="0x100000"/>
+  </rom>
+
+  <rom index="0xFE">
+    <part repeat="8"> FF </part>
+  </rom>
+
+  <switches page_id="1" page_name="Switches" base="16" dip_defaults="FF FF">
+    <dip bits="0,1" name="Coin A" ids="2 Coins/1 Credit,1 Coin/1 Credit,1 Coin/2 Credits,Free Play"/>
+    <dip bits="4,5" name="Difficulty" ids="Easy,Normal,Hard,Hardest"/>
+    <dip bits="6"   name="Demo Sounds" ids="Off,On"/>
+    <dip bits="7"   name="Service Mode" ids="On,Off"/>
+  </switches>
+
+  <buttons names="Attack,Jump,Button 3,Start,Coin,Core credits" default="A,B,C,Start,Select,-"/>
+
+</misterromdescription>

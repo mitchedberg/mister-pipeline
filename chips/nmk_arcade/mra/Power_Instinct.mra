@@ -1,0 +1,84 @@
+<!--
+    Power Instinct / Gouketsuji Ichizoku (USA) — Atlus, 1993
+    MiSTer ROM descriptor for NMK16 core
+
+    Hardware:
+      MC68000 @ 8 MHz
+      NMK004 MCU (sound controller)
+      OKI M6295 x2 (ADPCM)
+
+    MAME driver: nmk16.cpp, set: powerins
+    ROM set CRCs from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 1MB interleaved from 2x512KB)
+      0x0C0000   Sprite ROM (8MB from 8 x 1MB)
+      0x1C0000   BG/FG tile ROM
+      0x200000   ADPCM ROM bank 0 (oki1, 2MB)
+      0x280000   ADPCM ROM bank 1 (oki2, 2MB)
+      0x300000   NMK004 audio CPU ROM (audiocpu, 128KB)
+-->
+<misterromdescription>
+  <name>Power Instinct</name>
+  <setname>powerins</setname>
+  <rbf>NMK16</rbf>
+  <mameversion>0.245</mameversion>
+
+  <switches default="FF,FF">
+    <dip name="Coinage"    ids="0,0" bits="0,1" values="1 Coin/1 Credit,2 Coins/1 Credit,1 Coin/2 Credits,Free Play"/>
+    <dip name="Lives"      ids="0,0" bits="2,3" values="3,4,5,2"/>
+    <dip name="Difficulty" ids="0,0" bits="4,5" values="Normal,Hard,Easy,Very Hard"/>
+    <dip name="Demo Sound" ids="1,1" bits="0,0" values="On,Off"/>
+  </switches>
+
+  <!-- CPU Program ROM (1MB interleaved) — loaded at SDRAM 0x000000 -->
+  <rom index="0" zip="powerins.zip" md5="None">
+    <interleave output="16">
+      <part name="93095-3a.u108" crc="9825ea3d" map="10"/>  <!-- even bytes -->
+      <part name="93095-4.u109"  crc="d3d7a782" map="01"/>  <!-- odd bytes  -->
+    </interleave>
+  </rom>
+
+  <!-- Sprite ROM (8 x 1MB = 8MB) — loaded at SDRAM 0x0C0000 -->
+  <rom index="1" zip="powerins.zip" md5="None">
+    <part name="93095-12.u116" crc="35f3c2a3" offset="0x000000" length="0x100000"/>
+    <part name="93095-13.u117" crc="1ebd45da" offset="0x100000" length="0x100000"/>
+    <part name="93095-14.u118" crc="760d871b" offset="0x200000" length="0x100000"/>
+    <part name="93095-15.u119" crc="d011be88" offset="0x300000" length="0x100000"/>
+    <part name="93095-16.u120" crc="a9c16c9c" offset="0x400000" length="0x100000"/>
+    <part name="93095-17.u121" crc="51b57288" offset="0x500000" length="0x100000"/>
+    <part name="93095-18.u122" crc="b135e3f2" offset="0x600000" length="0x100000"/>
+    <part name="93095-19.u123" crc="67695537" offset="0x700000" length="0x100000"/>
+  </rom>
+
+  <!-- BG/FG tile ROM — loaded at SDRAM 0x1C0000 -->
+  <rom index="2" zip="powerins.zip" md5="None">
+    <part name="93095-5.u16" crc="b1371808" offset="0x000000" length="0x100000"/>
+    <part name="93095-6.u17" crc="29c85d80" offset="0x100000" length="0x100000"/>
+    <part name="93095-7.u18" crc="2dd76149" offset="0x200000" length="0x080000"/>
+    <part name="93095-1.u15" crc="6a579ee0" offset="0x280000" length="0x020000"/>
+  </rom>
+
+  <!-- ADPCM ROM bank 0 (2MB, oki1) — loaded at SDRAM 0x200000 -->
+  <rom index="3" zip="powerins.zip" md5="None">
+    <part name="93095-10.u48" crc="329ac6c5" offset="0x000000" length="0x100000"/>
+    <part name="93095-11.u49" crc="75d6097c" offset="0x100000" length="0x100000"/>
+  </rom>
+
+  <!-- ADPCM ROM bank 1 (2MB, oki2) — loaded at SDRAM 0x280000 -->
+  <rom index="4" zip="powerins.zip" md5="None">
+    <part name="93095-8.u46"  crc="f019bedb" offset="0x000000" length="0x100000"/>
+    <part name="93095-9.u47"  crc="adc83765" offset="0x100000" length="0x100000"/>
+  </rom>
+
+  <!-- Z80 audio ROM (audiocpu, 128KB) — loaded at SDRAM 0x300000 -->
+  <rom index="5" zip="powerins.zip" md5="None">
+    <part name="93095-2.u90" crc="4b123cc6" offset="0x000000" length="0x020000"/>
+  </rom>
+
+  <!-- DIP switches (index 0xFE) -->
+  <rom index="254">
+    <part>FF FF</part>
+  </rom>
+
+</misterromdescription>
