@@ -514,11 +514,57 @@ module kaneko16 #(
     end
 
     // ========================================================================
-    // Internal Sprite RAM (for simulation/testing)
+    // Internal Sprite RAM — 8K × 16-bit (64 KB)
     // ========================================================================
+    // Two read ports needed:
+    //   Port A: CPU read/write (synchronous, registered output)
+    //   Port B: Sprite scanner (synchronous, registered output — 1-cycle latency)
+    //
+    // Under Quartus: instantiate two altsyncram DUAL_PORT blocks (M10K).
+    // Under simulation: behavioural 2D array with combinational read.
 
-    logic [DATA_WIDTH-1:0] sprite_ram_mem[0:8191];  // 64 KB = 32K words
     logic [DATA_WIDTH-1:0] sprite_ram_dout_r;
+
+`ifdef QUARTUS
+    // ── Port A: CPU read/write ────────────────────────────────────────────────
+    logic [DATA_WIDTH-1:0] spr_cpu_raw;
+    altsyncram #(
+        .operation_mode             ("BIDIR_DUAL_PORT"),
+        .width_a                    (DATA_WIDTH), .widthad_a (13), .numwords_a (8192),
+        .width_b                    (DATA_WIDTH), .widthad_b (13), .numwords_b (8192),
+        .outdata_reg_a              ("CLOCK0"),   .outdata_reg_b ("CLOCK0"),
+        .address_reg_b              ("CLOCK0"),
+        .clock_enable_input_a       ("BYPASS"),   .clock_enable_input_b  ("BYPASS"),
+        .clock_enable_output_a      ("BYPASS"),   .clock_enable_output_b ("BYPASS"),
+        .intended_device_family     ("Cyclone V"),
+        .lpm_type                   ("altsyncram"), .ram_block_type ("M10K"),
+        .power_up_uninitialized     ("TRUE"),
+        .read_during_write_mode_port_a ("NEW_DATA_NO_NBE_READ"),
+        .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+    ) sprite_ram_inst (
+        .clock0     (clk),
+        // Port A — CPU
+        .address_a  (cpu_addr[12:0]),
+        .data_a     (cpu_din),
+        .wren_a     (write_strobe && is_sprite_ram),
+        .q_a        (spr_cpu_raw),
+        .byteena_a  (1'b1),
+        // Port B — sprite scanner (read-only, driven by spr_scan_addr below)
+        .address_b  (spr_scan_addr),
+        .data_b     ({DATA_WIDTH{1'b0}}),
+        .wren_b     (1'b0),
+        .q_b        (spr_scan_data),
+        .byteena_b  (1'b1),
+        .aclr0(1'b0), .aclr1(1'b0),
+        .addressstall_a(1'b0), .addressstall_b(1'b0),
+        .clocken0(1'b1), .clocken1(1'b1), .clocken2(1'b1), .clocken3(1'b1),
+        .eccstatus(), .rden_a(1'b1), .rden_b(1'b1), .clock1(clk)
+    );
+    always_ff @(posedge clk) begin
+        if (read_strobe && is_sprite_ram) sprite_ram_dout_r <= spr_cpu_raw;
+    end
+`else
+    logic [DATA_WIDTH-1:0] sprite_ram_mem[0:8191];  // 64 KB = 32K words
 
     // Write to sprite RAM on write strobe
     // Note: no reset initialization — CPU writes all entries before display starts.
@@ -533,6 +579,7 @@ module kaneko16 #(
     always_comb begin
         sprite_ram_dout_r = sprite_ram_mem[cpu_addr[12:0]];
     end
+`endif
 
     // ========================================================================
     // GFX ROM Window Decode
@@ -686,39 +733,66 @@ module kaneko16 #(
     // ========================================================================
     // Gate 2: Sprite Scanner FSM (VU-001/VU-002)
     // ========================================================================
+    //
+    // Each sprite descriptor occupies 8 consecutive 16-bit words (words 0-7).
+    // The scanner reads words 0-3 per sprite.  Under synthesis (BRAM), reads
+    // take 1 cycle; an extra SPRITE_FETCH state holds for 1 cycle after the
+    // address is issued before consuming the latched data.
+    //
+    // Sprite RAM port B (scanner) address/data wires:
+    //   spr_scan_addr — driven by FSM (word address, 13-bit)
+    //   spr_scan_data — registered output from BRAM (1-cycle latency)
+    //
+    // Under simulation: sprite_ram_mem is read combinationally via the same
+    // spr_scan_addr wire; spr_scan_data is just a reg latched on clock.
 
-    // Sprite scanner state machine
+    // Port B wires (shared between `ifdef QUARTUS block and sim fallback)
+    logic [12:0]        spr_scan_addr;
+    logic [DATA_WIDTH-1:0] spr_scan_data;
+
+`ifndef QUARTUS
+    // Simulation: drive spr_scan_data from behavioural array
+    always_ff @(posedge clk) begin
+        spr_scan_data <= sprite_ram_mem[spr_scan_addr];
+    end
+`endif
+
+    // ── Sprite scanner state machine ─────────────────────────────────────────
+    // States:
+    //   SPRITE_IDLE  — wait for VBlank rising edge
+    //   SPRITE_FETCH — issue spr_scan_addr for word 0, wait 1 cycle for BRAM
+    //   SPRITE_SCAN  — consume latched words 0-3, write display_list_shadow
+    //   SPRITE_DONE  — signal display list ready, return to IDLE
     typedef enum logic [1:0] {
-        SPRITE_IDLE = 2'b00,
-        SPRITE_SCAN = 2'b01,
-        SPRITE_DONE = 2'b10
+        SPRITE_IDLE  = 2'b00,
+        SPRITE_FETCH = 2'b01,
+        SPRITE_SCAN  = 2'b10,
+        SPRITE_DONE  = 2'b11
     } sprite_fsm_state_t;
 
     sprite_fsm_state_t sprite_state, sprite_state_next;
     logic [7:0] sprite_index;
     logic [7:0] display_list_ptr;
     logic [8:0] scan_counter;  // Counts 0-256 for detecting end of scan
-    kaneko16_sprite_t display_list_shadow [0:255];
     logic [7:0] display_list_count_shadow;
     logic display_list_ready_shadow;
 
-    // Extract sprite descriptor fields from RAM words
-    // Each sprite: 8 words (16 bytes), stored as 16-bit words in sprite_ram
-    // Word 0: Y position [8:0]
-    // Word 1: tile number [15:0]
-    // Word 2: X position [8:0]
-    // Word 3: attributes (palette [3:0], flip_x, flip_y, priority [3:0], size [3:0])
-    // Words 4-7: reserved
+    // Latched descriptor fields (valid one cycle after spr_scan_addr is set)
+    // Words 0-2 are latched during FETCH steps 1-3; word 3 (attrs) is read
+    // directly from spr_scan_data in SCAN state.
+    logic [8:0]  sprite_y_r;
+    logic [15:0] sprite_tile_r;
+    logic [8:0]  sprite_x_r;
 
-    wire [12:0] sprite_addr_base = {2'b00, sprite_index, 3'b000};
-    wire [8:0] sprite_y = sprite_ram_mem[sprite_addr_base][8:0];
-    wire [15:0] sprite_tile = sprite_ram_mem[sprite_addr_base + 13'b1][15:0];
-    wire [8:0] sprite_x = sprite_ram_mem[sprite_addr_base + 13'b10][8:0];
-    wire [3:0] sprite_palette = sprite_ram_mem[sprite_addr_base + 13'b11][3:0];
-    wire sprite_flip_x = sprite_ram_mem[sprite_addr_base + 13'b11][4];
-    wire sprite_flip_y = sprite_ram_mem[sprite_addr_base + 13'b11][5];
-    wire [3:0] sprite_priority = sprite_ram_mem[sprite_addr_base + 13'b11][9:6];
-    wire [3:0] sprite_size = sprite_ram_mem[sprite_addr_base + 13'b11][13:10];
+    // Word-step counter within a single sprite descriptor (0-3)
+    logic [1:0]  fetch_step;
+
+    // ── Scanner address drive ─────────────────────────────────────────────────
+    // spr_scan_addr is set combinationally so the BRAM output is valid
+    // on the next clock edge (registered output).
+    always_comb begin
+        spr_scan_addr = {3'b000, sprite_index, fetch_step};
+    end
 
     // Detect VBlank rising edge
     logic vsync_n_prev, vblank_rising;
@@ -732,56 +806,92 @@ module kaneko16 #(
         end
     end
 
-    // Sprite scanner FSM
+    // ── Sprite scanner FSM ────────────────────────────────────────────────────
+    //
+    // State transitions:
+    //   IDLE  → FETCH  (on vblank_rising)
+    //   FETCH → SCAN   (after 1 cycle — BRAM output for word 0 now valid)
+    //   SCAN  → FETCH  (after all 4 words consumed, advance sprite_index)
+    //   SCAN  → DONE   (after 256 sprites scanned)
+    //   DONE  → IDLE
+    //
+    // In FETCH: fetch_step counts 0→1→2→3 each clock, latching each word
+    //   into sprite_{y,tile,x,attrs}_r.  After step 3 we have all 4 words
+    //   and move to SCAN to commit the entry to display_list_shadow.
+    //
+    // fetch_step is also the combinational driver for spr_scan_addr, so the
+    // BRAM output (spr_scan_data) is valid on the NEXT cycle after the step
+    // advances.  We latch at step+1 to keep the pipeline correct.
+    //
+    // Because display_list_shadow[255] is a register file (256 entries ×
+    // ~49 bits = ~12K bits), it is small enough for MLAB blocks.
+
+    (* ramstyle = "MLAB" *) kaneko16_sprite_t display_list_shadow [0:255];
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            sprite_state <= SPRITE_IDLE;
-            sprite_index <= 8'h00;
-            display_list_ptr <= 8'h00;
+            sprite_state          <= SPRITE_IDLE;
+            sprite_index          <= 8'h00;
+            display_list_ptr      <= 8'h00;
             display_list_count_shadow <= 8'h00;
             display_list_ready_shadow <= 1'b0;
-            for (int i = 0; i < 256; i++) begin
-                display_list_shadow[i].y <= 9'h1FF;
-                display_list_shadow[i].tile_num <= 16'h0000;
-                display_list_shadow[i].x <= 9'h000;
-                display_list_shadow[i].palette <= 4'h0;
-                display_list_shadow[i].flip_x <= 1'b0;
-                display_list_shadow[i].flip_y <= 1'b0;
-                display_list_shadow[i].prio <= 4'h0;
-                display_list_shadow[i].size <= 4'h0;
-                display_list_shadow[i].valid <= 1'b0;
-            end
+            fetch_step            <= 2'h0;
+            scan_counter          <= 9'h000;
+            sprite_y_r        <= 9'h1FF;
+            sprite_tile_r     <= 16'h0000;
+            sprite_x_r        <= 9'h000;
         end else begin
-            case (sprite_state_next)
+            sprite_state <= sprite_state_next;
+
+            case (sprite_state)
                 SPRITE_IDLE: begin
-                    // Nothing to do
+                    if (vblank_rising) begin
+                        // Kick off scan — reset pointers, start first fetch
+                        sprite_index          <= 8'h00;
+                        display_list_ptr      <= 8'h00;
+                        display_list_count_shadow <= 8'h00;
+                        display_list_ready_shadow <= 1'b0;
+                        scan_counter          <= 9'h000;
+                        fetch_step            <= 2'h0;
+                    end
+                end
+
+                SPRITE_FETCH: begin
+                    // Advance fetch_step each cycle.
+                    // spr_scan_addr = {sprite_index, fetch_step} drives BRAM.
+                    // BRAM output (spr_scan_data) is valid on next cycle.
+                    // We latch each word with a 1-cycle offset: when step==1
+                    // spr_scan_data holds the word from step==0, etc.
+                    fetch_step <= fetch_step + 2'h1;
+                    case (fetch_step)
+                        2'd0: ; // address for word 0 issued; wait for output
+                        2'd1: sprite_y_r    <= spr_scan_data[8:0];   // word 0 latched
+                        2'd2: sprite_tile_r <= spr_scan_data;         // word 1 latched
+                        2'd3: sprite_x_r    <= spr_scan_data[8:0];   // word 2 latched
+                        default: ;
+                    endcase
                 end
 
                 SPRITE_SCAN: begin
-                    if (sprite_state == SPRITE_IDLE) begin
-                        // Just entering SCAN state - initialize
-                        sprite_index <= 8'h00;
-                        display_list_ptr <= 8'h00;
-                        display_list_count_shadow <= 8'h00;
-                        display_list_ready_shadow <= 1'b0;
-                        scan_counter <= 9'h000;
-                    end else begin
-                        // In SCAN state - process one sprite
-                        if (sprite_y != 9'h1FF) begin
-                            display_list_shadow[display_list_ptr[7:0]].y <= sprite_y;
-                            display_list_shadow[display_list_ptr[7:0]].tile_num <= sprite_tile;
-                            display_list_shadow[display_list_ptr[7:0]].x <= sprite_x;
-                            display_list_shadow[display_list_ptr[7:0]].palette <= sprite_palette;
-                            display_list_shadow[display_list_ptr[7:0]].flip_x <= sprite_flip_x;
-                            display_list_shadow[display_list_ptr[7:0]].flip_y <= sprite_flip_y;
-                            display_list_shadow[display_list_ptr[7:0]].prio <= sprite_priority;
-                            display_list_shadow[display_list_ptr[7:0]].size <= sprite_size;
-                            display_list_shadow[display_list_ptr[7:0]].valid <= 1'b1;
-                            display_list_ptr <= display_list_ptr + 1'b1;
-                        end
-                        sprite_index <= sprite_index + 1'b1;
-                        scan_counter <= scan_counter + 1'b1;
+                    // spr_scan_data holds word 3 (attrs); write directly to display list.
+                    // Commit this sprite to the display list if not hidden
+                    if (sprite_y_r != 9'h1FF) begin
+                        display_list_shadow[display_list_ptr].y       <= sprite_y_r;
+                        display_list_shadow[display_list_ptr].tile_num <= sprite_tile_r;
+                        display_list_shadow[display_list_ptr].x       <= sprite_x_r;
+                        display_list_shadow[display_list_ptr].palette  <= spr_scan_data[3:0];
+                        display_list_shadow[display_list_ptr].flip_x   <= spr_scan_data[4];
+                        display_list_shadow[display_list_ptr].flip_y   <= spr_scan_data[5];
+                        display_list_shadow[display_list_ptr].prio     <= spr_scan_data[9:6];
+                        display_list_shadow[display_list_ptr].size     <= spr_scan_data[13:10];
+                        display_list_shadow[display_list_ptr].valid    <= 1'b1;
+                        display_list_ptr <= display_list_ptr + 8'h1;
                     end
+
+                    // Advance to next sprite
+                    sprite_index <= sprite_index + 8'h1;
+                    scan_counter <= scan_counter + 9'h1;
+                    fetch_step   <= 2'h0;  // reset for next FETCH phase
                 end
 
                 SPRITE_DONE: begin
@@ -789,40 +899,26 @@ module kaneko16 #(
                     display_list_ready_shadow <= 1'b1;
                 end
 
-                default: begin
-                    // No operation
-                end
+                default: ;
             endcase
-
-            sprite_state <= sprite_state_next;
         end
     end
 
-    // FSM state transition logic
+    // FSM state transition logic (combinational)
     always_comb begin
         sprite_state_next = sprite_state;
-
         case (sprite_state)
-            SPRITE_IDLE: begin
-                if (vblank_rising) begin
-                    sprite_state_next = SPRITE_SCAN;
-                end
-            end
-
-            SPRITE_SCAN: begin
-                // Transition to DONE after scanning all 256 sprites
-                if (scan_counter == 9'd256) begin
+            SPRITE_IDLE:  if (vblank_rising)          sprite_state_next = SPRITE_FETCH;
+            // Stay in FETCH for 4 cycles (steps 0-3), then one SCAN cycle
+            SPRITE_FETCH: if (fetch_step == 2'd3)     sprite_state_next = SPRITE_SCAN;
+            SPRITE_SCAN:  begin
+                if (scan_counter == 9'd255)
                     sprite_state_next = SPRITE_DONE;
-                end
+                else
+                    sprite_state_next = SPRITE_FETCH;
             end
-
-            SPRITE_DONE: begin
-                sprite_state_next = SPRITE_IDLE;
-            end
-
-            default: begin
-                sprite_state_next = SPRITE_IDLE;
-            end
+            SPRITE_DONE:                              sprite_state_next = SPRITE_IDLE;
+            default:                                  sprite_state_next = SPRITE_IDLE;
         endcase
     end
 
@@ -872,9 +968,11 @@ module kaneko16 #(
     logic [19:0] g3_full_tile;    // tile_base + tile_row*tiles_wide + tile_col (20-bit max)
 
     // ── Scanline pixel buffer (320 pixels) ───────────────────────────────────
-    logic [7:0]  spr_pix_color    [0:319];
-    logic        spr_pix_valid    [0:319];
-    logic [3:0]  spr_pix_priority [0:319];  // sprite prio field from descriptor
+    // Small enough for MLAB (320×8 + 320×1 + 320×4 = 4160 bits; fits in ~7 MLAB blocks).
+    // MLAB supports asynchronous read, so the combinatorial read-back port below is valid.
+    (* ramstyle = "MLAB" *) logic [7:0]  spr_pix_color    [0:319];
+    (* ramstyle = "MLAB" *) logic        spr_pix_valid    [0:319];
+    (* ramstyle = "MLAB" *) logic [3:0]  spr_pix_priority [0:319];  // sprite prio field from descriptor
 
     // ── Read-back port (combinational) ───────────────────────────────────────
     always_comb begin
@@ -1077,9 +1175,54 @@ module kaneko16 #(
     // Gate 4: BG Tilemap Renderer (VIEW2-CHIP)
     // =========================================================================
 
-    // ── Tilemap VRAM (4 layers × 32×32 = 4096 words) ─────────────────────────
+    // ── Tilemap VRAM (4 layers × 32×32 = 4096 words, 8KB) ────────────────────
     // Address: {layer[1:0], row[4:0], col[4:0]} = 12 bits
+    //
+    // Under Quartus: altsyncram SINGLE_PORT M10K (no reset loop — power_up=FALSE).
+    // Under simulation: behavioural array with registered read to match 1-cycle latency.
+    //
+    // Pipeline is 3-stage:
+    //   Stage 0 (g4s0): compute VRAM address + pixel offsets (combinational)
+    //   Stage 1 (g4s1): VRAM output valid (registered read) + save px metadata
+    //   Stage 2 (g4s2): decode VRAM word, compute ROM address, latch
 
+`ifdef QUARTUS
+    // DUAL_PORT: Port A = CPU write; Port B = pixel pipeline read.
+    // Write address: {bg_layer_sel, bg_row_sel, bg_col_sel}
+    // Read address:  g4s0_vram_addr (computed combinationally every cycle)
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic [15:0] g4s1_vram_word;  // bits [1:0] reserved (unused by design)
+    /* verilator lint_on UNUSEDSIGNAL */
+    altsyncram #(
+        .operation_mode            ("DUAL_PORT"),
+        .width_a                   (16), .widthad_a (12), .numwords_a (4096),
+        .width_b                   (16), .widthad_b (12), .numwords_b (4096),
+        .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+        .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b  ("BYPASS"),
+        .clock_enable_output_b     ("BYPASS"),
+        .intended_device_family    ("Cyclone V"),
+        .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+        .power_up_uninitialized    ("TRUE"),
+        .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+    ) tilemap_vram_inst (
+        .clock0 (clk), .clock1 (clk),
+        // Port A — CPU write
+        .address_a  ({bg_layer_sel, bg_row_sel, bg_col_sel}),
+        .data_a     (bg_vram_din),
+        .wren_a     (bg_vram_wr),
+        .q_a        (),
+        // Port B — pixel pipeline read (registered output, 1-cycle latency)
+        .address_b  (g4s0_vram_addr),
+        .wren_b     (1'b0),
+        .data_b     (16'd0),
+        .q_b        (g4s1_vram_word),
+        .byteena_a  (1'b1), .byteena_b (1'b1),
+        .aclr0(1'b0), .aclr1(1'b0),
+        .addressstall_a(1'b0), .addressstall_b(1'b0),
+        .clocken0(1'b1), .clocken1(1'b1), .clocken2(1'b1), .clocken3(1'b1),
+        .eccstatus(), .rden_a(1'b1), .rden_b(1'b1)
+    );
+`else
     logic [15:0] tilemap_vram [0:4095];
 
     always_ff @(posedge clk or negedge rst_n) begin
@@ -1095,20 +1238,20 @@ module kaneko16 #(
         end
     end
 
-    // ── Stage 0: combinational — scroll + VRAM read + ROM address ────────────
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic [15:0] g4s1_vram_word;  // bits [1:0] reserved (unused by design)
+    /* verilator lint_on UNUSEDSIGNAL */
+    always_ff @(posedge clk) begin
+        g4s1_vram_word <= tilemap_vram[g4s0_vram_addr];
+    end
+`endif
+
+    // ── Stage 0: combinational — scroll + VRAM address ───────────────────────
 
     logic [8:0]  g4s0_tile_x, g4s0_tile_y;
     logic [4:0]  g4s0_col, g4s0_row;
     logic [3:0]  g4s0_px,  g4s0_py;
     logic [11:0] g4s0_vram_addr;
-    /* verilator lint_off UNUSEDSIGNAL */
-    logic [15:0] g4s0_vram_word;   // bits [1:0] reserved (unused by design)
-    /* verilator lint_on UNUSEDSIGNAL */
-    logic [7:0]  g4s0_tile_num;
-    logic [3:0]  g4s0_palette;
-    logic        g4s0_hflip, g4s0_vflip;
-    logic [3:0]  g4s0_fpx,  g4s0_fpy;
-    logic [20:0] g4s0_rom_addr;
 
     // Select active scroll for queried layer (only lower 9 bits [8:0] used)
     /* verilator lint_off UNUSEDSIGNAL */
@@ -1131,58 +1274,92 @@ module kaneko16 #(
         g4s0_tile_y = (bg_vpos + g4s0_scroll_y_sel[8:0]) & 9'h1FF;
 
         // Tile column/row and pixel within tile
-        g4s0_col   = g4s0_tile_x[8:4];   // tile_x >> 4 (0..31)
-        g4s0_row   = g4s0_tile_y[8:4];   // tile_y >> 4 (0..31)
-        g4s0_px    = g4s0_tile_x[3:0];   // pixel X in tile (0..15)
-        g4s0_py    = g4s0_tile_y[3:0];   // pixel Y in tile (0..15)
+        g4s0_col        = g4s0_tile_x[8:4];   // tile_x >> 4 (0..31)
+        g4s0_row        = g4s0_tile_y[8:4];   // tile_y >> 4 (0..31)
+        g4s0_px         = g4s0_tile_x[3:0];   // pixel X in tile (0..15)
+        g4s0_py         = g4s0_tile_y[3:0];   // pixel Y in tile (0..15)
 
-        // VRAM lookup
-        g4s0_vram_addr = {bg_layer_query, g4s0_row, g4s0_col};
-        g4s0_vram_word = tilemap_vram[g4s0_vram_addr];
-
-        // Decode VRAM entry (GATE_PLAN.md encoding):
-        //   [15:8] tile_num, [7:4] palette, [3] VFLIP, [2] HFLIP
-        g4s0_tile_num = g4s0_vram_word[15:8];
-        g4s0_palette  = g4s0_vram_word[7:4];
-        g4s0_vflip    = g4s0_vram_word[3];
-        g4s0_hflip    = g4s0_vram_word[2];
-
-        // Apply flip
-        g4s0_fpx = g4s0_hflip ? (4'd15 - g4s0_px) : g4s0_px;
-        g4s0_fpy = g4s0_vflip ? (4'd15 - g4s0_py) : g4s0_py;
-
-        // Tile ROM byte address: tile_num*128 + fpy*8 + fpx/2
-        // 4bpp packed: 8 bytes/row, lo nybble = left pixel (even fpx), hi = right (odd fpx)
-        g4s0_rom_addr = 21'(g4s0_tile_num) * 21'd128
-                      + 21'(g4s0_fpy)      * 21'd8
-                      + {17'h0, g4s0_fpx[3:1]};  // fpx >> 1
+        // VRAM address
+        g4s0_vram_addr  = {bg_layer_query, g4s0_row, g4s0_col};
     end
 
-    // ── Stage 1: registered — latch ROM address + metadata ───────────────────
+    // ── Stage 0→1 registered: save pixel offsets alongside VRAM read ─────────
+    // These are pipelined alongside the 1-cycle VRAM read latency.
 
     logic [1:0]  g4s1_layer;
-    logic [3:0]  g4s1_palette;
-    logic        g4s1_px_lsb;   // fpx[0]: selects hi/lo nybble
+    logic [3:0]  g4s1_px;      // pixel X within tile (pre-flip)
+    logic [3:0]  g4s1_py;      // pixel Y within tile (pre-flip)
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            g4s1_layer        <= 2'h0;
-            g4s1_palette      <= 4'h0;
-            g4s1_px_lsb       <= 1'b0;
-            bg_tile_rom_addr  <= 21'h0;
+            g4s1_layer  <= 2'h0;
+            g4s1_px     <= 4'h0;
+            g4s1_py     <= 4'h0;
         end else begin
-            g4s1_layer       <= bg_layer_query;
-            g4s1_palette     <= g4s0_palette;
-            g4s1_px_lsb      <= g4s0_fpx[0];
-            bg_tile_rom_addr <= g4s0_rom_addr;
+            g4s1_layer  <= bg_layer_query;
+            g4s1_px     <= g4s0_px;
+            g4s1_py     <= g4s0_py;
         end
     end
 
-    // ── Stage 2: combinational — unpack nybble from ROM data ─────────────────
+    // ── Stage 1: decode VRAM word (now valid from BRAM/registered read) ───────
 
-    logic [3:0] g4s2_nybble;
+    // Note: g4s1_vram_word bits [1:0] are reserved (unused by design).
+    logic [7:0]  g4s1_tile_num;
+    logic [3:0]  g4s1_palette;
+    logic        g4s1_hflip, g4s1_vflip;
+    logic [3:0]  g4s1_fpx, g4s1_fpy;
+    logic [20:0] g4s1_rom_addr;
+
     always_comb begin
-        g4s2_nybble = g4s1_px_lsb ? bg_tile_rom_data[7:4] : bg_tile_rom_data[3:0];
+        // Decode VRAM entry (GATE_PLAN.md encoding):
+        //   [15:8] tile_num, [7:4] palette, [3] VFLIP, [2] HFLIP
+        g4s1_tile_num = g4s1_vram_word[15:8];
+        g4s1_palette  = g4s1_vram_word[7:4];
+        g4s1_vflip    = g4s1_vram_word[3];
+        g4s1_hflip    = g4s1_vram_word[2];
+
+        // Apply flip using pipelined pixel offsets
+        g4s1_fpx = g4s1_hflip ? (4'd15 - g4s1_px) : g4s1_px;
+        g4s1_fpy = g4s1_vflip ? (4'd15 - g4s1_py) : g4s1_py;
+
+        // Tile ROM byte address: tile_num*128 + fpy*8 + fpx/2
+        // 4bpp packed: 8 bytes/row, lo nybble = left pixel (even fpx), hi = right (odd fpx)
+        g4s1_rom_addr = 21'(g4s1_tile_num) * 21'd128
+                      + 21'(g4s1_fpy)      * 21'd8
+                      + {17'h0, g4s1_fpx[3:1]};  // fpx >> 1
+    end
+
+    // ── Stage 2: registered — latch ROM address + metadata ───────────────────
+
+    logic [3:0]  g4s2_palette;
+    logic        g4s2_px_lsb;   // fpx[0]: selects hi/lo nybble
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            g4s2_palette      <= 4'h0;
+            g4s2_px_lsb       <= 1'b0;
+            bg_tile_rom_addr  <= 21'h0;
+        end else begin
+            g4s2_palette     <= g4s1_palette;
+            g4s2_px_lsb      <= g4s1_fpx[0];
+            bg_tile_rom_addr <= g4s1_rom_addr;
+        end
+    end
+
+    // Alias for downstream stages (previously g4s1_layer/palette/px_lsb)
+    logic [1:0]  g4s1_layer_d2;   // layer delayed to match 2-stage pipeline
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) g4s1_layer_d2 <= 2'h0;
+        else        g4s1_layer_d2 <= g4s1_layer;
+    end
+
+    // ── Stage 3: combinational — unpack nybble from ROM data ─────────────────
+    // (ROM data arrives after bg_tile_rom_addr was latched in Stage 2)
+
+    logic [3:0] g4s3_nybble;
+    always_comb begin
+        g4s3_nybble = g4s2_px_lsb ? bg_tile_rom_data[7:4] : bg_tile_rom_data[3:0];
     end
 
     // ── Output registers: update the queried layer slot ───────────────────────
@@ -1195,9 +1372,9 @@ module kaneko16 #(
                 bg_pix_color[i] <= 8'h00;
         end else begin
             for (int i = 0; i < 4; i++) begin
-                if (2'(i) == g4s1_layer) begin
-                    bg_pix_valid[i]    <= (g4s2_nybble != 4'h0);
-                    bg_pix_color[i]    <= {g4s1_palette, g4s2_nybble};
+                if (2'(i) == g4s1_layer_d2) begin
+                    bg_pix_valid[i]    <= (g4s3_nybble != 4'h0);
+                    bg_pix_color[i]    <= {g4s2_palette, g4s3_nybble};
                     bg_pix_priority[i] <= 1'b0;  // BG tile priority bit (reserved, always 0)
                 end
             end
