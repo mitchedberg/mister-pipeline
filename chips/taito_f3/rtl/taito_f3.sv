@@ -336,6 +336,8 @@ tc0630fdp u_fdp (
     .pixel_valid     (fdp_pixel_valid),
 
     // Testbench / step-validation outputs — tied or left open
+    // (ports exist only outside Quartus synthesis)
+`ifndef QUARTUS
     /* verilator lint_off PINCONNECTEMPTY */
     .text_pixel_out  (),
     .bg_pixel_out    (),
@@ -344,8 +346,11 @@ tc0630fdp u_fdp (
     .blend_rgb_out   (),
     .pivot_pixel_out (),
     /* verilator lint_on PINCONNECTEMPTY */
+`endif
 
     // Testbench write ports — tied off (not used at top level)
+    // (ports exist only outside Quartus synthesis)
+`ifndef QUARTUS
     .gfx_wr_addr     (22'b0),
     .gfx_wr_data     (32'b0),
     .gfx_wr_en       (1'b0),
@@ -358,6 +363,7 @@ tc0630fdp u_fdp (
     .pvt_wr_addr     (14'b0),
     .pvt_wr_data     (32'b0),
     .pvt_wr_en       (1'b0),
+`endif
 
     // TC0650FDA CPU interface (palette writes, 32-bit direct)
     .fda_cpu_cs      (fda_cpu_cs),
