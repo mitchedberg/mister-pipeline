@@ -248,14 +248,15 @@ end
 
 // Mosaic snap (applied uniformly — uses per-layer mosaic inputs)
 // For QUARTUS compatibility, generate 4 snap computations:
+genvar gi;
 generate
-    for (genvar gi = 0; gi < 4; gi++) begin : gen_bg_out
+    for (gi = 0; gi < 4; gi++) begin : gen_bg_out
         logic [8:0] snap_col;
         always_comb begin
-            automatic logic [9:0] gx_wide;
-            automatic logic [8:0] grid_sum;
-            automatic logic [8:0] sr;
-            automatic logic [4:0] off;
+            logic [9:0] gx_wide;
+            logic [8:0] grid_sum;
+            logic [8:0] sr;
+            logic [4:0] off;
 
             gx_wide  = {1'b0, scol_c} + 10'd114;
             grid_sum = (gx_wide >= 10'd432) ? gx_wide[8:0] - 9'd432 : gx_wide[8:0];
@@ -526,13 +527,13 @@ always_ff @(posedge clk_4x) begin
 
 /* verilator lint_off UNUSED */
                     for (int px = 0; px < 16; px++) begin
-                        automatic logic signed [10:0] scol;
-                        automatic logic [18:0] acc_px;
-                        automatic logic [ 3:0] px_tile;
-                        automatic logic [ 2:0] ni;
-                        automatic logic [31:0] src;
-                        automatic logic [ 4:0] sh;
-                        automatic logic [ 3:0] pen;
+                        logic signed [10:0] scol;
+                        logic [18:0] acc_px;
+                        logic [ 3:0] px_tile;
+                        logic [ 2:0] ni;
+                        logic [31:0] src;
+                        logic [ 4:0] sh;
+                        logic [ 3:0] pen;
 
                         scol    = scol_base + $signed(11'(px));
                         acc_px  = run_zoom_acc_fp + 19'(px) * 19'({10'b0, run_zoom_step});
