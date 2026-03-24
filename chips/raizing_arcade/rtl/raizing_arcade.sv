@@ -15,7 +15,7 @@
 //   Text tilemap (separate from GP9001)
 //
 // Memory map (68000) — from MAME bgaregga_68k_mem:
-//   0x000000 - 0x0FFFFF   1MB    Program ROM (direct BRAM in sim)
+//   0x000000 - 0x0FFFFF   1MB    Program ROM (SDRAM CH1)
 //   0x100000 - 0x10FFFF  64KB    Work RAM
 //   0x218000 - 0x21BFFF  16KB    Z80 shared RAM (byte-wide, even bytes)
 //   0x21C020 - 0x21C021         IN1 (joystick 1)
@@ -46,12 +46,12 @@
 //   0xE01C                   Sound latch read (read from 68K)
 //   0xE01D                   bgaregga_E01D_r (IRQ pending status)
 //
-// SDRAM layout (for MiSTer ioctl ROM loading):
-//   ROM index 0 (CPU):  0x000000 - 0x0FFFFF  1MB   68K program ROM
-//   ROM index 1 (GFX):  0x100000 - 0x8FFFFF  8MB   GP9001 tile ROM (4 × 2MB)
-//   ROM index 2 (SND):  0x900000 - 0x91FFFF  128KB  Z80 audio ROM
-//   ROM index 3 (OKI):  0x920000 - 0xA1FFFF  1MB   OKI ADPCM samples
-//   ROM index 4 (TXT):  0xA20000 - 0xA27FFF  32KB  Text tilemap ROM
+// SDRAM layout (for MiSTer ioctl ROM loading, handled by emu.sv → sdram_b):
+//   SDRAM 0x000000 – 0x0FFFFF  1MB   68K program ROM   (ioctl_index 0)
+//   SDRAM 0x100000 – 0x8FFFFF  8MB   GP9001 tile ROM   (ioctl_index 1)
+//   SDRAM 0x900000 – 0x91FFFF  128KB Z80 audio ROM     (ioctl_index 2, BRAM in raizing_arcade)
+//   SDRAM 0x920000 – 0xA1FFFF  1MB   OKI ADPCM samples (ioctl_index 3)
+//   SDRAM 0xA20000 – 0xA27FFF  32KB  Text tilemap ROM  (ioctl_index 4)
 //
 // =============================================================================
 
@@ -84,10 +84,12 @@ module raizing_arcade #(
     input  logic        rst_n,          // active-low reset
 
     // ── MiSTer HPS I/O ────────────────────────────────────────────────────────
+    // NOTE: ioctl_index 0 (prog ROM) is loaded via SDRAM in emu.sv.
+    //       Only ioctl_index 2 (snd ROM, BRAM) is handled here.
     input  logic        ioctl_wr,       // ROM loading write strobe
     input  logic [24:0] ioctl_addr,     // ROM loading address
     input  logic [15:0] ioctl_dout,     // ROM loading data (16-bit)
-    input  logic [7:0]  ioctl_index,    // ROM region index (0=CPU, 1=GFX, 2=SND, 3=OKI, 4=TXT)
+    input  logic [7:0]  ioctl_index,    // ROM region index (2=SND handled here)
     output logic        ioctl_wait,     // Stall HPS while SDRAM busy
 
     // ── Video output ─────────────────────────────────────────────────────────
@@ -110,31 +112,19 @@ module raizing_arcade #(
     input  logic [7:0]  dipsw_a,        // DIP switch A
     input  logic [7:0]  dipsw_b,        // DIP switch B
 
-    // ── SDRAM interface ───────────────────────────────────────────────────────
-    output logic [12:0] sdram_a,
-    output logic [1:0]  sdram_ba,
-    inout  logic [15:0] sdram_dq,
-    output logic        sdram_cas_n,
-    output logic        sdram_ras_n,
-    output logic        sdram_we_n,
-    output logic        sdram_cs_n,
-    output logic [1:0]  sdram_dqm,
-    output logic        sdram_cke
+    // ── Program ROM SDRAM (toggle-handshake, CH1 in sdram_b) ─────────────────
+    // Driven by emu.sv → sdram_b.  Prog ROM loaded via SDRAM CH0 ioctl path.
+    output logic [26:0] prog_rom_addr,  // word address within SDRAM
+    output logic        prog_rom_req,   // toggle to initiate read
+    input  logic [15:0] prog_rom_data,  // data returned from SDRAM
+    input  logic        prog_rom_ack    // echoes prog_rom_req when data ready
 );
 
 // =============================================================================
-// SDRAM — tied off (sim uses internal BRAM for program ROM)
+// ioctl_wait — never stall HPS (no SDRAM write-path latency on this side)
 // =============================================================================
 
-assign sdram_a     = 13'h0;
-assign sdram_ba    = 2'b00;
-assign sdram_cas_n = 1'b1;
-assign sdram_ras_n = 1'b1;
-assign sdram_we_n  = 1'b1;
-assign sdram_cs_n  = 1'b1;
-assign sdram_dqm   = 2'b11;
-assign sdram_cke   = 1'b1;
-assign ioctl_wait  = 1'b0;
+assign ioctl_wait = 1'b0;
 
 // =============================================================================
 // Clock Enable Generation
@@ -285,28 +275,39 @@ end
 assign vblank_rising = vblank_r & ~vblank_prev;
 
 // =============================================================================
-// Program ROM — 1MB internal BRAM (for sim; real hardware uses SDRAM)
-// Loaded via ioctl when ioctl_index == 8'h00.
-// 512K words × 16-bit = 1MB.
+// Program ROM — 1MB via SDRAM (CH1 toggle-handshake, driven from emu.sv)
+// CPU addr 0x000000–0x0FFFFF → word addr [19:1] → SDRAM word [26:0] (base 0)
 // =============================================================================
 
-localparam int PROG_WORDS  = 512 * 1024;   // 512K words = 1MB
-localparam int PROG_ABITS  = 19;           // $clog2(PROG_WORDS)
+// SDRAM word address: prog ROM sits at SDRAM base 0x000000.
+// cpu_addr is a word address (byte addr >> 1); prog ROM occupies [19:1].
+assign prog_rom_addr = {8'b0, cpu_addr[19:1]};  // 27-bit SDRAM word addr
 
-logic [15:0] prog_rom [0:PROG_WORDS-1];
-logic [15:0] prog_rom_dout;
+// Toggle-handshake: assert req on prog_cs rising, wait for ack, latch data.
+logic        prog_req_r;     // registered req toggle
+logic [15:0] prog_rom_dout;  // latched data from SDRAM
+logic        prog_ack_seen;  // ack received for current request
 
-// ROM load: ioctl_index 0, word-addressed (ioctl_addr[24:1])
-// ioctl_dout is 16-bit; ioctl_addr is byte address.
-always_ff @(posedge clk) begin
-    if (ioctl_wr && (ioctl_index == 8'h00))
-        prog_rom[ioctl_addr[19:1]] <= ioctl_dout;
+always_ff @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        prog_req_r   <= 1'b0;
+        prog_rom_dout <= 16'h0;
+        prog_ack_seen <= 1'b1;  // idle: ack already "seen"
+    end else begin
+        if (prog_cs && !cpu_as_n && prog_ack_seen) begin
+            // New ROM access: toggle req and wait for ack
+            prog_req_r   <= ~prog_req_r;
+            prog_ack_seen <= 1'b0;
+        end
+        // Capture data when SDRAM acknowledges (req == ack means data ready)
+        if (!prog_ack_seen && (prog_rom_req == prog_rom_ack)) begin
+            prog_rom_dout <= prog_rom_data;
+            prog_ack_seen <= 1'b1;
+        end
+    end
 end
 
-// ROM read (1-cycle registered)
-always_ff @(posedge clk) begin
-    prog_rom_dout <= prog_rom[cpu_addr[19:1]];
-end
+assign prog_rom_req = prog_req_r;
 
 // =============================================================================
 // Work RAM — 64KB synchronous block RAM at 0x100000–0x10FFFF
@@ -768,15 +769,16 @@ end
 // DTACK Generation
 // =============================================================================
 // Fast devices (GP9001, palette, shared RAM, I/O, WRAM): 1-cycle DTACK
-// Prog ROM (BRAM, 1-cycle): same
+// Prog ROM (SDRAM): asserted only when prog_ack_seen (SDRAM responded)
 // Open bus: 2-cycle fallback
 
 logic any_fast_cs;
 logic dtack_r;
 logic dtack_fallback_r;
 
+// prog_cs is NOT in any_fast_cs — it needs SDRAM latency
 assign any_fast_cs = !gp9001_cs_n | palram_cs | sram_cs | io_cs
-                   | txtvram_cs | wram_cs | prog_cs | sndlatch_cs;
+                   | txtvram_cs | wram_cs | sndlatch_cs;
 
 always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -794,6 +796,8 @@ always_comb begin
         cpu_dtack_n = 1'b1;
     else if (any_fast_cs)
         cpu_dtack_n = !dtack_r;
+    else if (prog_cs)
+        cpu_dtack_n = !prog_ack_seen;   // wait until SDRAM responds
     else
         cpu_dtack_n = !dtack_fallback_r;
 end

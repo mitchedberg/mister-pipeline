@@ -29,11 +29,16 @@ create_clock -period "20.0 ns" -name {FPGA_CLK3_50} [get_ports {FPGA_CLK3_50}]
 # ==========================================================================
 
 # Automatically derive all PLL-generated clocks from sys.tcl/sys.qip
-# These include sys_clk (96 MHz), HDMI clocks, audio clocks.
+# These include sys_clk (96 MHz), clk_sdram (133 MHz), HDMI clocks, audio clocks.
 derive_pll_clocks
 
 # Apply timing margin for setup/hold across process corners
 derive_clock_uncertainty
+
+# SDRAM chip clock (output pin, driven by PLL outclk_1 at 133 MHz)
+create_generated_clock -name {SDRAM_CLK} \
+    -source [get_pins {u_pll|pll_inst|altera_pll_i|*[1].*|divclk}] \
+    [get_ports {SDRAM_CLK}]
 
 # ==========================================================================
 # CLOCK DOMAIN ISOLATION (Exclusive Clock Groups)
@@ -47,11 +52,26 @@ derive_clock_uncertainty
 
 set_clock_groups -exclusive \
    -group [get_clocks { *|pll|pll_inst|altera_pll_i|*[*].*|divclk}] \
+   -group [get_clocks { SDRAM_CLK }] \
    -group [get_clocks { pll_hdmi|pll_hdmi_inst|altera_pll_i|*[0].*|divclk}] \
    -group [get_clocks { pll_audio|pll_audio_inst|altera_pll_i|*[0].*|divclk}] \
    -group [get_clocks { FPGA_CLK1_50 }] \
    -group [get_clocks { FPGA_CLK2_50 }] \
    -group [get_clocks { FPGA_CLK3_50 }]
+
+# ==========================================================================
+# SDRAM I/O TIMING
+# ==========================================================================
+
+# SDRAM data bus I/O (setup/hold relative to SDRAM_CLK)
+set_input_delay  -clock {SDRAM_CLK} -max 5.4 [get_ports {SDRAM_DQ[*]}]
+set_input_delay  -clock {SDRAM_CLK} -min 2.7 [get_ports {SDRAM_DQ[*]}]
+set_output_delay -clock {SDRAM_CLK} -max 1.6 [get_ports {SDRAM_DQ[*]}]
+set_output_delay -clock {SDRAM_CLK} -min -0.9 [get_ports {SDRAM_DQ[*]}]
+
+# SDRAM command outputs (setup/hold relative to SDRAM_CLK)
+set_output_delay -clock {SDRAM_CLK} -max 1.6 [get_ports {SDRAM_A[*] SDRAM_BA[*] SDRAM_nCS SDRAM_nRAS SDRAM_nCAS SDRAM_nWE SDRAM_CKE SDRAM_DQML SDRAM_DQMH}]
+set_output_delay -clock {SDRAM_CLK} -min -0.9 [get_ports {SDRAM_A[*] SDRAM_BA[*] SDRAM_nCS SDRAM_nRAS SDRAM_nCAS SDRAM_nWE SDRAM_CKE SDRAM_DQML SDRAM_DQMH}]
 
 # ==========================================================================
 # FALSE PATHS — USER INPUT & DISPLAY

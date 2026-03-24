@@ -30,12 +30,19 @@
 //   Aspect ratio:      4:3
 //
 // ROM loading (ioctl_index values, set in .mra file):
-//   0x00 — CPU program ROM (68K, BRAM, 1MB)
-//   0x01 — GFX ROM (GP9001 tile + sprite data, BRAM stub)
-//   0x02 — Sound ROM (Z80 audio, BRAM, 128KB)
-//   0x03 — OKI ADPCM ROM (BRAM stub)
+//   0x00 — CPU program ROM (68K, SDRAM 0x000000, 1MB)
+//   0x01 — GFX ROM (GP9001 tile + sprite data, SDRAM 0x100000, 8MB stub)
+//   0x02 — Sound ROM (Z80 audio, BRAM in raizing_arcade, 128KB)
+//   0x03 — OKI ADPCM ROM (SDRAM 0x920000 stub)
 //   0x04 — Text tilemap ROM (stub)
 //   0xFE — DIP switch / NVRAM init data
+//
+// SDRAM layout (IS42S16320F, 32 MB):
+//   0x000000 – 0x0FFFFF   1MB    CPU program ROM (index 0)
+//   0x100000 – 0x8FFFFF   8MB    GFX ROM (GP9001 tiles + sprites, index 1)
+//   0x900000 – 0x91FFFF   128KB  Z80 audio ROM (index 2 → BRAM in core, not here)
+//   0x920000 – 0xA1FFFF   1MB    OKI ADPCM ROM (index 3)
+//   0xA20000 – 0xA27FFF   32KB   Text tilemap ROM (index 4)
 //
 // -------------------------------------------------------------------------
 
@@ -316,7 +323,7 @@ hps_io #(.CONF_STR(CONF_STR)) u_hps_io
 //////////////////////////////////////////////////////////////////
 
 wire clk_sys;       // 96 MHz — core system clock
-wire clk_unused;    // second PLL output (not used — SDRAM not needed)
+wire clk_sdram;     // 133 MHz — SDRAM controller clock (phase-shifted)
 wire pll_locked;
 
 pll u_pll
@@ -324,15 +331,18 @@ pll u_pll
     .refclk   (CLK_50M),
     .rst      (1'b0),
     .outclk_0 (clk_sys),    // 96 MHz
-    .outclk_1 (clk_unused), // 133 MHz (unused; SDRAM not needed for BRAM-only core)
+    .outclk_1 (clk_sdram),  // 133 MHz (phase-shifted for SDRAM setup/hold)
     .locked   (pll_locked)
 );
+
+// SDRAM clock pin driven directly from PLL output
+assign SDRAM_CLK = clk_sdram;
 
 //////////////////////////////////////////////////////////////////
 // Reset
 //
 // Extend reset for 256 cycles after download completes to allow
-// all BRAMs to settle.
+// SDRAM to settle.
 //////////////////////////////////////////////////////////////////
 wire rom_download = ioctl_download;
 
@@ -372,14 +382,11 @@ wire [9:0] joy_p1 = joystick_0[9:0];
 wire [9:0] joy_p2 = joystick_1[9:0];
 
 //////////////////////////////////////////////////////////////////
-// ROM loading — ioctl_dout is 8-bit from hps_io; raizing_arcade
-// takes 16-bit ioctl_dout. Pack byte pairs.
-// hps_io provides 8-bit bytes sequentially.  raizing_arcade uses
-// word-addressed loads; pass lower 8 bits of the ioctl bus
-// duplicated to both bytes — raizing_arcade internally does
-// byte-enable based on addr[0].
-//
-// Note: ioctl_dout from hps_io is 8-bit. Pad to 16-bit.
+// ROM loading — sdram_b CH0 handles all ioctl writes to SDRAM.
+// Index 0 (prog ROM) and others go directly into SDRAM via sdram_b.
+// Index 2 (snd ROM) is handled by raizing_arcade internal BRAM;
+// we still pass ioctl_wr/addr/dout to raizing_arcade for that path.
+// ioctl_dout from hps_io is 8-bit; raizing_arcade expects 16-bit.
 //////////////////////////////////////////////////////////////////
 wire [15:0] ioctl_dout_16 = {ioctl_dout, ioctl_dout};
 wire [24:0] ioctl_addr_25 = ioctl_addr[24:0];
@@ -394,32 +401,79 @@ wire       core_ce_pixel;
 wire signed [15:0] snd_left_w, snd_right_w;
 
 //////////////////////////////////////////////////////////////////
-// Raizing Arcade core instantiation
+// SDRAM controller (sdram_b)
+//
+// CH0: ioctl ROM download writes (all indexes — sdram_b handles addr routing)
+// CH1: CPU program ROM reads (raizing_arcade prog_rom_* toggle-handshake)
+// CH2-4: unused stubs (tie req=0)
 //////////////////////////////////////////////////////////////////
 
-// SDRAM pins (tied off inside raizing_arcade — it uses BRAM)
-wire [12:0] sdram_a_w;
-wire  [1:0] sdram_ba_w;
-wire        sdram_cas_n_w, sdram_ras_n_w, sdram_we_n_w, sdram_cs_n_w;
-wire  [1:0] sdram_dqm_w;
-wire        sdram_cke_w;
+// prog_rom toggle-handshake wires
+wire [26:0] prog_rom_addr_w;
+wire        prog_rom_req_w;
+wire [15:0] prog_rom_data_w;
+wire        prog_rom_ack_w;
 
-// sdram_dq is inout in raizing_arcade (tied to 'Z inside).
-// Declare as wire; raizing_arcade drives it to Z internally (cs_n=1, we_n=1).
-wire [15:0] sdram_dq_w;
-assign sdram_dq_w = 16'hzzzz;   // pull to Z; raizing_arcade only drives when cs_n=0 (never)
+sdram_b u_sdram
+(
+    .clk        (clk_sdram),
+    .clk_sys    (clk_sys),
+    .rst_n      (reset_n),
+
+    // CH0: HPS ROM download write path
+    .ioctl_wr   (ioctl_wr & ioctl_download),
+    .ioctl_addr (ioctl_addr),
+    .ioctl_dout (ioctl_dout),
+
+    // CH1: CPU program ROM reads
+    .cpu_addr   (prog_rom_addr_w),
+    .cpu_data   (prog_rom_data_w),
+    .cpu_req    (prog_rom_req_w),
+    .cpu_ack    (prog_rom_ack_w),
+
+    // CH2-4: unused (GFX/ADPCM/Z80 stubs — tie off)
+    .gfx_addr   (27'h0),
+    .gfx_req    (1'b0),
+    .gfx_data   (),
+    .gfx_ack    (),
+
+    .adpcm_addr (27'h0),
+    .adpcm_req  (1'b0),
+    .adpcm_data (),
+    .adpcm_ack  (),
+
+    .z80_addr   (27'h0),
+    .z80_req    (1'b0),
+    .z80_data   (),
+    .z80_ack    (),
+
+    // SDRAM chip pins
+    .SDRAM_A    (SDRAM_A),
+    .SDRAM_BA   (SDRAM_BA),
+    .SDRAM_DQ   (SDRAM_DQ),
+    .SDRAM_DQM  ({SDRAM_DQMH, SDRAM_DQML}),
+    .SDRAM_nCS  (SDRAM_nCS),
+    .SDRAM_nCAS (SDRAM_nCAS),
+    .SDRAM_nRAS (SDRAM_nRAS),
+    .SDRAM_nWE  (SDRAM_nWE),
+    .SDRAM_CKE  (SDRAM_CKE)
+);
+
+//////////////////////////////////////////////////////////////////
+// Raizing Arcade core instantiation
+//////////////////////////////////////////////////////////////////
 
 raizing_arcade u_raizing
 (
     .clk            (clk_sys),
     .rst_n          (reset_n),
 
-    // ROM loading
+    // ROM loading (ioctl_index 2 = snd ROM → BRAM inside raizing_arcade)
     .ioctl_wr       (ioctl_wr & ioctl_download),
     .ioctl_addr     (ioctl_addr_25),
     .ioctl_dout     (ioctl_dout_16),
     .ioctl_index    (ioctl_index),
-    .ioctl_wait     (),            // unused — BRAM is always ready
+    .ioctl_wait     (),            // unused — core never stalls HPS
 
     // Video output
     .red            (core_rgb_r),
@@ -441,16 +495,11 @@ raizing_arcade u_raizing
     .dipsw_a        (dsw[0]),
     .dipsw_b        (dsw[1]),
 
-    // SDRAM (tied off internally; cs_n/ras_n/cas_n/we_n all held 1 inside)
-    .sdram_a        (sdram_a_w),
-    .sdram_ba       (sdram_ba_w),
-    .sdram_dq       (sdram_dq_w),
-    .sdram_cas_n    (sdram_cas_n_w),
-    .sdram_ras_n    (sdram_ras_n_w),
-    .sdram_we_n     (sdram_we_n_w),
-    .sdram_cs_n     (sdram_cs_n_w),
-    .sdram_dqm      (sdram_dqm_w),
-    .sdram_cke      (sdram_cke_w)
+    // Program ROM SDRAM toggle-handshake (→ sdram_b CH1)
+    .prog_rom_addr  (prog_rom_addr_w),
+    .prog_rom_req   (prog_rom_req_w),
+    .prog_rom_data  (prog_rom_data_w),
+    .prog_rom_ack   (prog_rom_ack_w)
 );
 
 //////////////////////////////////////////////////////////////////
@@ -511,11 +560,7 @@ wire _unused = &{
     OSD_STATUS,
     direct_video,
     joystick_0[31:10], joystick_1[31:10],
-    dsw[2], dsw[3],
-    clk_unused,
-    // SDRAM outputs from core (all tied off internally)
-    sdram_a_w, sdram_ba_w, sdram_cas_n_w, sdram_ras_n_w,
-    sdram_we_n_w, sdram_cs_n_w, sdram_dqm_w, sdram_cke_w
+    dsw[2], dsw[3]
 };
 /* verilator lint_on UNUSED */
 

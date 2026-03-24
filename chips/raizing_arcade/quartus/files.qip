@@ -23,6 +23,15 @@ set_global_assignment -name SYSTEMVERILOG_FILE emu.sv
 set_global_assignment -name QIP_FILE rtl/pll.qip
 
 # =========================================================================
+# SDRAM CONTROLLER
+# =========================================================================
+# sdram_b: 5-channel SDRAM controller (IS42S16320F, 143 MHz).
+# CH0=ioctl write, CH1=CPU prog ROM, CH2=GFX, CH3=ADPCM, CH4=Z80 ROM.
+# Shared with toaplan_v2 (same controller instance).
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../toaplan_v2/rtl/sdram_b.sv
+
+# =========================================================================
 # RAIZING ARCADE CORE (Main Integration)
 # =========================================================================
 # MC68000 @ 16 MHz, Z80 @ 4 MHz, GP9001 graphics, YM2151 + OKI M6295 audio.
