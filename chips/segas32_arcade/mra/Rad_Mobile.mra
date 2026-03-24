@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Rad Mobile (radm) — Sega System 32, 1990
+  NEC V60 (uPD70615) @ 16 MHz — 16-bit data bus, 24-bit address bus
+  Video: 5 tilemap layers (TEXT + NBG0-3), sprites (linked-list), bitmap, 320×224 @ 60 Hz
+  Audio: Z80 sound CPU + YM3438 (OPN2C) + 2× RF5C164 PCM (stubbed in this core revision)
+
+  ROM regions from MAME radm driver (src/mame/sega/segas32.cpp):
+    maincpu  : V60 program ROM
+    soundcpu : Z80 sound ROM (stubbed — not loaded until audio implemented)
+    gfx1     : Tile graphics (4× 512 KB)
+    sprites  : Sprite graphics (8× 1 MB)
+
+  SDRAM layout (single 32 MB chip, byte addresses):
+    index 0x00 — CPU program ROM   → 0x000000 (2 MB: epr-13693 + epr-13525/13526 interleaved)
+    index 0x01 — Sprite ROM        → 0x200000 (8 MB: mpr-13511 through mpr-13518)
+    index 0x02 — GFX tile ROM      → 0xA00000 (2 MB: mpr-13519 through mpr-13522)
+    0xFE       — DIP switch defaults
+
+  ROM CRCs from MAME 0.245 radm set.
+-->
+<misterromdescription>
+  <name>Rad Mobile</name>
+  <setname>radm</setname>
+  <rbf>segas32_arcade</rbf>
+  <mameversion>0245</mameversion>
+  <year>1990</year>
+  <manufacturer>Sega</manufacturer>
+  <category>Driving / Racing</category>
+  <rotation>0</rotation>
+  <buttons names="Btn1,Btn2,Btn3,Start,Coin" default="A,B,C,Start,Select"/>
+
+  <!--
+    index 0: CPU program ROM (V60 maincpu)
+    Layout from MAME segas32.cpp init_radm():
+      epr-13693.ic21  : 128 KB at offset 0x000000 (boot/vector ROM)
+      epr-13525.ic37  : 512 KB at offset 0x100000 (even bytes)
+      epr-13526.ic38  : 512 KB at offset 0x100001 (odd bytes)
+    Total: ~1.1 MB program space (padded to 2 MB SDRAM slot)
+  -->
+  <rom index="0" zip="radm.zip" type="merged">
+    <part name="epr-13693.ic21" crc="3f09a211" offset="0x000000" length="0x020000"/>
+    <part repeat="0x0E0000">FF</part>
+    <part name="epr-13525.ic37" crc="62ad83a0" offset="0x100000" length="0x080000" skip="1"/>
+    <part name="epr-13526.ic38" crc="59ea372a" offset="0x100001" length="0x080000" skip="1"/>
+  </rom>
+
+  <!--
+    index 1: Sprite ROM (8× 1 MB, 8 MB total)
+    Loaded to SDRAM 0x200000
+    mpr-13511 through mpr-13518 (ic1, ic5, ic10, ic16, ic2, ic6, ic11, ic17)
+  -->
+  <rom index="1" zip="radm.zip" type="merged">
+    <part name="mpr-13511.ic1"  crc="f8f15b11" offset="0x000000" length="0x100000"/>
+    <part name="mpr-13512.ic5"  crc="d0be34a6" offset="0x100000" length="0x100000"/>
+    <part name="mpr-13513.ic10" crc="feef1982" offset="0x200000" length="0x100000"/>
+    <part name="mpr-13514.ic16" crc="d0f9ebd1" offset="0x300000" length="0x100000"/>
+    <part name="mpr-13515.ic2"  crc="77bf2387" offset="0x400000" length="0x100000"/>
+    <part name="mpr-13516.ic6"  crc="8c4bc62d" offset="0x500000" length="0x100000"/>
+    <part name="mpr-13517.ic11" crc="1d7d84a7" offset="0x600000" length="0x100000"/>
+    <part name="mpr-13518.ic17" crc="9ea4b15d" offset="0x700000" length="0x100000"/>
+  </rom>
+
+  <!--
+    index 2: GFX tile ROM (4× 512 KB = 2 MB)
+    Loaded to SDRAM 0xA00000
+    mpr-13519 through mpr-13522 (ic3, ic12, ic7, ic18)
+  -->
+  <rom index="2" zip="radm.zip" type="merged">
+    <part name="mpr-13519.ic3"  crc="bedc9534" offset="0x000000" length="0x080000"/>
+    <part name="mpr-13521.ic12" crc="e9bca903" offset="0x080000" length="0x080000"/>
+    <part name="mpr-13520.ic7"  crc="3532e91a" offset="0x100000" length="0x080000"/>
+    <part name="mpr-13522.ic18" crc="25e04648" offset="0x180000" length="0x080000"/>
+  </rom>
+
+  <!-- DIP switch defaults (4 bytes) -->
+  <!-- Byte 0: lives/difficulty; Byte 1: credits/misc; Bytes 2-3: reserved -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>
