@@ -143,3 +143,4 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_
 # [touch: mb8421 dual-port → altsyncram (Error 10028 multiple-drivers fix)]
 # F3 Phase 5+6 optimization
 # genvar fix 74474dc
+# genvar fix d63
