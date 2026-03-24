@@ -1,0 +1,73 @@
+# =============================================================================
+# SETA 1 Arcade Core — QIP File (Quartus Source Files)
+# =============================================================================
+#
+# Add core-specific RTL files here.
+# System framework files (sys.qip) are sourced from sys/sys.tcl.
+#
+# WARNING: Do not add files through Quartus IDE — edit this file directly!
+#
+# SETA 1 hardware:
+#   Main CPU:  MC68000 @ 16 MHz
+#   Sound:     X1-010 (stub — not implemented)
+#   Video:     X1-001A sprite chip (from chips/taito_x/rtl/)
+#   Games:     Dragon Unit, Thunder & Lightning, Blandia, Rezon, + 62 more
+#
+# SDRAM layout (byte addresses):
+#   0x000000 – 0x1FFFFF    2MB   68000 program ROM (Blandia needs full 2MB)
+#   0x200000 – 0x5FFFFF    4MB   Sprite / Tile GFX ROM (X1-001A)
+#
+# =============================================================================
+
+# =========================================================================
+# TOP-LEVEL EMU WRAPPER
+# =========================================================================
+
+set_global_assignment -name SYSTEMVERILOG_FILE emu.sv
+
+# =========================================================================
+# PLL (Phase-Locked Loop)
+# =========================================================================
+# Generates clk_sys (32 MHz) and clk_sdram (143 MHz) from 50 MHz reference
+# (same PLL as taito_x — SETA 1 runs 68000 at 16 MHz, FPGA at 32 MHz)
+
+set_global_assignment -name QIP_FILE rtl/pll.qip
+
+# =========================================================================
+# SETA 1 ARCADE CORE (Main Integration)
+# =========================================================================
+# MC68000 + X1-001A sprite chip + palette RAM + work RAM + I/O
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/seta_arcade.sv
+
+# SDRAM controller (4-channel toggle-handshake: HPS write, CPU read, GFX read)
+# Reused from taito_x (same topology, same clock rates)
+set_global_assignment -name SYSTEMVERILOG_FILE ../../taito_x/rtl/sdram_x.sv
+
+# =========================================================================
+# X1-001A SPRITE CHIP
+# =========================================================================
+# Shared with Taito X core (same physical chip used in both hardware families)
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../taito_x/rtl/x1_001a.sv
+
+# =========================================================================
+# MC68000 CPU CORE
+# =========================================================================
+# fx68k: Cycle-accurate 68000 implementation by Jorge Cwik
+# Source: https://github.com/ijor/fx68k
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/fx68k.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/fx68kAlu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/hdl/fx68k/uaddrPla.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../m68000/rtl/fx68k_adapter.sv
+
+# =========================================================================
+# TIMING CONSTRAINTS
+# =========================================================================
+
+set_global_assignment -name SDC_FILE seta_arcade.sdc
+
+# =============================================================================
+# END OF FILES.QIP
+# =============================================================================

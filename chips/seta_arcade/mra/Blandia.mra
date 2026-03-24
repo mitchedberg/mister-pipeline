@@ -1,0 +1,55 @@
+<!--
+    Blandia (1992) — Seta
+    MiSTer ROM descriptor for SETA 1 core
+
+    Manufacturer: Allumer
+    MAME driver: seta/seta.cpp
+    ROM set CRCs verified from MAME 0.245
+-->
+<misterromdescription>
+    <name>Blandia</name>
+    <setname>blandia</setname>
+    <rbf>SETA1</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Coinage"     ids="0,0" bits="0,1" values="1 Coin/1 Credit,2 Coins/1 Credit,1 Coin/2 Credits,Free Play"/>
+        <dip name="Lives"       ids="0,0" bits="2,3" values="3,4,5,2"/>
+        <dip name="Difficulty"  ids="0,0" bits="4,5" values="Normal,Hard,Easy,Very Hard"/>
+        <dip name="Demo Sound"  ids="1,1" bits="0,0" values="On,Off"/>
+        <dip name="Screen Flip" ids="1,1" bits="1,1" values="Normal,Flipped"/>
+    </switches>
+
+    <!-- CPU Program ROM (1572864 bytes) -->
+    <rom index="0" zip="blandia.zip" md5="None">
+        <part name="ux001001.u3" crc="2376a1f3"/>
+        <part name="ux001002.u4" crc="b915e172"/>
+        <part name="ux001003.u202" crc="98052c63"/>
+    </rom>
+
+    <!-- Sprite/Graphics ROM (4194304 bytes) -->
+    <rom index="1" zip="blandia.zip" md5="None">
+        <part name="ux001008.u64" crc="413647b6"/>
+        <part name="ux001007.u201" crc="4440fdd1"/>
+        <part name="ux001006.u63" crc="abc01cf7"/>
+        <part name="ux001005.u200" crc="bea0c4a5"/>
+    </rom>
+
+    <!-- Tile ROM (1048576 bytes) -->
+    <rom index="2" zip="blandia.zip" md5="None">
+        <part name="ux001009.u65" crc="bc6f6aea"/>
+        <part name="ux001010.u66" crc="bd7f7614"/>
+    </rom>
+
+    <!-- X1-010 Sound ROM (1572864 bytes) -->
+    <rom index="3" zip="blandia.zip" md5="None">
+        <part name="ux001013.u69" crc="5cd273cd"/>
+        <part name="ux001014.u70" crc="86b49b4e"/>
+    </rom>
+
+    <!-- DIP switches (index 254) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

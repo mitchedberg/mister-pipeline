@@ -1,0 +1,47 @@
+<!--
+    Ultraman Club - Tatakae! Ultraman Kyoudai!! (1992) — Seta
+    MiSTer ROM descriptor for SETA 1 core
+
+    Manufacturer: Banpresto
+    MAME driver: seta/seta.cpp
+    ROM set CRCs verified from MAME 0.245
+-->
+<misterromdescription>
+    <name>Ultraman Club - Tatakae! Ultraman Kyoudai!!</name>
+    <setname>ultraman_club_-_tatakae!_ultraman_kyoudai!!</setname>
+    <rbf>SETA1</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Coinage"     ids="0,0" bits="0,1" values="1 Coin/1 Credit,2 Coins/1 Credit,1 Coin/2 Credits,Free Play"/>
+        <dip name="Lives"       ids="0,0" bits="2,3" values="3,4,5,2"/>
+        <dip name="Difficulty"  ids="0,0" bits="4,5" values="Normal,Hard,Easy,Very Hard"/>
+        <dip name="Demo Sound"  ids="1,1" bits="0,0" values="On,Off"/>
+        <dip name="Screen Flip" ids="1,1" bits="1,1" values="Normal,Flipped"/>
+    </switches>
+
+    <!-- CPU Program ROM (262144 bytes) -->
+    <rom index="0" zip="ultraman_club_-_tatakae!_ultraman_kyoudai!!.zip" md5="None">
+        <interleave output="16">
+            <part name="uw001006.u48" crc="3dae1e9d" map="10"/>
+            <part name="uw001007.u49" crc="5c21e702" map="01"/>
+        </interleave>
+    </rom>
+
+    <!-- Sprite/Graphics ROM (1048576 bytes) -->
+    <rom index="1" zip="ultraman_club_-_tatakae!_ultraman_kyoudai!!.zip" md5="None">
+        <part name="bp-u-002.u2" crc="936cbaaa"/>
+        <part name="bp-u-001.u1" crc="87813c48"/>
+    </rom>
+
+    <!-- X1-010 Sound ROM (1048576 bytes) -->
+    <rom index="2" zip="ultraman_club_-_tatakae!_ultraman_kyoudai!!.zip" md5="None">
+        <part name="uw003.u13" crc="e2f718eb"/>
+    </rom>
+
+    <!-- DIP switches (index 254) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

@@ -1107,6 +1107,15 @@ end
 // IACK detection (combinational): active when FC=111 and AS#=0
 wire inta_n = ~&{cpu_fc[2], cpu_fc[1], cpu_fc[0], ~cpu_as_n};
 
+// Level-specific IACK decode (failure_catalog: "Multi-level interrupt silently lost").
+// During IACK the 68000 places the acknowledged level on A[3:1].
+// Using a shared inta_n to clear all levels erases pending lower-priority interrupts
+// when a higher-priority level is acknowledged in the same frame.
+// Fix: each latch clears ONLY when the CPU acknowledges its specific level.
+wire iack3_n = inta_n | (cpu_addr[3:1] != 3'b011);  // IACK for level 3
+wire iack4_n = inta_n | (cpu_addr[3:1] != 3'b100);  // IACK for level 4
+wire iack5_n = inta_n | (cpu_addr[3:1] != 3'b101);  // IACK for level 5
+
 logic int3_n, int4_n, int5_n;  // active-low, one per level
 
 // Scanline-based interrupt triggers (1-cycle pulse at pixel-clock boundary)
@@ -1114,23 +1123,23 @@ wire at_scanline_64  = (vpos_r == 9'd64)  & clk_pix & (hpos_r == 9'd0);
 wire at_scanline_144 = (vpos_r == 9'd144) & clk_pix & (hpos_r == 9'd0);
 wire at_scanline_224 = (vpos_r == 9'd224) & clk_pix & (hpos_r == 9'd0);
 
-// Set/clear latches — cleared ONLY by IACK (FC=111 + ASn=0)
+// Set/clear latches — cleared ONLY by level-specific IACK
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         int3_n <= 1'b1;  // inactive (active-low)
         int4_n <= 1'b1;
         int5_n <= 1'b1;
     end else begin
-        // Level 3 (scanline 144): set on trigger, clear on IACK
-        if      (!inta_n)        int3_n <= 1'b1;  // cleared by CPU acknowledge
+        // Level 3 (scanline 144): set on trigger, clear on level-3 IACK only
+        if      (!iack3_n)        int3_n <= 1'b1;  // cleared by CPU acknowledging level 3
         else if (at_scanline_144) int3_n <= 1'b0;  // set on scanline event
 
-        // Level 4 (scanline 64): set on trigger, clear on IACK
-        if      (!inta_n)        int4_n <= 1'b1;
-        else if (at_scanline_64)  int4_n <= 1'b0;
+        // Level 4 (scanline 64): set on trigger, clear on level-4 IACK only
+        if      (!iack4_n)       int4_n <= 1'b1;
+        else if (at_scanline_64) int4_n <= 1'b0;
 
-        // Level 5 (scanline 224): set on trigger, clear on IACK
-        if      (!inta_n)        int5_n <= 1'b1;
+        // Level 5 (scanline 224): set on trigger, clear on level-5 IACK only
+        if      (!iack5_n)        int5_n <= 1'b1;
         else if (at_scanline_224) int5_n <= 1'b0;
     end
 end

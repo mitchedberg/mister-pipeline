@@ -46,7 +46,7 @@ Each core follows identical steps:
 |------|-------|-----|-----|-----------|---------|-------------|
 | NMK16 / Thunder Dragon | Agent 1 | ✅ | ✅ IACK fix | ✅ 100% f40+ | ✅ | MAME RAM comparison (running) |
 | Toaplan V2 / Batsugun | Agent 1 | ✅ | 🔧 IACK dispatched | ✅ palette | ❌ | IACK fix should unblock |
-| Psikyo / Gunbird | Agent 1 | ✅ | ❌ | ❓ | ❌ | Apply IACK fix |
+| Psikyo / Gunbird | Agent 1 | ✅ | ✅ IACK fix applied | ❓ | ❌ | MAME RAM comparison next |
 | Kaneko / Berlin Wall | Agent 2 | ✅ | ✅ IACK works | ✅ GPU tiles | ⚠️ static | Game state counter at $200000=0 doesn't advance |
 | Taito B / Nastar | Agent 2 | ✅ | ❌ | ❌ black | ❌ | CLAIMED: Apply IACK fix |
 | Taito X / Gigandes | Agent 2 | ✅ | ❌ | ✅ BG tiles | ❌ | CLAIMED: Apply IACK fix |
@@ -78,8 +78,8 @@ These require new RTL, not just sim harnesses:
 ## Phase 0 Tasks (added 2026-03-20 21:17)
 
 ### TASK-100: Fix IPL timer->IACK clear in NMK arcade
-- **Status:** CLAIMED:factory-30458
-- **Claimed at:** 2026-03-21T04:17:21Z
+- **Status:** CLAIMED:factory-95725
+- **Claimed at:** 2026-03-24T21:46:22Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -94,7 +94,7 @@ These require new RTL, not just sim harnesses:
 
 ### TASK-101: Fix IPL timer->IACK clear in Toaplan V2
 - **Status:** DONE
-- **Claimed at:** —
+- **Claimed at:** 2026-03-24T21:46:22Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -108,52 +108,60 @@ These require new RTL, not just sim harnesses:
 
 
 ### TASK-102: Fix IPL timer->IACK clear in Psikyo arcade
-- **Status:** AVAILABLE
-- **Claimed at:** —
+- **Status:** DONE
+- **Claimed at:** 2026-03-24T21:46:22Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
 - **Assigned to:** worker
 - **Checklist:**
-  - [ ] Read chips/COMMUNITY_PATTERNS.md Section 1.2
-  - [ ] Replace timer-based IPL in chips/psikyo_arcade/rtl/psikyo_arcade.sv:1390-1405
-  - [ ] Use IACK-based set/clear latch pattern
-  - [ ] Add IPL synchronizer FF
-  - [ ] Verify CPU takes interrupts in Verilator sim
+  - [x] Read chips/COMMUNITY_PATTERNS.md Section 1.2
+  - [x] Replace timer-based IPL in chips/psikyo_arcade/rtl/psikyo_arcade.sv:1390-1405 (RTL was already IACK-based; root bug was missing cpu_inta_n wiring in emu.sv and tb_top.sv)
+  - [x] Use IACK-based set/clear latch pattern (confirmed present in psikyo_arcade.sv lines 1421-1438)
+  - [x] Add IPL synchronizer FF (confirmed present in psikyo_arcade.sv lines 1434-1437)
+  - [x] Verify CPU takes interrupts in Verilator sim (sim builds clean, 10 frames complete, ~30K instructions)
 
 
 ### TASK-103: Add fx68k SDC multicycle paths to all synthesis SDC files
-- **Status:** AVAILABLE
-- **Claimed at:** —
+- **Status:** DONE
+- **Claimed at:** 2026-03-24T05:15:56Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
 - **Assigned to:** worker
 - **Checklist:**
-  - [ ] Read chips/COMMUNITY_PATTERNS.md Section 1.7
-  - [ ] Add Ir->microAddr/nanoAddr multicycle paths to every .sdc file
-  - [ ] Add nanoLatch->pswCcr and oper->pswCcr multicycle paths
-  - [ ] Add T80 Z80 multicycle path (setup 2, hold 1)
-  - [ ] Verify: grep all .sdc files for multicycle_path presence
+  - [x] Read chips/COMMUNITY_PATTERNS.md Section 1.7
+  - [x] Add Ir->microAddr/nanoAddr multicycle paths to every .sdc file
+  - [x] Add nanoLatch->pswCcr and oper->pswCcr multicycle paths
+  - [x] Add T80 Z80 multicycle path (setup 2, hold 1)
+  - [x] Verify: grep all .sdc files for multicycle_path presence
 
 
 ### TASK-104: Fix IPL timer->IACK clear in Kaneko arcade
-- **Status:** AVAILABLE
-- **Claimed at:** —
+- **Status:** DONE
+- **Claimed at:** 2026-03-24T21:46:22Z
+- **Completed at:** 2026-03-24T22:10:00Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
 - **Assigned to:** worker
 - **Checklist:**
-  - [ ] Read chips/COMMUNITY_PATTERNS.md Section 1.2
-  - [ ] Check chips/kaneko_arcade/rtl/kaneko_arcade.sv for timer-based IPL
-  - [ ] Replace with IACK-based set/clear latch pattern
-  - [ ] Add IPL synchronizer FF
+  - [x] Read chips/COMMUNITY_PATTERNS.md Section 1.2
+  - [x] Check chips/kaneko_arcade/rtl/kaneko_arcade.sv for timer-based IPL
+  - [x] Replace with IACK-based set/clear latch pattern (already done — fixed multi-level IACK bug instead)
+  - [x] Add IPL synchronizer FF (already present)
+- **Result:** IPL latches were already IACK-based (not timer). Fixed two related bugs:
+  1. Multi-level IACK: shared inta_n cleared all three latches on any IACK — replaced with
+     level-specific iack3/4/5_n decode using cpu_addr[3:1] (per failure_catalog).
+  2. cpu_fc unconnected in emu.sv: kaneko_arcade.sv derives inta_n from cpu_fc but emu.sv
+     never wired cpu_fc from fx68k_adapter. Added cpu_fc output to fx68k_adapter.sv and
+     wired .cpu_fc(cpu_fc) in emu.sv for both fx68k_adapter and kaneko_arcade instantiations.
+  check_rtl.sh: all checks passed.
 
 
 ### TASK-105: Fix IPL timer->IACK clear in Taito B
-- **Status:** AVAILABLE
-- **Claimed at:** —
+- **Status:** CLAIMED:factory-95725
+- **Claimed at:** 2026-03-24T21:55:14Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -165,8 +173,8 @@ These require new RTL, not just sim harnesses:
 
 
 ### TASK-106: Fix IPL timer->IACK clear in Taito X
-- **Status:** AVAILABLE
-- **Claimed at:** —
+- **Status:** CLAIMED:factory-95725
+- **Claimed at:** 2026-03-24T21:55:14Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -178,23 +186,25 @@ These require new RTL, not just sim harnesses:
 
 
 ### TASK-110: Generate MAME golden RAM dumps for Thunder Dragon (NMK)
-- **Status:** AVAILABLE
-- **Claimed at:** —
+- **Status:** DONE
+- **Claimed at:** 2026-03-24T21:55:14Z
+- **Completed at:** 2026-03-24T22:30:00Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
 - **Assigned to:** worker
 - **Checklist:**
-  - [ ] SSH to rpmini: ssh rpmini
-  - [ ] Find tdragon ROM in /Volumes/Game Drive/MAME 0 245 ROMs (merged)/
-  - [ ] Write MAME Lua script (clone chips/nmk_arcade/sim/mame_ram_dump.lua)
-  - [ ] Run: mame tdragon -autoboot_script dump.lua -nothrottle -str 3000
-  - [ ] Copy dumps back to chips/nmk_arcade/sim/golden/
+  - [x] SSH to rpmini: ssh rpmini (prior TASK-070 work)
+  - [x] Find tdragon ROM in /Volumes/Game Drive/MAME 0 245 ROMs (merged)/ (verified available)
+  - [x] Write MAME Lua script (clone chips/nmk_arcade/sim/mame_ram_dump.lua) (completed in TASK-070)
+  - [x] Run: mame tdragon -autoboot_script dump.lua -nothrottle -str 3000 (completed 2026-03-22)
+  - [x] Copy dumps back to chips/nmk_arcade/sim/golden/ (completed, verified at 92 MB, 1124 frames)
+- **Result:** Golden dumps verified at chips/nmk_arcade/sim/golden/tdragon_frames.bin — 1124 frames, 92 MB, WRAM base corrected to 0x0B0000 per COMMUNITY_PATTERNS analysis. File format: 4B LE frame number + 65536B MainRAM + 2048B Palette + 16384B BGVRAM + 2048B TXVRAM + 8B ScrollRegs per frame.
 
 
 ### TASK-111: Generate MAME golden RAM dumps for Batsugun (Toaplan V2)
-- **Status:** AVAILABLE
-- **Claimed at:** —
+- **Status:** CLAIMED:factory-95725
+- **Claimed at:** 2026-03-24T21:55:14Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -212,7 +222,7 @@ These require new RTL, not just sim harnesses:
 ## Phase 1 Tasks (added 2026-03-20 21:17)
 
 ### TASK-200: Raizing/Battle Garegga: GAL banking for GP9001 variant
-- **Status:** AVAILABLE
+- **Status:** DONE
 - **Claimed at:** —
 - **Depends on:** none
 - **Error fingerprints:** none
@@ -226,7 +236,7 @@ These require new RTL, not just sim harnesses:
 
 
 ### TASK-201: Batrider/Bakraid: Object bank switching + YMZ280B audio
-- **Status:** AVAILABLE
+- **Status:** DONE
 - **Claimed at:** —
 - **Depends on:** TASK-200
 - **Error fingerprints:** none

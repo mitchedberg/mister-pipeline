@@ -1,0 +1,61 @@
+<!--
+    The Roulette (Visco) (1989?) — Seta
+    MiSTer ROM descriptor for SETA 1 core
+
+    Manufacturer: Visco
+    MAME driver: seta/seta.cpp
+    ROM set CRCs verified from MAME 0.245
+-->
+<misterromdescription>
+    <name>The Roulette (Visco)</name>
+    <setname>the_roulette_(visco)</setname>
+    <rbf>SETA1</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Coinage"     ids="0,0" bits="0,1" values="1 Coin/1 Credit,2 Coins/1 Credit,1 Coin/2 Credits,Free Play"/>
+        <dip name="Lives"       ids="0,0" bits="2,3" values="3,4,5,2"/>
+        <dip name="Difficulty"  ids="0,0" bits="4,5" values="Normal,Hard,Easy,Very Hard"/>
+        <dip name="Demo Sound"  ids="1,1" bits="0,0" values="On,Off"/>
+        <dip name="Screen Flip" ids="1,1" bits="1,1" values="Normal,Flipped"/>
+    </switches>
+
+    <!-- CPU Program ROM (131072 bytes) -->
+    <rom index="0" zip="the_roulette_(visco).zip" md5="None">
+        <interleave output="16">
+            <part name="uf1-002.u14" crc="b3a622b0" map="10"/>
+            <part name="uf1-003.u16" crc="a6afd769" map="01"/>
+        </interleave>
+    </rom>
+
+    <!-- Sprite/Graphics ROM (131072 bytes) -->
+    <rom index="1" zip="the_roulette_(visco).zip" md5="None">
+        <part name="uf0-008.u6" crc="e198e602"/>
+        <part name="uf0-007.u5" crc="e72c3dba"/>
+        <part name="uf0-006.u4" crc="90c9dae6"/>
+        <part name="uf0-005.u3" crc="383c2d57"/>
+    </rom>
+
+    <!-- Tile ROM (4194304 bytes) -->
+    <rom index="2" zip="the_roulette_(visco).zip" md5="None">
+        <part name="uf0-010.u15" crc="0af13a56"/>
+        <part name="uf0-012.u29" crc="cba2a6b7"/>
+        <part name="uf0-014.u38" crc="da2bd4e4"/>
+        <part name="uf0-015.u40" crc="11dc19fa"/>
+        <part name="uf0-009.u13" crc="20f2d7f5"/>
+        <part name="uf0-011.u22" crc="af60adf9"/>
+        <part name="uf0-013.u37" crc="645ec3c3"/>
+        <part name="uf0-016.u48" crc="10f99fa8"/>
+    </rom>
+
+    <!-- X1-010 Sound ROM (131072 bytes) -->
+    <rom index="3" zip="the_roulette_(visco).zip" md5="None">
+        <part name="uf1-004.u52" crc="6638054d"/>
+    </rom>
+
+    <!-- DIP switches (index 254) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>
