@@ -833,7 +833,8 @@ assign AUDIO_L = core_snd_left;
 assign AUDIO_R = core_snd_right;
 
 //////////////////////////////////////////////////////////////////
-// fx68k_adapter — CPU A (MC68000 @ 16 MHz)
+// tg68k_adapter_m68k — CPU A (MC68000 @ 16 MHz, TG68K replaces fx68k)
+// Saves ~2,300 ALMs vs fx68k for this instance alone.
 //////////////////////////////////////////////////////////////////
 
 wire [23:1] cpua_addr;
@@ -846,8 +847,9 @@ wire        cpua_as_n;
 wire        cpua_dtack_n; // taito_z → CPU A
 wire [2:0]  cpua_ipl_n;   // taito_z → CPU A
 wire        cpua_reset_n_out;
+wire [2:0]  cpua_fc;      // function codes for IACK detection in taito_z
 
-fx68k_adapter u_cpu_a (
+tg68k_adapter_m68k u_cpu_a (
     .clk            (clk_sys),
     .cpu_ce         (ce_cpu),
     .reset_n        (reset_n),
@@ -861,11 +863,15 @@ fx68k_adapter u_cpu_a (
     .cpu_as_n       (cpua_as_n),
     .cpu_dtack_n    (cpua_dtack_n),
     .cpu_ipl_n      (cpua_ipl_n),
-    .cpu_reset_n_out(cpua_reset_n_out)
+    .cpu_reset_n_out(cpua_reset_n_out),
+    .cpu_halted_n   (),
+    .cpu_inta_n     (),
+    .cpu_fc         (cpua_fc)
 );
 
 //////////////////////////////////////////////////////////////////
-// fx68k_adapter — CPU B (MC68000 @ 16 MHz, opposite phase)
+// tg68k_adapter_m68k — CPU B (MC68000 @ 16 MHz, opposite phase)
+// Saves ~2,300 ALMs vs fx68k for this instance alone.
 //////////////////////////////////////////////////////////////////
 
 wire [23:1] cpub_addr;
@@ -879,8 +885,9 @@ wire        cpub_dtack_n; // taito_z → CPU B
 wire [2:0]  cpub_ipl_n;   // taito_z → CPU B
 wire        cpub_reset_n; // taito_z → CPU B (CPU A can hold CPU B in reset)
 wire        cpub_reset_n_out;
+wire [2:0]  cpub_fc;      // function codes for IACK detection in taito_z
 
-fx68k_adapter u_cpu_b (
+tg68k_adapter_m68k u_cpu_b (
     .clk            (clk_sys),
     .cpu_ce         (ce_cpu_b),         // opposite phase to CPU A
     .reset_n        (reset_n & cpub_reset_n),  // held in reset by CPU A control register
@@ -893,7 +900,10 @@ fx68k_adapter u_cpu_b (
     .cpu_as_n       (cpub_as_n),
     .cpu_dtack_n    (cpub_dtack_n),
     .cpu_ipl_n      (cpub_ipl_n),
-    .cpu_reset_n_out(cpub_reset_n_out)
+    .cpu_reset_n_out(cpub_reset_n_out),
+    .cpu_halted_n   (),
+    .cpu_inta_n     (),
+    .cpu_fc         (cpub_fc)
 );
 
 taito_z u_taito_z
@@ -902,7 +912,7 @@ taito_z u_taito_z
     .clk_pix    (ce_pix),
     .reset_n    (reset_n),
 
-    // ── CPU A bus — driven by fx68k_adapter u_cpu_a ──────────────────────────
+    // ── CPU A bus — driven by tg68k_adapter_m68k u_cpu_a ────────────────────
     .cpua_addr   (cpua_addr),
     .cpua_din    (cpua_dout),   // CPU A write data → taito_z
     .cpua_dout   (cpua_din),    // taito_z read data → CPU A
@@ -912,8 +922,9 @@ taito_z u_taito_z
     .cpua_as_n   (cpua_as_n),
     .cpua_dtack_n(cpua_dtack_n),
     .cpua_ipl_n  (cpua_ipl_n),
+    .cpua_fc     (cpua_fc),     // FC[2:0] for IACK detection
 
-    // ── CPU B bus — driven by fx68k_adapter u_cpu_b ──────────────────────────
+    // ── CPU B bus — driven by tg68k_adapter_m68k u_cpu_b ────────────────────
     .cpub_addr   (cpub_addr),
     .cpub_din    (cpub_dout),   // CPU B write data → taito_z
     .cpub_dout   (cpub_din),    // taito_z read data → CPU B
@@ -924,6 +935,7 @@ taito_z u_taito_z
     .cpub_dtack_n(cpub_dtack_n),
     .cpub_ipl_n  (cpub_ipl_n),
     .cpub_reset_n(cpub_reset_n),
+    .cpub_fc     (cpub_fc),     // FC[2:0] for IACK detection
 
     // ── GFX ROM (TC0480SCP, 4 × 32-bit toggle-handshake) ─────────────────────
     .gfx_addr    (gfx_addr_core),
