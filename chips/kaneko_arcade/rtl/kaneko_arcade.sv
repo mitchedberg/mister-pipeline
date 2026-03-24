@@ -657,6 +657,7 @@ always_ff @(posedge clk_sys) begin
     if (clk_pix) pal_entry_r <= palram_pix_raw;
 end
 `else
+/* verilator lint_off WIDTHEXPAND */
 logic [15:0] palette_ram [0:2047];  // 4KB = 2K words (berlwall palette: 0x400000-0x400FFF)
 always_ff @(posedge clk_sys) begin
     if (palram_cs && !cpu_rw) begin
@@ -667,6 +668,7 @@ end
 always_ff @(posedge clk_sys) begin
     if (palram_cs) palram_cpu_dout <= palette_ram[cpu_addr[10:1]];
 end
+/* verilator lint_on WIDTHEXPAND */
 logic [15:0] pal_entry_r;
 always_ff @(posedge clk_sys) begin
     if (clk_pix) pal_entry_r <= palette_ram[{3'b0, k16_final_color}];
@@ -794,7 +796,8 @@ logic  [7:0] z80_dout_cpu;
 logic        z80_wait_n;
 
 // Z80 2KB internal RAM (0x8000–0x87FF, mirrored)
-logic [7:0] z80_ram [0:2047];
+// 2048×8 = 16Kbits — fits in 2 M10K blocks or ~32 MLABs; MLAB preferred (no latency budget issue).
+(* ramstyle = "MLAB" *) logic [7:0] z80_ram [0:2047];
 logic [7:0] z80_ram_dout_r;
 
 // OKI read data (returned to Z80)
