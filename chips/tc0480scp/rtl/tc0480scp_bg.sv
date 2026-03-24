@@ -405,9 +405,9 @@ always_comb begin
     // For flip: bgscrollx = ctrl_raw + LAYER*4, scroll_adj = +bgscrollx + 15
     scroll_adj  = (flipscreen ? $signed({{16{bgscrollx[15]}}, bgscrollx})
                                : -$signed({{16{bgscrollx[15]}}, bgscrollx})) + 32'sd15;
-    term_scroll = scroll_adj <<< 16;
+    term_scroll = scroll_adj << 16;
     // (255 - bg_dx) << 8
-    term_dx     = $signed({24'd0, ~bg_dx}) <<< 8;   // ~bg_dx = 255 - bg_dx (for 8-bit)
+    term_dx     = $signed({24'd0, ~bg_dx}) << 8;   // ~bg_dx = 255 - bg_dx (for 8-bit)
     // (-15 - LAYER*4) * zoomx
     neg_origin  = -32'sd15 - $signed(32'(LAYER) * 32'sd4);
     term_origin = neg_origin * $signed({1'b0, zoomx_c[30:0]});

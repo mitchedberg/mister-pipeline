@@ -1545,8 +1545,8 @@ jt6295 u_jt6295 (
 // Sign-extend 14-bit ADPCM to 16-bit by replicating the sign bit into the top 2 bits.
 // Then sum FM and ADPCM with halved amplitudes to prevent overflow.
 wire signed [15:0] adpcm_16 = {{2{m6295_sound[13]}}, m6295_sound};   // 14→16 sign-extend
-assign snd_left  = (ym_left_raw  >>> 1) + (adpcm_16 >>> 1);
-assign snd_right = (ym_right_raw >>> 1) + (adpcm_16 >>> 1);
+assign snd_left  = ($signed(ym_left_raw)  >> 1) + ($signed(adpcm_16) >> 1);
+assign snd_right = ($signed(ym_right_raw) >> 1) + ($signed(adpcm_16) >> 1);
 
 // =============================================================================
 // Lint suppression

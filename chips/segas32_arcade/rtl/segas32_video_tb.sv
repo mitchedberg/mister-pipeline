@@ -249,7 +249,7 @@ int pass_count = 0;
 int fail_count = 0;
 
 `define CHECK(label, got, exp) \
-    if ((got) === (exp)) begin \
+    if ((got) == (exp)) begin \
         $display("PASS %s: got=%0d (exp=%0d)", label, got, exp); \
         pass_count++; \
     end else begin \
