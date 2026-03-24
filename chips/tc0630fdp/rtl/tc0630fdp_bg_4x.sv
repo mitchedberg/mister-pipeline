@@ -253,8 +253,8 @@ end
 // =============================================================================
 logic [8:0] snap_col [0:3];
 
-generate
 genvar gi;
+genvar gi2;
 generate
     for (gi = 0; gi < 4; gi++) begin : gen_snap
         always_comb begin
@@ -343,8 +343,7 @@ generate
     end
 endgenerate
 
-generate
-genvar gi2;
+
 generate
     for (gi2 = 0; gi2 < 4; gi2++) begin : gen_bg_out
         assign bg_pixel[gi2] = lb_rdata[gi2];
@@ -363,9 +362,7 @@ always_ff @(posedge clk_4x) begin
 end
 
 generate
-genvar gi2;
-generate
-    for (gi2 = 0; gi2 < 4; gi2++) begin : gen_bg_out
+    for (gi2 = 0; gi2 < 4; gi2++) begin : gen_bg_out_sim
         assign bg_pixel[gi2] = linebuf[gi2][snap_col[gi2]];
     end
 endgenerate
