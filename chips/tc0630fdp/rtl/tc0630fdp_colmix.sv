@@ -143,37 +143,37 @@ always_comb begin
     screen_x = screen_x_9[7:0];
 end
 
+// ── Clip plane boundary tests (shared across all layers) ─────────────────────
+// Pre-compute inside_plane[p] = (screen_x >= left[p]) && (screen_x <= right[p])
+// for all 4 clip planes once per pixel.  Avoids re-computing 8-bit comparators
+// 5 times (4 BG layers + sprites) — saves ~64 ALMs.
+logic [3:0] clip_inside;  // clip_inside[p] = 1 if screen_x is inside plane p window
+always_comb begin
+    for (int p = 0; p < 4; p++) begin
+        clip_inside[p] = (screen_x >= ls_clip_left[p]) && (screen_x <= ls_clip_right[p]);
+    end
+end
+
 // ── Clip plane evaluation function ───────────────────────────────────────────
+// Uses pre-computed clip_inside[] rather than re-evaluating the boundary tests.
 function automatic logic eval_clip(
     input logic [ 3:0] clip_en,
     input logic [ 3:0] clip_inv,
     input logic        clip_sense,
-    input logic [ 7:0] sx,
-    input logic [ 7:0] l0, l1, l2, l3,
-    input logic [ 7:0] r0, r1, r2, r3
+    input logic [ 3:0] in_plane   // pre-computed inside_plane[3:0]
 );
-    logic inside_p;
     logic eff_inv;
     logic vis_p;
     logic any_en;
     logic result;
-    logic [7:0] lp, rp;
     result = 1'b1;
     any_en = 1'b0;
     for (int p = 0; p < 4; p++) begin
         if (clip_en[p]) begin
-            any_en = 1'b1;
-            case (p)
-                0: begin lp = l0; rp = r0; end
-                1: begin lp = l1; rp = r1; end
-                2: begin lp = l2; rp = r2; end
-                3: begin lp = l3; rp = r3; end
-                default: begin lp = 8'h00; rp = 8'hFF; end
-            endcase
-            inside_p = (sx >= lp) && (sx <= rp);
-            eff_inv  = clip_inv[p] ^ clip_sense;
-            vis_p    = eff_inv ? ~inside_p : inside_p;
-            result   = result & vis_p;
+            any_en  = 1'b1;
+            eff_inv = clip_inv[p] ^ clip_sense;
+            vis_p   = eff_inv ? ~in_plane[p] : in_plane[p];
+            result  = result & vis_p;
         end
     end
     if (!any_en) result = 1'b1;
@@ -208,9 +208,7 @@ generate
         always_comb begin
             pf_vis[gi] = eval_clip(
                 ls_pf_clip_en[gi], ls_pf_clip_inv[gi], ls_pf_clip_sense[gi],
-                screen_x,
-                ls_clip_left[0], ls_clip_left[1], ls_clip_left[2], ls_clip_left[3],
-                ls_clip_right[0], ls_clip_right[1], ls_clip_right[2], ls_clip_right[3]
+                clip_inside
             );
             pf_pen_clipped[gi] = pf_vis[gi] ? bg_pixel[gi][3:0] : 4'd0;
         end
@@ -221,9 +219,7 @@ logic spr_vis;
 always_comb begin
     spr_vis = eval_clip(
         ls_spr_clip_en, ls_spr_clip_inv, ls_spr_clip_sense,
-        screen_x,
-        ls_clip_left[0], ls_clip_left[1], ls_clip_left[2], ls_clip_left[3],
-        ls_clip_right[0], ls_clip_right[1], ls_clip_right[2], ls_clip_right[3]
+        clip_inside
     );
     spr_pen_clipped = spr_vis ? spr_pixel[3:0] : 4'd0;
 end
