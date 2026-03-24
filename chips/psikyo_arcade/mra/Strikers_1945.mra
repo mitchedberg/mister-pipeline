@@ -26,10 +26,17 @@
   <rotation>270</rotation>
   <buttons names="Shot,Bomb,Btn3,Start,Coin" default="A,B,C,Start,Select"/>
 
-  <!-- CPU program ROM (maincpu, interleaved even/odd) -->
+  <!-- CPU program ROM (maincpu, interleaved even/odd)
+       3s.u41 = D15:D8 (high byte, even) → offset 0x000000, stride 2
+       2s.u40 = D7:D0  (low byte,  odd)  → offset 0x000001, stride 2
+       NOTE: MRA offset 0x000000/0x000001 = byte stride interleave.
+       u41 must be loaded as the high byte (D15:D8) per validated brute-force test:
+         u41(hi)+u40(lo) → SSP=0x00FF80FF, PC=0x000400 → 10,926 bus cycles/frame (correct)
+         u40(hi)+u41(lo) → SSP=0xFF00FF80, PC=0x00000004 → CPU crashes (PC in vector table)
+       Verified 2026-03-23 by run_sim.py interleave_68k_roms(even=u41, odd=u40). -->
   <rom index="0" zip="s1945.zip" type="merged" md5="None">
-    <part name="2s.u40" crc="9b10062a" offset="0x000000" length="0x040000"/>
-    <part name="3s.u41" crc="f87e871a" offset="0x000002" length="0x040000"/>
+    <part name="3s.u41" crc="f87e871a" offset="0x000000" length="0x040000"/>
+    <part name="2s.u40" crc="9b10062a" offset="0x000001" length="0x040000"/>
   </rom>
 
   <!-- Z80 audio ROM -->

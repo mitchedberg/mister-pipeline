@@ -64,6 +64,8 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../m68020/rtl/tg68k_adapter.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_text.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_bg.sv
+# Phase 1: time-multiplexed 4-layer BG engine (replaces 4x tc0630fdp_bg)
+set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_bg_4x.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_lineram.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_sprite_scan.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../tc0630fdp/rtl/tc0630fdp_sprite_render.sv
