@@ -1,0 +1,7 @@
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/v60_decode_pkg.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/v60_decode_00_3f.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/v60_decode_40_7f.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/v60_decode_80_bf.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/v60_decode_c0_ff.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/v60_alu.sv]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) ../rtl/v60_core.sv]
