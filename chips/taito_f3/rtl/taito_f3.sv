@@ -335,6 +335,7 @@ tc0630fdp u_fdp (
     .rgb_out         (fdp_rgb_out),
     .pixel_valid     (fdp_pixel_valid),
 
+`ifndef QUARTUS
     // Testbench / step-validation outputs — tied or left open
     /* verilator lint_off PINCONNECTEMPTY */
     .text_pixel_out  (),
@@ -358,6 +359,7 @@ tc0630fdp u_fdp (
     .pvt_wr_addr     (14'b0),
     .pvt_wr_data     (32'b0),
     .pvt_wr_en       (1'b0),
+`endif
 
     // TC0650FDA CPU interface (palette writes, 32-bit direct)
     .fda_cpu_cs      (fda_cpu_cs),
