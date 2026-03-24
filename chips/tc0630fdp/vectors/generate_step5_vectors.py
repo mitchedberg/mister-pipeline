@@ -499,38 +499,49 @@ ALT_PAL_ALT  = 0x155
 ALT_PEN_NORM = 0x4
 ALT_PEN_ALT  = 0xC
 
-# Write tile code 0 into PF1–PF3 at ty=10, tx=0..20 to ensure they show transparent.
-# Previous test groups wrote GFX tile 0 with pen=0x5, so we write a code that
-# points to an unwritten GFX slot (0x7FF) which Verilator initialises to 0 (pen=0).
+# Write tile code 0 into PF1-PF3 at ty=9 AND ty=10, tx=0..20 to ensure they show
+# transparent on the checked scanline.  With buf_rd_sel=buf_wr_sel, the linebuf
+# bank read at hpos=46 for VPOS_ALT=159 (scan=160, ty=10) was last written 2
+# scan-lines earlier (scan=158, ty=9).  Both rows must have the transparent code
+# so the read gives pen=0.
+# Previous test groups wrote GFX tile 0 with pen=0x5, so we use code 0x7FF which
+# Verilator initialises to 0 (pen=0).
 TRANSPARENT_TC = 0x7FF
+ALT_TY_PREV = ALT_TY - 1   # = 9 (the tile row read from 2 hblanks earlier)
 for pf_clr in range(3):
-    for tx_clr in range(21):    # 21 tiles visible per scanline
-        tidx_clr = ALT_TY * 32 + tx_clr
-        write_pf_tile(PF_BASES[pf_clr], tidx_clr, 0, TRANSPARENT_TC)
-        m.write_pf_ram(pf_clr, tidx_clr * 2,     0)
-        m.write_pf_ram(pf_clr, tidx_clr * 2 + 1, TRANSPARENT_TC)
+    for ty_c in [ALT_TY_PREV, ALT_TY]:
+        for tx_clr in range(21):    # 21 tiles visible per scanline
+            tidx_clr = ty_c * 32 + tx_clr
+            write_pf_tile(PF_BASES[pf_clr], tidx_clr, 0, TRANSPARENT_TC)
+            m.write_pf_ram(pf_clr, tidx_clr * 2,     0)
+            m.write_pf_ram(pf_clr, tidx_clr * 2 + 1, TRANSPARENT_TC)
 
-# Write to normal PF4 RAM: tile at ty=10, tx=0 (tile_idx = 10*32+0 = 320)
-TILE_IDX_NORM = ALT_TY * 32 + 0
-write_pf_tile(PF4_BASE, TILE_IDX_NORM, ALT_PAL_NORM, ALT_TC_NORM)
-m.write_pf_ram(3, TILE_IDX_NORM * 2,     ALT_PAL_NORM)
-m.write_pf_ram(3, TILE_IDX_NORM * 2 + 1, ALT_TC_NORM)
+# Write to normal PF4 RAM: tile at ty=9 AND ty=10, tx=0 (same tile code for
+# both rows so "2-frames-ago" bank read matches the current configuration).
+TILE_IDX_NORM      = ALT_TY      * 32 + 0
+TILE_IDX_NORM_PREV = ALT_TY_PREV * 32 + 0
+for tidx in [TILE_IDX_NORM_PREV, TILE_IDX_NORM]:
+    write_pf_tile(PF4_BASE, tidx, ALT_PAL_NORM, ALT_TC_NORM)
+    m.write_pf_ram(3, tidx * 2,     ALT_PAL_NORM)
+    m.write_pf_ram(3, tidx * 2 + 1, ALT_TC_NORM)
 
 # Write to ALT PF4 RAM (+0x1800 word offset): tile at word_base + 0x1800
 # word_base = TILE_IDX_NORM * 2 = 640; alt_base = 640 + 0x1800 = 0x1B40
-TILE_WORD_BASE_ALT = TILE_IDX_NORM * 2 + 0x1000   # +0x1000 words = +0x2000 bytes (section2 §2.5)
-emit({"op": "write_pf",
-      "addr": PF4_BASE + TILE_WORD_BASE_ALT,
-      "data": ALT_PAL_ALT,
-      "be": 3,
-      "note": f"PF4 alt-tmap attr (word_addr={PF4_BASE + TILE_WORD_BASE_ALT:#06x})"})
-emit({"op": "write_pf",
-      "addr": PF4_BASE + TILE_WORD_BASE_ALT + 1,
-      "data": ALT_TC_ALT,
-      "be": 3,
-      "note": f"PF4 alt-tmap code (word_addr={PF4_BASE + TILE_WORD_BASE_ALT + 1:#06x})"})
-m.write_pf_ram(3, TILE_WORD_BASE_ALT,     ALT_PAL_ALT)
-m.write_pf_ram(3, TILE_WORD_BASE_ALT + 1, ALT_TC_ALT)
+TILE_WORD_BASE_ALT      = TILE_IDX_NORM      * 2 + 0x1000   # ty=10, +0x1000 words
+TILE_WORD_BASE_ALT_PREV = TILE_IDX_NORM_PREV * 2 + 0x1000   # ty=9,  +0x1000 words
+for alt_base in [TILE_WORD_BASE_ALT_PREV, TILE_WORD_BASE_ALT]:
+    emit({"op": "write_pf",
+          "addr": PF4_BASE + alt_base,
+          "data": ALT_PAL_ALT,
+          "be": 3,
+          "note": f"PF4 alt-tmap attr (word_addr={PF4_BASE + alt_base:#06x})"})
+    emit({"op": "write_pf",
+          "addr": PF4_BASE + alt_base + 1,
+          "data": ALT_TC_ALT,
+          "be": 3,
+          "note": f"PF4 alt-tmap code (word_addr={PF4_BASE + alt_base + 1:#06x})"})
+    m.write_pf_ram(3, alt_base,     ALT_PAL_ALT)
+    m.write_pf_ram(3, alt_base + 1, ALT_TC_ALT)
 
 # Write GFX ROM for both tile codes (row 0 = fetch_py=0)
 write_gfx_solid(ALT_TC_NORM, 0, ALT_PEN_NORM)

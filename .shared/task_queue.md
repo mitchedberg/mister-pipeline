@@ -78,8 +78,8 @@ These require new RTL, not just sim harnesses:
 ## Phase 0 Tasks (added 2026-03-20 21:17)
 
 ### TASK-100: Fix IPL timer->IACK clear in NMK arcade
-- **Status:** CLAIMED:factory-30458
-- **Claimed at:** 2026-03-21T04:17:21Z
+- **Status:** CLAIMED:factory-95725
+- **Claimed at:** 2026-03-24T05:15:56Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -94,7 +94,7 @@ These require new RTL, not just sim harnesses:
 
 ### TASK-101: Fix IPL timer->IACK clear in Toaplan V2
 - **Status:** DONE
-- **Claimed at:** —
+- **Claimed at:** 2026-03-24T05:15:56Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -108,8 +108,8 @@ These require new RTL, not just sim harnesses:
 
 
 ### TASK-102: Fix IPL timer->IACK clear in Psikyo arcade
-- **Status:** AVAILABLE
-- **Claimed at:** —
+- **Status:** CLAIMED:factory-95725
+- **Claimed at:** 2026-03-24T05:15:56Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -123,8 +123,8 @@ These require new RTL, not just sim harnesses:
 
 
 ### TASK-103: Add fx68k SDC multicycle paths to all synthesis SDC files
-- **Status:** AVAILABLE
-- **Claimed at:** —
+- **Status:** CLAIMED:factory-95725
+- **Claimed at:** 2026-03-24T05:15:56Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -138,7 +138,7 @@ These require new RTL, not just sim harnesses:
 
 
 ### TASK-104: Fix IPL timer->IACK clear in Kaneko arcade
-- **Status:** AVAILABLE
+- **Status:** CLAIMED:factory-95725
 - **Claimed at:** —
 - **Depends on:** none
 - **Error fingerprints:** none
