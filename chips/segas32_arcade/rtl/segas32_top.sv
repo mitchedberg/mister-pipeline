@@ -149,12 +149,15 @@ v60_core u_v60 (
 // Address index: cpu_addr[16:1] (bits 16 down to 1, bit 0 = byte select).
 logic [15:0] work_ram [0:32767];  // 32K words
 
-// Pre-initialize work RAM to simulate Z80 boot initialization.
+// Pre-initialize work RAM to simulate Z80 boot initialization (simulation only).
 // The V60 boot loop at 0x7F938-0x7F9B6 compares:
 //   [R25]=[0x208000] (work_ram word 0x4000) vs [R11+0x1A]=[0x20F02A] (work_ram word 0x7815)
 // The loop exits when work_ram[0x4000] < work_ram[0x7815] (unsigned 16-bit compare).
 // In MAME, the Z80 increments 0x208000; we stub this by setting the threshold > 0.
 // Setting work_ram[0x7815]=1 ensures the V60 exits the boot wait on its first pass.
+// NOTE: Quartus cannot unroll 32K-iteration loops at synthesis time; this block is
+// excluded from synthesis. Hardware RAM starts undefined — game software initializes it.
+/* synthesis translate_off */
 initial begin
     for (int i = 0; i < 32768; i++) work_ram[i] = 16'h0000;
     // Boot loop exit condition analysis (from V60 bootrom trace):
@@ -166,6 +169,7 @@ initial begin
     work_ram[16'h7815] = 16'h0001;   // threshold = 1
     // work_ram[0x7828] stays 0 (R0 will be 0, < threshold=1)
 end
+/* synthesis translate_on */
 
 logic        wram_cs;
 logic [15:0] wram_rdata;
