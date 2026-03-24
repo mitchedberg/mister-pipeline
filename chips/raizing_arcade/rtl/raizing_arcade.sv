@@ -334,14 +334,72 @@ end
 // Z80 Shared RAM — 8KB (16KB byte space, byte-wide, 68K sees word interface)
 // 68K at 0x218000–0x21BFFF (16KB byte range), Z80 at 0xC000–0xDFFF (8KB byte range)
 // Both CPUs share the same 8KB data.  68K word-wide, byte-enables for odd/even.
+//
+// Two-master access (68K + Z80) requires explicit altsyncram under Quartus —
+// four-port (2W+2R) inferred BRAM with RMW causes OOM during synthesis.
+// Use TRUE_DUAL_PORT altsyncram: Port A = 68K (word-wide, byteena), Port B = Z80
+// (word-wide, byteena from z80_addr[0]).
 // =============================================================================
 
 localparam int SRAM_WORDS = 4 * 1024;    // 4K words = 8KB
 localparam int SRAM_ABITS = 12;          // $clog2(SRAM_WORDS)
 
-logic [15:0] shared_ram [0:SRAM_WORDS-1];
 logic [15:0] sram_m68k_dout;
 logic [7:0]  sram_z80_dout;
+
+`ifdef QUARTUS
+// TRUE_DUAL_PORT altsyncram: Port A = 68K, Port B = Z80.
+// Z80 writes use byteena_b derived from z80_addr[0] (byte-lane select).
+logic [15:0] sram_raw_a, sram_raw_b;
+
+altsyncram #(
+    .operation_mode            ("BIDIR_DUAL_PORT"),
+    .width_a                   (16), .widthad_a (SRAM_ABITS), .numwords_a (SRAM_WORDS),
+    .width_b                   (16), .widthad_b (SRAM_ABITS), .numwords_b (SRAM_WORDS),
+    .outdata_reg_a             ("CLOCK0"), .outdata_reg_b ("CLOCK0"),
+    .address_reg_b             ("CLOCK0"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_a     ("BYPASS"), .clock_enable_output_b ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .width_byteena_b (2),
+    .power_up_uninitialized    ("FALSE"),
+    .read_during_write_mode_mixed_ports ("DONT_CARE"),
+    .read_during_write_mode_port_a      ("NEW_DATA_NO_NBE_READ"),
+    .read_during_write_mode_port_b      ("NEW_DATA_NO_NBE_READ")
+) shared_ram_inst (
+    .clock0     (clk),
+    // Port A: 68K (word-wide with byte enables)
+    .address_a  (cpu_addr[SRAM_ABITS:1]),
+    .data_a     (cpu_dout),
+    .wren_a     (sram_cs && !cpu_rw),
+    .byteena_a  ({~cpu_uds_n, ~cpu_lds_n}),
+    .q_a        (sram_raw_a),
+    // Port B: Z80 (byte-wide, byte-lane from z80_addr[0])
+    .address_b  (z80_addr[12:1]),
+    .data_b     ({z80_dout_cpu, z80_dout_cpu}),  // duplicate byte to both lanes
+    .wren_b     (z80_sram_cs && !z80_wr_n),
+    .byteena_b  (z80_addr[0] ? 2'b10 : 2'b01),  // upper byte when addr[0]=1
+    .q_b        (sram_raw_b),
+    // Tie-offs
+    .aclr0(1'b0), .aclr1(1'b0),
+    .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .clocken0(1'b1), .clocken1(1'b1), .clocken2(1'b1), .clocken3(1'b1),
+    .eccstatus(), .rden_a(1'b1), .rden_b(1'b1)
+);
+
+always_ff @(posedge clk) begin
+    if (sram_cs) sram_m68k_dout <= sram_raw_a;
+end
+
+always_ff @(posedge clk) begin
+    if (z80_sram_cs)
+        sram_z80_dout <= z80_addr[0] ? sram_raw_b[15:8] : sram_raw_b[7:0];
+end
+
+`else
+// Simulation path: simple behavioral array (4-port not synthesisable)
+logic [15:0] shared_ram [0:SRAM_WORDS-1];
 
 // 68K port: word-wide, byte-enable
 always_ff @(posedge clk) begin
@@ -370,18 +428,89 @@ always_ff @(posedge clk) begin
             shared_ram[z80_addr[12:1]][15:8] :
             shared_ram[z80_addr[12:1]][7:0];
 end
+`endif
 
 // =============================================================================
 // Palette RAM — 2048 × 16-bit (4KB at 0x400000–0x400FFF)
 // Format: XRRRRRGGGGGGBBBBB (R5G6B5 or similar; expand 5:5:5 to 8:8:8)
+//
+// Three-port access (1 write + 2 reads) requires explicit altsyncram under
+// Quartus — inferred BRAM cannot represent this and causes OOM during synthesis.
+// Pattern matches toaplan_v2.sv COMMUNITY_PATTERNS.md Section 3.1.
 // =============================================================================
 
 localparam int PALRAM_WORDS = 2048;
 localparam int PALRAM_ABITS = 11;
 
-logic [15:0] palette_ram [0:PALRAM_WORDS-1];
 logic [15:0] palram_cpu_dout;
 logic [15:0] pal_entry_r;
+
+`ifdef QUARTUS
+// Two DUAL_PORT altsyncram instances sharing write port A (byteena_a=2).
+// palram_cpu_inst  port B = CPU read  (11-bit addr, 2048 words)
+// palram_pix_inst  port B = pixel lookup (11-bit addr, lower 256 words via zero-ext)
+logic [15:0] palram_cpu_raw, palram_pix_raw;
+
+/* synthesis translate_off */
+// Suppress lint warnings for unused altsyncram ports
+/* synthesis translate_on */
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (11), .numwords_a (2048),
+    .width_b                   (16), .widthad_b (11), .numwords_b (2048),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) palram_cpu_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(cpu_addr[PALRAM_ABITS:1]), .data_a(cpu_dout),
+    .wren_a(palram_cs && !cpu_rw), .byteena_a({~cpu_uds_n, ~cpu_lds_n}),
+    .address_b(cpu_addr[PALRAM_ABITS:1]), .q_b(palram_cpu_raw),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+altsyncram #(
+    .operation_mode            ("DUAL_PORT"),
+    .width_a                   (16), .widthad_a (11), .numwords_a (2048),
+    .width_b                   (16), .widthad_b (11), .numwords_b (2048),
+    .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
+    .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
+    .clock_enable_output_b     ("BYPASS"),
+    .intended_device_family    ("Cyclone V"),
+    .lpm_type                  ("altsyncram"), .ram_block_type ("M10K"),
+    .width_byteena_a           (2), .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) palram_pix_inst (
+    .clock0(clk), .clock1(clk),
+    .address_a(cpu_addr[PALRAM_ABITS:1]), .data_a(cpu_dout),
+    .wren_a(palram_cs && !cpu_rw), .byteena_a({~cpu_uds_n, ~cpu_lds_n}),
+    .address_b({3'b000, final_color_w}),  .q_b(palram_pix_raw),
+    .wren_b(1'b0), .data_b(16'd0), .q_a(),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
+);
+
+always_ff @(posedge clk) begin
+    if (palram_cs) palram_cpu_dout <= palram_cpu_raw;
+end
+
+// Pixel lookup: altsyncram output is already registered (1-cycle latency).
+// Apply pix_cen enable after altsyncram to stay aligned with pixel stream.
+always_ff @(posedge clk) begin
+    if (pix_cen) pal_entry_r <= palram_pix_raw;
+end
+
+`else
+// Simulation path: simple behavioral array (3-port not synthesisable)
+logic [15:0] palette_ram [0:PALRAM_WORDS-1];
 
 always_ff @(posedge clk) begin
     if (palram_cs && !cpu_rw) begin
@@ -396,8 +525,9 @@ end
 
 // Pixel-domain palette lookup (GP9001 Gate 5 output = 8-bit palette index)
 always_ff @(posedge clk) begin
-    if (pix_cen) pal_entry_r <= palette_ram[{1'b0, final_color_w}];
+    if (pix_cen) pal_entry_r <= palette_ram[{3'b000, final_color_w}];
 end
+`endif
 
 // Expand R5G5B5 → R8G8B8 (replicate 3 MSBs into low 3 bits)
 assign red   = {pal_entry_r[14:10], pal_entry_r[14:12]};
