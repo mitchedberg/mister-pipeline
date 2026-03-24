@@ -147,3 +147,4 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_
 # Round 2 opt
 # round2 RTL 1774363769
 # serialize BG
+# genvar fix
