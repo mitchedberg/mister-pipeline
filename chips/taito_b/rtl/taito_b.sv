@@ -39,7 +39,9 @@ module taito_b #(
     parameter logic [23:1] IOC_BASE    = 23'h500000,   // 0xA00000 byte / 2
     parameter logic [23:1] SYT_BASE    = 23'h400000,   // 0x800000 byte / 2
     parameter logic [23:1] WRAM_BASE   = 23'h300000,   // 0x600000 byte / 2  (nastar 32KB)
-    parameter int unsigned  WRAM_ABITS = 14,            // 2^14 = 16K words = 32KB
+    // WRAM_ABITS set to 15 (max 64KB = Crime City) so work_ram[] covers all games.
+    // Nastar only uses the lower 32KB; top 16K words are allocated but unused.
+    parameter int unsigned  WRAM_ABITS = 15,            // 2^15 = 32K words = 64KB (max)
 
     // ── Interrupt level assignments (game-specific, nastar defaults) ────────
     // nastar: int_h → M68K_IRQ_4, int_l → M68K_IRQ_2
@@ -172,8 +174,63 @@ module taito_b #(
     input  logic  [1:0] coin,            // [0]=COIN1, [1]=COIN2 (active low)
     input  logic        service,         // service button (active low)
     input  logic  [7:0] dipsw1,          // DIP switch bank 1
-    input  logic  [7:0] dipsw2           // DIP switch bank 2
+    input  logic  [7:0] dipsw2,          // DIP switch bank 2
+
+    // ── Game select ─────────────────────────────────────────────────────────
+    // 0 = Nastar / Rastan Saga II (default)
+    // 1 = Crime City
+    // Selects address map, interrupt levels, and IOC byte lane at runtime.
+    // Captured from MRA header byte (ioctl_index=0xFF) during ROM download.
+    input  logic        game_id           // 0=nastar, 1=crimec
 );
+
+// =============================================================================
+// Address Map: per-game runtime mux (selected by game_id input)
+// =============================================================================
+// Two supported address maps (all values are WORD addresses = byte_addr >> 1):
+//
+//   game_id=0  Nastar / Rastan Saga II:
+//     TC0260DAR: 0x200000 byte → word 0x100000  (13-bit window)
+//     TC0220IOC: 0xA00000 byte → word 0x500000  (5-bit window, upper byte)
+//     TC0140SYT: 0x800000 byte → word 0x400000  (2-bit window)
+//     Work RAM:  0x600000 byte → word 0x300000  (32KB = 14-bit)
+//     IRQs:      int_h=4, int_l=2
+//
+//   game_id=1  Crime City:
+//     TC0260DAR: 0x800000 byte → word 0x400000  (13-bit window)
+//     TC0220IOC: 0x200000 byte → word 0x100000  (5-bit window, upper byte)
+//     TC0140SYT: 0x600000 byte → word 0x300000  (2-bit window)
+//     Work RAM:  0xA00000 byte → word 0x500000  (64KB = 15-bit)
+//     IRQs:      int_h=5, int_l=3
+//
+//   TC0180VCU base (0x400000 byte → word 0x200000) is the same for both games.
+
+logic [23:1] g_dar_base, g_ioc_base, g_syt_base, g_wram_base;
+logic [2:0]  g_int_h, g_int_l;
+logic        g_ioc_upper;
+logic        g_wram_64k;   // 0 = 32KB (nastar), 1 = 64KB (crimec)
+
+always_comb begin
+    if (game_id) begin   // Crime City (game_id == 1)
+        g_dar_base  = 23'h400000;   // 0x800000 byte / 2
+        g_ioc_base  = 23'h100000;   // 0x200000 byte / 2
+        g_syt_base  = 23'h300000;   // 0x600000 byte / 2
+        g_wram_base = 23'h500000;   // 0xA00000 byte / 2
+        g_wram_64k  = 1'b1;
+        g_int_h     = 3'd5;
+        g_int_l     = 3'd3;
+        g_ioc_upper = 1'b1;
+    end else begin       // Nastar (game_id == 0, default)
+        g_dar_base  = DAR_BASE;
+        g_ioc_base  = IOC_BASE;
+        g_syt_base  = SYT_BASE;
+        g_wram_base = WRAM_BASE;
+        g_wram_64k  = 1'b0;
+        g_int_h     = INT_H_LEVEL;
+        g_int_l     = INT_L_LEVEL;
+        g_ioc_upper = IOC_UPPER_BYTE;
+    end
+end
 
 // =============================================================================
 // Chip-Select Decode
@@ -183,50 +240,48 @@ module taito_b #(
 // must ensure cpu_addr is stable when these selects are used.
 
 // CPU Program ROM: 0x000000–0x07FFFF byte (512KB)
-//   Word address range: 0x000000–0x03FFFF → top 9 bits [23:15] = 9'h000..9'h001
-//   Simpler: top 9 bits [23:15] == 0 (i.e. cpu_addr[23:15] == 0 covers 0x000000–0x007FFF word = 0x000000–0x00FFFF byte — too narrow)
 //   Correct: byte 0x000000–0x07FFFF → word 0x000000–0x03FFFF → bits [23:18] == 6'b000000
-//   (top 6 bits zero means the address is in the first 256KB×2 = bottom 512KB)
 logic prog_rom_cs;
 assign prog_rom_cs = (cpu_addr[23:18] == 6'b000000) && !cpu_as_n;
 
 // TC0180VCU: 512KB window (19-bit word offset → top 5 bits of 23-bit word addr)
-//   nastar byte 0x400000–0x47FFFF → word 0x200000–0x23FFFF
-//   Top 5 bits: cpu_addr[23:19] == VCU_BASE[23:19]
+//   Same base (0x400000 byte → word 0x200000) for both supported games.
 logic vcu_cs;
 assign vcu_cs = (cpu_addr[23:19] == VCU_BASE[23:19]) && !cpu_as_n;
 
-// TC0260DAR: 8KB window (8K × 16-bit words = palette RAM)
-//   nastar byte 0x200000–0x201FFF → word 0x100000–0x100FFF
-//   Top 12 bits: cpu_addr[23:12] == DAR_BASE[23:12]
+// TC0260DAR: 8KB window (palette RAM)
+//   nastar: 0x200000 byte → word 0x100000; crimec: 0x800000 byte → word 0x400000
+//   Top 12 bits [23:12] match.
 logic dar_cs;
-assign dar_cs = (cpu_addr[23:12] == DAR_BASE[23:12]) && !cpu_as_n;
+assign dar_cs = (cpu_addr[23:12] == g_dar_base[23:12]) && !cpu_as_n;
 
-// TC0220IOC: 16 registers max (4-bit word offset → cpu_addr[4:1])
-//   nastar byte 0xA00000–0xA0001F → word 0x500000–0x50000F
-//   Compare top 19 bits [23:5]: allows cpu_addr[4:1] = A[3:0] to vary freely.
-//   This gives a 32-byte / 16-word window, covering all 16 IOC register addresses
-//   including paddle registers (12-15 need A[3]=1, cpu_addr[4]=1).
-//   For nastar (no paddles) only regs 0-7 are used; upper half is harmless.
+// TC0220IOC: 16 registers max (4-bit word offset)
+//   nastar: 0xA00000 byte → word 0x500000; crimec: 0x200000 byte → word 0x100000
+//   Top 19 bits [23:5] match.
 logic ioc_cs_n;
-assign ioc_cs_n = !((cpu_addr[23:5] == IOC_BASE[23:5]) && !cpu_as_n);
+assign ioc_cs_n = !((cpu_addr[23:5] == g_ioc_base[23:5]) && !cpu_as_n);
 
 // TC0140SYT master: 2 byte addresses (port @ +0, comm @ +2)
-//   nastar byte 0x800000–0x800003 → word 0x400000–0x400001
-//   cpu_addr[23:2] == SYT_BASE[23:2]  (A[1] = MA1, selects port vs comm)
+//   nastar: 0x800000 byte → word 0x400000; crimec: 0x600000 byte → word 0x300000
+//   Top 22 bits [23:2] match (A[1] = MA1 selects port/comm).
 logic syt_mcs_n;
-assign syt_mcs_n = !((cpu_addr[23:2] == SYT_BASE[23:2]) && !cpu_as_n);
+assign syt_mcs_n = !((cpu_addr[23:2] == g_syt_base[23:2]) && !cpu_as_n);
 
-// Work RAM: parameterized window
-//   nastar byte 0x600000–0x607FFF → word 0x300000–0x303FFF (14-bit word addr)
+// Work RAM: runtime-muxed window
+//   nastar: 0x600000 byte → word 0x300000 (32KB = 14-bit word addr)
+//   crimec: 0xA00000 byte → word 0x500000 (64KB = 15-bit word addr)
 //
-// Note on [23:1] indexing: cpu_addr is declared logic [23:1], so index N corresponds
-// to bit (N-1) of the underlying value. To match a 2^WRAM_ABITS word window, we need
-// to compare bits above position WRAM_ABITS of the word address. In [23:1] notation,
-// the bit at index (WRAM_ABITS+1) corresponds to bit WRAM_ABITS of the word address.
-// Therefore the tag comparison must use [23:WRAM_ABITS+1], not [23:WRAM_ABITS].
+//   g_wram_64k=0 (nastar): compare [23:15] against g_wram_base[23:15]  (32KB window)
+//   g_wram_64k=1 (crimec): compare [23:16] against g_wram_base[23:16]  (64KB window)
+//
+//   WRAM_ABITS=15 at elaboration so work_ram[] is sized for the largest game (64KB).
+//   Nastar uses only the lower 16K words; Crime City uses all 32K words.
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:WRAM_ABITS+1] == WRAM_BASE[23:WRAM_ABITS+1]) && !cpu_as_n;
+assign wram_cs = !cpu_as_n && (
+    g_wram_64k
+        ? (cpu_addr[23:16] == g_wram_base[23:16])   // 64KB window (crimec)
+        : (cpu_addr[23:15] == g_wram_base[23:15])    // 32KB window (nastar)
+);
 
 // =============================================================================
 // TC0180VCU
@@ -485,8 +540,8 @@ TC0220IOC u_ioc (
     .CSn          (ioc_cs_n),
     .OEn          (1'b0),
 
-    // Data bus: select byte lane based on IOC_UPPER_BYTE parameter
-    .Din          (IOC_UPPER_BYTE ? cpu_din[15:8]  : cpu_din[7:0]),
+    // Data bus: select byte lane based on g_ioc_upper (runtime game_id mux)
+    .Din          (g_ioc_upper ? cpu_din[15:8]  : cpu_din[7:0]),
     .Dout         (ioc_dout),
 
     // Physical outputs — not used in MiSTer (no solenoids)
@@ -851,7 +906,7 @@ end
 logic [15:0] ioc_dout_word;
 logic [15:0] syt_dout_word;
 
-assign ioc_dout_word = IOC_UPPER_BYTE ? {ioc_dout, 8'hFF}    : {8'hFF, ioc_dout};
+assign ioc_dout_word = g_ioc_upper ? {ioc_dout, 8'hFF}    : {8'hFF, ioc_dout};
 assign syt_dout_word = {11'b0, syt_mdout, 1'b0};  // nibble in D[4:1], rest open
 
 always_comb begin
@@ -941,14 +996,14 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
         if (vcu_int_h)
             ipl_h_active <= 1'b1;
         else if (iack_cycle && ipl_h_active &&
-                 (INT_H_LEVEL >= INT_L_LEVEL || !ipl_l_active))
+                 (g_int_h >= g_int_l || !ipl_l_active))
             ipl_h_active <= 1'b0;
 
         // int_l: latch on VCU pulse, clear on IACK when int_l is the active level
         if (vcu_int_l)
             ipl_l_active <= 1'b1;
         else if (iack_cycle && ipl_l_active &&
-                 (INT_L_LEVEL > INT_H_LEVEL || !ipl_h_active))
+                 (g_int_l > g_int_h || !ipl_h_active))
             ipl_l_active <= 1'b0;
     end
 end
@@ -961,10 +1016,10 @@ end
 // by fx68k's two-stage pipeline (rIpl → iIpl → iplStable check).
 logic [2:0] ipl_raw;
 always_comb begin
-    if      (ipl_h_active && (INT_H_LEVEL >= INT_L_LEVEL || !ipl_l_active))
-        ipl_raw = ~INT_H_LEVEL;
+    if      (ipl_h_active && (g_int_h >= g_int_l || !ipl_l_active))
+        ipl_raw = ~g_int_h;
     else if (ipl_l_active)
-        ipl_raw = ~INT_L_LEVEL;
+        ipl_raw = ~g_int_l;
     else
         ipl_raw = 3'b111;   // no interrupt
 end

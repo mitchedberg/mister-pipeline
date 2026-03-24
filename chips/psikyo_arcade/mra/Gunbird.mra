@@ -6,12 +6,12 @@
   Native resolution: 320×240 (vertical shooter, rotated 90° CW for display)
 
   SDRAM layout (byte addresses):
-    0x000000  CPU program ROM (2 MB)
-    0x200000  Sprite ROM (PS2001B / Gate 3)
-    0x600000  BG tile ROM (PS3103 / Gate 4)
+    0x000000  CPU program ROM (512KB: 2×256KB interleaved)
+    0x200000  Sprite ROM (PS2001B / Gate 3, 7 MB)
+    0x600000  BG tile ROM (PS3103 / Gate 4, 2 MB)
 
   ROM names from MAME gunbird driver (src/mame/psikyo/psikyo.cpp)
-  CRCs are placeholders (00000000) — replace with actual MAME ROM dump CRCs.
+  CRCs verified from MAME 0.245 database.
 -->
 <misterromdescription>
   <name>Gunbird</name>
@@ -30,9 +30,11 @@
     0xFE: DIP switches
   -->
 
-  <!-- CPU program ROM (2 MB) -->
+  <!-- CPU program ROM (512KB: 2×256KB interleaved even/odd bytes).
+       4.u46 = even bytes (D15:D8), offset 0, stride 2.
+       5.u39 = odd  bytes (D7:D0),  offset 1, stride 2.
+       NOTE: Audio (Z80 3.u71 + YMF278B u56/u64) not loaded — audio stubbed. -->
   <rom index="0" zip="gunbird.zip" type="merged" md5="63b70590c15fc226bd05994b41291121">
-    <!-- MC68EC020 program ROM (512KB interleaved as 2x262KB) from MAME gunbird set -->
     <part name="4.u46" crc="b78ec99d" sha1="399b79931652d9df1632cd4d7ec3d214e473a5c3" offset="0x000000" length="0x040000"/>
     <part name="5.u39" crc="925f095d" sha1="301a536119a0320a756e9c6e51fb10e36b90ef16" offset="0x000001" length="0x040000"/>
   </rom>
