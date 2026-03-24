@@ -4,7 +4,7 @@ compare_ram_dumps.py — Format-aware RAM comparison: MAME Lua dump vs Verilator
 
 MAME dump format (86028 bytes/frame):
   [0..3]           4B LE frame number
-  [4..65539]       64KB Main RAM (0x080000-0x08FFFF)
+  [4..65539]       64KB Main RAM (0x0B0000-0x0BFFFF — tdragon WRAM, NOT 0x080000 which is I/O)
   [65540..67587]   2KB Palette RAM (0x0C8000-0x0C87FF — 1024 entries × 2B, NMK16 uses first 512)
   [67588..83971]   16KB BG VRAM (0x0CC000-0x0CFFFF)
   [83972..86019]   2KB TX VRAM (0x0D0000-0x0D07FF)
@@ -12,7 +12,7 @@ MAME dump format (86028 bytes/frame):
 
 SIM dump format (89100 bytes/frame):
   [0..3]           4B LE frame number
-  [4..65539]       64KB Work RAM (0x0B0000-0x0BFFFF — same array content as MAME 0x080000)
+  [4..65539]       64KB Work RAM (0x0B0000-0x0BFFFF — tdragon WRAM, matches MAME MainRAM)
   [65540..66563]   1KB Palette RAM (512 entries × 2B big-endian)
   [66564..70659]   4KB Sprite RAM (2048 words × 2B — nmk16 sprite_ram_storage)
   [70660..87043]   16KB BG VRAM (2048 tilemap words padded to 16KB)
