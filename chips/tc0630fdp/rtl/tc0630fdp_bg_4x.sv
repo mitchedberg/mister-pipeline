@@ -448,6 +448,19 @@ logic [8:0]  wr_zoom_step_r;         // run_zoom_step snapshot
 logic [8:0]  wr_pal_add_lines_r;     // run_pal_add_lines snapshot
 logic signed [10:0] wr_scol_base_r;  // tile base screen column
 
+`ifdef QUARTUS
+// Incremental accumulators for BG_WRITE pixel decode.
+// Replaces the combinational wr_zoom_acc_fp_r + px_idx*wr_zoom_step_r multiply
+// (saves ~80-120 ALMs on Cyclone V by eliminating LUT-based 4x9-bit multiplier).
+// Each register is initialised at BG_GFX1 and incremented each BG_WRITE cycle.
+//   wr_acc_px_r : zoom accumulator; starts at wr_zoom_acc_fp_r, +zoom_step/cycle
+//   wr_scol_r   : screen column;    starts at wr_scol_base_r,   +1/cycle
+//   wr_pal9_r   : pre-computed palette+pal_add (constant within BG_WRITE tile)
+logic [18:0]         wr_acc_px_r;
+logic signed [10:0]  wr_scol_r;
+logic [8:0]          wr_pal9_r;
+`endif
+
 // =============================================================================
 // PF RAM address combinational logic
 // =============================================================================
@@ -556,8 +569,14 @@ logic [12:0] wr_out_data;
 
 /* verilator lint_off UNUSED */
 always_comb begin
-    wr_scol_c    = wr_scol_base_r + $signed({7'b0, px_idx});
-    wr_acc_px    = wr_zoom_acc_fp_r + (19'(px_idx) * {10'b0, wr_zoom_step_r});
+`ifdef QUARTUS
+    // Incremental accumulators: no combinational multiply needed.
+    wr_scol_c   = wr_scol_r;
+    wr_acc_px   = wr_acc_px_r;
+`else
+    wr_scol_c   = wr_scol_base_r + $signed({7'b0, px_idx});
+    wr_acc_px   = wr_zoom_acc_fp_r + (19'(px_idx) * {10'b0, wr_zoom_step_r});
+`endif
     wr_px_tile   = wr_acc_px[11:8];
 
     wr_src       = wr_px_tile[3] ? gfx_right_data_r : gfx_left_data_r;
@@ -567,7 +586,11 @@ always_comb begin
 
     wr_in_range  = (wr_scol_c >= 0) && (wr_scol_c < 320);
     wr_out_addr  = wr_in_range ? 9'(wr_scol_c[8:0]) : 9'b0;
+`ifdef QUARTUS
+    wr_out_data  = {wr_pal9_r, wr_pen};
+`else
     wr_out_data  = {wr_palette_r + wr_pal_add_lines_r, wr_pen};
+`endif
 end
 /* verilator lint_on UNUSED */
 
@@ -615,6 +638,11 @@ always_ff @(posedge clk_4x) begin
         wr_zoom_step_r     <= 9'b0;
         wr_pal_add_lines_r <= 9'b0;
         wr_scol_base_r     <= 11'b0;
+`ifdef QUARTUS
+        wr_acc_px_r        <= 19'b0;
+        wr_scol_r          <= 11'sb0;
+        wr_pal9_r          <= 9'b0;
+`endif
     end else begin
         case (state)
             BG_IDLE: begin
@@ -684,6 +712,12 @@ always_ff @(posedge clk_4x) begin
                     scol_base = $signed({1'b0, tile_col, 4'b0}) -
                                 $signed({7'b0, run_xoff});
                     wr_scol_base_r <= scol_base;
+`ifdef QUARTUS
+                    // Initialise incremental accumulators for BG_WRITE.
+                    wr_acc_px_r <= run_zoom_acc_fp;
+                    wr_scol_r   <= scol_base;
+                    wr_pal9_r   <= tile_palette_r + run_pal_add_lines;
+`endif
                 end
                 wr_palette_r       <= tile_palette_r;
                 wr_flipx_r         <= tile_flipx_r;
@@ -698,6 +732,13 @@ always_ff @(posedge clk_4x) begin
                 // Serialised pixel write: one pixel per clk_4x cycle.
                 // Combinational decode (wr_*) produces lb_waddr/lb_wdata/lb_wen.
                 // altsyncram captures the write on this clock edge.
+
+`ifdef QUARTUS
+                // Advance incremental accumulators for next pixel.
+                // Combinational block reads current values first, then FSM updates them.
+                wr_acc_px_r <= wr_acc_px_r + {10'b0, wr_zoom_step_r};
+                wr_scol_r   <= wr_scol_r + 11'sd1;
+`endif
 
                 if (px_idx == 4'd15) begin
                     // All 16 pixels written — advance to next tile.

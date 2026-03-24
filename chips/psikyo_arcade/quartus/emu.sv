@@ -577,6 +577,7 @@ wire        cpu_as_n;
 wire        cpu_dtack_n;
 wire [2:0]  cpu_ipl_n;
 wire        cpu_reset_n_out;
+wire        cpu_inta_n;   // interrupt acknowledge: 0 when FC=111 & ASn=0 (active-low)
 
 fx68k_adapter u_cpu (
     .clk             (clk_sys),
@@ -592,7 +593,8 @@ fx68k_adapter u_cpu (
     .cpu_as_n        (cpu_as_n),
     .cpu_dtack_n     (cpu_dtack_n),
     .cpu_ipl_n       (cpu_ipl_n),
-    .cpu_reset_n_out (cpu_reset_n_out)
+    .cpu_reset_n_out (cpu_reset_n_out),
+    .cpu_inta_n      (cpu_inta_n)
 );
 
 wire signed [15:0] core_snd_left, core_snd_right;
@@ -614,6 +616,7 @@ psikyo_arcade u_psikyo_arcade
     .cpu_lds_n       (cpu_lds_n),
     .cpu_dtack_n     (cpu_dtack_n),
     .cpu_ipl_n       (cpu_ipl_n),
+    .cpu_inta_n      (cpu_inta_n),
 
     // Program ROM
     .prog_rom_addr   (prog_sdr_addr),

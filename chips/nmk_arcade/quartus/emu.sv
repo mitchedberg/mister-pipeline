@@ -547,6 +547,7 @@ wire        cpu_as_n;
 wire        cpu_dtack_n;
 wire [2:0]  cpu_ipl_n;
 wire        cpu_reset_n_out;
+wire        cpu_inta_n;     // IACK: active-low, driven by fx68k_adapter, fed to nmk_arcade
 
 fx68k_adapter u_cpu (
     .clk            (clk_sys),
@@ -562,7 +563,8 @@ fx68k_adapter u_cpu (
     .cpu_as_n       (cpu_as_n),
     .cpu_dtack_n    (cpu_dtack_n),
     .cpu_ipl_n      (cpu_ipl_n),
-    .cpu_reset_n_out(cpu_reset_n_out)
+    .cpu_reset_n_out(cpu_reset_n_out),
+    .cpu_inta_n     (cpu_inta_n)
 );
 
 nmk_arcade u_nmk_arcade
@@ -581,6 +583,7 @@ nmk_arcade u_nmk_arcade
     .cpu_as_n    (cpu_as_n),
     .cpu_dtack_n (cpu_dtack_n),
     .cpu_ipl_n   (cpu_ipl_n),
+    .cpu_inta_n  (cpu_inta_n),  // IACK: clears IPL latch when CPU acknowledges interrupt
 
     // Program ROM
     .prog_rom_addr (prog_sdr_addr),

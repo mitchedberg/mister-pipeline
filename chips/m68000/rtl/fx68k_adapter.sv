@@ -80,7 +80,21 @@ module fx68k_adapter (
     // ── CPU halted output ─────────────────────────────────────────────────────
     // oHALTEDn from fx68k — asserted (low) when the CPU enters the halted state
     // (double bus fault). Exposed for testbench diagnostics.
-    output logic        cpu_halted_n
+    output logic        cpu_halted_n,
+
+    // ── Interrupt acknowledge output ──────────────────────────────────────────
+    // Active-low: 0 when FC[2:0]=111 and ASn=0 (68000 IACK cycle).
+    // The core module uses this to clear the IPL latch on IACK — NOT on a timer.
+    // If left unconnected the input defaults to 0 (always-IACK) and the IPL
+    // latch is cleared on the same cycle it is set, so no interrupt is ever taken.
+    output logic        cpu_inta_n,
+
+    // ── CPU function codes ────────────────────────────────────────────────────
+    // FC[2:0] = 3'b111 during interrupt acknowledge cycles.
+    // During IACK the CPU also places the acknowledged interrupt level on A[3:1].
+    // Exposed so cores with multiple interrupt levels can perform level-specific
+    // IACK decode (failure_catalog: "Multi-level interrupt silently lost").
+    output logic [2:0]  cpu_fc
 );
 
 // =============================================================================
@@ -220,6 +234,8 @@ assign cpu_lds_n     = fx_LDSn;
 assign cpu_as_n      = fx_ASn;
 assign cpu_reset_n_out = fx_oRESETn;
 assign cpu_halted_n    = fx_oHALTEDn;
+assign cpu_inta_n      = inta_n;  // IACK: active-low, 0 when FC=111 & ASn=0
+assign cpu_fc          = {fx_FC2, fx_FC1, fx_FC0};  // function code bus
 
 // =============================================================================
 // Unused signal suppression (prevent lint warnings)

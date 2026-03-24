@@ -423,8 +423,31 @@ logic [3:0]          px_src_x;
 logic [3:0]          px_pen;
 logic signed [12:0]  px_scol;
 
+`ifdef QUARTUS
+// px_src_x = (px_idx * scale_x) >> 8 : 4-bit x 9-bit -> 13-bit product.
+// Explicit lpm_mult forces DSP block use in Quartus 17.0 Lite; a plain *
+// operator maps to LUT-based multiplier consuming ~80-120 ALMs.
+logic [12:0] px_src_x_prod;
+lpm_mult #(
+    .lpm_widtha         (4),
+    .lpm_widthb         (9),
+    .lpm_widthp         (13),
+    .lpm_representation ("UNSIGNED"),
+    .lpm_pipeline       (0)
+) u_px_src_x_mult (
+    .dataa  (px_idx),
+    .datab  (scale_x[8:0]),
+    .result (px_src_x_prod),
+    .clock  (1'b0), .clken(1'b0), .aclr(1'b0), .sum({13{1'b0}})
+);
+`endif
+
 always_comb begin
+`ifdef QUARTUS
+    px_src_x = 4'(px_src_x_prod >> 8);
+`else
     px_src_x = 4'((13'(px_idx) * 13'(scale_x)) >> 8);
+`endif
     px_scol  = $signed({{1{r_sx[11]}}, r_sx}) + 13'(px_idx);
     if (px_src_x < 4'd8)
         px_pen = decode_pen(gfx_left_r, px_src_x[2:0], r_flipx);
