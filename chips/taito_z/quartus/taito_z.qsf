@@ -53,7 +53,7 @@ set_global_assignment -name OPTIMIZE_POWER_DURING_FITTING OFF
 set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS OFF
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
 # AREA optimization to avoid routing congestion timeout (same as toaplan_v2.qsf)
-set_global_assignment -name FITTER_EFFORT "AGGRESSIVE FIT"
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
 set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE AREA"
 set_global_assignment -name OPTIMIZATION_TECHNIQUE AREA
 
