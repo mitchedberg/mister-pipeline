@@ -1,0 +1,6 @@
+QUARTUS_VERSION = "17.0"
+DATE = "2026-03-24"
+
+# Revisions
+
+PROJECT_REVISION = "raizing_arcade"
