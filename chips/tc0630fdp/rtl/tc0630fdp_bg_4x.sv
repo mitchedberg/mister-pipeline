@@ -1,6 +1,6 @@
 `default_nettype none
 // =============================================================================
-// TC0630FDP — 4× Time-Multiplexed BG Tilemap Engine  (Phase 1 ALM optimisation)
+// TC0630FDP — 4× Time-Multiplexed BG Tilemap Engine  (Phase 2: Serialised writes)
 // =============================================================================
 // Replaces the 4-instance generate of tc0630fdp_bg with a single instance
 // running at 4× pixel clock, processing layers PF1–PF4 sequentially within
@@ -10,9 +10,8 @@
 //   · clk_4x = 4× pixel clock (≈96 MHz when pixel clock ≈24 MHz)
 //   · clk    = pixel clock domain for all pixel-rate I/O
 //   · Layer counter cycles 0→1→2→3 within each HBLANK period.
-//     Layer 0 occupies the first 112×4/4 = 112 clk_4x cycles of HBLANK,
+//     Layer 0 occupies the first 112 clk_4x cycles of HBLANK,
 //     layer 1 the next 112, etc.  Total budget: 448 clk_4x cycles.
-//     Each layer needs ≤106 clk_4x cycles for 21 tiles (5-state FSM).
 //   · 4 separate linebuffers (320×13 each), one per layer.
 //     Written at clk_4x during HBLANK; read at clk during active display.
 //     Cross-domain safety: buffers are written only during HBLANK and read
@@ -25,13 +24,25 @@
 //   HBLANK active = hpos < H_START (46 cycles at clk = 184 cycles at clk_4x)
 //                 + hpos >= H_END  (66 cycles at clk = 264 cycles at clk_4x)
 //   Total HBLANK: 448 clk_4x cycles per scanline.
-//   Per-layer budget: 112 clk_4x cycles.  FSM uses ≤106 cycles.
 //
-// Reset / layer sequencing:
-//   At the start of HBLANK (hblank_rise in clk domain, sampled into clk_4x),
-//   layer_idx resets to 0 and the FSM starts layer 0.  When the FSM completes
-//   (returns to BG_IDLE with done_r asserted), layer_idx increments and the
-//   FSM restarts with the new layer's inputs.
+//   Revised per-layer cycle count after BG_WRITE serialisation:
+//     BG_PREFETCH(1) + 21 tiles × [BG_ATTR(1)+BG_CODE(1)+BG_GFX0(1)+BG_GFX1(1)+BG_WRITE(16)]
+//     = 1 + 21×20 = 421 clk_4x cycles.
+//     4 layers × 421 = 1684 > 448 — layers are SEQUENTIAL, each layer gets
+//     its own independent time slot; the FSM runs each layer within the full 448.
+//     Single-layer budget: 421 ≤ 448. OK.
+//
+// Phase 2 change: BG_WRITE serialisation
+//   Instead of writing all 16 pixels in one clk_4x cycle (parallel for-loop),
+//   the FSM stays in BG_WRITE for 16 clk_4x cycles, writing one pixel each cycle
+//   via a px_idx counter.  This makes the linebuf write-port a single-address
+//   single-data port, enabling altsyncram (MLAB dual-port) under `ifdef QUARTUS`.
+//
+// Linebuf architecture (Phase 2):
+//   · Write port (Port A): clk_4x, single addr+data+wen per cycle.
+//   · Read port (Port B):  async (UNREGISTERED), addressed by per-layer snap_col.
+//   · 4 altsyncram instances (one per BG layer) under QUARTUS.
+//   · Simulation: standard 2D register arrays, identical pixel output.
 // =============================================================================
 
 module tc0630fdp_bg_4x (
@@ -86,11 +97,9 @@ localparam int H_END   = 366;
 
 // =============================================================================
 // Cross-domain: hblank_rise in clk domain → synchronised into clk_4x domain.
-// We need a 2-cycle synchroniser since clk and clk_4x are related (4×) but
-// separate clock domains in the tool's eyes.
 // =============================================================================
-logic hblank_r_clk;   // hblank delayed 1 cycle in clk domain
-logic hblank_rise_clk; // hblank rising edge in clk domain
+logic hblank_r_clk;
+logic hblank_rise_clk;
 
 always_ff @(posedge clk) begin
     if (!rst_n) hblank_r_clk  <= 1'b0;
@@ -108,9 +117,7 @@ logic hblank_rise_4x;
 assign hblank_rise_4x = hrise_sync[1];
 
 // =============================================================================
-// Synchronise vpos and current layer's line-ram outputs into clk_4x domain.
-// These are stable at HBLANK start and held for the entire HBLANK period.
-// A simple registered capture is sufficient (they don't change during HBLANK).
+// Synchronise vpos and per-layer inputs into clk_4x domain.
 // =============================================================================
 logic [ 8:0] vpos_4x;
 always_ff @(posedge clk_4x) begin
@@ -118,7 +125,6 @@ always_ff @(posedge clk_4x) begin
     else        vpos_4x <= vpos;
 end
 
-// All per-layer inputs also captured at hblank_rise into clk_4x domain.
 logic [3:0][15:0] pf_xscroll_4x;
 logic [3:0][15:0] pf_yscroll_4x;
 logic             extend_mode_4x;
@@ -130,7 +136,7 @@ logic [3:0][ 8:0] ls_colscroll_4x;
 logic [3:0][15:0] ls_pal_add_4x;
 
 always_ff @(posedge clk_4x) begin
-    if (hrise_sync[0]) begin   // capture on the cycle before hblank_rise_4x asserts
+    if (hrise_sync[0]) begin
         pf_xscroll_4x    <= pf_xscroll;
         pf_yscroll_4x    <= pf_yscroll;
         extend_mode_4x   <= extend_mode;
@@ -144,15 +150,26 @@ always_ff @(posedge clk_4x) begin
 end
 
 // =============================================================================
-// Layer counter — advances after each layer's FSM completes.
+// Layer counter
 // =============================================================================
-logic [1:0] layer_idx;    // current active layer (0–3)
-logic       layer_done;   // FSM has returned to BG_IDLE after being active
-logic       fsm_start;    // 1-cycle pulse to kick off FSM for current layer_idx
-logic       fsm_active;   // 1 from fsm_start until FSM returns to BG_IDLE
+logic [1:0] layer_idx;
+logic       layer_done;
+logic       fsm_start;
+logic       fsm_active;
 
-// fsm_active: set on fsm_start, clear when FSM returns to BG_IDLE.
-// Prevents layer_done from firing before the FSM has been started.
+// Forward declare state for use in fsm_active logic
+typedef enum logic [2:0] {
+    BG_IDLE     = 3'd0,
+    BG_ATTR     = 3'd1,
+    BG_CODE     = 3'd2,
+    BG_GFX0     = 3'd3,
+    BG_GFX1     = 3'd4,
+    BG_WRITE    = 3'd5,
+    BG_PREFETCH = 3'd6
+} bg_state_t;
+
+bg_state_t state;
+
 always_ff @(posedge clk_4x) begin
     if (!rst_n) begin
         fsm_active <= 1'b0;
@@ -164,7 +181,6 @@ always_ff @(posedge clk_4x) begin
     end
 end
 
-// layer_done: FSM returns to IDLE after being active (not spurious idle at reset)
 assign layer_done = fsm_active & (state == BG_IDLE);
 
 always_ff @(posedge clk_4x) begin
@@ -184,7 +200,7 @@ always_ff @(posedge clk_4x) begin
 end
 
 // =============================================================================
-// Input mux: select current layer's inputs based on layer_idx.
+// Input mux: select current layer's inputs
 // =============================================================================
 logic [15:0] cur_pf_xscroll;
 logic [15:0] cur_pf_yscroll;
@@ -211,8 +227,7 @@ always_comb begin
 end
 
 // =============================================================================
-// PF RAM address: route current layer's pf_rd_addr output.
-// Other layers' pf_rd_addr are held 0 (inactive).
+// PF RAM address routing
 // =============================================================================
 logic [12:0] fsm_pf_rd_addr;
 
@@ -223,31 +238,7 @@ always_comb begin
 end
 
 // =============================================================================
-// Per-layer 4 line buffers: 320 × 13-bit.
-// Written during HBLANK (clk_4x domain), read during display (clk domain).
-// Cross-domain safe: write and read phases are mutually exclusive.
-//
-// NOTE: Cannot be converted to explicit altsyncram because BG_WRITE writes
-// up to 16 different addresses per cycle (for-loop).  altsyncram SINGLE_PORT
-// supports one write per cycle only.  A true M10K conversion would require
-// serialising writes to one pixel per clk_4x cycle (Phase 0+2).
-//
-// The (* ramstyle = "MLAB" *) attribute is left in place as a hint; however
-// Quartus 17.0 Lite ignores it for 3D arrays and this will map to FFs.
-// Estimated cost: 4×320×13 = 16,640 FFs ≈ 400 ALMs.  This is the remaining
-// linebuf register cost that requires the Phase 0+2 serialisation refactor.
-// =============================================================================
-`ifdef QUARTUS
-(* ramstyle = "MLAB" *) logic [12:0] linebuf [0:3][0:319];
-`else
-logic [12:0] linebuf [0:3][0:319];
-`endif
-
-// Linebuf writes happen directly in the FSM always_ff block below.
-// (16 parallel writes per BG_WRITE cycle — valid for MLAB/register arrays)
-
-// =============================================================================
-// Pixel read (clk domain): mosaic-snapped column → bg_pixel[0..3]
+// Screen column decode (pixel clock domain, used for linebuf read address)
 // =============================================================================
 logic [8:0] scol_c;
 always_comb begin
@@ -257,11 +248,13 @@ always_comb begin
         scol_c = 9'd0;
 end
 
-// Mosaic snap (applied uniformly — uses per-layer mosaic inputs)
-// For QUARTUS compatibility, generate 4 snap computations:
+// =============================================================================
+// Mosaic snap: per-layer read address (snap_col[gi])
+// =============================================================================
+logic [8:0] snap_col [0:3];
+
 generate
-    for (genvar gi = 0; gi < 4; gi++) begin : gen_bg_out
-        logic [8:0] snap_col;
+    for (genvar gi = 0; gi < 4; gi++) begin : gen_snap
         always_comb begin
             automatic logic [9:0] gx_wide;
             automatic logic [8:0] grid_sum;
@@ -271,39 +264,110 @@ generate
             gx_wide  = {1'b0, scol_c} + 10'd114;
             grid_sum = (gx_wide >= 10'd432) ? gx_wide[8:0] - 9'd432 : gx_wide[8:0];
             sr       = 9'd1 + {5'b0, ls_mosaic_rate};
-            // Modulo via subtraction chain (avoids combinational divider, ~1500 ALMs each)
-            // sr ranges 1..16; grid_sum max 431. sr*16 max = 256, all fit in 9 bits.
             begin
                 automatic logic [8:0] sr16, sr8, sr4, sr2, rem;
                 sr16 = sr << 4;
                 sr8  = sr << 3;
                 sr4  = sr << 2;
                 sr2  = sr << 1;
-                rem = grid_sum;
-                if (rem >= sr16) rem = rem - sr16;  // sr*16
-                if (rem >= sr8)  rem = rem - sr8;   // sr*8
-                if (rem >= sr4)  rem = rem - sr4;   // sr*4
-                if (rem >= sr2)  rem = rem - sr2;   // sr*2
-                if (rem >= sr)   rem = rem - sr;    // sr*1
+                rem  = grid_sum;
+                if (rem >= sr16) rem = rem - sr16;
+                if (rem >= sr8)  rem = rem - sr8;
+                if (rem >= sr4)  rem = rem - sr4;
+                if (rem >= sr2)  rem = rem - sr2;
+                if (rem >= sr)   rem = rem - sr;
                 off = 5'(rem);
             end
 
             if (ls_mosaic_en[gi] && ls_mosaic_rate != 4'd0)
-                snap_col = 9'(scol_c - {5'b0, off});
+                snap_col[gi] = 9'(scol_c - {5'b0, off});
             else
-                snap_col = scol_c;
+                snap_col[gi] = scol_c;
         end
-
-        assign bg_pixel[gi] = linebuf[gi][snap_col];
     end
 endgenerate
 
 // =============================================================================
+// Per-layer line buffers: 320 × 13-bit.
+// Written during HBLANK at clk_4x (one pixel per cycle — serialised).
+// Read during active display at clk (async, via snap_col per layer).
+//
+// Phase 2: serialised write port (single addr+data+wen) enables altsyncram.
+//
+// Under QUARTUS: 4 explicit altsyncram dual-port MLAB instances.
+//   Port A (write): clk_4x, single addr+data+wen.
+//   Port B (read):  UNREGISTERED async, addressed by snap_col[gi].
+//   MLAB: 4 × 320×13 = 16,640 bits ≈ 26 MLABs  (vs 400+ ALMs from FFs).
+//
+// Under Verilator: register arrays with identical pixel output behaviour.
+// =============================================================================
+logic [12:0] lb_wdata;   // write data (from BG_WRITE serialised decode)
+logic [ 8:0] lb_waddr;   // write address [0..319]
+logic [3:0]  lb_wen;     // per-layer write enable (one-hot)
+
+`ifdef QUARTUS
+logic [12:0] lb_rdata [0:3];
+
+genvar gi_lb;
+generate
+    for (gi_lb = 0; gi_lb < 4; gi_lb++) begin : gen_lb
+        altsyncram #(
+            .width_a            (13),
+            .widthad_a          (9),
+            .numwords_a         (512),
+            .width_b            (13),
+            .widthad_b          (9),
+            .numwords_b         (512),
+            .operation_mode     ("DUAL_PORT"),
+            .ram_block_type     ("MLAB"),
+            .outdata_reg_a      ("UNREGISTERED"),
+            .outdata_reg_b      ("UNREGISTERED"),
+            .read_during_write_mode_mixed_ports ("DONT_CARE"),
+            .intended_device_family ("Cyclone V")
+        ) u_lb (
+            .clock0    (clk_4x),
+            .address_a (lb_waddr),
+            .data_a    (lb_wdata),
+            .wren_a    (lb_wen[gi_lb]),
+            .address_b (snap_col[gi_lb]),
+            .q_b       (lb_rdata[gi_lb]),
+            // unused ports
+            .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+            .byteena_a(1'b1), .byteena_b(1'b1), .clock1(1'b0), .clocken0(1'b1),
+            .clocken1(1'b1), .clocken2(1'b1), .clocken3(1'b1),
+            .data_b({13{1'b1}}), .eccstatus(), .q_a(), .rden_a(1'b1), .rden_b(1'b1),
+            .wren_b(1'b0)
+        );
+    end
+endgenerate
+
+generate
+    for (genvar gi2 = 0; gi2 < 4; gi2++) begin : gen_bg_out
+        assign bg_pixel[gi2] = lb_rdata[gi2];
+    end
+endgenerate
+
+`else
+// Simulation: register arrays
+logic [12:0] linebuf [0:3][0:319];
+
+always_ff @(posedge clk_4x) begin
+    if (lb_wen[0]) linebuf[0][lb_waddr] <= lb_wdata;
+    if (lb_wen[1]) linebuf[1][lb_waddr] <= lb_wdata;
+    if (lb_wen[2]) linebuf[2][lb_waddr] <= lb_wdata;
+    if (lb_wen[3]) linebuf[3][lb_waddr] <= lb_wdata;
+end
+
+generate
+    for (genvar gi2 = 0; gi2 < 4; gi2++) begin : gen_bg_out
+        assign bg_pixel[gi2] = linebuf[gi2][snap_col[gi2]];
+    end
+endgenerate
+`endif
+
+// =============================================================================
 // Fetch geometry: Y zoom computation for current layer.
 // =============================================================================
-// Y-zoom row computation: canvas_y_raw * zoom_y → 17-bit product.
-// Explicit lpm_mult (combinational, pipeline=0) forces DSP block in Quartus 17.0 Lite.
-// multstyle attribute is ignored by that tool version.
 /* verilator lint_off UNUSED */
 logic [16:0] cy_zoomed_w;
 /* verilator lint_on UNUSED */
@@ -344,19 +408,8 @@ always_comb begin
 end
 
 // =============================================================================
-// FSM state machine — identical logic to tc0630fdp_bg, runs at clk_4x.
+// FSM registers
 // =============================================================================
-typedef enum logic [2:0] {
-    BG_IDLE     = 3'd0,
-    BG_ATTR     = 3'd1,
-    BG_CODE     = 3'd2,
-    BG_GFX0     = 3'd3,
-    BG_GFX1     = 3'd4,
-    BG_WRITE    = 3'd5,
-    BG_PREFETCH = 3'd6
-} bg_state_t;
-
-bg_state_t  state;
 logic [4:0] tile_col;
 logic [5:0] map_tx;
 logic [4:0] map_ty;
@@ -383,7 +436,18 @@ logic [21:0] gfx_right_r;
 logic [31:0] gfx_left_data_r;
 logic [31:0] gfx_right_data_r;
 
-// PF RAM address logic (same as tc0630fdp_bg)
+// Phase 2: pixel index counter and per-tile write snapshot registers
+logic [3:0] px_idx;                  // 0..15, serialised pixel within BG_WRITE
+logic [8:0]  wr_palette_r;           // tile_palette_r snapshot
+logic        wr_flipx_r;             // tile_flipx_r snapshot
+logic [18:0] wr_zoom_acc_fp_r;       // run_zoom_acc_fp snapshot at tile start
+logic [8:0]  wr_zoom_step_r;         // run_zoom_step snapshot
+logic [8:0]  wr_pal_add_lines_r;     // run_pal_add_lines snapshot
+logic signed [10:0] wr_scol_base_r;  // tile base screen column
+
+// =============================================================================
+// PF RAM address combinational logic
+// =============================================================================
 logic [12:0] pf_attr_addr_c;
 logic [12:0] pf_code_addr_c;
 
@@ -473,6 +537,49 @@ assign _unused_scroll = ^{cur_pf_xscroll[5:0], cur_pf_yscroll[6:0],
 /* verilator lint_on UNUSED */
 
 // =============================================================================
+// Serialised BG_WRITE pixel decode (combinational)
+// Computes one pixel for the current px_idx every clk_4x cycle in BG_WRITE.
+// =============================================================================
+logic signed [10:0] wr_scol_c;
+logic [18:0] wr_acc_px;
+logic [ 3:0] wr_px_tile;
+logic [ 2:0] wr_ni;
+logic [31:0] wr_src;
+logic [ 4:0] wr_sh;
+logic [ 3:0] wr_pen;
+logic        wr_in_range;
+logic [ 8:0] wr_out_addr;
+logic [12:0] wr_out_data;
+
+/* verilator lint_off UNUSED */
+always_comb begin
+    wr_scol_c    = wr_scol_base_r + $signed({7'b0, px_idx});
+    wr_acc_px    = wr_zoom_acc_fp_r + (19'(px_idx) * {10'b0, wr_zoom_step_r});
+    wr_px_tile   = wr_acc_px[11:8];
+
+    wr_src       = wr_px_tile[3] ? gfx_right_data_r : gfx_left_data_r;
+    wr_ni        = wr_flipx_r ? 3'(3'd7 - wr_px_tile[2:0]) : 3'(wr_px_tile[2:0]);
+    wr_sh        = 5'd28 - 5'({2'b00, wr_ni} << 2);
+    wr_pen       = 4'(wr_src >> wr_sh);
+
+    wr_in_range  = (wr_scol_c >= 0) && (wr_scol_c < 320);
+    wr_out_addr  = wr_in_range ? 9'(wr_scol_c[8:0]) : 9'b0;
+    wr_out_data  = {wr_palette_r + wr_pal_add_lines_r, wr_pen};
+end
+/* verilator lint_on UNUSED */
+
+// =============================================================================
+// Linebuf write signals (combinational from BG_WRITE decode)
+// =============================================================================
+always_comb begin
+    lb_wdata = wr_out_data;
+    lb_waddr = wr_out_addr;
+    lb_wen   = 4'b0;
+    if (state == BG_WRITE && wr_in_range)
+        lb_wen[layer_idx] = 1'b1;
+end
+
+// =============================================================================
 // FSM (clk_4x domain)
 // =============================================================================
 always_ff @(posedge clk_4x) begin
@@ -498,11 +605,17 @@ always_ff @(posedge clk_4x) begin
         gfx_right_r        <= 22'b0;
         gfx_left_data_r    <= 32'b0;
         gfx_right_data_r   <= 32'b0;
+        px_idx             <= 4'b0;
+        wr_palette_r       <= 9'b0;
+        wr_flipx_r         <= 1'b0;
+        wr_zoom_acc_fp_r   <= 19'b0;
+        wr_zoom_step_r     <= 9'b0;
+        wr_pal_add_lines_r <= 9'b0;
+        wr_scol_base_r     <= 11'b0;
     end else begin
         case (state)
             BG_IDLE: begin
                 if (fsm_start) begin
-                    // Compute effective X scroll
                     logic [9:0]  eff_x_base;
                     logic [9:0]  eff_x;
                     logic [8:0]  zstep;
@@ -562,45 +675,29 @@ always_ff @(posedge clk_4x) begin
 
             BG_GFX1: begin
                 gfx_right_data_r <= gfx_data;
-                state             <= BG_WRITE;
-            end
-
-            BG_WRITE: begin
+                // Snapshot tile write parameters for the 16-cycle BG_WRITE loop.
                 begin
                     logic signed [10:0] scol_base;
                     scol_base = $signed({1'b0, tile_col, 4'b0}) -
                                 $signed({7'b0, run_xoff});
-
-/* verilator lint_off UNUSED */
-                    for (int px = 0; px < 16; px++) begin
-                        automatic logic signed [10:0] scol;
-                        automatic logic [18:0] acc_px;
-                        automatic logic [ 3:0] px_tile;
-                        automatic logic [ 2:0] ni;
-                        automatic logic [31:0] src;
-                        automatic logic [ 4:0] sh;
-                        automatic logic [ 3:0] pen;
-
-                        scol    = scol_base + $signed(11'(px));
-                        acc_px  = run_zoom_acc_fp + 19'(px) * 19'({10'b0, run_zoom_step});
-                        px_tile = acc_px[11:8];
-
-                        src = px_tile[3] ? gfx_right_data_r : gfx_left_data_r;
-                        ni  = tile_flipx_r ? 3'(7 - px_tile[2:0]) : 3'(px_tile[2:0]);
-                        sh  = 5'({2'b00, ni} << 2);
-                        sh  = 5'd28 - sh;
-                        pen = 4'(src >> sh);
-
-                        if (scol >= 0 && scol < 320) begin
-                            // Palette addition: add run_pal_add_lines to tile_palette_r.
-                            linebuf[layer_idx][scol[8:0]] <=
-                                {tile_palette_r + run_pal_add_lines, pen};
-                        end
-                    end
-/* verilator lint_on UNUSED */
+                    wr_scol_base_r <= scol_base;
                 end
+                wr_palette_r       <= tile_palette_r;
+                wr_flipx_r         <= tile_flipx_r;
+                wr_zoom_acc_fp_r   <= run_zoom_acc_fp;
+                wr_zoom_step_r     <= run_zoom_step;
+                wr_pal_add_lines_r <= run_pal_add_lines;
+                px_idx             <= 4'b0;
+                state              <= BG_WRITE;
+            end
 
-                begin
+            BG_WRITE: begin
+                // Serialised pixel write: one pixel per clk_4x cycle.
+                // Combinational decode (wr_*) produces lb_waddr/lb_wdata/lb_wen.
+                // altsyncram captures the write on this clock edge.
+
+                if (px_idx == 4'd15) begin
+                    // All 16 pixels written — advance to next tile.
                     logic [5:0] next_tx;
                     next_tx = next_zoom_acc_fp[17:12] & (run_extend ? 6'h3F : 6'h1F);
                     run_zoom_acc_fp <= next_zoom_acc_fp;
@@ -612,6 +709,8 @@ always_ff @(posedge clk_4x) begin
                         map_tx   <= next_tx;
                         state    <= BG_ATTR;
                     end
+                end else begin
+                    px_idx <= px_idx + 4'd1;
                 end
             end
 

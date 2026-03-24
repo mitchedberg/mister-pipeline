@@ -1205,6 +1205,7 @@ tc0630fdp_lineram u_lineram (
 // =============================================================================
 tc0630fdp_text u_text (
     .clk          (clk),
+    .clk_4x       (clk_4x),
     .rst_n        (rst_n),
     .hblank       (hblank),
     .vpos         (vpos),
@@ -1320,6 +1321,7 @@ tc0630fdp_sprite_render u_sprite_render (
 // =============================================================================
 tc0630fdp_pivot u_pivot (
     .clk            (clk),
+    .clk_4x         (clk_4x),
     .rst_n          (rst_n),
     .hblank         (hblank),
     .vpos           (vpos),
