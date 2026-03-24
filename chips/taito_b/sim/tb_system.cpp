@@ -38,6 +38,10 @@
 // =============================================================================
 
 #include "Vtb_top.h"
+<<<<<<< HEAD
+=======
+#include "Vtb_top_tb_top.h"
+>>>>>>> sim-batch2
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
@@ -97,6 +101,63 @@ struct FrameBuffer {
 };
 
 // =============================================================================
+<<<<<<< HEAD
+=======
+// RAM Dump Helpers
+// =============================================================================
+// Write a 16-bit word as two bytes in 68000 big-endian order (MSB first).
+static inline void write_word_be(FILE* f, uint16_t w) {
+    uint8_t b[2] = { (uint8_t)(w >> 8), (uint8_t)(w & 0xFF) };
+    fwrite(b, 1, 2, f);
+}
+
+// Write N zero bytes.
+static inline void write_zeros(FILE* f, size_t n) {
+    static const uint8_t zero_buf[4096] = {};
+    while (n >= sizeof(zero_buf)) {
+        fwrite(zero_buf, 1, sizeof(zero_buf), f);
+        n -= sizeof(zero_buf);
+    }
+    if (n > 0)
+        fwrite(zero_buf, 1, n, f);
+}
+
+// Dump one frame's RAM state to binary file.
+// Format per frame: [4B LE frame#][32KB work RAM][8KB palette RAM]
+// Note: TAITO_B_PRESENT must be defined at compile time (via CFLAGS -DTAITO_B_PRESENT)
+// to enable the actual RAM dump. Without it, all regions write zeros.
+#define TAITO_B_PRESENT
+static void dump_frame_ram(FILE* f, uint32_t frame_num, Vtb_top* top) {
+    // Access the Verilator-generated tb_top sub-module that holds all internal state.
+    // (In Verilator 5.x, internal arrays migrated from rootp to tb_top.)
+    auto* r = top->tb_top;
+
+    // ── 4-byte LE frame number ───────────────────────────────────────────────
+    uint8_t frame_le[4] = {
+        (uint8_t)(frame_num & 0xFF),
+        (uint8_t)((frame_num >> 8) & 0xFF),
+        (uint8_t)((frame_num >> 16) & 0xFF),
+        (uint8_t)((frame_num >> 24) & 0xFF)
+    };
+    fwrite(frame_le, 1, 4, f);
+
+    // In isolation mode (no taito_b), write zeros for all regions to keep
+    // the binary format consistent.
+#ifdef TAITO_B_PRESENT
+    // Work RAM: 32KB = 16384 words at 0x600000-0x607FFF
+    for (int i = 0; i < 16384; i++)
+        write_word_be(f, (uint16_t)r->__PVT__u_taito_b__DOT__work_ram[i]);
+    // Palette RAM: 8KB = 4096 words at 0x200000-0x201FFF (TC0260DAR external palette)
+    for (int i = 0; i < 4096; i++)
+        write_word_be(f, (uint16_t)r->__PVT__u_taito_b__DOT__pal_ram[i]);
+#else
+    write_zeros(f, 32768);  // work RAM (16384 words × 2 bytes)
+    write_zeros(f, 8192);   // palette RAM (4096 words × 2 bytes)
+#endif
+}
+
+// =============================================================================
+>>>>>>> sim-batch2
 // main
 // =============================================================================
 int main(int argc, char** argv) {
@@ -109,12 +170,32 @@ int main(int argc, char** argv) {
     const char* env_gfx    = getenv("ROM_GFX");
     const char* env_adpcm  = getenv("ROM_ADPCM");
     const char* env_vcd    = getenv("DUMP_VCD");
+<<<<<<< HEAD
+=======
+    const char* env_ram_dump = getenv("RAM_DUMP");
+>>>>>>> sim-batch2
 
     int n_frames = env_frames ? atoi(env_frames) : 30;
     if (n_frames < 1) n_frames = 1;
 
     fprintf(stderr, "Taito B (Nastar) simulation: %d frames\n", n_frames);
 
+<<<<<<< HEAD
+=======
+    // ── Optional RAM dump file ───────────────────────────────────────────────
+    FILE* ram_dump_f = nullptr;
+    if (env_ram_dump) {
+        ram_dump_f = fopen(env_ram_dump, "wb");
+        if (!ram_dump_f) {
+            fprintf(stderr, "ERROR: cannot open RAM_DUMP file: %s\n", env_ram_dump);
+        } else {
+            fprintf(stderr, "RAM dump enabled: %s\n", env_ram_dump);
+            fprintf(stderr, "  Format: 4B frame# + 32KB wram + 8KB palette\n");
+            fprintf(stderr, "  (matches mame_ram_dump.lua layout for byte-by-byte comparison)\n");
+        }
+    }
+
+>>>>>>> sim-batch2
     // ── Load ROM data ────────────────────────────────────────────────────────
     SdramModel sdram;
     if (env_prog)  sdram.load(env_prog,  0x000000);   // CPU program ROM (512KB interleaved)
@@ -219,7 +300,13 @@ int main(int argc, char** argv) {
     // ========================================================================
     // RTL BUS EVAL LOOP
     // ========================================================================
+<<<<<<< HEAD
     for (iter = 0; iter < (uint64_t)n_frames * 5000000ULL; iter++) {
+=======
+    // Iteration budget: H_TOTAL=416, V_TOTAL=264, PIX_DIV=5, 2 half-cycles/iter
+    // → ~416*264*5*2 = 1,098,240 iters/frame. Use 1.2M for margin.
+    for (iter = 0; iter < (uint64_t)n_frames * 1200000ULL; iter++) {
+>>>>>>> sim-batch2
         // Toggle clock
         top->clk_sys = top->clk_sys ^ 1;
 
@@ -307,6 +394,7 @@ int main(int argc, char** argv) {
                 uint8_t  rwn  = top->dbg_cpu_rw;
                 uint32_t addr = ((uint32_t)top->dbg_cpu_addr << 1) & 0xFFFFFF;
 
+<<<<<<< HEAD
                 // Stall detection: count consecutive iters with AS_N=0 (bus cycle active)
                 static uint64_t as_low_since = 0;
                 static uint32_t stall_addr   = 0;
@@ -327,6 +415,10 @@ int main(int argc, char** argv) {
                     last_bc_addrs[last_bc_head % 16] = addr;
                     last_bc_rw   [last_bc_head % 16] = (int)rwn;
                     ++last_bc_head;
+=======
+                if (!prev_asn && asn) {
+                    bus_cycles++;
+>>>>>>> sim-batch2
                 }
 
                 // Log first 60 bus cycles
@@ -339,6 +431,7 @@ int main(int argc, char** argv) {
                             (unsigned)(top->dbg_cpu_dout & 0xFFFF));
                 }
 
+<<<<<<< HEAD
                 // Detect stall: AS_N held low for > 10000 iters without DTACK
                 if (!asn && as_low_since > 0 &&
                     (iter - as_low_since) > 10000 && !stall_reported) {
@@ -389,6 +482,8 @@ int main(int argc, char** argv) {
                     }
                 }
 
+=======
+>>>>>>> sim-batch2
                 // Track writes to key address ranges
                 static int pal_wr_count = 0;
                 static int wram_wr_count = 0;
@@ -410,12 +505,46 @@ int main(int argc, char** argv) {
                     }
                 }
 
+<<<<<<< HEAD
                 // Periodic write summary (every 10K bus cycles)
                 if (bus_cycles > 0 && (bus_cycles % 10000) == 0 && prev_asn && asn) {
+=======
+                // Periodic write summary
+                if (bus_cycles > 0 && (bus_cycles % 50000) == 0 && prev_asn && asn) {
+>>>>>>> sim-batch2
                     fprintf(stderr, "  [%dK bus] pal_wr=%d wram_wr=%d frame=%d\n",
                             bus_cycles/1000, pal_wr_count, wram_wr_count, frame_num);
                 }
 
+<<<<<<< HEAD
+=======
+                // Stuck-DTACK detector: if ASn=0 and DTACKn=1 for >10000 consecutive
+                // rising edges, report the stalling address. Only fires once per address.
+                {
+                    static uint64_t dtack_stall_start = 0;
+                    static uint32_t dtack_stall_addr  = 0xFFFFFFFF;
+                    static bool     dtack_stall_reported = false;
+                    if (!asn && top->dbg_cpu_dtack_n) {
+                        if (dtack_stall_start == 0) {
+                            dtack_stall_start = iter;
+                            dtack_stall_addr  = addr;
+                        } else if (!dtack_stall_reported &&
+                                   (iter - dtack_stall_start) > 10000) {
+                            dtack_stall_reported = true;
+                            fprintf(stderr,
+                                "*** STUCK DTACK: addr=%06X RW=%d iter=%lu bc=%d "
+                                "(stalled for %lu iters)\n",
+                                dtack_stall_addr, (int)rwn,
+                                (unsigned long)iter, bus_cycles,
+                                (unsigned long)(iter - dtack_stall_start));
+                        }
+                    } else {
+                        dtack_stall_start   = 0;
+                        dtack_stall_reported = false;
+                    }
+                }
+
+>>>>>>> sim-batch2
                 // Detect CPU halt (double bus fault)
                 if (top->dbg_cpu_halted_n == 0 && iter > (uint64_t)RESET_ITERS + 100 &&
                     !halted_reported) {
@@ -439,12 +568,25 @@ int main(int argc, char** argv) {
         if (vcd) vcd->dump((vluint64_t)vcd_ts);
         ++vcd_ts;
 
+<<<<<<< HEAD
         // ── Pixel capture (on rising edge, after eval) ────────────────────
         if (top->clk_sys == 1) {
             bool active = (!top->vblank) && (!top->hblank);
             if (active) {
                 int cx = (int)top->hpos;
                 int cy = (int)top->vpos;
+=======
+        // ── Pixel capture (on pixel clock edge only, using C++-driven timing) ──
+        // Use C++-driven hcnt/vcnt for position (not RTL's delayed hblank/vblank
+        // outputs from TC0260DAR's 3-stage pipeline). Only capture on clk_pix
+        // edges since that's when the TC0260DAR latches valid pixel data.
+        if (top->clk_sys == 1 && top->clk_pix) {
+            bool h_active = (hcnt > 0 ? hcnt - 1 : VID_H_TOTAL - 1) < VID_H_ACTIVE;
+            bool v_active = (vcnt < VID_V_ACTIVE);
+            if (h_active && v_active) {
+                int cx = (hcnt > 0 ? hcnt - 1 : VID_H_TOTAL - 1);
+                int cy = vcnt;
+>>>>>>> sim-batch2
                 if (cx >= 0 && cx < VID_H_ACTIVE && cy >= 0 && cy < VID_V_ACTIVE)
                     fb.set(cx, cy, top->rgb_r, top->rgb_g, top->rgb_b);
             }
@@ -459,6 +601,17 @@ int main(int argc, char** argv) {
                 if (fb.write_ppm(fname))
                     fprintf(stderr, "Frame %4d written: %s  (bus_cycles=%d)\n",
                             frame_num, fname, bus_cycles);
+<<<<<<< HEAD
+=======
+
+                // ── Per-frame RAM dump (matches mame_ram_dump.lua format) ─────────
+                if (ram_dump_f) {
+                    dump_frame_ram(ram_dump_f, (uint32_t)frame_num, top);
+                    if ((frame_num % 10) == 0)
+                        fflush(ram_dump_f);
+                }
+
+>>>>>>> sim-batch2
                 ++frame_num;
                 if (frame_num >= n_frames) done = true;
                 fb = FrameBuffer();
@@ -479,6 +632,14 @@ int main(int argc, char** argv) {
         vcd->close();
         delete vcd;
     }
+<<<<<<< HEAD
+=======
+    if (ram_dump_f) {
+        fclose(ram_dump_f);
+        fprintf(stderr, "RAM dump file closed: %lu bytes written (%d frames)\n",
+                (unsigned long)(frame_num * (4 + 32768 + 8192)), frame_num);
+    }
+>>>>>>> sim-batch2
     top->final();
     delete top;
 

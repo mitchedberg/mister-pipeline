@@ -1,0 +1,79 @@
+<!--
+    Dogyuun (1992) — Toaplan
+    MiSTer ROM descriptor for Toaplan V2 core (dual GP9001 variant)
+
+    Hardware:
+      MC68000 @ 16 MHz
+      NEC V25 @ 16 MHz (sound CPU)
+      GP9001 VDP #0 + GP9001 VDP #1 (dual graphics processor)
+      YM2151 + OKI M6295 audio
+
+    IMPORTANT: Dogyuun uses DUAL GP9001 VDPs (m_vdp[0] at 0x300000, m_vdp[1] at 0x500000).
+    This MRA requires the toaplan_v2 core with dual-VDP support enabled.
+
+    Memory map (from MAME dogyuun_state, batsugun_state family):
+      0x000000-0x07FFFF  512KB  68K program ROM
+      0x100000-0x10FFFF  64KB   Work RAM
+      0x200010-0x200019  I/O ports (IN1, IN2, SYS)
+      0x20001D           coin_sound_reset_w
+      0x210000-0x21FFFF  64KB   V25 shared RAM
+      0x300000-0x30000D  GP9001 VDP #0 registers
+      0x400000-0x400FFF  Palette RAM
+      0x500000-0x50000D  GP9001 VDP #1 registers
+      0x700000-0x700001  VDP #0 scanline counter
+
+    ROM set: dogyuun (from MAME 0.245)
+    Parent: dogyuun
+    Manufacturer: Toaplan
+
+    SDRAM layout:
+      0x000000 - 0x07FFFF   512KB  CPU program ROM (tp022_01.r16)
+      0x100000 - 0x2FFFFF   2MB    GP9001 #0 GFX ROMs (tp022_3.w92 + tp022_4.w93)
+      0x300000 - 0x6FFFFF   4MB    GP9001 #1 GFX ROMs (tp022_5.w16 + tp022_6.w17)
+      0x700000 - 0x73FFFF   256KB  ADPCM ROM (tp022_2.w30)
+
+    CRCs verified from dogyuun.zip (MAME 0.245 merged ROM set).
+    Verify with: mame -listxml dogyuun
+-->
+
+<misterromdescription>
+    <name>Dogyuun</name>
+    <setname>dogyuun</setname>
+    <rbf>toaplan_v2</rbf>
+
+    <!-- DIP switches — defaults from MAME dogyuun driver -->
+    <nvram index="2" size="2"/>
+
+    <!-- Program ROM (68K CPU, index 0x00) -->
+    <!-- SDRAM byte offset 0x000000 -->
+    <rom index="0" zip="dogyuun.zip" md5="None" type="merged">
+        <!-- CPU program ROM — Dogyuun (World), 512KB -->
+        <part name="tp022_01.r16" crc="79eb2429"/>   <!-- 512KB, ROM_LOAD16_WORD_SWAP -->
+    </rom>
+
+    <!-- GFX ROMs — GP9001 #0 + GP9001 #1 tile data (index 0x01) -->
+    <!-- SDRAM byte offset 0x100000 -->
+    <!-- GP9001 #0: tp022_3.w92 + tp022_4.w93 (1MB each, standard load) -->
+    <!-- GP9001 #1: tp022_5.w16 + tp022_6.w17 (2MB each) -->
+    <rom index="1" zip="dogyuun.zip" md5="None" type="merged">
+        <!-- GP9001 #0 GFX data — 2MB total -->
+        <part name="tp022_3.w92" crc="191b595f"/>   <!-- 1MB -->
+        <part name="tp022_4.w93" crc="d58d29ca"/>   <!-- 1MB -->
+        <!-- GP9001 #1 GFX data — 4MB total -->
+        <part name="tp022_5.w16" crc="d4c1db45"/>   <!-- 2MB -->
+        <part name="tp022_6.w17" crc="d48dc74f"/>   <!-- 2MB -->
+    </rom>
+
+    <!-- ADPCM ROM (OKI M6295 sample data, index 0x02) -->
+    <!-- SDRAM byte offset 0x700000 -->
+    <rom index="2" zip="dogyuun.zip" md5="None" type="merged">
+        <part name="tp022_2.w30" crc="043271b3"/>    <!-- 256KB -->
+    </rom>
+
+    <!-- DIP switch defaults (index 0xFE) -->
+    <rom index="254">
+        <!-- DSW1: all OFF = factory defaults -->
+        <part>00 00</part>
+    </rom>
+
+</misterromdescription>

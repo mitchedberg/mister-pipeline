@@ -15,28 +15,31 @@
 //        ~6.67 MHz pixel clock from a 50 MHz reference without a PLL.
 //        Timing results will be faster than real system; resource count
 //        is accurate.
+//
+// Phase 7 note: all debug/testbench ports (bg_pixel_out, text_pixel_out,
+// spr_pixel_out, colmix_pixel_out, blend_rgb_out, *_wr_* ports) are excluded
+// from tc0630fdp when `QUARTUS is defined — no connections needed here.
 // =============================================================================
 `default_nettype none
 
 module tc0630fdp_top (
-    input  wire clk,          // 50 MHz FPGA oscillator (or any reference)
+    input  wire clk,          // pixel clock reference (e.g. 24 MHz)
+    input  wire clk_4x,       // 4× pixel clock for time-multiplexed BG engine (≈96 MHz)
     output wire led           // keeps Quartus from optimising everything away
 );
 
 // All chip I/O is tied-off so the design is self-contained.
 // Quartus will see all logic reachable from clk → retain it.
 
-// ── Video / pixel outputs (use as led source) ────────────────────────────────
+// ── Video / pixel outputs ────────────────────────────────────────────────────
 wire [23:0] rgb_out;
 wire        pixel_valid;
-wire  [8:0] text_pixel_out;
-wire [3:0][12:0] bg_pixel_out;
 
 // ── CPU interface (tied idle — no reads or writes) ───────────────────────────
 wire [15:0] cpu_dout;
 wire        cpu_dtack_n;
 
-// ── Timing outputs (unused in harness) ──────────────────────────────────────
+// ── Timing outputs ───────────────────────────────────────────────────────────
 wire hblank, vblank, hsync, vsync;
 wire [9:0] hpos;
 wire [8:0] vpos;
@@ -50,11 +53,17 @@ wire        gfx_lo_rd,   gfx_hi_rd;
 wire [14:0] pal_addr;
 wire        pal_rd;
 
+// ── FDA video outputs ─────────────────────────────────────────────────────────
+wire [7:0] fda_r, fda_g, fda_b;
+wire [2:0] fda_pixel_valid_d;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DUT
 // ─────────────────────────────────────────────────────────────────────────────
 tc0630fdp dut (
     .clk            (clk),
+    .clk_4x         (clk_4x),
+    .pix_cen        (1'b1),       // run at full clock rate for resource measurement
     .async_rst_n    (1'b1),
 
     // CPU — idle (no CS)
@@ -90,22 +99,28 @@ tc0630fdp dut (
     .pal_rd         (pal_rd),
     .pal_data       (16'd0),
 
-    // Pixel outputs
+    // Main video output
     .rgb_out        (rgb_out),
     .pixel_valid    (pixel_valid),
-    .text_pixel_out (text_pixel_out),
-    .bg_pixel_out   (bg_pixel_out),
 
-    // Testbench write ports — tied off
-    .gfx_wr_addr    (22'd0),
-    .gfx_wr_data    (32'd0),
-    .gfx_wr_en      (1'b0),
-    .spr_wr_addr    (15'd0),
-    .spr_wr_data    (16'd0),
-    .spr_wr_en      (1'b0)
+    // TC0650FDA CPU interface — idle
+    .fda_cpu_cs     (1'b0),
+    .fda_cpu_we     (1'b0),
+    .fda_cpu_addr   (13'd0),
+    .fda_cpu_din    (32'd0),
+    .fda_cpu_be     (4'd0),
+    .fda_mode_12bit (1'b0),
+
+    // TC0650FDA video outputs
+    .fda_video_r    (fda_r),
+    .fda_video_g    (fda_g),
+    .fda_video_b    (fda_b),
+    .fda_pixel_valid_d (fda_pixel_valid_d)
+    // Note: debug/testbench ports (bg_pixel_out, spr_pixel_out, *_wr_*, etc.)
+    // are excluded from the port list when `QUARTUS is defined.
 );
 
-// Fold all outputs into the LED pin so the optimizer cannot remove logic.
-assign led = ^rgb_out ^ pixel_valid ^ vblank ^ ^bg_pixel_out[0] ^ ^bg_pixel_out[3];
+// Fold all live outputs into the LED pin so the optimizer retains all logic.
+assign led = ^rgb_out ^ pixel_valid ^ vblank ^ ^fda_r ^ ^fda_b;
 
 endmodule

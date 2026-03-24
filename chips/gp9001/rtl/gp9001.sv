@@ -96,20 +96,25 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Display list entry type (produced by Gate 2 scanner for Gate 3 renderer)
 // ─────────────────────────────────────────────────────────────────────────────
+`ifndef SPRITE_ENTRY_T_DEFINED
+`define SPRITE_ENTRY_T_DEFINED
 typedef struct packed {
     logic [8:0]  x;         // X position (9-bit)
     logic [8:0]  y;         // Y position (9-bit)
-    logic [9:0]  tile_num;  // tile index
+    logic [9:0]  tile_num;  // tile index (base 10-bit; extended via obj_bank when OBJECTBANK_EN=1)
     logic        flip_x;
     logic        flip_y;
     logic        prio;      // 0 = below BG, 1 = above BG
     logic [3:0]  palette;
     logic [1:0]  size;      // 0=8×8, 1=16×16, 2=32×32, 3=64×64
+    logic [2:0]  bank_slot; // object bank slot index (0..7); used when OBJECTBANK_EN=1
     logic        valid;
 } sprite_entry_t;
+`endif
 
 module gp9001 #(
-    parameter int NUM_LAYERS = 2  // 2, 3, or 4 active BG layers
+    parameter int NUM_LAYERS  = 2,  // 2, 3, or 4 active BG layers
+    parameter bit OBJECTBANK_EN = 0 // 1 = enable 8-slot object bank register (Batrider/Bakraid)
 ) (
     input  logic        clk,
     input  logic        rst_n,
@@ -204,12 +209,27 @@ module gp9001 #(
     input  logic        scan_trigger,      // 1-cycle pulse: start scanline render
     input  logic [8:0]  current_scanline,  // scanline to render (0..239)
 
+    // ── Object bank switching (Batrider/Bakraid only, OBJECTBANK_EN=1) ─────────
+    // 8-slot table: CPU writes GP9001_OP_OBJECTBANK_WR commands to configure.
+    // Format: addr[3:0] = slot index (0..7), din[3:0] = 4-bit bank value.
+    // During sprite scan, extended tile code = {bank_val, tile_num[9:0]} (14-bit).
+    // Sprite word 3 bits [6:4] select which of the 8 bank slots to use.
+    // Bank write enable (active-high, 1-cycle pulse): assert with addr[3:0]=slot, din[3:0]=value.
+    input  logic        obj_bank_wr,   // write strobe for bank register (from system decoder)
+    input  logic [2:0]  obj_bank_slot, // which of the 8 bank slots to write (0..7)
+    input  logic [3:0]  obj_bank_val,  // 4-bit bank value to write
+    // Extended tile ROM address bank output (for ROM address generation at system level)
+    // spr_rom_addr upper bits are extended when OBJECTBANK_EN=1.
+    // Tile address = {active_obj_bank, base_tile_code, row/byte} = 25-bit max.
+
     // ── Gate 4: Sprite ROM interface (byte-addressed, 4bpp packed) ────────────
     // One 16×16 tile = 128 bytes (16 rows × 8 bytes/row, 2 pixels/byte).
     // ROM address: tile_code * 128 + row_in_tile * 8 + byte_in_row.
     // Tile code for multi-tile sprite at tile column tc, tile row tr:
-    //   tile_code = sprite.tile_num + tr * tiles_wide + tc
-    output logic [20:0] spr_rom_addr,  // sprite tile ROM byte address
+    //   tile_code = sprite.tile_num + tr * tiles_wide + tc (base 10-bit)
+    // With OBJECTBANK_EN=1: full_tile_code = {obj_bank_table[bank_slot], base_tile} (14-bit)
+    // spr_rom_addr with bank = full_tile_code * 128 + row * 8 + byte (25 bits max)
+    output logic [24:0] spr_rom_addr,  // sprite tile ROM byte address (25-bit with bank ext)
     output logic        spr_rom_rd,    // ROM read strobe (combinational model: ignored)
     input  logic [7:0]  spr_rom_data,  // data returned (combinational in TB)
 
@@ -456,6 +476,32 @@ module gp9001 #(
     assign sprite_en   = (active_sprite_ctrl_r[15:12] != 4'h0);
 
     // =========================================================================
+    // Object Bank Register Table (Batrider/Bakraid, OBJECTBANK_EN=1)
+    // =========================================================================
+    // 8-slot × 4-bit table.  CPU writes via obj_bank_wr pulse.
+    // The bank value extends sprite tile addresses: full_code = {bank, tile_num}.
+    // When OBJECTBANK_EN=0, the table is not instantiated (0 LUTs, 0 FFs).
+
+    logic [3:0] obj_bank_table [0:7];
+
+    generate
+        if (OBJECTBANK_EN) begin : gen_objbank
+            always_ff @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    for (int i = 0; i < 8; i++) obj_bank_table[i] <= 4'h0;
+                end else if (obj_bank_wr) begin
+                    obj_bank_table[obj_bank_slot] <= obj_bank_val;
+                end
+            end
+        end else begin : gen_objbank_tie
+            // When bank switching disabled, tie table to zero (synthesizer will optimize away)
+            always_comb begin
+                for (int i = 0; i < 8; i++) obj_bank_table[i] = 4'h0;
+            end
+        end
+    endgenerate
+
+    // =========================================================================
     // Gate 2: Sprite Scanner FSM
     // =========================================================================
 
@@ -515,18 +561,20 @@ module gp9001 #(
     logic [8:0]  slot_x;
     logic [3:0]  slot_palette;
     logic [1:0]  slot_size;
+    logic [2:0]  slot_bank_slot; // object bank slot index from Word 3 [6:4]
     logic        slot_visible;
 
     always_comb begin
-        slot_y       = slot_w0[8:0];
-        slot_tile    = slot_w1[9:0];
-        slot_flip_x  = slot_w1[10];
-        slot_flip_y  = slot_w1[11];
-        slot_prio    = slot_w1[15];
-        slot_x       = slot_w2[8:0];
-        slot_palette = slot_w3[3:0];
-        slot_size    = slot_w3[5:4];
-        slot_visible = (slot_y != 9'h100);
+        slot_y         = slot_w0[8:0];
+        slot_tile      = slot_w1[9:0];
+        slot_flip_x    = slot_w1[10];
+        slot_flip_y    = slot_w1[11];
+        slot_prio      = slot_w1[15];
+        slot_x         = slot_w2[8:0];
+        slot_palette   = slot_w3[3:0];
+        slot_size      = slot_w3[5:4];
+        slot_bank_slot = slot_w3[6:4]; // bank slot select (bits [6:4] of Word 3)
+        slot_visible   = (slot_y != 9'h100);
     end
 
     sprite_entry_t display_list_r [0:255];
@@ -570,15 +618,16 @@ module gp9001 #(
                 S_SCAN: begin
                     if (slot_visible) begin
                         display_list_r[scan_count] <= '{
-                            x:        slot_x,
-                            y:        slot_y,
-                            tile_num: slot_tile,
-                            flip_x:   slot_flip_x,
-                            flip_y:   slot_flip_y,
-                            prio:     slot_prio,
-                            palette:  slot_palette,
-                            size:     slot_size,
-                            valid:    1'b1
+                            x:         slot_x,
+                            y:         slot_y,
+                            tile_num:  slot_tile,
+                            flip_x:    slot_flip_x,
+                            flip_y:    slot_flip_y,
+                            prio:      slot_prio,
+                            palette:   slot_palette,
+                            size:      slot_size,
+                            bank_slot: slot_bank_slot,
+                            valid:     1'b1
                         };
                         scan_count <= scan_count + 8'd1;
                     end
@@ -887,7 +936,8 @@ module gp9001 #(
     logic [8:0]  g4_spr_y;    // saved but only used during G4_CHECK transition
     logic        g4_flip_y;   // applied when computing g4_row_in_spr (G4_CHECK)
     /* verilator lint_on UNUSEDSIGNAL */
-    logic [9:0]  g4_tile_base;    // sprite.tile_num
+    logic [9:0]  g4_tile_base;    // sprite.tile_num (10-bit base code)
+    logic [2:0]  g4_bank_slot_r; // sprite.bank_slot (saved from display list)
     logic        g4_flip_x;
     logic        g4_prio;
     logic [3:0]  g4_palette;
@@ -919,22 +969,29 @@ module gp9001 #(
     end
 
     // ── ROM address drive ─────────────────────────────────────────────────────
-    logic [9:0]  g4_full_tile;    // tile_base + tile_row*tiles_wide + tile_col
-    logic [3:0]  g4_rit;          // row in tile (0..15) = g4_row_in_spr[3:0]
+    logic [9:0]  g4_full_tile;      // tile_base + tile_row*tiles_wide + tile_col (10-bit base)
+    logic [13:0] g4_full_tile_ext;  // bank-extended tile code (14-bit when OBJECTBANK_EN=1)
+    logic [3:0]  g4_rit;            // row in tile (0..15) = g4_row_in_spr[3:0]
+    logic [2:0]  g4_bank_slot;      // active bank slot for current sprite
+    logic [3:0]  g4_bank_val;       // resolved 4-bit bank value from table
 
     always_comb begin
         g4_tiles_wide = 4'(1 << g4_size);
         g4_px_width   = 9'(g4_tiles_wide) * 9'd16;  // tiles * 16 pixels wide
         g4_rit        = g4_row_in_spr[3:0];
         g4_tile_row   = g4_row_in_spr[7:4];
-        // full tile code: base + tile_row * tiles_wide + tile_col
+        // 10-bit base tile code: tile_base + tile_row * tiles_wide + tile_col
         g4_full_tile  = g4_tile_base
                       + 10'(g4_tile_row) * 10'(g4_tiles_wide)
                       + 10'(g4_tile_col);
-        // byte address: full_tile * 128 + rit * 8 + byte_idx
-        spr_rom_addr  = 21'(g4_full_tile) * 21'd128
-                      + 21'(g4_rit)       * 21'd8
-                      + 21'(g4_byte_idx);
+        // Bank extension (OBJECTBANK_EN=1): lookup bank table by sprite's bank_slot
+        g4_bank_slot  = g4_bank_slot_r;  // registered bank slot from display list
+        g4_bank_val   = OBJECTBANK_EN ? obj_bank_table[g4_bank_slot] : 4'h0;
+        g4_full_tile_ext = {g4_bank_val, g4_full_tile};  // 14-bit: {bank[3:0], tile[9:0]}
+        // Byte address: full_tile_ext * 128 + rit * 8 + byte_idx (25-bit with bank)
+        spr_rom_addr  = 25'(g4_full_tile_ext) * 25'd128
+                      + 25'(g4_rit)            * 25'd8
+                      + 25'(g4_byte_idx);
         spr_rom_rd    = (g4_state == G4_FETCH);
     end
 
@@ -948,6 +1005,7 @@ module gp9001 #(
             g4_spr_x       <= 9'h000;
             g4_spr_y       <= 9'h000;
             g4_tile_base   <= 10'h000;
+            g4_bank_slot_r <= 3'h0;
             g4_flip_x      <= 1'b0;
             g4_flip_y      <= 1'b0;
             g4_prio        <= 1'b0;
@@ -995,14 +1053,15 @@ module gp9001 #(
                                 if (current_scanline >= e.y &&
                                     current_scanline < (e.y + spr_h)) begin
                                     // Sprite intersects — save fields, start fetch
-                                    g4_spr_x     <= e.x;
-                                    g4_spr_y     <= e.y;
-                                    g4_tile_base <= e.tile_num;
-                                    g4_flip_x    <= e.flip_x;
-                                    g4_flip_y    <= e.flip_y;
-                                    g4_prio      <= e.prio;
-                                    g4_palette   <= e.palette;
-                                    g4_size      <= e.size;
+                                    g4_spr_x       <= e.x;
+                                    g4_spr_y       <= e.y;
+                                    g4_tile_base   <= e.tile_num;
+                                    g4_bank_slot_r <= e.bank_slot;
+                                    g4_flip_x      <= e.flip_x;
+                                    g4_flip_y      <= e.flip_y;
+                                    g4_prio        <= e.prio;
+                                    g4_palette     <= e.palette;
+                                    g4_size        <= e.size;
 
                                     // Compute row within sprite (with flip_y applied)
                                     begin
@@ -1202,7 +1261,9 @@ module gp9001 #(
     // =========================================================================
     /* verilator lint_off UNUSEDSIGNAL */
     logic _unused;
-    assign _unused = &{1'b0, NUM_LAYERS[0]};
+    assign _unused = &{1'b0, NUM_LAYERS[0],
+                       obj_bank_wr, obj_bank_slot, obj_bank_val,  // tied-off when OBJECTBANK_EN=0
+                       g4_full_tile_ext};                          // used combinationally
     /* verilator lint_on UNUSEDSIGNAL */
 
 endmodule

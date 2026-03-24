@@ -13,6 +13,7 @@
 
 VERILATOR      ?= verilator
 CXX            ?= g++
+NPROC          := $(shell sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)
 
 # Project root (two levels up from chips/nmk_arcade/sim/)
 ROOT           := ../../..
@@ -66,6 +67,8 @@ INCDIRS = \
 VLFLAGS = \
     --sv --cc --exe --build --trace \
     --top-module tb_top \
+    -j $(NPROC) \
+    --compiler clang \
     -Wno-PINMISSING -Wno-MODMISSING -Wno-UNUSED -Wno-UNDRIVEN \
     -Wno-SYNCASYNCNET -Wno-IMPLICIT -Wno-UNSIGNED -Wno-CASEINCOMPLETE \
     -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND -Wno-COMBDLY -Wno-INITIALDLY \
@@ -73,8 +76,11 @@ VLFLAGS = \
     -Wno-VARHIDDEN -Wno-PINCONNECTEMPTY -Wno-SYMRSVDWORD -Wno-ALWCOMBORDER \
     -Wno-TIMESCALEMOD -O2
 
-# C++ flags
+# C++ flags — ccache for incremental rebuilds (3min → 30sec on re-compile)
 CFLAGS = -O2 -std=c++17
+ifneq ($(shell which ccache 2>/dev/null),)
+    CXX := ccache $(CXX)
+endif
 
 SIM_NAME   = sim_nmk_arcade
 # Verilator 5 places the binary in obj_dir/ regardless of -o; we symlink it out.

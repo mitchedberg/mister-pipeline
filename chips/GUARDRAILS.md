@@ -99,7 +99,7 @@ From `pattern-ledger.md` Pattern 9.
 | **DONE** | nmk_arcade | ✅ GREEN (run #23269331071, exit 0, setup -17.859ns, 10,937/41,910 ALMs 26%) | SDC timing work; improvement from baseline -18ns (stable) |
 | **DONE** | psikyo_arcade | ✅ GREEN (run #23260684856, exit 0) | — |
 | **DONE** | taito_b | ✅ GREEN (run #23263937572, exit 0, setup -56.224ns, 11,460/41,910 ALMs 27%) | SDC timing work (regression from baseline -59.685ns → -56.224ns, slight improvement) |
-| **DONE** | toaplan_v2 | ❌ FAIL (run #23267780482, exit 1) — Fitter: Can't fit device (27,542/41,910 ALMs 66% — routing/placement congestion; SDC `// retrigger` is a Quartus-internal artifact, not a user file issue) | Investigate placement constraints or reduce routing pressure; SDC file is clean |
+| **DONE** | toaplan_v2 | ❌ FAIL (run #23267780482, exit 1) — Fitter: Can't fit device (27,542/41,910 ALMs 66% — routing/placement congestion from GP9001 Gates 3-5 added ~12K ALMs after last green run #23260684816). QSF updated 2026-03-23: AGGRESSIVE AREA + AGGRESSIVE FIT + disabled register duplication. Pending re-run. MLAB→M10K VRAM restructure (saves ~800 ALMs) needs Opus review. | Re-run CI after QSF changes. If still fails, Opus review for VRAM pipeline restructure. |
 | **DONE** | taito_x | ✅ GREEN (run #23260684796, exit 0, RBF 2.9M) | SDC timing work (setup -47.934ns) |
 | **DONE** | kaneko_arcade | ✅ GREEN (run #23260684782, exit 0, RBF 3.4M) | SDC timing work (setup -42.461ns) |
 | **FROZEN** | taito_f3 | ❌ 53% over budget (TC0630FDP) | Architecture decision |
@@ -107,8 +107,9 @@ From `pattern-ledger.md` Pattern 9.
 
 **Do not touch FROZEN chips.**
 
-**5/8 chips GREEN with RBF bitstreams as of 2026-03-18. toaplan_v2 regressed: Fitter Can't fit (66% ALMs, routing/placement congestion). Quartus Gates CI also shows nmk16.sv WIDTHEXPAND lint warnings (non-blocking, Quartus still fits clean).**
-**Next priority: Debug toaplan_v2 fitter failure (was green at run #23260684816 — identify RTL change that caused regression). Then SDC timing closure for all 5 green chips.**
+**5/8 chips GREEN with RBF bitstreams as of 2026-03-18. toaplan_v2 regressed: Fitter Can't fit (66% ALMs, routing/placement congestion). Root cause identified 2026-03-23: GP9001 Gates 3-5 added ~12K ALMs after last green run.**
+**QSF updated 2026-03-23 to AGGRESSIVE AREA optimization + disabled register duplication. CI re-run pending. If still fails: Opus review for MLAB→M10K VRAM pipeline restructure (~800 ALM savings).**
+**Taito B COMPLETE: 2299/2299 frames 100% WRAM match. All tasks done.**
 
 ## Chip Status (component chips — run standalone after system chips pass)
 

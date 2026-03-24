@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Strikers 1945 (World) — Psikyo SH201B, 1995
+  MC68EC020 @ 16 MHz, Z80 audiocpu @ 4 MHz
+  PS2001B sprites, PS3103 tilemap (2 layers), YM2610 audio
+
+  MAME set: s1945 (src/mame/psikyo/psikyo.cpp)
+  Native resolution: 320×240 (vertical shooter, rotated 90° CW for display)
+
+  SDRAM layout (byte addresses):
+    0x000000  CPU program ROM (maincpu, 2 MB interleaved)
+    0x080000  Z80 audio ROM (audiocpu, 128 KB)
+    0x200000  Sprite ROM (PS2001B sprites, 8 MB)
+    0x600000  BG tile ROM (PS3103 tiles, 2 MB)
+
+  ROM CRCs from MAME s1945 set.
+-->
+<misterromdescription>
+  <name>Strikers 1945</name>
+  <setname>s1945</setname>
+  <rbf>psikyo_arcade</rbf>
+  <mameversion>0245</mameversion>
+  <year>1995</year>
+  <manufacturer>Psikyo</manufacturer>
+  <category>Shooter / Vertical</category>
+  <rotation>270</rotation>
+  <buttons names="Shot,Bomb,Btn3,Start,Coin" default="A,B,C,Start,Select"/>
+
+  <!-- CPU program ROM (maincpu, interleaved even/odd)
+       3s.u41 = D15:D8 (high byte, even) → offset 0x000000, stride 2
+       2s.u40 = D7:D0  (low byte,  odd)  → offset 0x000001, stride 2
+       NOTE: MRA offset 0x000000/0x000001 = byte stride interleave.
+       u41 must be loaded as the high byte (D15:D8) per validated brute-force test:
+         u41(hi)+u40(lo) → SSP=0x00FF80FF, PC=0x000400 → 10,926 bus cycles/frame (correct)
+         u40(hi)+u41(lo) → SSP=0xFF00FF80, PC=0x00000004 → CPU crashes (PC in vector table)
+       Verified 2026-03-23 by run_sim.py interleave_68k_roms(even=u41, odd=u40). -->
+  <rom index="0" zip="s1945.zip" type="merged" md5="None">
+    <part name="3s.u41" crc="f87e871a" offset="0x000000" length="0x040000"/>
+    <part name="2s.u40" crc="9b10062a" offset="0x000001" length="0x040000"/>
+  </rom>
+
+  <!-- Z80 audio ROM -->
+  <rom index="0" zip="s1945.zip" type="merged" md5="None">
+    <part name="3-u63.bin" crc="42d40ae1" offset="0x080000" length="0x020000"/>
+  </rom>
+
+  <!-- Sprite ROM (PS2001B, 8 MB) — loaded at SDRAM 0x200000 -->
+  <rom index="1" zip="s1945.zip" type="merged" md5="None">
+    <part name="u20.bin" crc="28a27fee" offset="0x000000" length="0x200000"/>
+    <part name="u22.bin" crc="ca152a32" offset="0x200000" length="0x200000"/>
+    <part name="u21.bin" crc="c5d60ea9" offset="0x400000" length="0x200000"/>
+    <part name="u23.bin" crc="48710332" offset="0x600000" length="0x200000"/>
+  </rom>
+
+  <!-- BG tile ROM (PS3103, 2 MB) — loaded at SDRAM 0x600000 -->
+  <rom index="2" zip="s1945.zip" type="merged" md5="None">
+    <part name="u34.bin" crc="aaf83e23" offset="0x000000" length="0x200000"/>
+  </rom>
+
+  <!-- DIP switch defaults -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>

@@ -14,6 +14,10 @@
 
 VERILATOR      ?= verilator
 CXX            ?= g++
+<<<<<<< HEAD
+=======
+NPROC          := $(shell sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)
+>>>>>>> sim-batch2
 
 # Project root (three levels up from chips/taito_x/sim/)
 ROOT           := ../../..
@@ -56,6 +60,11 @@ INCDIRS = \
 VLFLAGS = \
     --sv --cc --exe --build --trace \
     --top-module tb_top \
+<<<<<<< HEAD
+=======
+    -j $(NPROC) \
+    --compiler clang \
+>>>>>>> sim-batch2
     -Wno-PINMISSING -Wno-MODMISSING -Wno-UNUSED -Wno-UNDRIVEN \
     -Wno-SYNCASYNCNET -Wno-IMPLICIT -Wno-UNSIGNED -Wno-CASEINCOMPLETE \
     -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND -Wno-COMBDLY -Wno-INITIALDLY \

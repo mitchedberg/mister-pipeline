@@ -361,7 +361,19 @@ end
 // =============================================================================
 // Line buffer: 320 × 13-bit
 // =============================================================================
+// Phase 3: BG line buffer registers → MLAB block RAM.
+// The BG_WRITE FSM writes 16 pixels in parallel (one per clock) and the read is
+// async — this pattern requires MLAB (supports async reads and parallel writes)
+// rather than M10K (sync-read only, single write port).
+// MLAB: 640 bits per ALM cluster; 320×13=4160 bits ≈ 7 MLABs vs 320×13=4160 FFs.
+// Savings: ~4160 FFs freed — each BG instance saves ~100 ALMs × 4 instances = ~400 ALMs.
+// (True M10K conversion requires Phase 0+2: 96MHz clock + serialized BG_WRITE.)
+// =============================================================================
+`ifdef QUARTUS
+(* ramstyle = "MLAB" *) logic [12:0] linebuf [0:319];
+`else
 logic [12:0] linebuf [0:319];
+`endif
 
 // Screen column from hpos (unsnapped)
 logic [8:0] scol_c;

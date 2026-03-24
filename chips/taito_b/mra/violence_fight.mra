@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Violence Fight (World) — Taito B System, 1989
+  MC68000 @ 16 MHz, Z80 @ 4 MHz, YM2610 @ 8 MHz
+  TC0180VCU tilemap + sprites, TC0220IOC I/O, TC0140SYT sound comm
+
+  MAME set: viofight (src/mame/taito/taito_b.cpp)
+
+  SDRAM layout (byte addresses):
+    0x000000  CPU program ROM (maincpu, 512KB interleaved)
+    0x080000  Z80 audio program (audiocpu, 64KB)
+    0x100000  TC0180VCU GFX ROM (2MB)
+    0x300000  OKI ADPCM samples (512KB)
+
+  ROM CRCs from MAME viofight set.
+-->
+<misterromdescription>
+  <name>Violence Fight</name>
+  <setname>viofight</setname>
+  <rbf>taito_b</rbf>
+  <mameversion>0245</mameversion>
+  <year>1989</year>
+  <manufacturer>Taito</manufacturer>
+  <category>Fighter</category>
+  <buttons names="Punch,Kick,Special,Start,Coin" default="A,B,C,Start,Select"/>
+
+  <!-- CPU program ROM (maincpu, interleaved) + Z80 audio -->
+  <rom index="0" zip="viofight.zip" type="merged" md5="None">
+    <part name="c16-11.42" crc="23dbd388" offset="0x000000" length="0x010000"/>
+    <part name="c16-14.23" crc="dc934f6a" offset="0x000001" length="0x010000"/>
+    <part name="c16-07.41" crc="64d1d059" offset="0x040000" length="0x020000"/>
+    <part name="c16-06.22" crc="043761d8" offset="0x040001" length="0x020000"/>
+    <!-- Z80 audio ROM -->
+    <part name="c16-12.32" crc="6fb028c7" offset="0x080000" length="0x010000"/>
+  </rom>
+
+  <!-- TC0180VCU GFX ROM (2MB interleaved) -->
+  <!-- Loaded to SDRAM offset 0x100000 -->
+  <rom index="1" zip="viofight.zip" type="merged" md5="None">
+    <part name="c16-01.1" crc="7059ce83" offset="0x000000" length="0x080000"/>
+    <part name="c16-02.2" crc="b458e905" offset="0x080000" length="0x080000"/>
+    <part name="c16-03.3" crc="515a9431" offset="0x100000" length="0x080000"/>
+    <part name="c16-04.4" crc="ebf285e2" offset="0x180000" length="0x080000"/>
+  </rom>
+
+  <!-- OKI ADPCM samples (512KB) -->
+  <!-- Loaded to SDRAM offset 0x300000 -->
+  <rom index="2" zip="viofight.zip" type="merged" md5="None">
+    <part name="c16-05.47" crc="a49d064a" offset="0x000000" length="0x080000"/>
+  </rom>
+
+  <!-- DIP switch defaults -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>

@@ -159,6 +159,44 @@ details[open] .expand-chevron{transform:rotate(180deg)}
 /* Coverage bar */
 .coverage-bar-wrap{background:#1e293b;border-radius:.375rem;height:8px;overflow:hidden;margin-top:.35rem}
 .coverage-bar{height:100%;border-radius:.375rem;background:linear-gradient(90deg,#22c55e,#16a34a)}
+
+/* ==================== Agent Status Panel ==================== */
+.sec-agents .section-header{border-color:#a78bfa;background:rgba(167,139,250,.07)}
+.sec-agents .sec-num{color:#c4b5fd}
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:1.25rem}
+.agent-card{background:#161b22;border:1px solid #21262d;border-radius:.75rem;padding:1.25rem;transition:border-color .2s}
+.agent-card:hover{border-color:#4c1d95}
+.agent-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem}
+.agent-name{font-size:1.1rem;font-weight:700;color:#c4b5fd;font-family:monospace}
+.agent-meta{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.85rem}
+.agent-meta-tag{font-size:.72rem;font-family:monospace;color:#94a3b8;background:rgba(255,255,255,.05);border:1px solid #21262d;border-radius:.25rem;padding:.15rem .45rem}
+.agent-status-badge{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.2rem .55rem;border-radius:.3rem}
+.agent-status-badge.active{background:rgba(34,197,94,.15);color:#86efac;border:1px solid #166534}
+.agent-status-badge.idle{background:rgba(107,114,128,.1);color:#6b7280;border:1px solid #374151}
+.agent-tasks{display:flex;flex-direction:column;gap:.45rem}
+.agent-task{display:flex;align-items:flex-start;gap:.65rem;padding:.5rem .65rem;background:rgba(255,255,255,.03);border:1px solid #1e293b;border-radius:.4rem}
+.task-core{font-size:.72rem;font-family:monospace;font-weight:700;color:#fbbf24;min-width:70px;padding-top:.05rem}
+.task-desc{font-size:.78rem;color:#94a3b8;flex:1;line-height:1.4}
+.task-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:.3rem}
+.task-status-dot.in_progress{background:#22c55e;box-shadow:0 0 5px rgba(34,197,94,.5)}
+.task-status-dot.next{background:#3b82f6}
+.task-status-dot.blocked{background:#ef4444}
+
+/* ==================== Project Timeline ==================== */
+.sec-timeline .section-header{border-color:#f59e0b;background:rgba(245,158,11,.07)}
+.sec-timeline .sec-num{color:#fcd34d}
+.timeline-list{position:relative;padding-left:2.5rem}
+.timeline-list::before{content:'';position:absolute;left:.6rem;top:.25rem;bottom:.25rem;width:2px;background:linear-gradient(180deg,#3b82f6,#22c55e,#f59e0b)}
+.tl-item{position:relative;margin-bottom:1.1rem;padding:.75rem 1rem;background:#161b22;border:1px solid #21262d;border-radius:.6rem;transition:border-color .2s}
+.tl-item:hover{border-color:#374151}
+.tl-item::before{content:'';position:absolute;left:-1.88rem;top:.9rem;width:10px;height:10px;border-radius:50%;border:2px solid #0d1117}
+.tl-item.type-infra::before{background:#3b82f6}
+.tl-item.type-render::before{background:#22c55e}
+.tl-item.type-ci::before{background:#f59e0b}
+.tl-item.type-safety::before{background:#a78bfa}
+.tl-date{font-size:.72rem;font-family:monospace;color:#475569;margin-bottom:.2rem}
+.tl-event{font-size:.9rem;font-weight:700;color:#f1f5f9;margin-bottom:.2rem}
+.tl-detail{font-size:.78rem;color:#64748b;line-height:1.45}
 </style>
 </head>
 <body>
@@ -175,6 +213,8 @@ details[open] .expand-chevron{transform:rotate(180deg)}
     <a href="/api/ecosystem">API: Ecosystem</a>
     <a href="/api/systems">API: Our Systems</a>
     <a href="/api/games">API: Games</a>
+    <a href="/api/timeline">API: Timeline</a>
+    <a href="/api/agents">API: Agents</a>
   </nav>
 </header>
 
@@ -211,6 +251,14 @@ details[open] .expand-chevron{transform:rotate(180deg)}
   <div class="stat-item">
     <span class="stat-value">{{ total_games }}</span>
     <span class="stat-label">Total ROM Sets</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value">4</span>
+    <span class="stat-label">Cores Rendering</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-value">6</span>
+    <span class="stat-label">RBF Bitstreams</span>
   </div>
 </div>
 
@@ -287,11 +335,81 @@ details[open] .expand-chevron{transform:rotate(180deg)}
 </div>
 
 <!-- ============================================================ -->
-<!-- SECTION 2: Full Ecosystem Table                              -->
+<!-- SECTION 2: Agent Status Panel                                -->
+<!-- ============================================================ -->
+<div class="section sec-agents">
+  <div class="section-header">
+    <span class="sec-num">Section 2</span>
+    <span class="sec-title">Agent Status</span>
+    <span class="sec-desc">Live task assignments across active development branches</span>
+  </div>
+
+  <div class="agents-grid">
+    {% for agent in agent_status %}
+    <div class="agent-card">
+      <div class="agent-card-header">
+        <div class="agent-name">{{ agent.name }}</div>
+        <span class="agent-status-badge {{ agent.status }}">{{ agent.status }}</span>
+      </div>
+      <div class="agent-meta">
+        <span class="agent-meta-tag">branch: {{ agent.branch }}</span>
+        <span class="agent-meta-tag">{{ agent.machine }}</span>
+      </div>
+      <div class="agent-tasks">
+        {% for task in agent.tasks %}
+        <div class="agent-task">
+          <span class="task-core">{{ task.core }}</span>
+          <span class="task-desc">{{ task.task }}</span>
+          <span class="task-status-dot {{ task.status }}" title="{{ task.status }}"></span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div style="margin-top:.6rem;font-size:.75rem;color:#334155">
+    <span style="display:inline-flex;align-items:center;gap:.35rem;margin-right:1rem"><span class="task-status-dot in_progress" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e"></span> In Progress</span>
+    <span style="display:inline-flex;align-items:center;gap:.35rem;margin-right:1rem"><span class="task-status-dot next" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3b82f6"></span> Next Up</span>
+    <span style="display:inline-flex;align-items:center;gap:.35rem"><span class="task-status-dot blocked" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444"></span> Blocked</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 3: Project Timeline                                  -->
+<!-- ============================================================ -->
+<div class="section sec-timeline">
+  <div class="section-header">
+    <span class="sec-num">Section 3</span>
+    <span class="sec-title">Project Timeline</span>
+    <span class="sec-desc">Key milestones — most recent first</span>
+  </div>
+
+  <div class="timeline-list">
+    {% for milestone in timeline | reverse %}
+    {% if 'rendering' in milestone.event | lower or 'graphics' in milestone.event | lower or 'CPUs boot' in milestone.event %}
+    {% set tl_type = 'type-render' %}
+    {% elif 'CI' in milestone.event or 'synthesis' in milestone.event | lower or 'bitstream' in milestone.event | lower %}
+    {% set tl_type = 'type-ci' %}
+    {% elif 'safety' in milestone.event | lower or 'timeout' in milestone.detail | lower %}
+    {% set tl_type = 'type-safety' %}
+    {% else %}
+    {% set tl_type = 'type-infra' %}
+    {% endif %}
+    <div class="tl-item {{ tl_type }}">
+      <div class="tl-date">{{ milestone.date }}</div>
+      <div class="tl-event">{{ milestone.event }}</div>
+      <div class="tl-detail">{{ milestone.detail }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 4: Full Ecosystem Table                              -->
 <!-- ============================================================ -->
 <div class="section sec-eco">
   <div class="section-header">
-    <span class="sec-num">Section 2</span>
+    <span class="sec-num">Section 4</span>
     <span class="sec-title">Full MiSTer Arcade Ecosystem</span>
     <span class="sec-desc">{{ ecosystem_data|length }} hardware platforms &mdash; all core statuses with links</span>
   </div>
@@ -389,12 +507,12 @@ details[open] .expand-chevron{transform:rotate(180deg)}
 </div>
 
 <!-- ============================================================ -->
-<!-- SECTION 3: Full Game Library (collapsible)                   -->
+<!-- SECTION 5: Full Game Library (collapsible)                   -->
 <!-- ============================================================ -->
 <div class="section sec-games" style="margin-bottom:3rem">
   <details>
     <summary class="expand-summary">
-      <span class="sec-num" style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fb923c;opacity:.7">Section 3</span>
+      <span class="sec-num" style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fb923c;opacity:.7">Section 5</span>
       Full Game Library &mdash; {{ total_games }} ROM sets across {{ systems_list|length }} systems
       <span style="color:#475569;font-size:.82rem;font-weight:400;margin-left:.5rem">MAME parent+clone catalog (our tracked systems)</span>
       <span class="expand-chevron">&#9660;</span>

@@ -6,19 +6,24 @@
 -- Run with: mame tdragon -autoboot_script mame_ram_dump.lua
 --
 -- Memory layout dumped each frame (~84 KB/frame):
---   Main RAM:    0x080000-0x08FFFF  (64 KB)
+--   Main RAM:    0x0B0000-0x0BFFFF  (64 KB) — tdragon WRAM (NOT 0x080000 which is I/O)
 --   Palette:     0x0C8000-0x0C87FF  (2 KB)
 --   BG VRAM:     0x0CC000-0x0CFFFF  (16 KB)
 --   TX VRAM:     0x0D0000-0x0D07FF  (2 KB)
 --   Scroll regs: 0x0C4000-0x0C4007  (8 bytes)
 -- Total per frame: 65536 + 2048 + 16384 + 2048 + 8 = 86024 bytes + 4 header
+--
+-- NOTE: Previous version incorrectly used 0x080000-0x08FFFF (I/O ports, always 0).
+-- tdragon WRAM is at 0x0B0000-0x0BFFFF per nmk16.cpp: WRAM_BASE=8'h0B
+-- nmk_arcade.sv: assign wram_cs = (cpu_addr[23:16] == 8'h0B) && !cpu_as_n
+-- SSP reset vector = 0x000C0000 (stack top = one past WRAM end)
 
 local MAX_FRAMES = 2000
 local OUTPUT_FILE = "tdragon_frames.bin"
 
 -- Region definitions: { label, start, end_inclusive }
 local REGIONS = {
-    { "MainRAM",    0x080000, 0x08FFFF },  -- 64 KB
+    { "MainRAM",    0x0B0000, 0x0BFFFF },  -- 64 KB (tdragon WRAM at 0x0B0000)
     { "Palette",    0x0C8000, 0x0C87FF },  --  2 KB
     { "BGVRAM",     0x0CC000, 0x0CFFFF },  -- 16 KB
     { "TXVRAM",     0x0D0000, 0x0D07FF },  --  2 KB
@@ -135,9 +140,17 @@ stop_notifier = emu.add_machine_stop_notifier(function()
     close_output()
 end)
 
-frame_notifier = emu.add_machine_frame_notifier(function()
-    on_frame()
-end)
+-- MAME 0.257 uses emu.register_frame_done for per-frame callbacks.
+-- Older MAME uses emu.add_machine_frame_notifier.
+if emu.register_frame_done then
+    emu.register_frame_done(on_frame)
+    print("[mame_ram_dump] Registered per-frame callback (emu.register_frame_done)")
+elseif emu.add_machine_frame_notifier then
+    frame_notifier = emu.add_machine_frame_notifier(function() on_frame() end)
+    print("[mame_ram_dump] Registered per-frame callback (emu.add_machine_frame_notifier)")
+else
+    print("[mame_ram_dump] ERROR: No per-frame callback API available")
+end
 
 -- Open output immediately (machine is already running when script loads).
 print("[mame_ram_dump] Script loaded — opening output immediately.")

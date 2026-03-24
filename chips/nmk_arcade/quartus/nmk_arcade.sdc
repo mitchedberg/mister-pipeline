@@ -149,6 +149,20 @@ set_false_path -to   {sysmem|fpga_interfaces|clocks_resets|f2h*}
 set_multicycle_path -from [get_registers {*cpu*}]  -to [get_registers {*cpu*}]  -setup 4
 set_multicycle_path -from [get_registers {*cpu*}]  -to [get_registers {*cpu*}]  -hold  3
 
+# fx68k internal paths — span two phi phases (MANDATORY — COMMUNITY_PATTERNS.md Section 1.7)
+set_multicycle_path -start -setup -from [get_keepers {*|Ir[*]}]               -to [get_keepers {*|microAddr[*]}]      2
+set_multicycle_path -start -hold  -from [get_keepers {*|Ir[*]}]               -to [get_keepers {*|microAddr[*]}]      1
+set_multicycle_path -start -setup -from [get_keepers {*|Ir[*]}]               -to [get_keepers {*|nanoAddr[*]}]       2
+set_multicycle_path -start -hold  -from [get_keepers {*|Ir[*]}]               -to [get_keepers {*|nanoAddr[*]}]       1
+set_multicycle_path -start -setup -from [get_keepers {*|nanoLatch[*]}]        -to [get_keepers {*|alu|pswCcr[*]}]     2
+set_multicycle_path -start -hold  -from [get_keepers {*|nanoLatch[*]}]        -to [get_keepers {*|alu|pswCcr[*]}]     1
+set_multicycle_path -start -setup -from [get_keepers {*|excUnit|alu|oper[*]}] -to [get_keepers {*|alu|pswCcr[*]}]     2
+set_multicycle_path -start -hold  -from [get_keepers {*|excUnit|alu|oper[*]}] -to [get_keepers {*|alu|pswCcr[*]}]     1
+
+# T80 Z80 — required or synthesis fails timing
+set_multicycle_path -from [get_keepers {*|Z80CPU|*}] -setup 2
+set_multicycle_path -from [get_keepers {*|Z80CPU|*}] -hold 1
+
 # Z80 sound CPU — 40 MHz / 5 = 8 MHz (5-cycle multicycle)
 # T80s instance (u_z80), CEN = ce_z80 (clk_sys / 5).
 set_multicycle_path -from [get_registers {*u_z80*}] -to [get_registers {*u_z80*}] -setup 5

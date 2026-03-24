@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Samurai Aces (World) — Psikyo SH201B, 1993
+  MC68EC020 @ 16 MHz, Z80 audiocpu @ 4 MHz
+  PS2001B sprites, PS3103 tilemap (2 layers), YM2610 audio
+
+  MAME set: samuraia (src/mame/psikyo/psikyo.cpp)
+  Native resolution: 320×240 (vertical shooter, rotated 90° CW for display)
+
+  SDRAM layout (byte addresses):
+    0x000000  CPU program ROM (maincpu, 512 KB interleaved)
+    0x080000  Z80 audio ROM (audiocpu, 128 KB)
+    0x200000  Sprite ROM (PS2001B, 2 MB)
+    0x600000  BG tile ROM (PS3103, 2 MB)
+
+  ROM CRCs from MAME samuraia set.
+-->
+<misterromdescription>
+  <name>Samurai Aces</name>
+  <setname>samuraia</setname>
+  <rbf>psikyo_arcade</rbf>
+  <mameversion>0245</mameversion>
+  <year>1993</year>
+  <manufacturer>Psikyo (Banpresto license)</manufacturer>
+  <category>Shooter / Vertical</category>
+  <rotation>270</rotation>
+  <buttons names="Shot,Bomb,Btn3,Start,Coin" default="A,B,C,Start,Select"/>
+
+  <!-- CPU program ROM (maincpu, interleaved even/odd) -->
+  <rom index="0" zip="samuraia.zip" type="merged" md5="None">
+    <part name="4-u127.bin" crc="8c9911ca" offset="0x000000" length="0x040000"/>
+    <part name="5-u126.bin" crc="d20c3ef0" offset="0x000002" length="0x040000"/>
+    <!-- Z80 audio ROM appended -->
+    <part name="3-u58.bin"  crc="310f5c76" offset="0x080000" length="0x020000"/>
+  </rom>
+
+  <!-- Sprite ROM (PS2001B, 2 MB) — loaded at SDRAM 0x200000 -->
+  <rom index="1" zip="samuraia.zip" type="merged" md5="None">
+    <part name="u14.bin" crc="00a546cb" offset="0x000000" length="0x200000"/>
+  </rom>
+
+  <!-- BG tile ROM (PS3103, 2 MB) — loaded at SDRAM 0x600000 -->
+  <rom index="2" zip="samuraia.zip" type="merged" md5="None">
+    <part name="u34.bin" crc="e6a75bd8" offset="0x000000" length="0x100000"/>
+    <part name="u35.bin" crc="c4ca0164" offset="0x100000" length="0x100000"/>
+  </rom>
+
+  <!-- DIP switch defaults -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>

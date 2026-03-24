@@ -12,8 +12,8 @@
 //   psikyo_gate5  — Priority mixer / colour compositor
 //
 // Plus local block RAMs:
-//   work_ram      — 64KB at byte 0x000000–0x00FFFF
-//   sprite_ram    — 32-bit wide, byte 0x020000–0x027FFF (sprite list)
+//   work_ram      — 128KB at byte 0xFE0000–0xFFFFFF
+//   sprite_ram    — 8KB at byte 0x400000–0x401FFF (sprite list)
 //   palette_ram   — 256 × 16-bit R5G5B5, byte 0x600000–0x6007FF
 //
 // Audio:
@@ -28,17 +28,15 @@
 //   68EC020 is source-compatible for all instructions used by these games.
 //   Replace fx68k with a proper 68020 core once available.
 //
-// Address map (byte addresses, from MAME psikyo.cpp driver):
-//   0x000000–0x00FFFF   64 KB   Work RAM
-//   0x020000–0x027FFF   32 KB   Sprite list RAM (PS2001B)
-//   0x040000–0x05FFFF   128 KB  Tilemap VRAM (2 layers × 64 KB)
-//   0x060000–0x067FFF   32 KB   BG VRAM (aliases to tilemap area on some games)
-//   0x080000–0x0FFFFF   512 KB  Program ROM bank 0 (from SDRAM)
-//   0x100000–0x1FFFFF   1 MB    Program ROM bank 1 (from SDRAM)
-//   0x200000–0x3FFFFF   2 MB    Sprite ROM area (mapped through SDRAM)
-//   0x600000–0x6007FF   2 KB    Palette RAM (256 × 16-bit)
-//   0x800000–0x80000F   16 B    PS2001B sprite control registers
+// Address map (byte addresses, from MAME psikyo.cpp driver — psikyo_map):
+//   0x000000–0x0FFFFF   1 MB    Program ROM (from SDRAM)
+//   0x400000–0x401FFF   8 KB    Sprite list RAM (PS2001B)
+//   0x600000–0x601FFF   8 KB    Palette RAM (256 × 16-bit R5G5B5)
+//   0x800000–0x801FFF   8 KB    Tilemap VRAM Layer 0
+//   0x802000–0x803FFF   8 KB    Tilemap VRAM Layer 1
+//   0x804000–0x807FFF   16 KB   Video registers + working buffer
 //   0xC00000–0xC0FFFF   64 KB   PS3103 tilemap control + I/O
+//   0xFE0000–0xFFFFFF   128 KB  Work RAM
 //
 // IRQ assignment (from MAME):
 //   Level 4 — VBLANK (ipl_n = ~4 = 3'b011)
@@ -54,29 +52,32 @@
 /* verilator lint_off SYNCASYNCNET */
 module psikyo_arcade #(
     // ── Address decode parameters (WORD addresses = byte_addr >> 1) ────────────
-    // Work RAM: byte 0x000000–0x00FFFF → word base 0x000000, 15-bit window
-    parameter logic [23:1] WRAM_BASE   = 23'h000000,
-    parameter int          WRAM_ABITS  = 15,    // 2^15 = 32K words = 64KB
+    // Program ROM: byte 0x000000–0x0FFFFF → word base 0x000000, 19-bit window (1MB)
+    parameter logic [23:1] PROM_BASE    = 23'h000000,
+    parameter int          PROM_ABITS   = 19,   // 2^19 = 512K words = 1MB
 
-    // Sprite RAM: byte 0x020000–0x027FFF → word base 0x010000, 14-bit window
-    parameter logic [23:1] SPRAM_BASE  = 23'h010000,
-    parameter int          SPRAM_ABITS = 14,    // 2^14 = 16K words = 32KB
+    // Sprite RAM: byte 0x400000–0x401FFF → word base 0x200000, 12-bit window (8KB)
+    parameter logic [23:1] SPRAM_BASE  = 23'h200000,
+    parameter int          SPRAM_ABITS = 12,    // 2^12 = 4K words = 8KB
 
-    // Tilemap VRAM: byte 0x040000–0x05FFFF → word base 0x020000, 16-bit window
-    parameter logic [23:1] VRAM_BASE   = 23'h020000,
-
-    // Palette RAM: byte 0x600000–0x6007FF → word base 0x300000, 9-bit window
+    // Palette RAM: byte 0x600000–0x601FFF → word base 0x300000, 12-bit window
     parameter logic [23:1] PALRAM_BASE = 23'h300000,
 
+    // Tilemap VRAM: byte 0x800000–0x807FFF → word base 0x400000, 14-bit window
+    parameter logic [23:1] VRAM_BASE   = 23'h400000,
+
     // PS2001B sprite ctrl regs: byte 0x800000–0x80000F → word 0x400000
+    // (overlaps bottom of VRAM range; decoded by psikyo Gate 1/2 internally)
     parameter logic [23:1] SPR_REG_BASE = 23'h400000,
 
     // PS3103 tilemap ctrl + I/O: byte 0xC00000–0xC0FFFF → word 0x600000
     parameter logic [23:1] IO_BASE      = 23'h600000,
 
-    // Program ROM: byte 0x080000–0x1FFFFF → word 0x040000–0x0FFFFF
-    parameter logic [23:1] PROM_BASE    = 23'h040000,
-    parameter int          PROM_ABITS   = 20,   // 2^20 = 1M words = 2 MB
+    // Work RAM: byte 0xFE0000–0xFFFFFF → word base 0x7F0000
+    // CS: cpu_addr[23:17] == 7'h7F covers both 0xFE0000–0xFEFFFF and 0xFF0000–0xFFFFFF
+    // WRAM_ABITS=17 → array is 2^17=128K words (256KB); actual MAME RAM is 128KB but fine for sim
+    parameter logic [23:1] WRAM_BASE   = 23'h7F0000,
+    parameter int          WRAM_ABITS  = 17,    // 17-bit CS window covers 256KB (byte 0xFE0000–0xFFFFFF)
 
     // SDRAM base addresses for ROM regions
     parameter logic [26:0] PROM_SDR_BASE  = 27'h000000,  // prog ROM at SDRAM 0x000000
@@ -102,6 +103,7 @@ module psikyo_arcade #(
     input  logic        cpu_lds_n,       // lower data strobe (active low)
     output logic        cpu_dtack_n,     // data transfer acknowledge (active low)
     output logic [2:0]  cpu_ipl_n,       // interrupt priority level (active low)
+    input  logic        cpu_inta_n,      // interrupt acknowledge (active low, FC=111 & ASn=0)
 
     // ── Program ROM SDRAM interface ─────────────────────────────────────────
     output logic [26:0] prog_rom_addr,
@@ -251,23 +253,28 @@ assign scan_trigger = hblank_prev & ~hblank_r;
 // All comparisons use cpu_addr[23:1] (word address).
 // =============================================================================
 
-// Work RAM: byte 0x000000–0x00FFFF
-logic wram_cs;
-assign wram_cs = (cpu_addr[23:WRAM_ABITS] == WRAM_BASE[23:WRAM_ABITS]) && !cpu_as_n;
+// Program ROM: byte 0x000000–0x0FFFFF (MAME psikyo_map)
+logic prom_cs;
+assign prom_cs = (cpu_addr[23:PROM_ABITS] == PROM_BASE[23:PROM_ABITS]) && !cpu_as_n;
 
-// Sprite RAM: byte 0x020000–0x027FFF
+// Sprite RAM: byte 0x400000–0x401FFF (8KB = 4096 16-bit words)
+// CS window covers SPRAM_ABITS address bits; comparison uses [23:SPRAM_ABITS+1]
+// so that bits [SPRAM_ABITS:1] are free (word-address range = 2^SPRAM_ABITS entries).
 logic spram_cs;
-assign spram_cs = (cpu_addr[23:SPRAM_ABITS] == SPRAM_BASE[23:SPRAM_ABITS]) && !cpu_as_n;
+assign spram_cs = (cpu_addr[23:SPRAM_ABITS+1] == SPRAM_BASE[23:SPRAM_ABITS+1]) && !cpu_as_n;
 
-// Tilemap VRAM: byte 0x040000–0x05FFFF (16-bit window, 16 bits of word addr)
-logic vram_cs;
-assign vram_cs = (cpu_addr[23:16] == VRAM_BASE[23:16]) && !cpu_as_n;
-
-// Palette RAM: byte 0x600000–0x6007FF (9-bit window)
+// Palette RAM: byte 0x600000–0x601FFF (8KB = 4096 16-bit words)
+// Same sizing rule as SPRAM: comparison [23:13] leaves bits [12:1] free.
 logic palram_cs;
-assign palram_cs = (cpu_addr[23:9] == PALRAM_BASE[23:9]) && !cpu_as_n;
+assign palram_cs = (cpu_addr[23:13] == PALRAM_BASE[23:13]) && !cpu_as_n;
+
+// Tilemap VRAM: byte 0x800000–0x807FFF (32KB = 16384 16-bit words)
+// Comparison [23:15] leaves bits [14:1] free = 14 bits = 16384 words = 32KB.
+logic vram_cs;
+assign vram_cs = (cpu_addr[23:15] == VRAM_BASE[23:15]) && !cpu_as_n;
 
 // PS2001B sprite control registers: byte 0x800000–0x80000F
+// (detected within vram_cs range; Gate 1/2 handles sub-decoding)
 logic spr_reg_cs_n;
 assign spr_reg_cs_n = !((cpu_addr[23:4] == SPR_REG_BASE[23:4]) && !cpu_as_n);
 
@@ -275,16 +282,15 @@ assign spr_reg_cs_n = !((cpu_addr[23:4] == SPR_REG_BASE[23:4]) && !cpu_as_n);
 logic io_cs;
 assign io_cs = (cpu_addr[23:15] == IO_BASE[23:15]) && !cpu_as_n;
 
-// Program ROM: byte 0x080000–0x1FFFFF
-//   word base 0x040000, upper bits [23:PROM_ABITS] == PROM_BASE[23:PROM_ABITS]
-logic prom_cs;
-assign prom_cs = (cpu_addr[23:PROM_ABITS] == PROM_BASE[23:PROM_ABITS]) && !cpu_as_n;
+// Work RAM: byte 0xFE0000–0xFFFFFF (MAME: 128KB at top of 24-bit addr space)
+logic wram_cs;
+assign wram_cs = (cpu_addr[23:WRAM_ABITS] == WRAM_BASE[23:WRAM_ABITS]) && !cpu_as_n;
 
 // =============================================================================
 // Work RAM — 64KB synchronous block RAM (word-wide)
 // =============================================================================
 `ifdef QUARTUS
-// altsyncram DUAL_PORT: WRAM_ABITS=15 → widthad=15, numwords=32768
+// altsyncram DUAL_PORT: WRAM_ABITS=17 → widthad=17, numwords=131072 (256KB)
 logic        wram_we;
 logic [1:0]  wram_be;
 logic [15:0] wram_dout_r;
@@ -293,8 +299,8 @@ assign wram_be = {!cpu_uds_n, !cpu_lds_n};
 
 altsyncram #(
     .operation_mode            ("DUAL_PORT"),
-    .width_a                   (16), .widthad_a (15), .numwords_a (32768),
-    .width_b                   (16), .widthad_b (15), .numwords_b (32768),
+    .width_a                   (16), .widthad_a (17), .numwords_a (131072),
+    .width_b                   (16), .widthad_b (17), .numwords_b (131072),
     .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
     .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
     .clock_enable_output_b     ("BYPASS"),
@@ -304,9 +310,9 @@ altsyncram #(
     .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
 ) wram_inst (
     .clock0(clk_sys), .clock1(clk_sys),
-    .address_a(cpu_addr[15:1]), .data_a(cpu_dout),
+    .address_a(cpu_addr[17:1]), .data_a(cpu_dout),
     .wren_a(wram_we), .byteena_a(wram_be),
-    .address_b(cpu_addr[15:1]), .q_b(wram_dout_r),
+    .address_b(cpu_addr[17:1]), .q_b(wram_dout_r),
     .wren_b(1'b0), .data_b(16'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
     .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
@@ -342,7 +348,7 @@ logic [1:0]  sprite_ram_wsel_w;
 logic        sprite_ram_wr_en_w;
 
 `ifdef QUARTUS
-// Three DUAL_PORT instances sharing port A (muxed write). SPRAM_ABITS=14.
+// Three DUAL_PORT instances sharing port A (muxed write). SPRAM_ABITS=12 (8KB).
 // CPU has priority over DMA writes.
 logic [13:0] spram_wr_addr;
 logic [15:0] spram_wr_data;
@@ -451,8 +457,8 @@ logic [15:0] sp_ram_lo, sp_ram_hi;
 logic [31:0] sprite_ram_dout_w;
 
 // Gate 1/2 may write DMA data back; read is 32-bit (two consecutive words)
-// sprite_ram has 2^SPRAM_ABITS = 16384 entries; index is 14-bit.
-// sprite_ram_addr_w[15:14] are unused (Gate 1/2 stub always drives 0 there).
+// sprite_ram has 2^SPRAM_ABITS = 4096 entries (SPRAM_ABITS=12); index is 12-bit.
+// sprite_ram_addr_w[15:12] are unused (Gate 1/2 stub always drives 0 there).
 /* verilator lint_off UNUSEDSIGNAL */
 always_ff @(posedge clk_sys) begin
     sp_ram_lo <= sprite_ram[{sprite_ram_addr_w[13:1], 1'b0}];   // even word (14-bit index)
@@ -464,15 +470,15 @@ assign sprite_ram_dout_w = {sp_ram_hi, sp_ram_lo};
 `endif
 
 // =============================================================================
-// Tilemap VRAM — 8192 × 16-bit (2 layers × 4096 cells)
+// Tilemap VRAM — 16384 × 16-bit (covers all tile layers 0x800000-0x807FFF)
 // Write port: CPU; read port: psikyo_gate4 (combinational)
 // =============================================================================
 
 // Forward VRAM write to gate4 for its internal copy (used by both paths)
-logic [12:0]  vram_wr_addr_w;
+logic [13:0]  vram_wr_addr_w;
 logic [15:0]  vram_wr_data_w;
 logic         vram_wr_en_w;
-assign vram_wr_addr_w = cpu_addr[13:1];
+assign vram_wr_addr_w = cpu_addr[14:1];
 assign vram_wr_data_w = cpu_dout;
 assign vram_wr_en_w   = vram_cs && !cpu_rw;
 
@@ -485,8 +491,8 @@ assign vram_be_q = {!cpu_uds_n, !cpu_lds_n};
 
 altsyncram #(
     .operation_mode            ("DUAL_PORT"),
-    .width_a                   (16), .widthad_a (13), .numwords_a (8192),
-    .width_b                   (16), .widthad_b (13), .numwords_b (8192),
+    .width_a                   (16), .widthad_a (14), .numwords_a (16384),
+    .width_b                   (16), .widthad_b (14), .numwords_b (16384),
     .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
     .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
     .clock_enable_output_b     ("BYPASS"),
@@ -496,29 +502,29 @@ altsyncram #(
     .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
 ) vram_inst (
     .clock0(clk_sys), .clock1(clk_sys),
-    .address_a(cpu_addr[13:1]), .data_a(cpu_dout),
+    .address_a(cpu_addr[14:1]), .data_a(cpu_dout),
     .wren_a(vram_we), .byteena_a(vram_be_q),
-    .address_b(cpu_addr[13:1]), .q_b(vram_cpu_dout),
+    .address_b(cpu_addr[14:1]), .q_b(vram_cpu_dout),
     .wren_b(1'b0), .data_b(16'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
     .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
     .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
 );
 `else
-logic [15:0]  vram_mem [0:8191];
+logic [15:0]  vram_mem [0:16383];
 
-// CPU VRAM write: addr[13:1] = 13-bit index into 8192-word space
+// CPU VRAM write: addr[14:1] = 14-bit index into 16384-word space
 always_ff @(posedge clk_sys) begin
     if (vram_cs && !cpu_rw) begin
         // gate4 expects {layer[0], cell[11:0]} — layer selects from cpu_addr[14]
-        if (!cpu_uds_n) vram_mem[cpu_addr[13:1]][15:8] <= cpu_dout[15:8];
-        if (!cpu_lds_n) vram_mem[cpu_addr[13:1]][ 7:0] <= cpu_dout[ 7:0];
+        if (!cpu_uds_n) vram_mem[cpu_addr[14:1]][15:8] <= cpu_dout[15:8];
+        if (!cpu_lds_n) vram_mem[cpu_addr[14:1]][ 7:0] <= cpu_dout[ 7:0];
     end
 end
 
 logic [15:0] vram_cpu_dout;
 always_ff @(posedge clk_sys) begin
-    if (vram_cs) vram_cpu_dout <= vram_mem[cpu_addr[13:1]];
+    if (vram_cs) vram_cpu_dout <= vram_mem[cpu_addr[14:1]];
 end
 `endif
 
@@ -1283,22 +1289,43 @@ end
 // =============================================================================
 
 logic        prog_req_pending;
+logic        prog_data_ready;   // 1 when acked data is available for current prom_cs
 logic [26:0] prog_req_addr_r;
+logic [PROM_ABITS:1] prog_last_word_addr; // tracks which word the ready data belongs to
+
+// Current SDRAM byte address for the active CPU word address
+wire [26:0] prog_cpu_byte_addr = PROM_SDR_BASE + 27'({cpu_addr[PROM_ABITS:1], 1'b0});
+
+// Address mismatch: CPU addr changed while AS still held (multi-word longword access).
+// Detect when cpu_addr changes so we can re-request the new word from SDRAM.
+wire prog_addr_changed = prog_data_ready && !cpu_as_n &&
+                         (cpu_addr[PROM_ABITS:1] != prog_last_word_addr);
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
-        prog_rom_req     <= 1'b0;
-        prog_req_pending <= 1'b0;
-        prog_req_addr_r  <= 27'b0;
+        prog_rom_req        <= 1'b0;
+        prog_req_pending    <= 1'b0;
+        prog_data_ready     <= 1'b0;
+        prog_req_addr_r     <= 27'b0;
+        prog_last_word_addr <= '0;
     end else begin
-        if (prom_cs && cpu_rw && !prog_req_pending) begin
-            // Program ROM is mapped from byte 0x080000; SDRAM base = PROM_SDR_BASE
-            // cpu_addr[PROM_ABITS:1] is PROM_ABITS bits wide; pad to 27 bits for SDRAM addr.
-            prog_req_addr_r  <= PROM_SDR_BASE + 27'(cpu_addr[PROM_ABITS:1]);
-            prog_req_pending <= 1'b1;
-            prog_rom_req     <= ~prog_rom_req;
+        // Clear data_ready when address strobe is de-asserted (end of bus cycle)
+        // OR when the CPU increments the address (second half of longword read).
+        if (cpu_as_n || prog_addr_changed) begin
+            prog_data_ready  <= 1'b0;
+            prog_req_pending <= prog_addr_changed ? 1'b0 : prog_req_pending;
+        end
+        if (prom_cs && cpu_rw && !prog_req_pending && !prog_data_ready) begin
+            // Program ROM is mapped from byte 0x000000; SDRAM base = PROM_SDR_BASE
+            // cpu_addr[23:1] is the WORD address; SDRAM model uses BYTE addresses.
+            // Shift left by 1 to convert word addr → byte addr for the SDRAM model.
+            prog_req_addr_r     <= prog_cpu_byte_addr;
+            prog_last_word_addr <= cpu_addr[PROM_ABITS:1];
+            prog_req_pending    <= 1'b1;
+            prog_rom_req        <= ~prog_rom_req;
         end else if (prog_req_pending && (prog_rom_req == prog_rom_ack)) begin
             prog_req_pending <= 1'b0;
+            prog_data_ready  <= 1'b1;
         end
     end
 end
@@ -1374,40 +1401,41 @@ always_comb begin
     if (cpu_as_n)
         cpu_dtack_n = 1'b1;
     else if (prom_cs)
-        cpu_dtack_n = prog_req_pending;   // 0 = ready
+        // 0 = ready (data arrived from SDRAM for THIS word address).
+        // prog_addr_changed: CPU changed address mid-cycle (longword); stall.
+        cpu_dtack_n = !prog_data_ready || prog_addr_changed;
     else
         cpu_dtack_n = !dtack_r;
 end
 
 // =============================================================================
-// Interrupt (IPL) Generation
-// VBLANK → level 4 (cpu_ipl_n = ~4 = 3'b011)
+// Interrupt (IPL) Generation — VBLANK at level 4
 // =============================================================================
-
-logic       ipl_vbl_active;
-logic [15:0] ipl_vbl_timer;
+// Community pattern (jotego, Cave, NeoGeo, va7deo, atrac17):
+//   SET IPL on VBLANK edge, CLEAR on IACK only. NEVER use a timer.
+//   Timer-based clear races with pswI mask — interrupt expires before
+//   the CPU enables interrupts, so the game never takes VBlank.
+// =============================================================================
+logic ipl_vbl_active;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         ipl_vbl_active <= 1'b0;
-        ipl_vbl_timer  <= 16'b0;
     end else begin
-        if (vblank_rising) begin
+        if (!cpu_inta_n)               // IACK cycle: CPU acknowledged the interrupt
+            ipl_vbl_active <= 1'b0;
+        else if (vblank_rising)        // VBlank: assert interrupt
             ipl_vbl_active <= 1'b1;
-            ipl_vbl_timer  <= 16'hFFFF;
-        end else if (ipl_vbl_active) begin
-            if (ipl_vbl_timer == 16'b0)
-                ipl_vbl_active <= 1'b0;
-            else
-                ipl_vbl_timer <= ipl_vbl_timer - 16'd1;
-        end
     end
 end
 
-always_comb begin
-    if (ipl_vbl_active)  cpu_ipl_n = ~VBLANK_LEVEL;
-    else                 cpu_ipl_n = 3'b111;   // no interrupt
+// IPL4 encoding: level 4 = ~4 = 3'b011 (active low)
+// Register through synchronizer FF to avoid Verilator scheduling race
+reg [2:0] ipl_sync;
+always_ff @(posedge clk_sys) begin
+    ipl_sync <= ipl_vbl_active ? ~VBLANK_LEVEL : 3'b111;
 end
+assign cpu_ipl_n = ipl_sync;
 
 // =============================================================================
 // Lint suppression

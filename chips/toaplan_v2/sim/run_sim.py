@@ -1,35 +1,33 @@
 #!/usr/bin/env python3
 """
-run_sim.py — Toaplan V2 (Batsugun) simulation runner
+run_sim.py — Toaplan V2 (Truxton II) simulation runner
 
-Extracts ROMs from batsugun.zip, builds (if needed), and runs the
+Extracts ROMs from truxton2.zip, builds (if needed), and runs the
 Verilator Toaplan V2 simulation, dumping one PPM frame file per vertical sync.
 
-Batsugun ROM layout (from Batsugun.mra and MAME batsugun driver):
-  SDRAM 0x000000: tp030_1a.bin (512KB CPU program ROM)
-  SDRAM 0x100000: GFX ROMs — 4 x 1MB planes concatenated:
-                   tp030_3l.bin, tp030_3h.bin, tp030_4l.bin, tp030_4h.bin,
-                   tp030_5.bin, tp030_6.bin
-  SDRAM 0x500000: tp030_2.bin (256KB ADPCM/MSM6295 sample data)
-  SDRAM 0x600000: Z80 ROM (unused for Batsugun — NEC V25 shares main CPU ROM)
+Truxton II ROM layout (from Truxton2.mra and MAME toaplan2 driver):
+  SDRAM 0x000000: tp024_1.bin (512KB CPU program ROM, standard ROM_LOAD)
+  SDRAM 0x100000: GFX ROMs — tp024_3.bin + tp024_4.bin concatenated
+  SDRAM ADPCM:    tp024_2.bin (512KB MSM6295 ADPCM sample ROM)
+  ROM_Z80:        empty (Truxton II has no Z80 — 68K drives YM2151+MSM6295 directly)
 
 Usage:
   python3 run_sim.py [options]
 
 Options:
   --frames N        Number of frames to simulate (default: 30)
-  --zip PATH        Path to batsugun.zip (default: auto-detect)
+  --zip PATH        Path to truxton2.zip (default: auto-detect)
   --vcd             Enable VCD trace output (very slow)
   --out-dir DIR     Output directory for PPM frames (default: current dir)
   --build           Force rebuild before running
   --no-build        Skip build step
 
 Examples:
-  # Simulate 30 frames with Batsugun ROMs (auto-detect zip):
+  # Simulate 30 frames with Truxton II ROMs (auto-detect zip):
   python3 run_sim.py --frames 30
 
   # With explicit zip path:
-  python3 run_sim.py --frames 30 --zip /path/to/batsugun.zip
+  python3 run_sim.py --frames 30 --zip /path/to/truxton2.zip
 """
 
 import argparse
@@ -41,44 +39,34 @@ import zipfile
 import tempfile
 
 # =============================================================================
-# ROM Extraction — Batsugun
+# ROM Extraction — Truxton II
 #
-# ROM files inside batsugun.zip:
-#   tp030_1a.bin — 512KB CPU program ROM (raw binary, loaded directly)
-#   tp030_2.bin  — 256KB ADPCM ROM (raw binary, loaded directly)
-#   tp030_3l.bin — 1MB GFX plane 0 low bytes
-#   tp030_3h.bin — 1MB GFX plane 0 high bytes
-#   tp030_4l.bin — 1MB GFX plane 1 low bytes
-#   tp030_4h.bin — 1MB GFX plane 1 high bytes
-#   tp030_5.bin  — 1MB GFX data (GP9001 #1 low)
-#   tp030_6.bin  — 1MB GFX data (GP9001 #1 high)
+# ROM files inside truxton2.zip:
+#   tp024_1.bin — 512KB CPU program ROM (standard ROM_LOAD, no word swap)
+#   tp024_2.bin — 512KB MSM6295 ADPCM sample ROM
+#   tp024_3.bin — GFX ROM part 1
+#   tp024_4.bin — GFX ROM part 2
 #
 # GFX ROM construction:
-#   The MRA loads 3l+3h, 4l+4h, 5, 6 as concatenated planes (6 x 1MB = 6MB).
-#   The sdram_model.h load() function loads them sequentially into SDRAM starting
-#   at 0x100000.  For sim, we concatenate them in order:
-#     [tp030_3l.bin][tp030_3h.bin][tp030_4l.bin][tp030_4h.bin][tp030_5.bin][tp030_6.bin]
-#   This matches the MRA <part> order exactly.
+#   Concatenate tp024_3.bin + tp024_4.bin in order into SDRAM starting at
+#   0x100000.  This matches the MRA <part> order exactly.
 #
-#   NOTE: The GP9001 RTL may expect a specific byte interleaving.  For first-pass
-#   validation we load sequentially (no interleaving) — the CPU will boot and we
-#   can verify the video pipeline produces non-black frames from palette writes.
+# Audio:
+#   Truxton II has NO Z80 — the 68K drives YM2151 + MSM6295 directly.
+#   tp024_2.bin is the MSM6295 ADPCM sample ROM → ROM_ADPCM.
+#   ROM_Z80 is left empty.
 # =============================================================================
 
-# Search paths for batsugun.zip
+# Search paths for truxton2.zip
 ROM_SEARCH_PATHS = [
-    '/Volumes/2TB_20260220/Projects/ROMs_Claude/Roms/batsugun.zip',
-    os.path.expanduser('~/ROMs/batsugun.zip'),
-    '/tmp/batsugun.zip',
+    '/Volumes/2TB_20260220/Projects/ROMs_Claude/Roms/truxton2.zip',
+    os.path.expanduser('~/ROMs/truxton2.zip'),
+    '/tmp/truxton2.zip',
 ]
 
 GFX_FILES_ORDERED = [
-    'tp030_3l.bin',
-    'tp030_3h.bin',
-    'tp030_4l.bin',
-    'tp030_4h.bin',
-    'tp030_5.bin',
-    'tp030_6.bin',
+    'tp024_3.bin',
+    'tp024_4.bin',
 ]
 
 
@@ -91,7 +79,7 @@ def find_zip(explicit_path=None):
     for p in ROM_SEARCH_PATHS:
         if os.path.exists(p):
             return p
-    print('ERROR: batsugun.zip not found.  Use --zip to specify path.',
+    print('ERROR: truxton2.zip not found.  Use --zip to specify path.',
           file=sys.stderr)
     sys.exit(1)
 
@@ -115,16 +103,16 @@ def extract_roms(zip_path, out_dir):
 
     print(f'Extracting ROMs from {zip_path}...', file=sys.stderr)
 
-    # CPU program ROM
-    prog_path = extract('tp030_1a.bin')
+    # CPU program ROM (standard ROM_LOAD, no word swap for Truxton II)
+    prog_path = extract('tp024_1.bin')
     if prog_path:
-        print(f'  CPU ROM: tp030_1a.bin ({os.path.getsize(prog_path)//1024}KB)',
+        print(f'  CPU ROM: tp024_1.bin ({os.path.getsize(prog_path)//1024}KB)',
               file=sys.stderr)
 
-    # ADPCM ROM
-    adpcm_path = extract('tp030_2.bin')
-    if adpcm_path:
-        print(f'  ADPCM:   tp030_2.bin ({os.path.getsize(adpcm_path)//1024}KB)',
+    # MSM6295 ADPCM sample ROM (no Z80 in Truxton II)
+    z80_path = extract('tp024_2.bin')
+    if z80_path:
+        print(f'  ADPCM ROM: tp024_2.bin ({os.path.getsize(z80_path)//1024}KB)',
               file=sys.stderr)
 
     # GFX ROMs — concatenate in MRA order
@@ -146,8 +134,8 @@ def extract_roms(zip_path, out_dir):
     return {
         'ROM_PROG':  prog_path  or '',
         'ROM_GFX':   gfx_path,
-        'ROM_ADPCM': adpcm_path or '',
-        'ROM_Z80':   '',   # Batsugun uses NEC V25, not Z80 — leave empty
+        'ROM_ADPCM': z80_path or '',   # tp024_2.bin is actually ADPCM data
+        'ROM_Z80':   '',                # No Z80 in Truxton II
     }
 
 
@@ -162,7 +150,11 @@ def build(force=False):
         return sim_bin
 
     print('Building sim_toaplan_v2...', file=sys.stderr)
-    result = subprocess.run(['make', '-j4'], cwd=sim_dir)
+    try:
+        result = subprocess.run(['make', '-j4'], cwd=sim_dir, timeout=600)
+    except subprocess.TimeoutExpired:
+        print(f"\nTIMEOUT: Build exceeded 600s — killed.", file=sys.stderr)
+        sys.exit(124)
     if result.returncode != 0:
         print('Build FAILED', file=sys.stderr)
         sys.exit(1)
@@ -170,7 +162,7 @@ def build(force=False):
     return sim_bin
 
 
-def run_sim(sim_bin, rom_env, n_frames, out_dir, vcd=False):
+def run_sim(sim_bin, rom_env, n_frames, out_dir, vcd=False, sim_timeout=None):
     """Run the simulation binary."""
     env = os.environ.copy()
     env['N_FRAMES'] = str(n_frames)
@@ -186,14 +178,23 @@ def run_sim(sim_bin, rom_env, n_frames, out_dir, vcd=False):
     print(f'  ROM_ADPCM = {env.get("ROM_ADPCM","(none)")}', file=sys.stderr)
     print(f'  ROM_Z80   = {env.get("ROM_Z80","(none)")}', file=sys.stderr)
 
+    if sim_timeout is None:
+        sim_timeout = max(300, n_frames * 30)
+
     # Always run from the sim directory so that $readmem (nanorom.mem,
     # microrom.mem) can be found by Verilator's VL_READMEM_N with relative path.
     sim_dir = os.path.dirname(os.path.abspath(sim_bin))
-    result = subprocess.run(
-        [sim_bin],
-        env=env,
-        cwd=sim_dir
-    )
+    try:
+        result = subprocess.run(
+            [sim_bin],
+            env=env,
+            cwd=sim_dir,
+            timeout=sim_timeout
+        )
+    except subprocess.TimeoutExpired:
+        print(f"\nTIMEOUT: Simulation exceeded {sim_timeout}s — killed to prevent system overload.",
+              file=sys.stderr)
+        return 124
     # Move output PPMs to out_dir if different from sim_dir
     if os.path.abspath(out_dir) != sim_dir:
         import glob
@@ -232,11 +233,11 @@ def analyze_frames(out_dir, n_frames):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Toaplan V2 (Batsugun) simulation runner')
+        description='Toaplan V2 (Truxton II) simulation runner')
     parser.add_argument('--frames', type=int, default=30,
                         help='Number of frames to simulate (default: 30)')
     parser.add_argument('--zip', default=None,
-                        help='Path to batsugun.zip')
+                        help='Path to truxton2.zip')
     parser.add_argument('--vcd', action='store_true',
                         help='Enable VCD trace (very slow)')
     parser.add_argument('--out-dir', default='.',
@@ -245,6 +246,8 @@ def main():
                         help='Force rebuild before running')
     parser.add_argument('--no-build', action='store_true',
                         help='Skip build step')
+    parser.add_argument('--timeout', type=int, default=0,
+                        help='Max seconds for simulation (0=auto: 30s per frame)')
     args = parser.parse_args()
 
     out_dir = os.path.abspath(args.out_dir)
@@ -263,7 +266,9 @@ def main():
         rom_env = extract_roms(zip_path, rom_dir)
 
         # Step 3: Run simulation
-        rc = run_sim(sim_bin, rom_env, args.frames, out_dir, vcd=args.vcd)
+        sim_timeout = args.timeout if args.timeout > 0 else max(300, args.frames * 30)
+        rc = run_sim(sim_bin, rom_env, args.frames, out_dir, vcd=args.vcd,
+                     sim_timeout=sim_timeout)
 
     # Step 4: Analyze results
     if rc == 0:

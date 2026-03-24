@@ -187,7 +187,10 @@ assign dbg_cpu_halted_n = cpu_halted_n_raw;
 // =============================================================================
 // nmk_arcade — full system (GPU, palette, work RAM, Z80, audio, I/O)
 // =============================================================================
-nmk_arcade u_nmk (
+nmk_arcade #(
+    .WRAM_BASE (8'h0B)   // tdragon original: work RAM at 0x0B0000
+    // For tdragonb2 bootleg, change to 8'h08
+) u_nmk (
     .clk_sys            (clk_sys),
     .clk_pix            (clk_pix),
     .reset_n            (reset_n),
@@ -200,6 +203,7 @@ nmk_arcade u_nmk (
     .cpu_uds_n          (cpu_uds_n),
     .cpu_rw             (cpu_rw),
     .cpu_as_n           (cpu_as_n),
+    .cpu_inta_n         (inta_n),       // IACK detection from FC pins
     .cpu_dtack_n        (cpu_dtack_n),
     .cpu_ipl_n          (cpu_ipl_n),
 

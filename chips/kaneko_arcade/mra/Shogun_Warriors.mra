@@ -1,0 +1,64 @@
+<!--
+    Shogun Warriors (World) — Kaneko16, 1992
+    MiSTer MRA file for Kaneko16 core
+
+    MAME driver: kaneko16.cpp, set: shogwarr
+    MC68000 @ 12 MHz, Z80 @ 4 MHz, YM2151 audio, OKI M6295
+
+    SDRAM layout:
+      0x000000 – 0x03FFFF   256KB  CPU program ROM  (maincpu, ioctl_index 0x00)
+      0x100000 – 0x7FFFFF   7MB    GFX ROM: sprites + tilemap (ioctl_index 0x01)
+      0x800000 – 0xEFFFFF   3.5MB  OKI sample ROMs  (ioctl_index 0x02)
+
+    ROM CRCs from MAME shogwarr set.
+-->
+<misterromdescription>
+
+  <name>Shogun Warriors</name>
+  <setname>shogwarr</setname>
+  <mameversion>0250</mameversion>
+  <rbf>Kaneko16</rbf>
+
+  <!-- CPU program ROM: 68000, interleaved upper/lower byte -->
+  <rom index="0" zip="shogwarr.zip" md5="Unknown">
+    <part name="fb030e.u61" crc="32ce7909" offset="0x000000" length="0x020000"/>
+    <part name="fb031e.u62" crc="228aeaf5" offset="0x000001" length="0x020000"/>
+  </rom>
+
+  <!-- GFX ROM: kan_spr sprites + view2_0 tilemap -->
+  <!-- Loaded at SDRAM 0x100000 -->
+  <rom index="1" zip="shogwarr.zip" md5="Unknown">
+    <part name="fb-020a.u1"  crc="87e55c6d" offset="0x000000" length="0x100000"/>
+    <part name="fb020b.u2"   crc="276b9d7b" offset="0x100000" length="0x100000"/>
+    <part name="fb021a.u3"   crc="7da15d37" offset="0x200000" length="0x100000"/>
+    <part name="fb021b.u4"   crc="6a512d7b" offset="0x300000" length="0x100000"/>
+    <part name="fb-22a.u5"   crc="9039e5d3" offset="0x400000" length="0x100000"/>
+    <part name="fb-22b.u6"   crc="96ac9e54" offset="0x500000" length="0x100000"/>
+    <part name="fb023.u7"    crc="132794bd" offset="0x600000" length="0x100000"/>
+    <!-- VIEW2 tilemap ROM -->
+    <part name="fb010.u65"   crc="296ffd92" offset="0x700000" length="0x100000"/>
+    <part name="fb011.u66"   crc="500a0367" offset="0x800000" length="0x080000"/>
+  </rom>
+
+  <!-- OKI M6295 sample ROMs -->
+  <rom index="2" zip="shogwarr.zip" md5="Unknown">
+    <part name="fb001e.u43"  crc="f524aaa1" offset="0x000000" length="0x080000"/>
+    <part name="fb000e.u42"  crc="969f1465" offset="0x080000" length="0x080000"/>
+    <part name="fb-002.u45"  crc="010acc17" offset="0x100000" length="0x100000"/>
+    <part name="fb-003.u44"  crc="0aea4ac5" offset="0x200000" length="0x100000"/>
+  </rom>
+
+  <rom index="0xFE">
+    <part repeat="8"> FF </part>
+  </rom>
+
+  <switches page_id="1" page_name="Switches" base="16" dip_defaults="FF FF">
+    <dip bits="0,1" name="Coin A" ids="2 Coins/1 Credit,1 Coin/1 Credit,1 Coin/2 Credits,1 Coin/3 Credits"/>
+    <dip bits="4,5" name="Difficulty" ids="Easy,Normal,Hard,Hardest"/>
+    <dip bits="6"   name="Demo Sounds" ids="Off,On"/>
+    <dip bits="7"   name="Service Mode" ids="On,Off"/>
+  </switches>
+
+  <buttons names="Attack,Jump,Button 3,Start,Coin,Core credits" default="A,B,C,Start,Select,-"/>
+
+</misterromdescription>

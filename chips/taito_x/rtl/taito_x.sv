@@ -36,7 +36,7 @@
 //   0xE000 – 0xE001    YM2610/YM2151 register write (I/O mapped at 0x00/0x01)
 //
 // Interrupt routing:
-//   68000 IPL2 (level 5, active-low ~5 = 3'b010): VBlank from video timing.
+//   68000 IPL (level 2, active-low ~2 = 3'b101): VBlank from video timing.
 //   Z80 /INT: from 68000 sound command write (X1-004 NMI-like mechanism).
 //
 // Parameterised for per-game differences:
@@ -97,6 +97,7 @@ module taito_x #(
     input  logic        cpu_as_n,       // address strobe (active low)
     output logic        cpu_dtack_n,    // data acknowledge (active low)
     output logic [2:0]  cpu_ipl_n,      // interrupt level (active-low encoded)
+    input  logic [2:0]  cpu_fc,         // function codes FC[2:0] from 68000 (for IACK detect)
 
     // ── Z80 Sound CPU Bus ─────────────────────────────────────────────────────
     input  logic [15:0] z80_addr,
@@ -165,7 +166,7 @@ module taito_x #(
 //   HSync: assert during hpos 400..431 (32-pixel window in HBlank)
 //   VSync: assert during vpos 244..246 (2-line window in VBlank)
 //
-// Interrupt: VBlank rising edge → 68000 IPL5 (active-low ~5 = 3'b010)
+// Interrupt: VBlank rising edge → 68000 IPL2 (active-low ~2 = 3'b101)
 // =============================================================================
 
 localparam int H_VISIBLE  = 384;
@@ -178,21 +179,21 @@ localparam int VS_START   = 244;
 localparam int VS_END     = 247;
 
 logic [8:0] hpos;   // 0..511
-logic [7:0] vpos;   // 0..261
+logic [8:0] vpos;   // 0..261 (needs 9 bits: V_TOTAL=262 > 255)
 logic        vblank_r;
 logic        vblank_rise;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         hpos <= 9'd0;
-        vpos <= 8'd0;
+        vpos <= 9'd0;
     end else if (clk_pix) begin
         if (hpos == 9'(H_TOTAL - 1)) begin
             hpos <= 9'd0;
-            if (vpos == 8'(V_TOTAL - 1))
-                vpos <= 8'd0;
+            if (vpos == 9'(V_TOTAL - 1))
+                vpos <= 9'd0;
             else
-                vpos <= vpos + 8'd1;
+                vpos <= vpos + 9'd1;
         end else begin
             hpos <= hpos + 9'd1;
         end
@@ -200,9 +201,9 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
 end
 
 assign hblank  = (hpos >= 9'(H_VISIBLE));
-assign vblank  = (vpos >= 8'(V_VISIBLE));
+assign vblank  = (vpos >= 9'(V_VISIBLE));
 assign hsync_n = ~((hpos >= 9'(HS_START)) && (hpos < 9'(HS_END)));
-assign vsync_n = ~((vpos >= 8'(VS_START)) && (vpos < 8'(VS_END)));
+assign vsync_n = ~((vpos >= 9'(VS_START)) && (vpos < 9'(VS_END)));
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) vblank_r <= 1'b0;
@@ -214,6 +215,7 @@ assign vblank_rise = vblank & ~vblank_r;
 // Chip-Select Decode (all comparisons on cpu_addr[23:1], qualified by !cpu_as_n)
 // =============================================================================
 
+<<<<<<< HEAD
 // ─────────────────────────────────────────────────────────────────────────────
 // ADDRESS DECODE — IMPORTANT SLICE CONVENTION
 // cpu_addr is declared [23:1] so cpu_addr[k] = bit (k-1) of the integer value,
@@ -252,10 +254,41 @@ assign yram_cs = (cpu_addr[23:10] == 14'h3400) && !cpu_as_n
 
 // Sprite ctrl: 0xD00600–0xD00607  (4 × 16-bit registers, 2-bit index)
 //   word base 0x680300; tag [23:3] == 21'h1A00C0
+=======
+// Program ROM: 0x000000–0x07FFFF  (512KB = 256K words, 17-bit word index)
+//   cpu_addr[23:19] == 5'b0 covers byte range 0x000000–0x07FFFF (512KB)
+//   Previously used [23:18]==6'b0 which only covered 256KB — missing upper half.
+logic prog_rom_cs;
+assign prog_rom_cs = (cpu_addr[23:19] == 5'b0) && !cpu_as_n;
+
+// Work RAM: parameterised base and size (WRAM_BASE, WRAM_ABITS).
+//   Superman: byte 0x100000 (word 0x080000), 64KB, WRAM_ABITS=15
+//   Gigandes: byte 0xF00000 (word 0x780000), 16KB, WRAM_ABITS=13
+// NOTE: cpu_addr is [23:1], so addr bits 23..15 map to signal indices 23..15.
+// WRAM_BASE is also [23:1], so use matching indices [23:15].
+logic wram_cs;
+assign wram_cs = (cpu_addr[23:15] == WRAM_BASE[23:15]) && !cpu_as_n;
+
+// Palette RAM: 0xB00000–0xB00FFF  (4KB = 2048 × 16-bit, 11-bit index)
+//   word base 0x580000; cpu_addr[23:12] = word_addr >> 11 = 0x580000>>11 = 0xB00
+logic pal_cs;
+assign pal_cs  = (cpu_addr[23:12] == 12'hB00) && !cpu_as_n;
+
+// Sprite Y RAM: 0xD00000–0xD003FF  (1KB = 512 × 16-bit, 9-bit index)
+//   word base 0x680000; cpu_addr[23:10] = word_addr >> 9 = 0x680000>>9 = 0x3400
+//   [23:10]==0x3400 covers exactly word addrs 0x680000-0x6801FF (512 words = 1KB byte).
+logic yram_cs;
+assign yram_cs = (cpu_addr[23:10] == 14'h3400) && !cpu_as_n;
+
+// Sprite ctrl: 0xD00600–0xD00607  (4 × 16-bit registers, 2-bit index)
+//   word base 0x680300; cpu_addr[23:3] = word_addr >> 2 = 0x680300>>2 = 0x1A00C0
+//   Using [23:3] (21 bits) so all 4 word-aligned regs match (0x680300-0x680303).
+>>>>>>> sim-batch2
 logic ctrl_cs;
 assign ctrl_cs = (cpu_addr[23:3] == 21'h1A00C0) && !cpu_as_n;
 
 // Sprite code RAM: 0xE00000–0xE03FFF  (16KB = 8K words, 13-bit index)
+<<<<<<< HEAD
 //   word base 0x700000; tag [23:14] == 10'h380
 logic cram_cs;
 assign cram_cs = (cpu_addr[23:14] == 10'h380) && !cpu_as_n;
@@ -264,6 +297,31 @@ assign cram_cs = (cpu_addr[23:14] == 10'h380) && !cpu_as_n;
 //   word base 0x280000; tag [23:4] == 20'h50000
 logic io_cs;
 assign io_cs   = (cpu_addr[23:4] == 20'h50000) && !cpu_as_n;
+=======
+//   word base 0x700000; cpu_addr[23:14] = word_addr >> 13 = 0x700000>>13 = 0x380
+logic cram_cs;
+assign cram_cs = (cpu_addr[23:14] == 10'h380) && !cpu_as_n;
+
+// DIP switch / X1-004 I/O: 0x500000–0x500007  (4 × 16-bit words)
+//   word base [23:2] = 0x280000>>1 covering 0x500000-0x500006
+//   From MAME/FBNeo: word reads at 0x500000/2/4/6 return DIP nibbles.
+//   cpu_addr[23:2] == 22'h140000 covers 0x500000-0x500007 (4 words).
+logic io_cs;
+assign io_cs   = (cpu_addr[23:2] == 22'h140000) && !cpu_as_n;
+
+// Player inputs: 0x900000–0x900007  (byte reads at odd addresses)
+//   0x900001 = P1, 0x900003 = P2, 0x900005 = coin/service
+//   cpu_addr[23:2] == 22'h240000 covers 0x900000-0x900007
+logic joy_cs;
+assign joy_cs  = (cpu_addr[23:2] == 22'h240000) && !cpu_as_n;
+
+// TC0140SYT sound chip: 0x800000–0x800003 (2 × 16-bit words)
+//   0x800001 (write): port select; 0x800003 (read/write): command/status
+//   Return 0x00 for sound status (ready) to allow game to proceed.
+//   cpu_addr[23:1] covers individual words; use [23:2] for 4-byte range.
+logic syt_cs;
+assign syt_cs  = (cpu_addr[23:2] == 22'h200000) && !cpu_as_n;
+>>>>>>> sim-batch2
 
 // Sound command: 0x780000–0x780001  (1 × 16-bit, write-only from 68000)
 logic snd_cmd_cs;
@@ -532,29 +590,56 @@ assign z80_ram_cs_n = ~(!z80_mreq_n && (z80_addr[15:13] == 3'b110));
 // =============================================================================
 // I/O Registers (X1-004 input ports, read-only from 68000)
 // =============================================================================
-//
-// From MAME taito_x.cpp: I/O at 0x500000–0x50000F.
-// Typical layout (game-specific byte positions):
-//   0x500000: joystick P1 [7:0]
-//   0x500002: joystick P2 [7:0]
-//   0x500004: coin / service / start [7:0]
-//   0x500006: DIP switch bank 1
-//   0x500008: DIP switch bank 2
+// X1-004 DIP switch port (0x500000–0x500007):
+//   From MAME/FBNeo taitox.cpp (word reads):
+//     0x500000: DIP[0] bits [3:0]  (lo nibble of dipsw1)
+//     0x500002: DIP[0] bits [7:4]  (hi nibble of dipsw1)
+//     0x500004: DIP[1] bits [3:0]  (lo nibble of dipsw2)
+//     0x500006: DIP[1] bits [7:4]  (hi nibble of dipsw2)
+//   Byte reads use odd addresses (A0=1) and return low byte.
+//   cpu_addr[1] is the word select within each 32-bit pair.
+//   cpu_addr[2:1] selects the word (0=500000, 1=500002, 2=500004, 3=500006).
 
 logic [15:0] io_dout;
 always_comb begin
     io_dout = 16'hFFFF;
     if (io_cs) begin
-        case (cpu_addr[3:1])
-            3'd0: io_dout = {8'hFF, joystick_p1};
-            3'd1: io_dout = {8'hFF, joystick_p2};
-            3'd2: io_dout = {8'hFF, {2'b11, 1'b1 /*TILT*/, service,
-                                     coin[1], coin[0], 1'b1 /*START2*/, 1'b1}};
-            3'd3: io_dout = {8'hFF, dipsw1};
-            3'd4: io_dout = {8'hFF, dipsw2};
+        case (cpu_addr[2:1])
+            2'd0: io_dout = {8'hFF, 4'hF, dipsw1[3:0]};   // 0x500000: DIP1 lo nibble
+            2'd1: io_dout = {8'hFF, 4'hF, dipsw1[7:4]};   // 0x500002: DIP1 hi nibble
+            2'd2: io_dout = {8'hFF, 4'hF, dipsw2[3:0]};   // 0x500004: DIP2 lo nibble
+            2'd3: io_dout = {8'hFF, 4'hF, dipsw2[7:4]};   // 0x500006: DIP2 hi nibble
             default: io_dout = 16'hFFFF;
         endcase
     end
+end
+
+// Player input port (0x900000–0x900007, byte reads at odd addresses):
+//   0x900001: P1 joystick  0x900003: P2 joystick  0x900005: coin/service
+logic [15:0] joy_dout;
+always_comb begin
+    joy_dout = 16'hFFFF;
+    if (joy_cs) begin
+        case (cpu_addr[2:1])
+            2'd0: joy_dout = {8'hFF, joystick_p1};   // 0x900000/1: P1
+            2'd1: joy_dout = {8'hFF, joystick_p2};   // 0x900002/3: P2
+            2'd2: joy_dout = {8'hFF, {2'b11, 1'b1 /*TILT*/, service,
+                                      coin[1], coin[0], 1'b1 /*START2*/, 1'b1}};
+            default: joy_dout = 16'hFFFF;
+        endcase
+    end
+end
+
+// TC0140SYT sound chip stub (0x800000–0x800003):
+//   Read 0x800003 status byte:
+//     bits[1:0] = 0: not busy (game polls these to clear before sending)
+//     bit[2]    = 1: request complete (game polls this to set after sending)
+//   Without a real Z80, returning 0x0004 fakes "idle and ready" permanently.
+//   Writes ignored.
+logic [15:0] syt_dout;
+always_comb begin
+    // 0x04 = bits[1:0] clear (not busy) + bit[2] set (request complete = ready)
+    syt_dout = 16'h0004;
 end
 
 // =============================================================================
@@ -585,6 +670,10 @@ always_comb begin
         cpu_dout = wram_dout_r;
     else if (io_cs)
         cpu_dout = io_dout;
+    else if (joy_cs)
+        cpu_dout = joy_dout;
+    else if (syt_cs)
+        cpu_dout = syt_dout;
     else if (snd_ack_cs)
         cpu_dout = {8'hFF, snd_ack_reg};
     else
@@ -615,7 +704,15 @@ logic dtack_r;
 // Immediate chip-selects: BRAM/registers that respond in 1 pipeline cycle.
 logic imm_cs;
 assign imm_cs = wram_cs | pal_cs | yram_cs | ctrl_cs | cram_cs
-              | io_cs | snd_cmd_cs | snd_ack_cs;
+              | io_cs | joy_cs | syt_cs | snd_cmd_cs | snd_ack_cs;
+
+// Open-bus DTACK: any active bus cycle with no known chip-select → 1-cycle DTACK.
+// Prevents CPU hang on unmapped accesses (watchdog, sound bank reg, etc.)
+logic any_cs;
+logic open_bus_cs;
+assign any_cs      = prog_rom_cs | wram_cs | pal_cs | yram_cs | ctrl_cs | cram_cs
+                   | io_cs | joy_cs | syt_cs | snd_cmd_cs | snd_ack_cs;
+assign open_bus_cs = !cpu_as_n && !any_cs;
 
 // Combinational pulse: SDRAM ack arrives this cycle while request is pending.
 assign prog_dtack_now = prog_rom_cs && prog_req_pending && (sdr_req == sdr_ack);
@@ -648,7 +745,11 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n)
         dtack_r <= 1'b0;
     else
+<<<<<<< HEAD
         dtack_r <= !cpu_as_n && (dtack_r | imm_cs | prog_dtack_now | open_bus_dtack);
+=======
+        dtack_r <= !cpu_as_n && (dtack_r | imm_cs | prog_dtack_now | open_bus_cs);
+>>>>>>> sim-batch2
 end
 
 assign cpu_dtack_n = cpu_as_n       ? 1'b1 :
@@ -659,31 +760,53 @@ assign cpu_dtack_n = cpu_as_n       ? 1'b1 :
 // Interrupt Controller
 // =============================================================================
 //
-// VBlank → 68000 IPL5 (level 5, active-low ~5 = 3'b010).
-// HOLD_LINE: latch and hold for 16-bit timer window (~65K sys_clk cycles).
-// This is sufficient time for the 68000 to IACK the interrupt.
+// Gigandes: VBlank → 68000 IPL level 2 (active-low ~2 = 3'b101).
+//
+// IACK-based clear (community pattern — jotego/cave/neogeo/va7deo ALL use this).
+// The interrupt is SET on VBlank rising edge and CLEARED only when the CPU
+// performs an Interrupt Acknowledge bus cycle (FC=111, ASn=0).
+//
+// Why NOT timer-based or vblank-falling-edge clear:
+//   fx68k requires IPL stable for TWO consecutive phi2 edges (rIpl → iIpl pipeline).
+//   A time-based clear that fires before IACK can deassert the interrupt too early —
+//   particularly when pswI=7 during game init code. IACK-based clear guarantees
+//   the CPU has fully acknowledged the interrupt before the latch is released.
+//
+// Fix 2: Register IPL through synchronizer FF to ensure stable sampling
+// by fx68k's two-stage pipeline (rIpl → iIpl → iplStable check).
 
-logic        ipl_active;
-logic [15:0] ipl_timer;
+// IACK detection: CPU asserts FC=111 with ASn=0 during interrupt acknowledge.
+// VPAn (wired in tb_top) triggers autovector response on this same condition.
+wire inta_n = ~&{cpu_fc[2], cpu_fc[1], cpu_fc[0], ~cpu_as_n};
+
+logic int_vbl_n;  // active-low VBlank interrupt (Gigandes level 2)
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n) begin
-        ipl_active <= 1'b0;
-        ipl_timer  <= 16'b0;
-    end else begin
-        if (vblank_rise) begin
-            ipl_active <= 1'b1;
-            ipl_timer  <= 16'hFFFF;
-        end else if (ipl_active) begin
-            if (ipl_timer == 16'b0) ipl_active <= 1'b0;
-            else                    ipl_timer  <= ipl_timer - 16'd1;
-        end
-    end
+    if (!reset_n)
+        int_vbl_n <= 1'b1;           // inactive (no interrupt)
+    else if (!inta_n)
+        int_vbl_n <= 1'b1;           // CLEAR on IACK (CPU has acknowledged)
+    else if (vblank_rise)
+        int_vbl_n <= 1'b0;           // SET on VBlank rising edge
 end
 
+<<<<<<< HEAD
 // IPL6: active-low encoded = ~3'd6 = 3'b001
 // Gigandes VBlank interrupt: level 6 autovector (vec[0x78] = 0x5B8).
 assign cpu_ipl_n = ipl_active ? ~3'd6 : 3'b111;
+=======
+// Synchronizer FF: register IPL for stable sampling by fx68k
+// Gigandes: level 2 = IPL encoding ~2 = 3'b101 (IPL2n=1, IPL1n=0, IPL0n=1)
+reg [2:0] ipl_sync;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n)
+        ipl_sync <= 3'b111;          // no interrupt
+    else
+        ipl_sync <= int_vbl_n ? 3'b111 : 3'b101;  // level 2 when active
+end
+
+assign cpu_ipl_n = ipl_sync;
+>>>>>>> sim-batch2
 
 // =============================================================================
 // Program ROM SDRAM Bridge

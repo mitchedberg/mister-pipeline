@@ -42,12 +42,12 @@ module nmk16 #(
 
     // Sprite RAM write port (from CPU)
     output logic                    sprite_wr,      // Sprite RAM write enable
-    output logic [9:0]              sprite_addr_wr, // Sprite address (256 sprites × 4 words = 1024 words)
+    output logic [10:0]             sprite_addr_wr, // Sprite address (256 sprites × 8 words = 2048 words)
     output logic [15:0]             sprite_data_wr, // Sprite data to write
 
     // Sprite RAM read port (from CPU or rendering)
     output logic                    sprite_rd,      // Sprite RAM read enable (stub for external BRAM)
-    output logic [9:0]              sprite_addr_rd, // Sprite read address (stub for external BRAM)
+    output logic [10:0]             sprite_addr_rd, // Sprite read address (stub for external BRAM)
     /* verilator lint_off UNUSEDSIGNAL */
     input  logic [15:0]             sprite_data_rd, // Sprite data from RAM (unused; internal BRAM used)
     /* verilator lint_on UNUSEDSIGNAL */
@@ -300,8 +300,8 @@ module nmk16 #(
     logic [15:0] sprite_data_rd_muxed;
     altsyncram #(
         .operation_mode            ("DUAL_PORT"),
-        .width_a                   (16), .widthad_a (10), .numwords_a (1024),
-        .width_b                   (16), .widthad_b (10), .numwords_b (1024),
+        .width_a                   (16), .widthad_a (11), .numwords_a (2048),
+        .width_b                   (16), .widthad_b (11), .numwords_b (2048),
         .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
         .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
         .clock_enable_output_b     ("BYPASS"),
@@ -311,7 +311,7 @@ module nmk16 #(
         .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
     ) sprite_ram_inst (
         .clock0(clk), .clock1(clk),
-        .address_a(addr[10:1]), .data_a(din),
+        .address_a(addr[11:1]), .data_a(din),
         .wren_a(~cs_n & ~wr_n & is_sprite),
         .address_b(sprite_addr_rd), .q_b(sprite_data_rd_muxed),
         .wren_b(1'b0), .data_b(16'd0), .q_a(),
@@ -320,7 +320,7 @@ module nmk16 #(
         .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(), .rden_b(1'b1)
     );
 `else
-    logic [15:0] sprite_ram_storage [0:1023];  // 256 sprites × 4 words
+    logic [15:0] sprite_ram_storage [0:2047];  // 256 sprites × 8 words = 2048 words
     logic [15:0] sprite_data_rd_muxed;
 
     // Write port (from CPU)
@@ -328,7 +328,7 @@ module nmk16 #(
     // Reset loop removed to avoid Error 10028 (multiple constant drivers) in Quartus 17.0.
     always_ff @(posedge clk) begin
         if (~cs_n & ~wr_n & is_sprite) begin
-            sprite_ram_storage[addr[10:1]] <= din;
+            sprite_ram_storage[addr[11:1]] <= din;
         end
     end
 
@@ -342,7 +342,7 @@ module nmk16 #(
 
     always_comb begin
         sprite_wr = 1'b0;  // Stub - writes handled by internal BRAM
-        sprite_addr_wr = 10'h000;
+        sprite_addr_wr = 11'h000;
         sprite_data_wr = 16'h0000;
         // Note: sprite_data_rd is an input port; in a real design, it would come from external BRAM
         // For testing, we internally generate it via sprite_data_rd_muxed
@@ -363,8 +363,8 @@ module nmk16 #(
     } scanner_state_t;
 
     scanner_state_t scanner_state, scanner_next_state;
-    logic [9:0] sprite_scan_idx;      // Current sprite index (0-255 × 4 words)
-    logic [7:0] display_list_idx;     // Write index into display list
+    logic [10:0] sprite_scan_idx;     // Current sprite index (0-255 × 8 words = 2047)
+    logic [7:0]  display_list_idx;   // Write index into display list
 
     // Display list arrays (internal — packed to match output port types, avoids Quartus auto-generated multi-driver)
     logic [255:0][8:0]  _display_list_x;
@@ -393,7 +393,7 @@ module nmk16 #(
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             scanner_state <= IDLE;
-            sprite_scan_idx <= 10'h000;
+            sprite_scan_idx <= 11'h000;
             display_list_idx <= 8'h00;
         end else begin
             scanner_state <= scanner_next_state;
@@ -401,8 +401,8 @@ module nmk16 #(
             case (scanner_state)
                 IDLE: begin
                     // Hold display list from previous scan
-                    sprite_scan_idx <= 10'h000;
-                    // Reset display_list_idx when about to enter SCAN (VBLANK rising edge)
+                    sprite_scan_idx <= 11'h000;
+                    // Reset display_list_idx when about to enter SCAN (VBLANK falling edge)
                     if (scanner_next_state == SCAN) begin
                         display_list_idx <= 8'h00;
                     end
@@ -410,10 +410,10 @@ module nmk16 #(
 
                 SCAN: begin
                     // Advance sprite scan index each cycle
-                    // sprite_scan_idx[9:2] = sprite number (0-255)
-                    // sprite_scan_idx[1:0] = word offset within sprite (0-3)
-                    // After processing word 3 (attributes), latch display list entry
-                    if (sprite_scan_idx[1:0] == 2'b11) begin
+                    // sprite_scan_idx[10:3] = sprite number (0-255)
+                    // sprite_scan_idx[2:0]  = word offset within sprite (0-7)
+                    // After processing word 7 (color/palette), latch display list entry
+                    if (sprite_scan_idx[2:0] == 3'b111) begin
                         if (sprite_is_visible) begin
                             display_list_idx <= display_list_idx + 1'b1;
                         end
@@ -423,12 +423,12 @@ module nmk16 #(
                 end
 
                 DONE: begin
-                    sprite_scan_idx <= 10'h000;
+                    sprite_scan_idx <= 11'h000;
                     // Hold display_list_idx (don't change it)
                 end
 
                 default: begin
-                    sprite_scan_idx <= 10'h000;
+                    sprite_scan_idx <= 11'h000;
                     display_list_idx <= 8'h00;
                 end
             endcase
@@ -449,9 +449,9 @@ module nmk16 #(
 
             SCAN: begin
                 // Transition to DONE when all 256 sprites have been scanned
-                // sprite_scan_idx increments from 0-1023, then wraps to 0
-                // We transition when we've just processed the last sprite's word 3
-                if (sprite_scan_idx == 10'h3FF) begin  // About to overflow on next increment
+                // sprite_scan_idx increments from 0-2047, then wraps to 0
+                // We transition when we've just processed the last sprite's word 7
+                if (sprite_scan_idx == 11'h7FF) begin  // About to overflow on next increment
                     scanner_next_state = DONE;
                 end
             end
@@ -476,15 +476,15 @@ module nmk16 #(
         if (scanner_state == SCAN) begin
             // Scanner reads sprite RAM during VBLANK
             sprite_rd = 1'b1;
-            sprite_addr_rd = sprite_scan_idx[9:0];
+            sprite_addr_rd = sprite_scan_idx[10:0];
         end else begin
             // CPU reads sprite RAM (from Gate 1 CPU interface)
             sprite_rd = 1'b0;
-            sprite_addr_rd = 10'h000;
+            sprite_addr_rd = 11'h000;
 
             if (~cs_n & ~rd_n & is_sprite) begin
                 sprite_rd = 1'b1;
-                sprite_addr_rd = addr[10:1];  // 256 sprites × 4 words = 1024 addresses
+                sprite_addr_rd = addr[11:1];  // 256 sprites × 8 words = 2048 addresses
             end
         end
     end
@@ -493,72 +493,101 @@ module nmk16 #(
 
 `ifdef QUARTUS
     // Registered copy of sprite_scan_idx for 1-cycle altsyncram read latency compensation
-    logic [9:0] sprite_scan_idx_r;
+    logic [10:0] sprite_scan_idx_r;
     always_ff @(posedge clk) sprite_scan_idx_r <= sprite_scan_idx;
 `endif
 
     /* verilator lint_off UNUSEDSIGNAL */
-    logic [15:0] sprite_word_y, sprite_word_x, sprite_word_tile, sprite_word_attr;
+    logic [15:0] sprite_word_y, sprite_word_x, sprite_word_tile, sprite_word_attr, sprite_word_wh;
     /* verilator lint_on UNUSEDSIGNAL */
-    logic [8:0]  sprite_y_cached;  // Cache Y position when word 0 is read
+    logic [8:0]  sprite_y_cached;  // Cache Y position when word 6 is read
     logic        sprite_visible_cached;
-
-    localparam INACTIVE_Y = 9'h1FF;  // Y position sentinel for hidden sprites
 
 `ifdef QUARTUS
     // Under QUARTUS: sprite_data_rd_muxed is registered (1-cycle latency from altsyncram).
     // Use sprite_scan_idx_r (1-cycle delayed) to match the data word to correct slot.
+    //
+    // 8-word sprite format (Thunder Dragon / NMK16 hardware):
+    //   Word 0: active[0], priority[7:6]
+    //   Word 1: w[3:0], h[7:4], flipx[8], flipy[9]
+    //   Word 2: unused
+    //   Word 3: tile code [11:0]
+    //   Word 4: X position [8:0]
+    //   Word 5: unused
+    //   Word 6: Y position [8:0]
+    //   Word 7: palette/color [3:0] (at bits [7:4] or [3:0] depending on game)
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
-            sprite_word_y <= 16'h0000;
-            sprite_word_x <= 16'h0000;
+            sprite_word_y    <= 16'h0000;
+            sprite_word_x    <= 16'h0000;
             sprite_word_tile <= 16'h0000;
             sprite_word_attr <= 16'h0000;
-            sprite_y_cached <= 9'h000;
+            sprite_word_wh   <= 16'h0000;
+            sprite_y_cached  <= 9'h000;
             sprite_visible_cached <= 1'b0;
         end else if (scanner_state == SCAN) begin
-            case (sprite_scan_idx_r[1:0])
-                2'b00: begin
-                    sprite_word_y <= sprite_data_rd_muxed;
+            case (sprite_scan_idx_r[2:0])
+                3'd0: sprite_word_attr <= sprite_data_rd_muxed;   // Word 0: active[0], priority[7:6]
+                3'd1: sprite_word_wh   <= sprite_data_rd_muxed;   // Word 1: w[3:0], h[7:4], flipx[8], flipy[9]
+                3'd3: sprite_word_tile <= sprite_data_rd_muxed;   // Word 3: tile code [11:0]
+                3'd4: sprite_word_x    <= sprite_data_rd_muxed;   // Word 4: X position [8:0]
+                3'd6: begin
+                    sprite_word_y <= sprite_data_rd_muxed;        // Word 6: Y position [8:0]
                     sprite_y_cached <= sprite_data_rd_muxed[8:0];
-                    sprite_visible_cached <= (sprite_data_rd_muxed[8:0] != INACTIVE_Y);
+                    // Active if word0[0]=1 (rely on active bit only; Y=0 visible after transform)
+                    sprite_visible_cached <= sprite_word_attr[0];
                 end
-                2'b01: sprite_word_x <= sprite_data_rd_muxed;
-                2'b10: sprite_word_tile <= sprite_data_rd_muxed;
-                2'b11: sprite_word_attr <= sprite_data_rd_muxed;
+                default: begin end
             endcase
         end
     end
 `else
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
-            sprite_word_y <= 16'h0000;
-            sprite_word_x <= 16'h0000;
+            sprite_word_y    <= 16'h0000;
+            sprite_word_x    <= 16'h0000;
             sprite_word_tile <= 16'h0000;
             sprite_word_attr <= 16'h0000;
-            sprite_y_cached <= 9'h000;
+            sprite_word_wh   <= 16'h0000;
+            sprite_y_cached  <= 9'h000;
             sprite_visible_cached <= 1'b0;
         end else if (scanner_state == SCAN) begin
-            // Capture sprite RAM data based on which word we're reading
-            case (sprite_scan_idx[1:0])
-                2'b00: begin
-                    sprite_word_y <= sprite_data_rd_muxed;      // Word 0: Y
-                    sprite_y_cached <= sprite_data_rd_muxed[8:0];  // Cache for visibility check
-                    sprite_visible_cached <= (sprite_data_rd_muxed[8:0] != INACTIVE_Y);
+            // 8-word sprite format (Thunder Dragon / NMK16 hardware):
+            //   Word 0: active[0], priority[7:6]
+            //   Word 1: w[3:0], h[7:4], flipx[8], flipy[9]
+            //   Word 2: unused
+            //   Word 3: tile code [11:0]
+            //   Word 4: X position [8:0]
+            //   Word 5: unused
+            //   Word 6: Y position [8:0]
+            //   Word 7: palette/color [3:0]
+            case (sprite_scan_idx[2:0])
+                3'd0: sprite_word_attr <= sprite_data_rd_muxed;   // Word 0: active[0], priority[7:6]
+                3'd1: sprite_word_wh   <= sprite_data_rd_muxed;   // Word 1: w[3:0], h[7:4], flipx[8], flipy[9]
+                3'd3: sprite_word_tile <= sprite_data_rd_muxed;   // Word 3: tile code [11:0]
+                3'd4: sprite_word_x    <= sprite_data_rd_muxed;   // Word 4: X position [8:0]
+                3'd6: begin
+                    sprite_word_y <= sprite_data_rd_muxed;        // Word 6: Y position [8:0]
+                    sprite_y_cached <= sprite_data_rd_muxed[8:0];
+                    // Active if word0[0]=1 (rely on active bit only; Y=0 visible after transform)
+                    sprite_visible_cached <= sprite_word_attr[0];
                 end
-                2'b01: sprite_word_x <= sprite_data_rd_muxed;      // Word 1: X
-                2'b10: sprite_word_tile <= sprite_data_rd_muxed;   // Word 2: Tile
-                2'b11: sprite_word_attr <= sprite_data_rd_muxed;   // Word 3: Attributes
+                default: begin end
             endcase
         end
     end
 `endif
 
     // ========== SPRITE VISIBILITY CHECK & EXTRACTION ==========
+    //
+    // NMK16 coordinate convention: hardware stores position as (256 - screen_pos) & 0x1FF.
+    // Transform: screen_pos = (256 - raw_value) & 0x1FF.
+    // This matches MAME nmk16.cpp: sx = (256 - spriteram[offs+4]) & 0x1ff;
+    //                               sy = (256 - spriteram[offs+6]) & 0x1ff;
 
     always_comb begin
-        sprite_y_pos = sprite_y_cached;
-        sprite_x_pos = sprite_word_x[8:0];
+        sprite_y_pos = (9'd256 - sprite_y_cached) & 9'h1FF;
+        sprite_x_pos = (9'd256 - sprite_word_x[8:0]) & 9'h1FF;
         sprite_is_visible = sprite_visible_cached && (scanner_state == SCAN);
     end
 
@@ -578,22 +607,32 @@ module nmk16 #(
             _display_list_valid    <= '0;
             _display_list_priority <= '0;
 `ifdef QUARTUS
-        end else if (scanner_state == SCAN && sprite_scan_idx_r[1:0] == 2'b11 && sprite_is_visible) begin
+        end else if (scanner_state == SCAN && sprite_scan_idx_r[2:0] == 3'b111 && sprite_is_visible) begin
 `else
-        end else if (scanner_state == SCAN && sprite_scan_idx[1:0] == 2'b11 && sprite_is_visible) begin
+        end else if (scanner_state == SCAN && sprite_scan_idx[2:0] == 3'b111 && sprite_is_visible) begin
 `endif
-            // When word 3 (attributes) is presented and sprite is visible, write to display list.
-            // Use sprite_data_rd_muxed directly for attr fields: sprite_word_attr is registered
-            // on this same edge so it still holds the previous sprite's attr.
+            // When word 7 (palette) is presented and sprite is visible, write to display list.
+            // 8-word format:
+            //   sprite_word_attr  = word 0 (active[0], priority[7:6])
+            //   sprite_word_tile  = word 1 (w[3:0], h[7:4], flipx[8], flipy[9]) — then overwritten by word 3 (tile code)
+            //     NOTE: we need both w/h/flip from word1 AND tile from word3.
+            //     Separate registers needed. For now tile code from word3 is in sprite_word_tile;
+            //     w/h/flip from word1 stored in sprite_word_x (reuse as temp) was overwritten by word4.
+            //     Use a dedicated sprite_word_wh register (see below).
             _display_list_y[display_list_idx]        <= sprite_y_pos;
             _display_list_x[display_list_idx]        <= sprite_x_pos;
-            _display_list_tile[display_list_idx]     <= sprite_word_tile[11:0];
-            _display_list_flip_x[display_list_idx]   <= sprite_data_rd_muxed[10];
-            _display_list_flip_y[display_list_idx]   <= sprite_data_rd_muxed[9];
-            _display_list_size[display_list_idx]     <= sprite_data_rd_muxed[15:14];
-            _display_list_palette[display_list_idx]  <= sprite_data_rd_muxed[7:4];
+            _display_list_tile[display_list_idx]     <= sprite_word_tile[11:0];  // word 3 tile code
+            _display_list_flip_x[display_list_idx]   <= sprite_word_wh[8];      // word 1 flipx[8]
+            _display_list_flip_y[display_list_idx]   <= sprite_word_wh[9];      // word 1 flipy[9]
+            // Size: encode height nibble as power-of-2 index (h=0→16px, h=1→32px, h=3→64px)
+            // sprite_word_wh[7:4] = h (number of additional 16px rows above first)
+            // Clamp to 2 bits: 0=16px, 1=32px, 2=64px, 3=128px
+            _display_list_size[display_list_idx]     <= (sprite_word_wh[7:4] >= 4'd3) ? 2'd2 :
+                                                         (sprite_word_wh[7:4] >= 4'd1) ? 2'd1 :
+                                                         2'd0;
+            _display_list_palette[display_list_idx]  <= sprite_data_rd_muxed[3:0];  // word 7 [3:0]
             _display_list_valid[display_list_idx]    <= 1'b1;
-            _display_list_priority[display_list_idx] <= sprite_data_rd_muxed[11];  // ATTR[11]
+            _display_list_priority[display_list_idx] <= sprite_word_attr[7];  // word 0 priority high bit
         end
     end
 
@@ -702,9 +741,10 @@ module nmk16 #(
     // ── Scanline pixel buffer ─────────────────────────────────────────────
     // Packed arrays required by Quartus 17.0 — avoids Error 10028/10028 with
     // unpacked synthesis and enables direct '0 reset without a for-loop.
-    logic [319:0][7:0]  spr_pix_color;
-    logic [319:0]       spr_pix_valid;
-    logic [319:0]       spr_pix_priority;  // priority bit per pixel (from sprite ATTR[11])
+    // Size = 384 (NMK16 active horizontal pixels; sprites can span 0..383)
+    logic [383:0][7:0]  spr_pix_color;
+    logic [383:0]       spr_pix_valid;
+    logic [383:0]       spr_pix_priority;  // priority bit per pixel (from sprite ATTR[11])
 
     // ── Read-back port (combinational) ────────────────────────────────────
     always_comb begin
@@ -863,13 +903,13 @@ module nmk16 #(
 
                         /* verilator lint_off WIDTHTRUNC */
                         // Write low pixel
-                        if (px_lo_x < 10'd320 && eff_nib_lo != 4'h0) begin
+                        if (px_lo_x < 10'd384 && eff_nib_lo != 4'h0) begin
                             spr_pix_color[px_lo_x[8:0]]    <= {g3_palette, eff_nib_lo};
                             spr_pix_valid[px_lo_x[8:0]]    <= 1'b1;
                             spr_pix_priority[px_lo_x[8:0]] <= g3_priority;
                         end
                         // Write high pixel
-                        if (px_hi_x < 10'd320 && eff_nib_hi != 4'h0) begin
+                        if (px_hi_x < 10'd384 && eff_nib_hi != 4'h0) begin
                             spr_pix_color[px_hi_x[8:0]]    <= {g3_palette, eff_nib_hi};
                             spr_pix_valid[px_hi_x[8:0]]    <= 1'b1;
                             spr_pix_priority[px_hi_x[8:0]] <= g3_priority;

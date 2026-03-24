@@ -76,6 +76,10 @@ module tb_top (
     output logic        dbg_cpu_dtack_n,
     output logic        dbg_cpu_halted_n,
     output logic [15:0] dbg_cpu_dout,
+<<<<<<< HEAD
+=======
+    output logic  [2:0] dbg_cpu_fc,         // function codes FC2:FC0 (exception type)
+>>>>>>> sim-batch2
 
     // ── Bus bypass: C++ testbench drives CPU data/DTACK directly ─────────────
     input  logic        bypass_en,
@@ -116,12 +120,29 @@ logic cpu_reset_n_out;
 // Bus bypass: C++ can drive iEdb and DTACKn directly for ROM reads.
 // When bypass_en=1, CPU reads from bypass_data with bypass_dtack_n.
 // When bypass_en=0, CPU reads from taito_x's cpu_dout/cpu_dtack_n.
+<<<<<<< HEAD
+=======
+//
+// IACK DTACK suppression: during interrupt acknowledge cycles (FC=111, AS#=0),
+// force DTACKn HIGH so the CPU uses the autovector path (VPAn → AVEC) instead
+// of getting a spurious DTACK from the bus. Without this, fx68k may latch
+// random bus data as a vector number instead of autovectoring.
+>>>>>>> sim-batch2
 // =============================================================================
 logic [15:0] cpu_iEdb_mux;
 logic        cpu_dtack_mux;
 
+<<<<<<< HEAD
 assign cpu_iEdb_mux  = bypass_en ? bypass_data    : cpu_dout;
 assign cpu_dtack_mux = bypass_en ? bypass_dtack_n : cpu_dtack_n;
+=======
+logic iack_cycle;
+assign iack_cycle = fx_FC2 & fx_FC1 & fx_FC0 & ~cpu_as_n;
+
+assign cpu_iEdb_mux  = bypass_en ? bypass_data    : cpu_dout;
+assign cpu_dtack_mux = bypass_en ? bypass_dtack_n :
+                       iack_cycle ? 1'b1 : cpu_dtack_n;
+>>>>>>> sim-batch2
 
 fx68k u_cpu (
     .clk        (clk_sys),
@@ -288,6 +309,7 @@ logic [4:0] tx_rgb_r;
 logic [4:0] tx_rgb_g;
 logic [4:0] tx_rgb_b;
 
+<<<<<<< HEAD
 taito_x #(
     // ── Gigandes address map parameters ────────────────────────────────────
     // WRAM: 0xF00000–0xF03FFF (16KB = 8K words, word base 23'h780000)
@@ -296,6 +318,16 @@ taito_x #(
     // Palette, Sprite Y/Code, IO same as Superman defaults
     // Sound TC0140SYT: 0x800000 (word base 23'h400000)
     .SND_BASE   (23'h400000)
+=======
+// Gigandes memory map parameters:
+//   WRAM at 0xF00000–0xF03FFF (16KB, word base 0x780000, 13-bit word addr)
+//   IPL2 VBlank (level 2, active-low ~3'd2 = 3'b101)
+//   FG_NOFLIP_YOFFS = -10 (MAME taito_x.cpp: m_spritegen->set_fg_yoffsets(-0xa, 0xe))
+taito_x #(
+    .WRAM_BASE       (23'h780000),  // byte 0xF00000 / 2
+    .WRAM_ABITS      (13),          // 2^13 = 8K words = 16KB
+    .FG_NOFLIP_YOFFS (-10)          // Gigandes: -0x0a (Superman uses -0x12 = -18)
+>>>>>>> sim-batch2
 ) u_taito_x (
     .clk_sys        (clk_sys),
     .clk_pix        (clk_pix),
@@ -311,6 +343,10 @@ taito_x #(
     .cpu_as_n       (cpu_as_n),
     .cpu_dtack_n    (cpu_dtack_n),
     .cpu_ipl_n      (cpu_ipl_n),
+<<<<<<< HEAD
+=======
+    .cpu_fc         ({fx_FC2, fx_FC1, fx_FC0}),
+>>>>>>> sim-batch2
 
     // Z80 Sound CPU bus
     .z80_addr       (z80_addr_w),
@@ -367,5 +403,9 @@ assign dbg_cpu_rw      = cpu_rw;
 assign dbg_cpu_din     = cpu_din;
 assign dbg_cpu_dtack_n = cpu_dtack_n;
 assign dbg_cpu_dout    = cpu_dout;
+<<<<<<< HEAD
+=======
+assign dbg_cpu_fc      = {fx_FC2, fx_FC1, fx_FC0};
+>>>>>>> sim-batch2
 
 endmodule

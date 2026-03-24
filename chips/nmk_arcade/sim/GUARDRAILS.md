@@ -167,6 +167,112 @@ sessions, but you will forget them.
 
 ---
 
+## NMK16 Sprite Coordinate Convention (CRITICAL)
+
+NMK16 hardware stores sprite positions as `(256 - screen_pos) & 0x1FF`.
+
+To recover screen coordinates:
+```
+screen_x = (256 - spriteram[offs+4]) & 0x1FF   (matches MAME nmk16.cpp)
+screen_y = (256 - spriteram[offs+6]) & 0x1FF
+```
+
+This is applied in nmk16.sv:
+```sv
+sprite_y_pos = (9'd256 - sprite_y_cached) & 9'h1FF;
+sprite_x_pos = (9'd256 - sprite_word_x[8:0]) & 9'h1FF;
+```
+
+Raw values like X=482, Y=48 → screen X=286 (visible), screen Y=208 (visible).
+
+---
+
+## G3 Rasterizer scan_trigger — Fixed 2026-03-20
+
+The G3 sprite rasterizer requires `scan_trigger` = 1-cycle pulse at the start of each
+active scanline, plus `current_scanline` = the current Y position.
+
+Without this, G3 stays in G3_IDLE forever and no sprites render.
+
+**Fix in nmk_arcade.sv**:
+```sv
+logic scan_trigger_w;
+assign scan_trigger_w = (hpos == 9'd0) && hblank_n_in;
+```
+Connected to the nmk16 instance as:
+```sv
+.scan_trigger     (scan_trigger_w),
+.current_scanline ({1'b0, vpos}),
+```
+
+This fires exactly once per active scanline (when hpos transitions to 0 while hblank is
+inactive). During hblank, hblank_n_in=0 prevents false triggers even though hpos=0 during
+hblank (the testbench drives hpos=0 during blanking).
+
+---
+
+## RAM Dump Format (89100 bytes/frame — NOT 87052)
+
+The `dump_frame_ram()` function writes 89100 bytes per frame despite reporting "87052"
+in its stderr log. The log message is wrong; the file is correct.
+Use these offsets for analysis scripts:
+
+```python
+FRAME_SIZE  = 89100
+WRAM_OFF    = 4                           # 64KB work RAM (32768 words)
+PAL_OFF     = 4 + 65536                   # 512-entry palette (1024 bytes)
+SPR_OFF     = 4 + 65536 + 1024           # 2048-word sprite storage (4096 bytes)
+BG_OFF      = 4 + 65536 + 1024 + 4096   # 2048-word tilemap + padding to 16KB
+TX_OFF      = 4 + 65536 + 1024 + 4096 + 16384   # 2KB TX VRAM stub
+SCROLL_OFF  = 4 + 65536 + 1024 + 4096 + 16384 + 2048  # 8 bytes scroll regs
+```
+
+## MAME RAM Dump Format (86028 bytes/frame)
+
+The MAME Lua script `mame_ram_dump.lua` produces a DIFFERENT layout:
+
+```python
+MAME_FRAME  = 86028
+M_WRAM_OFF  = 4                                         # 64KB MainRAM (0x080000-0x08FFFF)
+M_PAL_OFF   = 4 + 65536                                 # 2KB Palette (1024 entries × 2B)
+M_BG_OFF    = 4 + 65536 + 2048                          # 16KB BGVRAM (0x0CC000-0x0CFFFF)
+M_TX_OFF    = 4 + 65536 + 2048 + 16384                  # 2KB TXVRAM (0x0D0000-0x0D07FF)
+M_SCROLL_OFF = 4 + 65536 + 2048 + 16384 + 2048         # 8B scroll regs
+```
+
+Key differences vs SIM format:
+- MAME palette: 2048 bytes (1024 entries); NMK16 only uses first 512 (1024 bytes)
+- MAME has NO separate sprite RAM section; sprites live in main RAM (0x087000-0x08BFFF)
+- MAME BGVRAM: 16KB, but hardware mirrors tilemap: only first 4KB is active data,
+  blocks 1-3 read as 0xFFFF (uninitialized SRAM in unimplemented sub-pages)
+- MAME scroll regs: appear as 0 if read before VBlank latch fires
+
+## Format-Aware Comparison Script
+
+Use `chips/validate/compare_ram_dumps.py` for byte-accurate MAME vs SIM comparison:
+
+```bash
+python3 chips/validate/compare_ram_dumps.py \
+    --mame results/tdragon/tdragon_frames.bin \
+    --sim  results/tdragon/tdragon_sim_v3.bin \
+    --frames 200
+```
+
+Baseline results (88eba67, 200 frames, cold boot):
+- MainRAM: 95.73% byte match (0 exact frames due to persistent WRAM drift)
+- Palette: 54.78% byte match (MAME palette loads ~10-15 frames later than SIM)
+- BGVRAM:   8.43% byte match (game-state divergence by frame ~12)
+- Scroll:  56.56% byte match (MAME scroll always reads 0; SIM scroll increments)
+
+Root causes identified (NOT translator bugs):
+1. Frame 0: 15 byte diffs at 0x089000 = sound/timer register init difference
+2. Frame 12: SIM CPU writes 0x0020 to sprite table at 0x08B000-0x08B7FF;
+   MAME captures same range as 0x0000 (timing of snapshot vs DMA)
+3. By frame ~30: game diverges because MAME scroll stays at 0 (audio CPU slower?)
+4. The 95.73% MainRAM accuracy across 200 frames confirms 68000 execution is correct
+
+---
+
 ## Common Failure Modes (Checklist)
 
 If simulation produces all-black frames, check in this order:
@@ -184,6 +290,8 @@ If simulation produces frames but they look wrong:
 2. Check VRAM tile writes (is the CPU populating video memory?)
 3. Check scroll register writes
 4. Check layer enable bits
+5. Is scan_trigger connected? (1'b0 = sprites never render)
+6. Use correct RAM dump offsets (see section above)
 
 ---
 

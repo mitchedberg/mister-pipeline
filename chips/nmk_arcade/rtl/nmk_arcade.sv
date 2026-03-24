@@ -35,7 +35,9 @@
 module nmk_arcade #(
     // ── Work RAM ───────────────────────────────────────────────────────────────
     // 64KB: 15-bit word address (WRAM_ABITS=15 → 32768 words = 65536 bytes)
+    // WRAM_BASE: upper byte of work RAM address (0x0B for tdragon, 0x08 for tdragonb2)
     parameter int unsigned WRAM_ABITS = 15,
+    parameter logic [7:0]  WRAM_BASE  = 8'h0B,
 
     // ── Palette RAM ────────────────────────────────────────────────────────────
     // 512 entries × 16-bit: 9-bit word address
@@ -66,6 +68,7 @@ module nmk_arcade #(
     input  logic        cpu_uds_n,      // upper data strobe (active low)
     input  logic        cpu_rw,         // 1=read, 0=write
     input  logic        cpu_as_n,       // address strobe (active low)
+    input  logic        cpu_inta_n,     // interrupt acknowledge (active low, FC=111 & ASn=0)
     output logic        cpu_dtack_n,    // data transfer acknowledge (active low)
     output logic [2:0]  cpu_ipl_n,      // interrupt priority level (active low encoded)
 
@@ -174,8 +177,11 @@ logic prog_rom_cs;
 assign prog_rom_cs = (cpu_addr[23:18] == 6'b0) && !cpu_as_n;
 
 // Work RAM: 64KB at 0x0B0000–0x0BFFFF → A[23:16] == 8'h0B
+// EXCEPT: 0x0BB000–0x0BBFFF is NMK004 MCU I/O space (read-only, not writable to BRAM)
 logic wram_cs;
-assign wram_cs = (cpu_addr[23:16] == 8'h0B) && !cpu_as_n;
+logic mcu_io_cs;
+assign mcu_io_cs = (cpu_addr[23:16] == WRAM_BASE) && (cpu_addr[15:12] == 4'hB) && !cpu_as_n;
+assign wram_cs = (cpu_addr[23:16] == WRAM_BASE) && !mcu_io_cs && !cpu_as_n;
 
 // I/O registers: 0x0C0000–0x0C001F → A[23:16]==8'h0C, A[15:5]==11'b0
 // (32 bytes of I/O at 0x0C0000-0x0C001F; cpu_addr[4:1] selects register word)
@@ -202,11 +208,10 @@ assign bg_vram_cs = (cpu_addr[23:16] == 8'h0C) && (cpu_addr[15:14] == 2'b11) && 
 logic tx_vram_cs;
 assign tx_vram_cs = (cpu_addr[23:16] == 8'h0D) && (cpu_addr[15:11] == 5'b0) && !cpu_as_n;
 
-// NMK16 cs_n: assert for any access to the NMK16 region
-// (BG VRAM at 0x0CC000; other NMK16 regs handled by scroll_cs/pal_cs/io_cs above)
-// For simplicity route bg_vram_cs to nmk16 chip; scroll/pal handled locally.
+// NMK16 cs_n: assert for BG VRAM (tilemap) and scroll register accesses.
+// Both regions are handled by the nmk16 chip.
 logic nmk_cs_n;
-assign nmk_cs_n = !bg_vram_cs;
+assign nmk_cs_n = !(bg_vram_cs | scroll_cs);
 
 // =============================================================================
 // NMK16 Chip Address Construction
@@ -216,11 +221,19 @@ assign nmk_cs_n = !bg_vram_cs;
 //   GPU regs:    addr[20:16]=5'b10010 → offset 0x120000
 //   Sprite RAM:  addr[20:16]=5'b10011 → offset 0x130000
 //
-// Thunder Dragon uses BG VRAM at 0x0CC000-0x0CFFFF (system addr).
-// We map this to the chip's tilemap range with addr[20:16]=5'b10001.
-// The lower bits [15:1] come from the offset within the 0x0CC000 window.
+// Thunder Dragon memory mapping:
+//   CPU 0x0CC000-0x0CFFFF → NMK16 tilemap RAM (addr[20:16]=5'b10001)
+//   CPU 0x0C4000-0x0C43FF → NMK16 GPU registers (addr[20:16]=5'b10010)
+//
+// For scroll_cs (0x0C4000): map to nmk16 GPU reg range 0x120000.
+// The scroll/control register offsets are in cpu_addr[4:1].
 logic [20:1] chip_addr;
-assign chip_addr = {5'b10001, cpu_addr[15:1]};   // BG tilemap RAM
+always_comb begin
+    if (scroll_cs)
+        chip_addr = {5'b10010, 11'h0, cpu_addr[4:1]};  // GPU regs: 0x120000 + offset
+    else
+        chip_addr = {5'b10001, cpu_addr[15:1]};          // BG tilemap RAM: 0x110000 + offset
+end
 
 // Signals driven by NMK16 submodule outputs.
 // Suppress UNDRIVEN: these are outputs from the nmk16 instance (not visible
@@ -266,6 +279,12 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) vsync_n_r <= 1'b1;
     else          vsync_n_r <= vsync_n_in;
 end
+
+// Scanline trigger: 1-cycle pulse at start of each active scanline (hpos==0,
+// hblank inactive). Feeds the G3 sprite rasterizer so it knows which scanline
+// to render pixels for.
+logic scan_trigger_w;
+assign scan_trigger_w = (hpos == 9'd0) && hblank_n_in;
 
 /* verilator lint_off PINCONNECTEMPTY */
 nmk16 #(
@@ -324,8 +343,8 @@ nmk16 #(
     .irq_vblank_pulse     (nmk_irq_vblank_pulse),
 
     // Gate 3: sprite rasterizer inputs
-    .scan_trigger     (1'b0),          // stub — no rasterizer pump
-    .current_scanline (9'b0),
+    .scan_trigger     (scan_trigger_w),    // pulse at start of each active scanline
+    .current_scanline ({1'b0, vpos}),      // current active scanline (vpos is 8-bit)
     .spr_rom_addr     (spr_rom_addr_w),
     .spr_rom_rd       (spr_rom_rd_w),
     .spr_rom_data     (spr_rom_data_w),
@@ -772,6 +791,8 @@ always_comb begin
         cpu_dout = prog_dtack_now ? prog_rom_data : prog_rom_data_r;
     end else if (!nmk_cs_n)
         cpu_dout = nmk_dout;
+    else if (mcu_io_cs)
+        cpu_dout = 16'h0000;   // MCU I/O space (0x0BB000–0x0BBFFF) — read-only, returns zero (MAME-compatible)
     else if (wram_cs)
         cpu_dout = wram_dout_r;
     else if (pal_cs)
@@ -807,8 +828,12 @@ logic dtack_r;
 
 // Immediate regions: all RAM/regs respond in 1 cycle (BRAM latency = 1 cycle)
 // Includes: wram, pal, io, scroll registers, bg_vram (nmk16 chip), tx_vram
+// Also: ROM write cycles — writes to ROM address space are silently ignored
+// (FBNeo maps ROM with MAP_ROM which completes writes immediately with no effect).
+// Without this, CLR.W $0002 in the Thunder Dragon MCU-sync loop stalls forever.
 logic imm_cs;
-assign imm_cs = (wram_cs | pal_cs | io_cs | scroll_cs | bg_vram_cs | tx_vram_cs) && !cpu_as_n;
+assign imm_cs = (wram_cs | mcu_io_cs | pal_cs | io_cs | scroll_cs | bg_vram_cs | tx_vram_cs
+                 | (prog_rom_cs && !cpu_rw)) && !cpu_as_n;
 
 // Program ROM: combinational pulse when SDRAM data arrives THIS cycle.
 // prog_req_pending goes 1→0 at the NEXT posedge (registered), so while
@@ -838,28 +863,39 @@ assign cpu_dtack_n = cpu_as_n          ? 1'b1 :
 // =============================================================================
 // Interrupt (IPL) Generation — VBLANK at level 4
 // =============================================================================
-logic        ipl4_active;
-logic [15:0] ipl4_timer;
+// Community pattern (jotego, Cave, NeoGeo, va7deo, atrac17):
+//   SET IPL on VBLANK edge, CLEAR on IACK only. NEVER use a timer.
+//   Timer-based clear races with pswI mask — interrupt expires before
+//   the CPU enables interrupts, so the game never takes VBlank.
+// =============================================================================
+logic ipl4_active;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         ipl4_active <= 1'b0;
-        ipl4_timer  <= 16'b0;
     end else begin
-        if (nmk_irq_vblank_pulse) begin
+        if (!cpu_inta_n)               // IACK cycle: CPU acknowledged the interrupt
+            ipl4_active <= 1'b0;
+        else if (nmk_irq_vblank_pulse) // VBlank: assert interrupt
             ipl4_active <= 1'b1;
-            ipl4_timer  <= 16'hFFFF;
-        end else if (ipl4_active) begin
-            if (ipl4_timer == 16'b0)
-                ipl4_active <= 1'b0;
-            else
-                ipl4_timer <= ipl4_timer - 16'd1;
-        end
     end
 end
 
 // IPL4 encoding: level 4 = ~4 = 3'b011 (active low)
-assign cpu_ipl_n = ipl4_active ? 3'b011 : 3'b111;
+// Synchronizer FF: register IPL output to prevent Verilator late-sample race.
+// fx68k samples IPL on enPhi2 through a two-stage pipeline (rIpl -> iIpl).
+// If cpu_ipl_n is combinational and Verilator evaluates it AFTER fx68k, the
+// sample arrives one cycle late and intPend never sets. Registered output
+// guarantees stable value before fx68k's enPhi2 sampling window.
+// (Community pattern — findings.md Fix 2, COMMUNITY_PATTERNS.md Section 1.2)
+logic [2:0] ipl_sync;
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n)
+        ipl_sync <= 3'b111;   // inactive (all levels masked)
+    else
+        ipl_sync <= ipl4_active ? 3'b011 : 3'b111;
+end
+assign cpu_ipl_n = ipl_sync;
 
 // =============================================================================
 // Video Sync / Blank Output

@@ -53,8 +53,12 @@
 
 module tc0630fdp (
     // ── Clocks and Reset ───────────────────────────────────────────────────
-    input  logic        clk,            // pixel clock (6.6715 MHz in hardware)
+    input  logic        clk,            // system clock (driven at clk_sys rate in integration)
+    input  logic        pix_cen,        // pixel clock enable (1-cycle pulse at pixel rate)
     input  logic        async_rst_n,
+    // Phase 1: 4× pixel clock for time-multiplexed BG engine (≈96 MHz).
+    // Required when QUARTUS is defined; may be tied to clk in simulation.
+    input  logic        clk_4x,
 
     // ── CPU Interface (68EC020 bus, 16-bit) ────────────────────────────────
     input  logic        cpu_cs,         // chip select (active high)
@@ -97,60 +101,80 @@ module tc0630fdp (
     output logic        pixel_valid,    // high during active display
 
     // ── Text Layer Pixel Output (Step 2) ──────────────────────────────────
+`ifndef QUARTUS
     output logic [ 8:0] text_pixel_out,
+`endif
 
     // ── BG Layer Pixel Outputs (Step 3) ───────────────────────────────────
     // Format: {palette[8:0], pen[3:0]}  (pen==0 → transparent)
     // Used by testbench to validate BG tile rendering.
+`ifndef QUARTUS
     output logic [3:0][12:0] bg_pixel_out,
+`endif
 
     // ── GFX ROM Write Port (Step 3 testbench) ─────────────────────────────
+`ifndef QUARTUS
     input  logic [21:0] gfx_wr_addr,
     input  logic [31:0] gfx_wr_data,
     input  logic        gfx_wr_en,
+`endif
 
     // ── Sprite RAM Write Port (Step 8 testbench) ───────────────────────────
     // Used by testbench to populate sprite RAM before rendering.
     // spr_wr_addr: 15-bit word address into Sprite RAM (0..32767)
     // spr_wr_data: 16-bit write data
     // spr_wr_en:   write enable (active high, registered on posedge clk)
+`ifndef QUARTUS
     input  logic [14:0] spr_wr_addr,
     input  logic [15:0] spr_wr_data,
     input  logic        spr_wr_en,
+`endif
 
     // ── Sprite Pixel Output (Step 8) ──────────────────────────────────────
     // {priority[1:0], palette[5:0], pen[3:0]}; pen==0 → transparent
+`ifndef QUARTUS
     output logic [11:0] spr_pixel_out,
+`endif
 
     // ── Compositor Output (Step 11) ───────────────────────────────────────
     // {palette[8:0], pen[3:0]}.  pen==0 → all transparent (background).
+`ifndef QUARTUS
     output logic [12:0] colmix_pixel_out,
+`endif
 
     // ── Palette RAM Write Port (Step 13 testbench) ────────────────────────
     // Testbench writes palette entries via this dedicated port.
     // pal_wr_addr: 13-bit address into palette RAM (0..8191)
     // pal_wr_data: 16-bit color word (bits[15:12]=R, bits[11:8]=G, bits[7:4]=B)
     // pal_wr_en:   write enable (active high, registered on posedge clk)
+`ifndef QUARTUS
     input  logic [12:0] pal_wr_addr,
     input  logic [15:0] pal_wr_data,
     input  logic        pal_wr_en,
+`endif
 
     // ── Step 13: Blended RGB Output ─────────────────────────────────────
     // 24-bit blended RGB; valid 1 cycle after colmix_pixel_out.
+`ifndef QUARTUS
     output logic [23:0] blend_rgb_out,
+`endif
 
     // ── Pivot RAM Write Port (Step 16 testbench) ─────────────────────────
     // Testbench writes pivot RAM entries via this dedicated port.
     // pvt_wr_addr: 14-bit 32-bit-word address into pivot RAM (0..16383)
     // pvt_wr_data: 32-bit write data (one row of 8 pixels, charlayout format)
     // pvt_wr_en:   write enable (active high, registered on posedge clk)
+`ifndef QUARTUS
     input  logic [13:0] pvt_wr_addr,
     input  logic [31:0] pvt_wr_data,
     input  logic        pvt_wr_en,
+`endif
 
     // ── Pivot Pixel Output (Step 16) ────────────────────────────────────
     // {color[3:0], pen[3:0]}.  pen==0 → transparent.  color always 0.
+`ifndef QUARTUS
     output logic [ 7:0] pivot_pixel_out,
+`endif
 
     // ── TC0650FDA CPU Interface (Step 17: alpha blend + DAC) ─────────────
     // 32-bit write-only bus from 68EC020 for RGB888 palette RAM writes.
@@ -170,6 +194,33 @@ module tc0630fdp (
     // pixel_valid delayed by 3 pixel-clock cycles to match FDA output.
     output logic [2:0]  fda_pixel_valid_d
 );
+
+// =============================================================================
+// Phase 7: QUARTUS-mode internal signals for debug/testbench ports.
+// When synthesising, these ports are removed; declare matching internal wires
+// so the rest of the module body compiles unchanged.
+// =============================================================================
+`ifdef QUARTUS
+logic [ 8:0] text_pixel_out;
+logic [3:0][12:0] bg_pixel_out;
+logic [11:0] spr_pixel_out;
+logic [12:0] colmix_pixel_out;
+logic [23:0] blend_rgb_out;
+logic [ 7:0] pivot_pixel_out;
+// Testbench write ports: tie all enables to 0 in synthesis
+logic [21:0] gfx_wr_addr  = 22'd0;
+logic [31:0] gfx_wr_data  = 32'd0;
+logic        gfx_wr_en    = 1'b0;
+logic [14:0] spr_wr_addr  = 15'd0;
+logic [15:0] spr_wr_data  = 16'd0;
+logic        spr_wr_en    = 1'b0;
+logic [12:0] pal_wr_addr  = 13'd0;
+logic [15:0] pal_wr_data  = 16'd0;
+logic        pal_wr_en    = 1'b0;
+logic [13:0] pvt_wr_addr  = 14'd0;
+logic [31:0] pvt_wr_data  = 32'd0;
+logic        pvt_wr_en    = 1'b0;
+`endif
 
 // =============================================================================
 // Reset synchronizer (2-FF)
@@ -198,7 +249,7 @@ always_ff @(posedge clk) begin
     if (!rst_n) begin
         hpos <= 10'b0;
         vpos <=  9'b0;
-    end else begin
+    end else if (pix_cen) begin
         if (hpos == 10'(H_TOTAL - 1)) begin
             hpos <= 10'b0;
             if (vpos == 9'(V_TOTAL - 1))
@@ -376,6 +427,12 @@ assign pf_yscroll[1] = ctrl[5];
 assign pf_yscroll[2] = ctrl[6];
 assign pf_yscroll[3] = ctrl[7];
 
+// Packed versions for tc0630fdp_bg_4x interface (Phase 1)
+logic [3:0][15:0] pf_xscroll_p;
+logic [3:0][15:0] pf_yscroll_p;
+assign pf_xscroll_p = {pf_xscroll[3], pf_xscroll[2], pf_xscroll[1], pf_xscroll[0]};
+assign pf_yscroll_p = {pf_yscroll[3], pf_yscroll[2], pf_yscroll[1], pf_yscroll[0]};
+
 logic [15:0] pixel_xscroll;
 logic [15:0] pixel_yscroll;
 assign pixel_xscroll = ctrl[12];
@@ -534,6 +591,16 @@ logic [15:0] pf_cpu_rdata [0:3];
 
 logic [12:0] pf_rd_addr_w [0:3];
 logic [15:0] pf_q_w [0:3];
+// Packed versions for tc0630fdp_bg_4x interface (Phase 1)
+logic [3:0][12:0] pf_rd_addr_w_p;
+logic [3:0][15:0] pf_q_w_p;
+// Unpack from bg_4x to the BG RAM altsyncram address ports
+always_comb begin
+    for (int i = 0; i < 4; i++) begin
+        pf_rd_addr_w[i] = pf_rd_addr_w_p[i];
+        pf_q_w_p[i]     = pf_q_w[i];
+    end
+end
 
 genvar gi;
 generate
@@ -1144,37 +1211,61 @@ tc0630fdp_text u_text (
 );
 
 // =============================================================================
-// tc0630fdp_bg × 4 — BG tilemap engines (Step 5: +rowscroll +alt-tilemap)
+// Phase 1: tc0630fdp_bg_4x — single time-multiplexed BG engine at 4× clock
 // =============================================================================
-generate
-    for (gi = 0; gi < 4; gi++) begin : gen_bg
-        tc0630fdp_bg #(.PLANE(gi)) u_bg (
-            .clk            (clk),
-            .rst_n          (rst_n),
-            .hblank         (hblank),
-            .vpos           (vpos),
-            .hpos           (hpos),
-            .pf_xscroll     (pf_xscroll[gi]),
-            .pf_yscroll     (pf_yscroll[gi]),
-            .extend_mode    (extend_mode),
-            .ls_rowscroll   (ls_rowscroll[gi]),
-            .ls_alt_tilemap (ls_alt_tilemap[gi]),
-            .ls_zoom_x      (ls_zoom_x[gi]),
-            .ls_zoom_y      (ls_zoom_y[gi]),
-            .ls_colscroll   (ls_colscroll[gi]),
-            .ls_pal_add     (ls_pal_add[gi]),
-            // Step 15: mosaic
-            .ls_mosaic_en   (ls_pf_mosaic_en[gi]),
-            .ls_mosaic_rate (ls_mosaic_rate),
-            .pf_rd_addr     (pf_rd_addr_w[gi]),
-            .pf_q           (pf_q_w[gi]),
-            .gfx_addr       (bg_gfx_addr[gi]),
-            .gfx_data       (bg_gfx_data[gi]),
-            .gfx_rd         (bg_gfx_rd[gi]),
-            .bg_pixel       (bg_pixel_out[gi])
-        );
-    end
-endgenerate
+// Replaces 4 independent tc0630fdp_bg instances with one instance running at
+// clk_4x (≈96 MHz), cycling through layers PF1–PF4 within each HBLANK period.
+// Estimated savings: ~3 BG engines × ~14K ALMs = ~42K–55K ALMs.
+//
+// GFX ROM: uses a single shared read port (bg_gfx_addr[0] / bg_gfx_data[0]).
+// The four bg_gfx_addr/data/rd arrays are declared for simulation compatibility;
+// under QUARTUS only index [0] is driven.
+// =============================================================================
+logic [21:0] bg_mux_gfx_addr;
+logic [31:0] bg_mux_gfx_data;
+logic        bg_mux_gfx_rd;
+
+`ifdef QUARTUS
+assign bg_mux_gfx_data = 32'b0;  // GFX ROM stubbed to 0 in synthesis (SDRAM in real system)
+`else
+// In simulation, use bg_gfx_addr[0] path (gfx_rom shared array)
+assign bg_gfx_addr[0]  = bg_mux_gfx_addr;
+assign bg_gfx_rd  [0]  = bg_mux_gfx_rd;
+assign bg_mux_gfx_data = bg_gfx_data[0];
+// Tie off unused BG GFX ports (indices 1–3 no longer driven by bg instance)
+assign bg_gfx_addr[1] = 22'b0;
+assign bg_gfx_addr[2] = 22'b0;
+assign bg_gfx_addr[3] = 22'b0;
+assign bg_gfx_rd  [1] = 1'b0;
+assign bg_gfx_rd  [2] = 1'b0;
+assign bg_gfx_rd  [3] = 1'b0;
+`endif
+
+tc0630fdp_bg_4x u_bg_4x (
+    .clk             (clk),
+    .clk_4x          (clk_4x),
+    .rst_n           (rst_n),
+    .hblank          (hblank),
+    .vpos            (vpos),
+    .hpos            (hpos),
+    .pf_xscroll      (pf_xscroll_p),
+    .pf_yscroll      (pf_yscroll_p),
+    .extend_mode     (extend_mode),
+    .ls_rowscroll    (ls_rowscroll),
+    .ls_alt_tilemap  (ls_alt_tilemap),
+    .ls_zoom_x       (ls_zoom_x),
+    .ls_zoom_y       (ls_zoom_y),
+    .ls_colscroll    (ls_colscroll),
+    .ls_pal_add      (ls_pal_add),
+    .ls_mosaic_en    (ls_pf_mosaic_en),
+    .ls_mosaic_rate  (ls_mosaic_rate),
+    .pf_rd_addr      (pf_rd_addr_w_p),
+    .pf_q            (pf_q_w_p),
+    .gfx_addr        (bg_mux_gfx_addr),
+    .gfx_data        (bg_mux_gfx_data),
+    .gfx_rd          (bg_mux_gfx_rd),
+    .bg_pixel        (bg_pixel_out)
+);
 
 // =============================================================================
 // tc0630fdp_sprite_scan — Sprite Walker (Step 8)
@@ -1449,7 +1540,7 @@ logic _unused;
 assign _unused = ^{gfx_lo_data,
                    gfx_hi_data,
                    pal_data,
-                   bg_gfx_rd[0], bg_gfx_rd[1], bg_gfx_rd[2], bg_gfx_rd[3],
+                   bg_mux_gfx_rd,
                    scan_scount_rd_data};
 /* verilator lint_on UNUSED */
 

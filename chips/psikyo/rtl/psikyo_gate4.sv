@@ -60,8 +60,8 @@ module psikyo_gate4 (
     input  logic [1:0][15:0] scroll_y,
 
     // ── Tilemap VRAM write port (CPU access) ──────────────────────────────────
-    // 13-bit address: {layer[0], cell[11:0]}
-    input  logic [12:0] vram_wr_addr,
+    // 14-bit address (only [12:0] used; bit 13 selects TileRAM[2] which is ignored here)
+    input  logic [13:0] vram_wr_addr,
     input  logic [15:0] vram_wr_data,
     input  logic        vram_wr_en,
 
@@ -113,10 +113,10 @@ module psikyo_gate4 (
 `else
     logic [15:0] vram [0:8191];
 
-    // Write port (synchronous)
+    // Write port (synchronous): only [12:0] used; bit 13 selects TileRAM[2] (ignored)
     always_ff @(posedge clk) begin
-        if (vram_wr_en)
-            vram[vram_wr_addr] <= vram_wr_data;
+        if (vram_wr_en && !vram_wr_addr[13])
+            vram[vram_wr_addr[12:0]] <= vram_wr_data;
     end
 `endif
 

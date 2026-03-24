@@ -164,5 +164,48 @@ set_false_path -from {mcp23009|flg_*}
 set_false_path -to   {sysmem|fpga_interfaces|clocks_resets|f2h*}
 
 # =============================================================================
+# MULTI-CYCLE PATHS — Clock-Enable-Gated Subsystems
+#
+# Taito Z system clock: 32 MHz
+#   MC68000 CPU A (main) : 32 MHz / 2 = 16 MHz  → 2-cycle multicycle
+#   MC68000 CPU B (road) : 32 MHz / 2 = 16 MHz  → 2-cycle multicycle
+#   Z80 sound   : 32 MHz / 8 =  4 MHz  → 8-cycle multicycle
+# =============================================================================
+
+# MC68000 CPU A (main) and CPU B (road) — 32 MHz / 2 = 16 MHz (2-cycle multicycle)
+set_multicycle_path -from [get_registers {*u_cpu*}]   -to [get_registers {*u_cpu*}]   -setup 2
+set_multicycle_path -from [get_registers {*u_cpu*}]   -to [get_registers {*u_cpu*}]   -hold  1
+set_multicycle_path -from [get_registers {*fx68k*}]   -to [get_registers {*fx68k*}]   -setup 2
+set_multicycle_path -from [get_registers {*fx68k*}]   -to [get_registers {*fx68k*}]   -hold  1
+
+# fx68k internal paths — span two phi phases (MANDATORY — COMMUNITY_PATTERNS.md Section 1.7)
+set_multicycle_path -start -setup -from [get_keepers {*|Ir[*]}]               -to [get_keepers {*|microAddr[*]}]      2
+set_multicycle_path -start -hold  -from [get_keepers {*|Ir[*]}]               -to [get_keepers {*|microAddr[*]}]      1
+set_multicycle_path -start -setup -from [get_keepers {*|Ir[*]}]               -to [get_keepers {*|nanoAddr[*]}]       2
+set_multicycle_path -start -hold  -from [get_keepers {*|Ir[*]}]               -to [get_keepers {*|nanoAddr[*]}]       1
+set_multicycle_path -start -setup -from [get_keepers {*|nanoLatch[*]}]        -to [get_keepers {*|alu|pswCcr[*]}]     2
+set_multicycle_path -start -hold  -from [get_keepers {*|nanoLatch[*]}]        -to [get_keepers {*|alu|pswCcr[*]}]     1
+set_multicycle_path -start -setup -from [get_keepers {*|excUnit|alu|oper[*]}] -to [get_keepers {*|alu|pswCcr[*]}]     2
+set_multicycle_path -start -hold  -from [get_keepers {*|excUnit|alu|oper[*]}] -to [get_keepers {*|alu|pswCcr[*]}]     1
+
+# T80 Z80 sound CPU — required or synthesis fails timing
+set_multicycle_path -from [get_keepers {*|Z80CPU|*}] -setup 2
+set_multicycle_path -from [get_keepers {*|Z80CPU|*}] -hold 1
+
+# =============================================================================
+# FALSE PATHS — ASYNCHRONOUS RESET RECOVERY
+# =============================================================================
+
+set_false_path -from [get_ports {reset}]
+set_false_path -from [get_ports {rst}]
+
+# =============================================================================
+# FALSE PATHS — I/O TIMING (not timing-critical for arcade cores)
+# =============================================================================
+
+set_false_path -from [get_ports *] -to [get_registers *]
+set_false_path -from [get_registers *] -to [get_ports *]
+
+# =============================================================================
 # END OF TIMING CONSTRAINTS
 # =============================================================================

@@ -23,4 +23,27 @@ chips/*/sim/obj_dir/
 chips/*/sim/*.ppm
 chips/*/sim/*.vcd
 chips/*/sim/sim_*
+chips/*/sim/golden/
+chips/*/sim/dumps/
+chips/*/sim/roms/
+chips/*/sim/*.bin
 .shared/
+
+# ROM data — never commit
+*.zip
+*.rom
+*.bin
+
+# Synthesis build artifacts (Quartus output)
+chips/*/quartus/output_files/
+chips/*/quartus/*.rpt
+chips/*/quartus/*.summary
+chips/*/quartus/*.done
+chips/*/quartus/*.pin
+chips/*/quartus/*.jdi
+chips/*/quartus/*.sld
+chips/*/quartus/db/
+chips/*/quartus/incremental_db/
+chips/*/standalone_synth/output_files/
+chips/*/standalone_synth/db/
+chips/*/standalone_synth/incremental_db/

@@ -1,0 +1,117 @@
+<!--
+    Battle Bakraid (Unlimited Version) — 8ing/Raizing
+    MiSTer ROM descriptor for Raizing Arcade (Batrider) core
+
+    Hardware (Board: RA9903):
+      MC68000 @ 16 MHz (32 MHz XTAL / 2)
+      Z80     @  4 MHz (32 MHz XTAL / 8, for audio)
+      GP9001 VDP (single — tile + sprite processor, OBJECTBANK_EN=1)
+      YMZ280B @ 16.9344 MHz (8-channel ADPCM)
+      ExtraText DMA (TVRMCTL7 at 0x300030)
+
+    Key hardware differences vs Batrider:
+      - No GAL/OKI banking (OKI M6295 removed entirely)
+      - Larger GFX ROM: 14MB (7 × 2MB vs Batrider's 6 × 2MB)
+      - Larger YMZ280B sample ROM: 2MB
+      - IS_BAKRAID=1 suppresses GAL OKI bank module
+      - EEPROM for settings (replaces DIP switches)
+
+    Memory map (68000):
+      0x000000 - 0x1FFFFF  Program ROM (2MB)
+      0x200000 - 0x20FFFF  Work RAM (64KB)
+      0x300000 - 0x30002F  GP9001 VDP registers + I/O
+      0x300030 - 0x300031  ExtraText DMA address register
+      0x400000 - 0x400FFF  Palette RAM
+      0x500000 - 0x50000F  Object bank registers (GP9001_OP_OBJECTBANK_WR)
+      0x600001             Sound latch write
+      0x700000 - 0x703FFF  Text tilemap VRAM
+
+    SDRAM layout (for MiSTer ROM loading):
+      ROM index 0: 0x000000 - 0x1FFFFF   2MB    68K program ROM
+      ROM index 1: 0x200000 - 0xFFFFFF  14MB    GP9001 tile ROMs (7 × 2MB)
+      ROM index 2: 0x1000000 - 0x103FFFF 256KB  Z80 audio ROM
+      ROM index 3: 0x1040000 - 0x123FFFF 2MB    YMZ280B ADPCM sample ROM
+      ROM index 4: 0x1240000 - 0x1247FFF 32KB   Text tilemap ROM
+
+    Note: SDRAM offsets exceed 24-bit for 14MB+ GFX.  In the MiSTer framework,
+    a second SDRAM bank or DDR3 may be required.  MRA offsets here assume
+    a linear mapping — the actual controller may interleave banks.
+
+    ROM set: bbakraid (from MAME 0.245), Unlimited Version (bbakradu)
+    Parent: bbakraid
+    Manufacturer: 8ing/Raizing
+    Year: 1999
+
+    CRCs verified from bbakraid.zip (MAME 0.245 merged ROM set).
+    Verify with: mame -listxml bbakraid
+    Note: bbakradu (Unlimited) has slightly different program ROMs from
+    the standard bbakraid set; both share the same GFX and sound ROMs.
+-->
+
+<misterromdescription>
+    <name>Battle Bakraid</name>
+    <setname>bbakraid</setname>
+    <rbf>batrider_arcade</rbf>
+    <manufacturer>8ing/Raizing</manufacturer>
+    <year>1999</year>
+    <category>Shooter</category>
+
+    <!-- EEPROM for settings (replaces DIP switches in bbakraid) -->
+    <nvram index="2" size="128"/>
+
+    <!-- Program ROM (68K CPU, index 0x00) -->
+    <!-- SDRAM byte offset 0x000000 — 2MB total -->
+    <!-- ROM_LOAD16_BYTE: even bytes = prg0, odd bytes = prg1 -->
+    <rom index="0" zip="bbakraid.zip" md5="None" type="merged">
+        <!-- prg0.bin: 68K program even bytes, 1MB (Unlimited Ver.) -->
+        <part name="prg0.bin" crc="4200b5ef" map="21"/>
+        <!-- prg1.bin: 68K program odd bytes, 1MB (Unlimited Ver.) -->
+        <part name="prg1.bin" crc="a2c5e97f" map="12"/>
+    </rom>
+
+    <!-- GFX ROMs — GP9001 tile data (index 0x01) -->
+    <!-- SDRAM byte offset 0x200000 — 14MB total -->
+    <!-- 7 × 2MB ROMs loaded sequentially -->
+    <rom index="1" zip="bbakraid.zip" md5="None" type="merged">
+        <part name="rom1.bin" crc="f64303aa"/>   <!-- 2MB, GP9001 tile data 0x000000-0x1FFFFF -->
+        <part name="rom2.bin" crc="27e5e2b6"/>   <!-- 2MB, GP9001 tile data 0x200000-0x3FFFFF -->
+        <part name="rom3.bin" crc="57e15155"/>   <!-- 2MB, GP9001 tile data 0x400000-0x5FFFFF -->
+        <part name="rom4.bin" crc="f4b0e357"/>   <!-- 2MB, GP9001 tile data 0x600000-0x7FFFFF -->
+        <part name="rom5.bin" crc="86d87b24"/>   <!-- 2MB, GP9001 tile data 0x800000-0x9FFFFF -->
+        <part name="rom6.bin" crc="c3a19a51"/>   <!-- 2MB, GP9001 tile data 0xA00000-0xBFFFFF -->
+        <part name="rom7.bin" crc="6f3cef3b"/>   <!-- 2MB, GP9001 tile data 0xC00000-0xDFFFFF -->
+    </rom>
+
+    <!-- Z80 sound CPU ROM (index 0x02) -->
+    <!-- SDRAM byte offset 0x1000000 — 256KB total -->
+    <rom index="2" zip="bbakraid.zip" md5="None" type="merged">
+        <part name="snd.bin" crc="37abb26b"/>    <!-- 256KB Z80 audio ROM -->
+    </rom>
+
+    <!-- YMZ280B ADPCM sample ROM (index 0x03) -->
+    <!-- SDRAM byte offset 0x1040000 — 2MB total (larger than Batrider) -->
+    <rom index="3" zip="bbakraid.zip" md5="None" type="merged">
+        <part name="snd_a.bin" crc="d8b98e0b"/>   <!-- 2MB YMZ280B ADPCM samples (part A) -->
+        <part name="snd_b.bin" crc="e61e60c5"/>   <!-- 2MB YMZ280B ADPCM samples (part B) -->
+    </rom>
+
+    <!-- Text tilemap ROM (index 0x04) -->
+    <!-- SDRAM byte offset 0x1240000 — 32KB total -->
+    <rom index="4" zip="bbakraid.zip" md5="None" type="merged">
+        <part name="text.bin" crc="40e04bc8"/>   <!-- 32KB text tilemap ROM -->
+    </rom>
+
+    <!-- EEPROM default content (index 0xFE) -->
+    <!-- From MAME bbakraid default NVRAM — factory settings -->
+    <rom index="254">
+        <part>FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+              FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+              FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+              FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+              FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+              FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+              FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+              FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF</part>
+    </rom>
+
+</misterromdescription>
