@@ -950,7 +950,7 @@ module gp9001 #(
     logic [3:0]  g4_tile_row;     // row_in_spr[7:4]
 
     // ── Hoisted locals (Quartus 17.0: no 'automatic' in always blocks) ─────────
-    sprite_entry_t g4_e;          // current display_list entry under inspection
+    // (g4_e replaced with individual wires below for Quartus 17.0 compat)
     logic [8:0]  g4_spr_h;        // sprite height in pixels (1<<size)*16
     logic [7:0]  g4_raw_row;      // scanline - sprite.y before flip
     logic [3:0]  g4_nib_lo;       // low nibble from ROM byte (left pixel)
@@ -1007,8 +1007,18 @@ module gp9001 #(
         spr_rom_rd    = (g4_state == G4_FETCH);
     end
 
-    // Continuous read of current display_list entry (Quartus 17.0 compat: no automatic)
-    assign g4_e = display_list[g4_spr_idx];
+    // Continuous read of current display_list entry (Quartus 17.0 compat: no packed struct .field access)
+    wire [40:0] g4_e_raw       = display_list[g4_spr_idx];
+    wire [8:0]  g4_e_x         = g4_e_raw[40:32];
+    wire [8:0]  g4_e_y         = g4_e_raw[31:23];
+    wire [9:0]  g4_e_tile_num  = g4_e_raw[22:13];
+    wire        g4_e_flip_x    = g4_e_raw[12];
+    wire        g4_e_flip_y    = g4_e_raw[11];
+    wire        g4_e_prio      = g4_e_raw[10];
+    wire [3:0]  g4_e_palette   = g4_e_raw[9:6];
+    wire [1:0]  g4_e_size      = g4_e_raw[5:4];
+    wire [2:0]  g4_e_bank_slot = g4_e_raw[3:1];
+    wire        g4_e_valid     = g4_e_raw[0];
 
     // ── FSM ───────────────────────────────────────────────────────────────────
     always_ff @(posedge clk or negedge rst_n) begin
@@ -1061,27 +1071,27 @@ module gp9001 #(
                         // Read sprite from display_list (g4_e = display_list[g4_spr_idx] via assign)
                         // g4_spr_h and g4_raw_row are module-level logics used as blocking temps
                         /* verilator lint_off BLKSEQ */
-                        g4_spr_h   = 9'(4'(1 << g4_e.size)) * 9'd16;
+                        g4_spr_h   = 9'(4'(1 << g4_e_size)) * 9'd16;
                         /* verilator lint_on BLKSEQ */
-                        if (g4_e.valid) begin
-                            if (current_scanline >= g4_e.y &&
-                                current_scanline < (g4_e.y + g4_spr_h)) begin
+                        if (g4_e_valid) begin
+                            if (current_scanline >= g4_e_y &&
+                                current_scanline < (g4_e_y + g4_spr_h)) begin
                                 // Sprite intersects — save fields, start fetch
-                                g4_spr_x       <= g4_e.x;
-                                g4_spr_y       <= g4_e.y;
-                                g4_tile_base   <= g4_e.tile_num;
-                                g4_bank_slot_r <= g4_e.bank_slot;
-                                g4_flip_x      <= g4_e.flip_x;
-                                g4_flip_y      <= g4_e.flip_y;
-                                g4_prio        <= g4_e.prio;
-                                g4_palette     <= g4_e.palette;
-                                g4_size        <= g4_e.size;
+                                g4_spr_x       <= g4_e_x;
+                                g4_spr_y       <= g4_e_y;
+                                g4_tile_base   <= g4_e_tile_num;
+                                g4_bank_slot_r <= g4_e_bank_slot;
+                                g4_flip_x      <= g4_e_flip_x;
+                                g4_flip_y      <= g4_e_flip_y;
+                                g4_prio        <= g4_e_prio;
+                                g4_palette     <= g4_e_palette;
+                                g4_size        <= g4_e_size;
 
                                 // Compute row within sprite (with flip_y applied)
                                 /* verilator lint_off BLKSEQ */
-                                g4_raw_row = 8'(current_scanline - g4_e.y);
+                                g4_raw_row = 8'(current_scanline - g4_e_y);
                                 /* verilator lint_on BLKSEQ */
-                                if (g4_e.flip_y)
+                                if (g4_e_flip_y)
                                     g4_row_in_spr <= 8'(g4_spr_h - 9'd1) - g4_raw_row;
                                 else
                                     g4_row_in_spr <= g4_raw_row;
