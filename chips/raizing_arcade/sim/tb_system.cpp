@@ -29,6 +29,8 @@
 
 #include "Vtb_top.h"
 #include "Vtb_top___024root.h"
+#include "Vtb_top_tb_top.h"
+#include "Vtb_top_raizing_arcade.h"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
@@ -192,15 +194,15 @@ static void dump_frame_ram(FILE* f, uint32_t frame_num, Vtb_top* top) {
     fwrite(hdr, 1, 4, f);
 
     // Work RAM: 32768 words × 2 bytes = 64KB
-    // Access: top->rootp->tb_top__DOT__u_raizing__DOT__work_ram[i]
-    auto& wram = top->rootp->tb_top__DOT__u_raizing__DOT__work_ram;
+    // Access: top->rootp->tb_top->u_raizing->work_ram[i]
+    auto& wram = top->rootp->tb_top->u_raizing->work_ram;
     for (int i = 0; i < 32768; i++) {
         write_word_be(f, (uint16_t)wram[i]);
     }
 
     // Palette RAM: 2048 words × 2 bytes = 4KB
-    // Access: top->rootp->tb_top__DOT__u_raizing__DOT__palette_ram[i]
-    auto& pram = top->rootp->tb_top__DOT__u_raizing__DOT__palette_ram;
+    // Access: top->rootp->tb_top->u_raizing->palette_ram[i]
+    auto& pram = top->rootp->tb_top->u_raizing->palette_ram;
     for (int i = 0; i < 2048; i++) {
         write_word_be(f, (uint16_t)pram[i]);
     }
@@ -445,7 +447,7 @@ int main(int argc, char** argv) {
                             ((uint32_t)golden_frame_buf[3] << 24);
 
                         // Compare work RAM (bytes 4 .. 65539)
-                        auto& wram = top->rootp->tb_top__DOT__u_raizing__DOT__work_ram;
+                        auto& wram = top->rootp->tb_top->u_raizing->work_ram;
                         int wram_match = 0;
                         int wram_total = 65536;
                         const uint8_t* gold_wram = golden_frame_buf + 4;

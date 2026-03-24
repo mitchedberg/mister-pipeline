@@ -315,7 +315,7 @@ end
 localparam int WRAM_WORDS = 32 * 1024;   // 32K words = 64KB
 localparam int WRAM_ABITS = 15;          // $clog2(WRAM_WORDS)
 
-logic [15:0] work_ram [0:WRAM_WORDS-1];
+logic [15:0] work_ram [0:WRAM_WORDS-1] /* verilator public */;
 logic [15:0] wram_dout_r;
 
 always_ff @(posedge clk) begin
@@ -378,7 +378,7 @@ end
 localparam int PALRAM_WORDS = 2048;
 localparam int PALRAM_ABITS = 11;
 
-logic [15:0] palette_ram [0:PALRAM_WORDS-1];
+logic [15:0] palette_ram [0:PALRAM_WORDS-1] /* verilator public */;
 logic [15:0] palram_cpu_dout;
 logic [15:0] pal_entry_r;
 
