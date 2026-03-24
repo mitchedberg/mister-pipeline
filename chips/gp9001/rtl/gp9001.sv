@@ -949,6 +949,18 @@ module gp9001 #(
     logic [7:0]  g4_row_in_spr;   // row within sprite (0..127 max for 128px sprite)
     logic [3:0]  g4_tile_row;     // row_in_spr[7:4]
 
+    // ── Hoisted locals (Quartus 17.0: no 'automatic' in always blocks) ─────────
+    sprite_entry_t g4_e;          // current display_list entry under inspection
+    logic [8:0]  g4_spr_h;        // sprite height in pixels (1<<size)*16
+    logic [7:0]  g4_raw_row;      // scanline - sprite.y before flip
+    logic [3:0]  g4_nib_lo;       // low nibble from ROM byte (left pixel)
+    logic [3:0]  g4_nib_hi;       // high nibble from ROM byte (right pixel)
+    logic [9:0]  g4_base_x;       // pixel X base for current byte
+    logic [9:0]  g4_px_lo_x;      // screen X for lo pixel
+    logic [9:0]  g4_px_hi_x;      // screen X for hi pixel
+    logic [3:0]  g4_eff_nib_lo;   // effective lo nibble (after flip_x swap)
+    logic [3:0]  g4_eff_nib_hi;   // effective hi nibble (after flip_x swap)
+
     // ── Scanline pixel buffer (Gate 4 internal) ──────────────────────────────
     // Internal buffer; read out via spr_rd_addr / spr_rd_color / spr_rd_valid.
     `ifdef QUARTUS
@@ -994,6 +1006,9 @@ module gp9001 #(
                       + 25'(g4_byte_idx);
         spr_rom_rd    = (g4_state == G4_FETCH);
     end
+
+    // Continuous read of current display_list entry (Quartus 17.0 compat: no automatic)
+    assign g4_e = display_list[g4_spr_idx];
 
     // ── FSM ───────────────────────────────────────────────────────────────────
     always_ff @(posedge clk or negedge rst_n) begin
@@ -1043,46 +1058,44 @@ module gp9001 #(
                         spr_render_done <= 1'b1;
                         g4_state        <= G4_IDLE;
                     end else begin
-                        // Read sprite from display_list
-                        begin
-                            automatic sprite_entry_t e = display_list[g4_spr_idx];
-                            if (e.valid) begin
-                                // sprite height in pixels = tiles_tall * 16
-                                // tiles_tall = 1 << e.size (same as tiles_wide, square)
-                                automatic logic [8:0] spr_h = 9'(4'(1 << e.size)) * 9'd16;
-                                if (current_scanline >= e.y &&
-                                    current_scanline < (e.y + spr_h)) begin
-                                    // Sprite intersects — save fields, start fetch
-                                    g4_spr_x       <= e.x;
-                                    g4_spr_y       <= e.y;
-                                    g4_tile_base   <= e.tile_num;
-                                    g4_bank_slot_r <= e.bank_slot;
-                                    g4_flip_x      <= e.flip_x;
-                                    g4_flip_y      <= e.flip_y;
-                                    g4_prio        <= e.prio;
-                                    g4_palette     <= e.palette;
-                                    g4_size        <= e.size;
+                        // Read sprite from display_list (g4_e = display_list[g4_spr_idx] via assign)
+                        // g4_spr_h and g4_raw_row are module-level logics used as blocking temps
+                        /* verilator lint_off BLKSEQ */
+                        g4_spr_h   = 9'(4'(1 << g4_e.size)) * 9'd16;
+                        /* verilator lint_on BLKSEQ */
+                        if (g4_e.valid) begin
+                            if (current_scanline >= g4_e.y &&
+                                current_scanline < (g4_e.y + g4_spr_h)) begin
+                                // Sprite intersects — save fields, start fetch
+                                g4_spr_x       <= g4_e.x;
+                                g4_spr_y       <= g4_e.y;
+                                g4_tile_base   <= g4_e.tile_num;
+                                g4_bank_slot_r <= g4_e.bank_slot;
+                                g4_flip_x      <= g4_e.flip_x;
+                                g4_flip_y      <= g4_e.flip_y;
+                                g4_prio        <= g4_e.prio;
+                                g4_palette     <= g4_e.palette;
+                                g4_size        <= g4_e.size;
 
-                                    // Compute row within sprite (with flip_y applied)
-                                    begin
-                                        automatic logic [7:0] raw_row = 8'(current_scanline - e.y);
-                                        if (e.flip_y)
-                                            g4_row_in_spr <= 8'(spr_h - 9'd1) - raw_row;
-                                        else
-                                            g4_row_in_spr <= raw_row;
-                                    end
+                                // Compute row within sprite (with flip_y applied)
+                                /* verilator lint_off BLKSEQ */
+                                g4_raw_row = 8'(current_scanline - g4_e.y);
+                                /* verilator lint_on BLKSEQ */
+                                if (g4_e.flip_y)
+                                    g4_row_in_spr <= 8'(g4_spr_h - 9'd1) - g4_raw_row;
+                                else
+                                    g4_row_in_spr <= g4_raw_row;
 
-                                    g4_tile_col <= 4'h0;
-                                    g4_byte_idx <= 4'h0;
-                                    g4_state    <= G4_FETCH;
-                                end else begin
-                                    // No intersection — advance
-                                    g4_spr_idx <= g4_spr_idx + 8'h01;
-                                end
+                                g4_tile_col <= 4'h0;
+                                g4_byte_idx <= 4'h0;
+                                g4_state    <= G4_FETCH;
                             end else begin
-                                // Invalid entry — advance
+                                // No intersection — advance
                                 g4_spr_idx <= g4_spr_idx + 8'h01;
                             end
+                        end else begin
+                            // Invalid entry — advance
+                            g4_spr_idx <= g4_spr_idx + 8'h01;
                         end
                     end
                 end
@@ -1093,58 +1106,58 @@ module gp9001 #(
                     // spr_rom_data is assumed combinational (zero-latency TB model).
                     begin
                         // Unpack two 4-bit pixels from the ROM byte
-                        automatic logic [3:0] nib_lo = spr_rom_data[3:0];  // left pixel
-                        automatic logic [3:0] nib_hi = spr_rom_data[7:4];  // right pixel
+                        // (module-level logics used as blocking temps — Quartus 17.0 compat)
+                        /* verilator lint_off BLKSEQ */
+                        g4_nib_lo = spr_rom_data[3:0];  // left pixel
+                        g4_nib_hi = spr_rom_data[7:4];  // right pixel
 
                         // Screen X base for this byte:
                         //   sprite_x + tile_col * 16 + byte_idx * 2  (no flip_x)
                         // With flip_x:
                         //   sprite_x + (tiles_wide * 16 - 1) - (tile_col * 16 + byte_idx * 2 + 1)
                         //   = sprite_x + px_width - 2 - tile_col*16 - byte_idx*2
-                        automatic logic [9:0] base_x;
-                        automatic logic [9:0] px_lo_x, px_hi_x;
-                        automatic logic [3:0] eff_nib_lo, eff_nib_hi;
 
                         if (g4_flip_x) begin
                             // Flip_x: sprite pixel P goes to screen X = spr_x + (px_width-1-P).
                             // Byte b contains:
-                            //   nib_lo = sprite pixel 2*b   → screen spr_x + px_width - 1 - 2*b
-                            //   nib_hi = sprite pixel 2*b+1 → screen spr_x + px_width - 2 - 2*b
-                            // base_x = spr_x + px_width - 2 - tile_col*16 - byte_idx*2
-                            //   nib_hi → base_x       (lower screen X = px_width-2-...)
-                            //   nib_lo → base_x + 1   (higher screen X = px_width-1-...)
-                            base_x   = 10'(g4_spr_x)
-                                     + 10'(g4_px_width)
-                                     - 10'd2
-                                     - 10'(g4_tile_col) * 10'd16
-                                     - 10'(g4_byte_idx) * 10'd2;
-                            px_hi_x    = base_x;           // nib_hi → lower screen X
-                            px_lo_x    = base_x + 10'd1;  // nib_lo → higher screen X
-                            eff_nib_hi = nib_hi;           // no swap — nibbles stay as-is
-                            eff_nib_lo = nib_lo;
+                            //   g4_nib_lo = sprite pixel 2*b   → screen spr_x + px_width - 1 - 2*b
+                            //   g4_nib_hi = sprite pixel 2*b+1 → screen spr_x + px_width - 2 - 2*b
+                            // g4_base_x = spr_x + px_width - 2 - tile_col*16 - byte_idx*2
+                            //   g4_nib_hi → g4_base_x       (lower screen X = px_width-2-...)
+                            //   g4_nib_lo → g4_base_x + 1   (higher screen X = px_width-1-...)
+                            g4_base_x     = 10'(g4_spr_x)
+                                          + 10'(g4_px_width)
+                                          - 10'd2
+                                          - 10'(g4_tile_col) * 10'd16
+                                          - 10'(g4_byte_idx) * 10'd2;
+                            g4_px_hi_x    = g4_base_x;           // g4_nib_hi → lower screen X
+                            g4_px_lo_x    = g4_base_x + 10'd1;  // g4_nib_lo → higher screen X
+                            g4_eff_nib_hi = g4_nib_hi;           // no swap — nibbles stay as-is
+                            g4_eff_nib_lo = g4_nib_lo;
                         end else begin
-                            base_x   = 10'(g4_spr_x)
-                                     + 10'(g4_tile_col) * 10'd16
-                                     + 10'(g4_byte_idx) * 10'd2;
-                            px_lo_x    = base_x;
-                            px_hi_x    = base_x + 10'd1;
-                            eff_nib_lo = nib_lo;
-                            eff_nib_hi = nib_hi;
+                            g4_base_x     = 10'(g4_spr_x)
+                                          + 10'(g4_tile_col) * 10'd16
+                                          + 10'(g4_byte_idx) * 10'd2;
+                            g4_px_lo_x    = g4_base_x;
+                            g4_px_hi_x    = g4_base_x + 10'd1;
+                            g4_eff_nib_lo = g4_nib_lo;
+                            g4_eff_nib_hi = g4_nib_hi;
                         end
+                        /* verilator lint_on BLKSEQ */
 
                         // Write pixel lo — index is safe (< 320) after the guard
                         /* verilator lint_off WIDTHTRUNC */
-                        if (px_lo_x < 10'd320 && eff_nib_lo != 4'h0) begin
-                            spr_pix_color[px_lo_x[8:0]] <= {g4_palette, eff_nib_lo};
-                            spr_pix_valid[px_lo_x[8:0]] <= 1'b1;
-                            spr_pix_priority[px_lo_x[8:0]]  <= g4_prio;
+                        if (g4_px_lo_x < 10'd320 && g4_eff_nib_lo != 4'h0) begin
+                            spr_pix_color[g4_px_lo_x[8:0]] <= {g4_palette, g4_eff_nib_lo};
+                            spr_pix_valid[g4_px_lo_x[8:0]] <= 1'b1;
+                            spr_pix_priority[g4_px_lo_x[8:0]]  <= g4_prio;
                         end
 
                         // Write pixel hi
-                        if (px_hi_x < 10'd320 && eff_nib_hi != 4'h0) begin
-                            spr_pix_color[px_hi_x[8:0]] <= {g4_palette, eff_nib_hi};
-                            spr_pix_valid[px_hi_x[8:0]] <= 1'b1;
-                            spr_pix_priority[px_hi_x[8:0]]  <= g4_prio;
+                        if (g4_px_hi_x < 10'd320 && g4_eff_nib_hi != 4'h0) begin
+                            spr_pix_color[g4_px_hi_x[8:0]] <= {g4_palette, g4_eff_nib_hi};
+                            spr_pix_valid[g4_px_hi_x[8:0]] <= 1'b1;
+                            spr_pix_priority[g4_px_hi_x[8:0]]  <= g4_prio;
                         end
                         /* verilator lint_on WIDTHTRUNC */
                     end
