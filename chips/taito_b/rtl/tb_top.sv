@@ -305,7 +305,10 @@ taito_b u_taito_b (
     .coin               (coin),
     .service            (service),
     .dipsw1             (dipsw1),
-    .dipsw2             (dipsw2)
+    .dipsw2             (dipsw2),
+
+    // game_id=0: simulation always runs Nastar (the validated reference game)
+    .game_id            (1'b0)
 );
 
 // Debug outputs expose internal CPU bus for testbench diagnostics

@@ -1,4 +1,30 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Crime City (World) — Taito B System, 1990
+  MC68000 @ 8 MHz, Z80 @ 4 MHz, YM2610 @ 8 MHz
+  TC0180VCU tilemap, TC0220IOC I/O, TC0260DAR palette DAC, TC0140SYT sound
+
+  Address map differs from Nastar (game_id=1 selects it at runtime):
+    0x000000–0x07FFFF  ROM (512KB, maincpu — 4×128KB interleaved)
+    0x200000–0x20000F  TC0220IOC (umask 0xFF00)
+    0x400000–0x47FFFF  TC0180VCU
+    0x600000–0x600000  TC0140SYT master_port_w
+    0x600002–0x600002  TC0140SYT master_comm r/w
+    0x800000–0x801FFF  TC0260DAR palette RAM
+    0xA00000–0xA0FFFF  Work RAM (64KB)
+
+  SDRAM layout (byte addresses):
+    0x000000  CPU program ROM (512KB, 4×128KB interleaved even/odd pairs)
+    0x080000  Z80 audio program (64KB, b99-08.45)
+    0x100000  TC0180VCU GFX ROM (1MB: b99-02.18 + b99-01.19)
+    0x200000  ADPCM-A samples (512KB, b99-03.37)
+    (no ADPCM-B for this game)
+
+  IRQs: int_h=IRQ5, int_l=IRQ3 (vs Nastar: IRQ4/IRQ2)
+
+  ROM names from MAME crimec driver (src/mame/taito/taito_b.cpp)
+  CRCs verified from MAME 0.245 database.
+-->
 <misterromdescription>
   <name>Crime City</name>
   <setname>crimec</setname>
@@ -7,27 +33,55 @@
   <year>1990</year>
   <manufacturer>Taito</manufacturer>
   <category>Action</category>
-  <buttons names="Attack,Jump,Taunt,Start,Coin" default="A,B,C,Start,Select" />
+  <buttons names="Attack,Jump,Taunt,Start,Coin" default="A,B,C,Start,Select"/>
 
-  
+  <!--
+    index 0: CPU program ROM (4×128KB interleaved) + Z80 audio (64KB)
+    index 1: TC0180VCU GFX ROM (1MB)
+    index 2: ADPCM-A samples (512KB)
+    0xFE: DIP switches
+    0xFF: game_id byte (0x01 = Crime City — selects crimec address map in RTL)
+  -->
+
+  <!--
+    CPU program ROMs: 4×128KB interleaved into 2×256KB even/odd pairs.
+    Pair 0 (byte 0x000000–0x03FFFF): b99-07.40 (even) interleaved with b99-05.29 (odd)
+    Pair 1 (byte 0x040000–0x07FFFF): b99-06.39 (even) interleaved with b99-14.28 (odd)
+    Z80 audio ROM follows at SDRAM offset 0x080000.
+  -->
   <rom index="0" zip="crimec.zip" type="merged" md5="e2de0bf0d348b2ea3ea68beef9bad3cd">
-    <part name="b99-07.40" crc="26e886e6" offset="0x000000" length="0x080000" />
-    <part name="b99-05.29" crc="ff7f9a9d" offset="0x080000" length="0x020000" />
+    <part name="b99-07.40" crc="26e886e6" sha1="b7d0024a084216c1139eb6705f1b8143902cbed3" offset="0x000000" length="0x020000"/>
+    <part name="b99-05.29" crc="ff7f9a9d" sha1="c1897a141eea423879d2792640a9ee85636ed5be" offset="0x000001" length="0x020000"/>
+    <part name="b99-06.39" crc="1f26aa92" sha1="10ab253812db83204c136d01d865063a2210cb92" offset="0x040000" length="0x020000"/>
+    <part name="b99-14.28" crc="71c8b4d7" sha1="55068c9cac75200f564b10f98f322e30aaa6849e" offset="0x040001" length="0x020000"/>
+    <!-- Z80 audio ROM at SDRAM 0x080000 -->
+    <part name="b99-08.45" crc="26135451" sha1="651c77285eb12a13a2fe4069031c6f01150ecba4" offset="0x080000" length="0x010000"/>
   </rom>
 
-  
+  <!-- TC0180VCU GFX ROM (1MB: 2×512KB) — loaded at SDRAM 0x100000 -->
   <rom index="1" zip="crimec.zip" type="merged" md5="92a8527a47377a69dbbd6d32c049fc4f">
-    <part name="b99-02.18" crc="2a5d4a26" offset="0x000000" length="0x100000" />
+    <part name="b99-02.18" crc="2a5d4a26" sha1="94bdfca9365970a80a639027b195b71cebc5ab9c" offset="0x000000" length="0x080000"/>
+    <part name="b99-01.19" crc="a19e373a" sha1="2208c9142473dc2218fd8b97fd6d0c861aeba011" offset="0x080000" length="0x080000"/>
   </rom>
 
-  
+  <!-- ADPCM-A samples (512KB) — loaded at SDRAM 0x200000 -->
+  <!-- Crime City has no ADPCM-B ROM -->
   <rom index="2" zip="crimec.zip" type="merged" md5="8f1a1b2ec3d8958e6b0ef1602b1512b3">
-    <part name="crimec.c11" crc="2a5d4a26" offset="0x000000" length="0x080000" />
-    <part name="crimec.c12" crc="a19e373a" offset="0x080000" length="0x080000" />
+    <part name="b99-03.37" crc="dda10df7" sha1="ffbe1423794035e6f049fddb096b7282610b7cee" offset="0x000000" length="0x080000"/>
   </rom>
 
-  
+  <!-- DIP switch defaults -->
   <rom index="0xFE" type="ram" size="0x4">
     <part>00 ff ff ff</part>
   </rom>
+
+  <!--
+    Game ID: 0x01 = Crime City address map.
+    Written to game_id register in emu.sv during ROM download (ioctl_index=0xFF).
+    Nastar omits this entry — game_id defaults to 0 (reset value).
+  -->
+  <rom index="0xFF" size="0x1">
+    <part>01</part>
+  </rom>
+
 </misterromdescription>

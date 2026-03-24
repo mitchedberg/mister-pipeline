@@ -49,8 +49,9 @@ All games share the same chip set; per-game ROM layout differences are handled b
 
 ## Validation
 
-- **Match rate:** 100% — 2299/2299 frames WRAM byte-perfect
+- **Match rate:** 100% — 2299/2299 frames WRAM byte-perfect (Nastar reference)
 - **CI run:** GREEN (Quartus exit 0, setup −56.224ns, 11,460/41,910 ALMs 27%)
+- **Multi-game support:** `game_id` input wire selects address map at runtime. Nastar=0 (default), Crime City=1. Set via MRA ioctl_index=0xFF header byte. Crime City pending full validation.
 - **Known issues:** None
 
 ---

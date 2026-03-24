@@ -417,6 +417,20 @@ always_ff @(posedge clk_sys)
         dsw[ioctl_addr[1:0]] <= ioctl_dout;
 
 //////////////////////////////////////////////////////////////////
+// Game ID (loaded by .mra at ioctl_index == 0xFF, byte 0)
+//   0x00 = Nastar / Rastan Saga II (default, no MRA entry needed)
+//   0x01 = Crime City
+// The MRA for Nastar omits this section; it defaults to 0.
+// The MRA for Crime City includes: <rom index="0xFF"><part>01</part></rom>
+//////////////////////////////////////////////////////////////////
+logic game_id;
+always_ff @(posedge clk_sys or negedge reset_n)
+    if (!reset_n)
+        game_id <= 1'b0;
+    else if (ioctl_wr && (ioctl_index == 8'hFF) && (ioctl_addr == 27'd0))
+        game_id <= ioctl_dout[0];
+
+//////////////////////////////////////////////////////////////////
 // Input mapping for Taito B action games
 //
 // MiSTer joystick_0 bit layout (standard):
@@ -655,7 +669,10 @@ taito_b u_taito_b
     .coin        (coin),
     .service     (service),
     .dipsw1      (dsw[0]),
-    .dipsw2      (dsw[1])
+    .dipsw2      (dsw[1]),
+
+    // ── Game select ───────────────────────────────────────────────────────────
+    .game_id     (game_id)
 );
 
 //////////////////////////////////////////////////////////////////
