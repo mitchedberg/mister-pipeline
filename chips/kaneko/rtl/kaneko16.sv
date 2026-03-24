@@ -533,7 +533,7 @@ module kaneko16 #(
         .width_a                    (DATA_WIDTH), .widthad_a (13), .numwords_a (8192),
         .width_b                    (DATA_WIDTH), .widthad_b (13), .numwords_b (8192),
         .outdata_reg_a              ("CLOCK0"),   .outdata_reg_b ("CLOCK0"),
-        .address_reg_b              ("CLOCK0"),
+        .address_reg_b              ("CLOCK1"),
         .clock_enable_input_a       ("BYPASS"),   .clock_enable_input_b  ("BYPASS"),
         .clock_enable_output_a      ("BYPASS"),   .clock_enable_output_b ("BYPASS"),
         .intended_device_family     ("Cyclone V"),
