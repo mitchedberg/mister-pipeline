@@ -1,5 +1,6 @@
 # =============================================================================
 # Raizing Arcade — Timing Constraints (SDC)
+# Revision: 2026-03-24
 # =============================================================================
 #
 # Timing constraints for Raizing Arcade MiSTer core on DE-10 Nano (Cyclone V)
