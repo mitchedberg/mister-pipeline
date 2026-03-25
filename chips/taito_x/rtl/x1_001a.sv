@@ -398,7 +398,7 @@ module x1_001a #(
         else if (vblank_fall) begin
             linebuf_bank <= ~linebuf_bank;
 `ifndef QUARTUS
-            $display("[X1-001A] LINEBUF SWAP: vblank_fall linebuf_bank %0d->%0d", linebuf_bank, ~linebuf_bank);
+            // $display("[X1-001A] LINEBUF SWAP: vblank_fall linebuf_bank %0d->%0d", linebuf_bank, ~linebuf_bank);
 `endif
         end
 
@@ -578,8 +578,8 @@ module x1_001a #(
                         bg_row     <= 4'd0;
                         fsm_state  <= ST_BG_INIT;
 `ifndef QUARTUS
-                        $display("[X1-001A] SCAN START (BG+FG): vblank_rise ctrl0=0x%04x ctrl1=0x%04x bank=%0d lbk=%0d",
-                                 spritectrl[0], spritectrl[1], frame_bank_latch, linebuf_bank);
+                        // $display("[X1-001A] SCAN START (BG+FG): vblank_rise ctrl0=0x%04x ctrl1=0x%04x bank=%0d lbk=%0d",
+                        //          spritectrl[0], spritectrl[1], frame_bank_latch, linebuf_bank);
 `endif
                     end
                 end
@@ -597,10 +597,10 @@ module x1_001a #(
                         yram_idx_x = 10'(bg_col * 16 + 516);
                         bg_col_y <= yram_lo[yram_idx_y];
                         bg_col_x <= yram_lo[yram_idx_x];
-                        if (bg_col <= 4'd3)
-                            $display("[BG] col=%0d yram_y[%0d]=0x%02x yram_x[%0d]=0x%02x",
-                                     bg_col, yram_idx_y, yram_lo[yram_idx_y],
-                                     yram_idx_x, yram_lo[yram_idx_x]);
+                        // if (bg_col <= 4'd3)
+                        //     $display("[BG] col=%0d yram_y[%0d]=0x%02x yram_x[%0d]=0x%02x",
+                        //              bg_col, yram_idx_y, yram_lo[yram_idx_y],
+                        //              yram_idx_x, yram_lo[yram_idx_x]);
                     end
 `else
                     bg_col_y <= 8'd0;
@@ -753,7 +753,7 @@ module x1_001a #(
                     fsm_cram_rd_addr <= bank_base + 13'(SPRITE_LIMIT);
                     fsm_state        <= ST_RD_CHAR;
 `ifndef QUARTUS
-                    $display("[X1-001A] BG DONE → FG START: bank_base=0x%04x xptr_base=0x%04x", bank_base, xptr_base);
+                    // $display("[X1-001A] BG DONE → FG START: bank_base=0x%04x xptr_base=0x%04x", bank_base, xptr_base);
 `endif
                 end
 
@@ -787,8 +787,8 @@ module x1_001a #(
 
 `ifndef QUARTUS
                         // DBG: trace sprites with non-zero tile or xptr (first 10 per scan)
-                        if (cw != 16'd0 || xw != 16'd0)
-                            $display("[X1-001A] ST_RD_XPTR: idx=%0d cw=0x%04x xw=0x%04x bank=%0d", scan_idx, cw, xw, frame_bank_latch);
+                        // if (cw != 16'd0 || xw != 16'd0)
+                        //     $display("[X1-001A] ST_RD_XPTR: idx=%0d cw=0x%04x xw=0x%04x bank=%0d", scan_idx, cw, xw, frame_bank_latch);
 `endif
 
                         spr_tile  <= cw[13:0];
@@ -870,8 +870,9 @@ module x1_001a #(
                         fsm_state <= ST_WRITE_ROW;
 `ifndef QUARTUS
                         // DBG: trace first row of every sprite with non-zero GFX data
-                        if (row_cnt == 4'd0 && (gfx_w[0] != 0 || gfx_w[1] != 0 || gfx_w[2] != 0 || gfx_data != 0))
-                            $display("[X1-001A] WRITE_ROW0: scan_idx=%0d tile=%0d sx=%0d ytop=%0d color=%0d gfx_w0=0x%04x gfx_w1=0x%04x gfx_w2=0x%04x gfx_w3=0x%04x bank=%0d lbk=%0d", scan_idx, spr_tile, spr_sx, spr_ytop, spr_color, gfx_w[0], gfx_w[1], gfx_w[2], gfx_data, frame_bank_latch, linebuf_bank);
+                        // NOTE: Disabled — too verbose for multi-frame validation runs.
+                        // if (row_cnt == 4'd0 && (gfx_w[0] != 0 || gfx_w[1] != 0 || gfx_w[2] != 0 || gfx_data != 0))
+                        //     $display("[X1-001A] WRITE_ROW0: ...");
 `endif
                     end
                 end
@@ -921,7 +922,7 @@ module x1_001a #(
                         bg_row     <= 4'd0;
                         fsm_state  <= ST_BG_INIT;
 `ifndef QUARTUS
-                        $display("[X1-001A] SCAN RESTART (BG+FG): ctrl0=0x%04x ctrl1=0x%04x", spritectrl[0], spritectrl[1]);
+                        // $display("[X1-001A] SCAN RESTART (BG+FG): ctrl0=0x%04x ctrl1=0x%04x", spritectrl[0], spritectrl[1]);
 `endif
                     end
                 end

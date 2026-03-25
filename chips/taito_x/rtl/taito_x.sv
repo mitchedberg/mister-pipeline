@@ -252,17 +252,20 @@ logic cram_cs;
 assign cram_cs = (cpu_addr[23:14] == 10'h380) && !cpu_as_n;
 
 // DIP switch / X1-004 I/O: 0x500000–0x500007  (4 × 16-bit words)
-//   word base [23:2] = 0x280000>>1 covering 0x500000-0x500006
-//   From MAME/FBNeo: word reads at 0x500000/2/4/6 return DIP nibbles.
-//   cpu_addr[23:2] == 22'h140000 covers 0x500000-0x500007 (4 words).
+//   Word reads at 0x500000/2/4/6 return DIP nibbles (byte addresses).
+//   cpu_addr[23:3] == 21'h0A0000 covers all 4 words (0x500000-0x500006).
+//   NOTE: [23:2] was wrong — it only covered 0x500000/0x500002, missing DIP2
+//   reads at 0x500004/0x500006. This caused WRAM[0x094A] bit 1 to be set
+//   (open-bus 0xFFFF & 0x02 = 0x02), selecting the wrong sprite Y init path.
 logic io_cs;
-assign io_cs   = (cpu_addr[23:2] == 22'h140000) && !cpu_as_n;
+assign io_cs   = (cpu_addr[23:3] == 21'h0A0000) && !cpu_as_n;
 
 // Player inputs: 0x900000–0x900007  (byte reads at odd addresses)
 //   0x900001 = P1, 0x900003 = P2, 0x900005 = coin/service
-//   cpu_addr[23:2] == 22'h240000 covers 0x900000-0x900007
+//   cpu_addr[23:3] == 21'h120000 covers all 4 words (0x900000-0x900006).
+//   NOTE: [23:2] was wrong — only covered 0x900000/0x900002, missing P2/coin.
 logic joy_cs;
-assign joy_cs  = (cpu_addr[23:2] == 22'h240000) && !cpu_as_n;
+assign joy_cs  = (cpu_addr[23:3] == 21'h120000) && !cpu_as_n;
 
 // TC0140SYT sound chip: 0x800000–0x800003 (2 × 16-bit words)
 //   0x800001 (write): port select; 0x800003 (read/write): command/status

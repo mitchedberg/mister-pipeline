@@ -137,11 +137,18 @@ int main(int argc, char** argv) {
     const char* env_gfx      = getenv("ROM_GFX");
     const char* env_vcd      = getenv("DUMP_VCD");
     const char* env_ram_dump = getenv("RAM_DUMP");
+    const char* env_dipsw1   = getenv("DIPSW1");   // hex byte, default 0xFF (all switches off)
+    const char* env_dipsw2   = getenv("DIPSW2");   // hex byte, default 0xFF (all switches off)
 
     int n_frames = env_frames ? atoi(env_frames) : 30;
     if (n_frames < 1) n_frames = 1;
 
+    // DIP switch byte values (active-low: 0xFF = all switches off = MAME default)
+    uint8_t dipsw1_val = env_dipsw1 ? (uint8_t)strtol(env_dipsw1, nullptr, 16) : 0xFF;
+    uint8_t dipsw2_val = env_dipsw2 ? (uint8_t)strtol(env_dipsw2, nullptr, 16) : 0xFF;
+
     fprintf(stderr, "Taito X simulation: %d frames\n", n_frames);
+    fprintf(stderr, "DIP switches: DIPSW1=0x%02X DIPSW2=0x%02X\n", dipsw1_val, dipsw2_val);
 
     // ── Open RAM dump file (gate-5 WRAM comparison) ─────────────────────────
     FILE* ram_dump_f = nullptr;
@@ -210,8 +217,11 @@ int main(int argc, char** argv) {
     top->joystick_p2 = 0xFF;
     top->coin        = 0x3;
     top->service     = 1;
-    top->dipsw1      = 0xDF;  // Gigandes default: difficulty=Easy, debug=Off (MAME default)
-    top->dipsw2      = 0x98;  // Gigandes default: 3 lives, demo sounds ON, flip screen OFF
+    top->dipsw1      = dipsw1_val;  // from DIPSW1 env var (default 0xFF = all off, MAME default)
+    top->dipsw2      = dipsw2_val;  // from DIPSW2 env var (default 0xFF = all off, MAME default)
+    // Game-specific DIP values (set via env vars):
+    //   Gigandes: DIPSW1=0xDF DIPSW2=0x98 (difficulty=Easy, debug=Off, 3 lives)
+    //   Ballbros: DIPSW1=0xFF DIPSW2=0xFF (all off — MAME default)
 
     // ── Simulation state ─────────────────────────────────────────────────────
     int      frame_num       = 0;
