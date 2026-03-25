@@ -466,6 +466,44 @@ int main(int argc, char** argv) {
                     }
                 }
 
+                // IACK cycle logging: detect FC=111, ASn=0 (interrupt acknowledge)
+                {
+                    auto* rtb = top->tb_top;
+                    int fc = ((int)rtb->u_cpu->__PVT__FC2 << 2) |
+                             ((int)rtb->u_cpu->__PVT__FC1 << 1) |
+                              (int)rtb->u_cpu->__PVT__FC0;
+                    int asn = (int)top->dbg_cpu_as_n;
+                    static int prev_fc = 0;
+                    static int iack_count = 0;
+                    if (fc == 7 && asn == 0 && (prev_fc != 7 || 1)) {
+                        if (iack_count < 20) {
+                            int cpu_pswI = (int)rtb->u_cpu->pswI & 7;
+                            fprintf(stderr, "  *** IACK_CYCLE fc=%d asn=%d iack_count=%d pswI=%d bc=%d frame=%d\n",
+                                    fc, asn, iack_count, cpu_pswI, bus_cycles, frame_num);
+                            iack_count++;
+                        }
+                    }
+                    prev_fc = fc;
+                }
+
+                // CPU interrupt state sampling in early frames (bc=50K-600K)
+                if (bus_cycles >= 50000 && bus_cycles <= 600000 && (bus_cycles % 50000) == 0) {
+                    auto* rtb = top->tb_top;
+                    auto* rcpu = rtb->u_cpu;
+                    int cpu_pswI  = (int)rcpu->pswI & 7;
+                    int cpu_iIpl  = (int)rcpu->iIpl & 7;
+                    int cpu_rIpl  = (int)rcpu->rIpl & 7;
+                    int cpu_intPd = (int)rcpu->intPend;
+                    int ipl_h     = (int)rtb->__PVT__u_taito_b__DOT__ipl_h_active;
+                    int ipl_sync  = (int)rtb->__PVT__u_taito_b__DOT__ipl_sync & 7;
+                    int fc = ((int)rtb->u_cpu->__PVT__FC2 << 2) |
+                             ((int)rtb->u_cpu->__PVT__FC1 << 1) |
+                              (int)rtb->u_cpu->__PVT__FC0;
+                    fprintf(stderr,
+                        "  CPU_STATE bc=%d pswI=%d iIpl=%d rIpl=%d intPend=%d ipl_h=%d ipl_sync=%d fc=%d\n",
+                        bus_cycles, cpu_pswI, cpu_iIpl, cpu_rIpl, cpu_intPd, ipl_h, ipl_sync, fc);
+                }
+
                 // Targeted stall-zone diagnostics: only when bc is near the stall zone
                 if (bus_cycles >= 2059000 && bus_cycles <= 2065000) {
                     auto* rtb = top->tb_top;

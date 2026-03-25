@@ -353,25 +353,41 @@ int main(int argc, char** argv) {
                 top->z80_rom_ack  = r.ack;
             }
 
-            // ── Bus diagnostics (first 60 bus cycles) ─────────────────────────
+            // ── Bus diagnostics ────────────────────────────────────────────────
             {
                 uint8_t  asn_c  = top->dbg_cpu_as_n;
                 uint8_t  rwn_c  = top->dbg_cpu_rw;
                 uint32_t addr_c = ((uint32_t)top->dbg_cpu_addr << 1) & 0xFFFFFF;
+                uint16_t dout_c = (uint16_t)top->dbg_cpu_dout;
+                uint16_t din_c  = (uint16_t)top->dbg_cpu_din;
 
                 if (!prev_asn && asn_c) {
                     bus_cycles++;
                 }
 
-                // Log first 60 bus cycles AND a window around frame 5 (~270K bc)
-                // to capture the stuck-loop polling behavior
+                // Log first 200 bus cycles for boot diagnostics
                 bool log_this = (!asn_c && prev_asn && iter > RESET_ITERS) &&
-                                (bus_cycles < 60 ||
-                                 (bus_cycles >= 270000 && bus_cycles < 270100));
-                if (log_this) {
-                    fprintf(stderr, "  [%6lu|bc%d] ASn=0 RW=%d addr=%06X dtack_n=%d dout=%04X\n",
-                            (unsigned long)iter, bus_cycles, (int)rwn_c, addr_c,
-                            (int)top->dbg_cpu_dtack_n, (unsigned)(top->dbg_cpu_dout));
+                                (bus_cycles < 200);
+
+                // Also log ALL bus cycles when CPU address is in key milestone regions:
+                //   0x0000B4E-0x0000B7E: WRAM march test
+                //   0x00089A:            JSR $28014 (MCU protection call)
+                //   0x000880-0x00089E:   sprite data copy + JSR
+                //   0x000490-0x0004C0:   TRAP #3 handler
+                //   0x028014-0x028020:   MCU protection stub
+                //   0x000ADE-0x000AF0:   state counter increment path
+                bool in_milestone = (!asn_c && iter > RESET_ITERS) &&
+                    ((addr_c >= 0x000B4E && addr_c <= 0x000B82) ||
+                     (addr_c >= 0x000880 && addr_c <= 0x0008A0) ||
+                     (addr_c >= 0x000490 && addr_c <= 0x0004C0) ||
+                     (addr_c >= 0x028010 && addr_c <= 0x028020) ||
+                     (addr_c >= 0x000ADE && addr_c <= 0x000AF0));
+
+                if (log_this || in_milestone) {
+                    fprintf(stderr, "  [bc%6d] RW=%d addr=%06X dtack=%d dout=%04X din=%04X iack=%d\n",
+                            bus_cycles, (int)rwn_c, addr_c,
+                            (int)top->dbg_cpu_dtack_n, dout_c, din_c,
+                            (int)top->tb_top->dbg_iack);
                 }
 
                 // Detect CPU halt
