@@ -41,7 +41,7 @@ module sdram_b (
 
     output logic [12:0] SDRAM_A,
     output logic  [1:0] SDRAM_BA,
-    inout  logic [15:0] SDRAM_DQ,
+    inout  wire  [15:0] SDRAM_DQ,
     output logic        SDRAM_nCAS,
     output logic        SDRAM_nRAS,
     output logic        SDRAM_nWE,
