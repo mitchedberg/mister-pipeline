@@ -2369,3 +2369,19 @@ The agent found that the timer-based IPL issue in `psikyo_arcade.sv` was actuall
 
 ### Root Cause
 The `cpu_inta_n` (IACK) signal existed in `psikyo_arcade.sv` with the correct set/clear latch pattern, but was **never wired up** through the system — causing it to default to `0` (permanently asserted) in simulation, which cleared the IPL latch every clock cy
+
+## 2026-03-25T03:33:58Z — Factory → Log: TASK-100
+**Status:** SUCCESS
+**Session:** 97ba857e-f5de-4ada-8b4b-b3585578ad27
+**Result excerpt:** The background Verilator build completed successfully. Here's the summary:
+
+## Background Verilator Build — ✅ SUCCESS
+
+The `sim_nmk_arcade` binary compiled cleanly with **zero errors or warnings** using Verilator 5.046 on 10 threads.
+
+**Build stats:**
+- Wall time: **233.9 seconds** (3.8 min — normal for a full rebuild including fx68k)
+- Source: 7.562 MB across 93 modules → 10.157 MB in 26 C++ files
+- All compilation units linked successfully into `sim_nmk_arcade`
+
+This confirms the TASK-100 fix 

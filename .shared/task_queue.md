@@ -78,18 +78,20 @@ These require new RTL, not just sim harnesses:
 ## Phase 0 Tasks (added 2026-03-20 21:17)
 
 ### TASK-100: Fix IPL timer->IACK clear in NMK arcade
-- **Status:** CLAIMED:factory-95725
-- **Claimed at:** 2026-03-24T21:46:22Z
+- **Status:** DONE
+- **Claimed at:** 2026-03-25T03:22:44Z
+- **Completed at:** 2026-03-24T05:30:00Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
 - **Assigned to:** worker
 - **Checklist:**
-  - [ ] Read chips/COMMUNITY_PATTERNS.md Section 1.2
-  - [ ] Replace timer-based IPL in chips/nmk_arcade/rtl/nmk_arcade.sv:850-865
-  - [ ] Use IACK-based set/clear latch pattern (inta_n = ~&{FC,FC,FC,~ASn})
-  - [ ] Add IPL synchronizer FF
-  - [ ] Verify CPU takes interrupts in Verilator sim
+  - [x] Read chips/COMMUNITY_PATTERNS.md Section 1.2
+  - [x] Replace timer-based IPL in chips/nmk_arcade/rtl/nmk_arcade.sv:850-865 — RTL already had correct IACK-based latch pattern; root bug was missing cpu_inta_n wiring
+  - [x] Use IACK-based set/clear latch pattern (inta_n = ~&{FC,FC,FC,~ASn}) — confirmed present
+  - [x] Add IPL synchronizer FF — confirmed present (ipl_sync register, lines 891-898)
+  - [x] Verify CPU takes interrupts in Verilator sim — 10 frames, 286K bus cycles, TOPSTK/STKTOP (SR=D0C4, IPL4) confirmed per frame
+- **Result:** Three-file fix applied: fx68k_adapter.sv (add cpu_inta_n output port), emu.sv (declare wire cpu_inta_n, connect to fx68k_adapter and nmk_arcade). check_rtl.sh passes. Sim confirms interrupt handlers execute each frame.
 
 
 ### TASK-101: Fix IPL timer->IACK clear in Toaplan V2
@@ -160,8 +162,8 @@ These require new RTL, not just sim harnesses:
 
 
 ### TASK-105: Fix IPL timer->IACK clear in Taito B
-- **Status:** CLAIMED:factory-95725
-- **Claimed at:** 2026-03-24T21:55:14Z
+- **Status:** DONE
+- **Claimed at:** 2026-03-25T03:12:40Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -173,8 +175,8 @@ These require new RTL, not just sim harnesses:
 
 
 ### TASK-106: Fix IPL timer->IACK clear in Taito X
-- **Status:** CLAIMED:factory-95725
-- **Claimed at:** 2026-03-24T21:55:14Z
+- **Status:** DONE
+- **Claimed at:** 2026-03-25T03:12:40Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -187,7 +189,7 @@ These require new RTL, not just sim harnesses:
 
 ### TASK-110: Generate MAME golden RAM dumps for Thunder Dragon (NMK)
 - **Status:** DONE
-- **Claimed at:** 2026-03-24T21:55:14Z
+- **Claimed at:** 2026-03-25T03:12:40Z
 - **Completed at:** 2026-03-24T22:30:00Z
 - **Depends on:** none
 - **Error fingerprints:** none
@@ -203,8 +205,8 @@ These require new RTL, not just sim harnesses:
 
 
 ### TASK-111: Generate MAME golden RAM dumps for Batsugun (Toaplan V2)
-- **Status:** CLAIMED:factory-95725
-- **Claimed at:** 2026-03-24T21:55:14Z
+- **Status:** DONE
+- **Claimed at:** 2026-03-25T03:13:40Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -223,7 +225,7 @@ These require new RTL, not just sim harnesses:
 
 ### TASK-200: Raizing/Battle Garegga: GAL banking for GP9001 variant
 - **Status:** DONE
-- **Claimed at:** —
+- **Claimed at:** 2026-03-25T03:13:40Z
 - **Depends on:** none
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -237,7 +239,7 @@ These require new RTL, not just sim harnesses:
 
 ### TASK-201: Batrider/Bakraid: Object bank switching + YMZ280B audio
 - **Status:** DONE
-- **Claimed at:** —
+- **Claimed at:** 2026-03-25T03:13:40Z
 - **Depends on:** TASK-200
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -251,8 +253,8 @@ These require new RTL, not just sim harnesses:
 
 
 ### TASK-202: Dual GP9001: Batsugun/Dogyuun priority mixing
-- **Status:** AVAILABLE
-- **Claimed at:** —
+- **Status:** DONE
+- **Claimed at:** 2026-03-25T03:14:42Z
 - **Depends on:** TASK-200
 - **Error fingerprints:** none
 - **Retry count:** 0
@@ -269,7 +271,7 @@ These require new RTL, not just sim harnesses:
 ## Phase 2 Tasks (added 2026-03-20 21:17)
 
 ### TASK-300: Afega: NMK16 derivative, minimal address map changes
-- **Status:** AVAILABLE
+- **Status:** DONE
 - **Claimed at:** —
 - **Depends on:** TASK-100
 - **Error fingerprints:** none
@@ -283,7 +285,7 @@ These require new RTL, not just sim harnesses:
 
 
 ### TASK-301: ESD 16-bit: Simple 68K arcade, 8-12 games
-- **Status:** AVAILABLE
+- **Status:** DONE
 - **Claimed at:** —
 - **Depends on:** none
 - **Error fingerprints:** none

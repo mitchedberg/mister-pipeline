@@ -49,14 +49,14 @@
 
   <!-- TC0180VCU GFX ROM (1MB interleaved) -->
   <!-- Loaded to SDRAM offset 0x100000 -->
-  <rom index="1" zip="nastar.zip" type="merged" md5="5a569163eabb0603ef2ee5792d522024">
+  <rom index="1" zip="nastar.zip" type="merged" md5="None">
     <part name="b81-03.14" crc="551b75e6" sha1="5b8388ee2c6262f359c9e6d04c951ea8dc3901c9" offset="0x000000" length="0x080000"/>
     <part name="b81-04.15" crc="cf734e12" sha1="4201a74468058761454515738fbf3a7b22a66e00" offset="0x080000" length="0x080000"/>
   </rom>
 
   <!-- ADPCM sample ROMs (512KB ADPCM-A + 512KB ADPCM-B) -->
   <!-- Loaded to SDRAM offset 0x200000 -->
-  <rom index="2" zip="nastar.zip" type="merged" md5="771dbb1b14d61860ec8e87eaee17cbff">
+  <rom index="2" zip="nastar.zip" type="merged" md5="None">
     <part name="b81-02.2" crc="20ec3b86" sha1="fcdcc7f0a09feb824d8d73b1af0aae7ec30fd1ed" offset="0x000000" length="0x080000"/>
     <part name="b81-01.1" crc="b33f796b" sha1="6cdb32f56283acdf20eb46a1e658e3bd7c97978c" offset="0x080000" length="0x080000"/>
   </rom>

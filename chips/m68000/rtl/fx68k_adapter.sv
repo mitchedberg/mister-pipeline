@@ -80,7 +80,14 @@ module fx68k_adapter (
     // ── CPU halted output ─────────────────────────────────────────────────────
     // oHALTEDn from fx68k — asserted (low) when the CPU enters the halted state
     // (double bus fault). Exposed for testbench diagnostics.
-    output logic        cpu_halted_n
+    output logic        cpu_halted_n,
+
+    // ── Interrupt acknowledge output ──────────────────────────────────────────
+    // Active-low: asserted (0) when FC=111 and ASn=0 (CPU performing IACK cycle).
+    // Drive to core module's cpu_inta_n input so the IPL latch can clear on IACK.
+    // Without this connection, cpu_inta_n defaults to 0 (always-IACK), which
+    // clears the IPL latch every cycle and prevents interrupts from being taken.
+    output logic        cpu_inta_n
 );
 
 // =============================================================================
@@ -220,6 +227,7 @@ assign cpu_lds_n     = fx_LDSn;
 assign cpu_as_n      = fx_ASn;
 assign cpu_reset_n_out = fx_oRESETn;
 assign cpu_halted_n    = fx_oHALTEDn;
+assign cpu_inta_n      = inta_n;        // expose IACK signal to caller
 
 // =============================================================================
 // Unused signal suppression (prevent lint warnings)

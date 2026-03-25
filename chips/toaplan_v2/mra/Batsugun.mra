@@ -34,10 +34,6 @@
     <setname>batsugun</setname>
     <rbf>toaplan_v2</rbf>
 
-    <!-- DIP switches — defaults from MAME batsugun driver -->
-    <!-- Index 0xFE loaded as dsw[0] and dsw[1] in emu.sv -->
-    <nvram index="2" size="2"/>
-
     <!-- Program ROM (68K CPU, index 0x00) -->
     <!-- SDRAM byte offset 0x000000 -->
     <rom index="0" zip="batsugun.zip" md5="None" type="merged">
@@ -46,17 +42,14 @@
     </rom>
 
     <!-- GFX ROMs (tiles + sprites, index 0x01) -->
-    <!-- SDRAM byte offset 0x100000 -->
-    <!-- FBNeo loads as 4x 1MB planes: 3l+3h interleaved, 4l+4h interleaved, 5+6 -->
+    <!-- SDRAM byte offset 0x100000, 4MB cap = emu.sv window 0x100000–0x4FFFFF -->
+    <!-- tp030_5 and tp030_6 (GP9001 #1, 2MB) omitted — would overflow into ADPCM at 0x500000 -->
     <rom index="1" zip="batsugun.zip" md5="None" type="merged">
         <!-- GP9001 #0 tile data (4bpp, planes interleaved) -->
         <part name="tp030_3l.bin" crc="3024b793" sha1="e161db940f069279356fca2c5bf2753f07773705"/>   <!-- 1MB plane 0-lo -->
         <part name="tp030_3h.bin" crc="ed75730b" sha1="341f0f728144a049486d996c9bb14078578c6879"/>   <!-- 1MB plane 0-hi -->
         <part name="tp030_4l.bin" crc="fedb9861" sha1="4b0917056bd359b21935358c6bcc729262be6417"/>   <!-- 1MB plane 1-lo -->
         <part name="tp030_4h.bin" crc="d482948b" sha1="31be7dc5cff072403b783bf203b9805ffcad7284"/>   <!-- 1MB plane 1-hi -->
-        <!-- GP9001 #1 tile data -->
-        <part name="tp030_5.bin"  crc="bcf5ba05" sha1="40f98888a29cdd30cda5dfb60fdc667c69b0fdb0"/>   <!-- 1MB -->
-        <part name="tp030_6.bin"  crc="0666fecd" sha1="aa8f921fc51590b5b05bbe0b0ad0cce5ff359c64"/>   <!-- 1MB -->
     </rom>
 
     <!-- ADPCM ROM (OKI M6295 sample data, index 0x02) -->

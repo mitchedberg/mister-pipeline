@@ -764,28 +764,40 @@ module gp9001 #(
     end
 
     // ── Stage 0: scrolled coords, VRAM read, ROM address computation ──────────
+    //
+    // Toaplan V2 / GP9001 uses 16×16 pixel tiles (all games).
+    // Scroll field: 512×512 pixels → 32×32 tile map per layer.
+    //   s0_col[4:0]: tile column (0..31), from tx[8:4]
+    //   s0_row[4:0]: tile row    (0..31), from ty[8:4]
+    //   s0_px [3:0]: pixel X within 16px tile (0..15)
+    //   s0_py [3:0]: pixel Y within 16px tile (0..15)
 
     logic [8:0] s0_tx, s0_ty;   // scrolled pixel coords
-    logic [5:0] s0_col, s0_row;
-    logic [2:0] s0_px,  s0_py;
+    logic [4:0] s0_col, s0_row; // 5-bit tile col/row (32-column tilemap)
+    logic [3:0] s0_px,  s0_py;  // 4-bit pixel offset within 16px tile
 
     always_comb begin
         s0_tx  = hpos + active_scroll_r[{mux_layer, 1'b0}][8:0];
         s0_ty  = vpos + active_scroll_r[{mux_layer, 1'b1}][8:0];
-        s0_col = s0_tx[8:3];
-        s0_row = s0_ty[8:3];
-        s0_px  = s0_tx[2:0];
-        s0_py  = s0_ty[2:0];
+        s0_col = s0_tx[8:4];   // 16px tiles: col = tx / 16
+        s0_row = s0_ty[8:4];   // 16px tiles: row = ty / 16
+        s0_px  = s0_tx[3:0];   // pixel X within tile (0..15)
+        s0_py  = s0_ty[3:0];   // pixel Y within tile (0..15)
     end
 
-    // VRAM cell address = {layer, cell[11:0], word_sel} where cell = {row, col}
-    logic [11:0] s0_cell;
+    // VRAM cell address — must match CPU write scheme (15-bit VRAM, 32768 entries).
+    // CPU write: vram_cpu_addr = {layer[1:0], 3'b000, addr[9:0]} = 15 bits.
+    //   addr[9:0] = {cell[8:0], word_sel} → 9-bit cell index + word select.
+    // Renderer: cell = {row[4:0], col[4:0]} = 10 bits; only lower 9 bits are
+    // accessible via CPU (cells 0..511 = rows 0..15, all visible on 240p screen).
+    // Address: {layer[1:0], 3'b000, cell[8:0], word_sel} = 15 bits.
+    logic [9:0]  s0_cell;         // full 10-bit cell (row×32+col)
     logic [14:0] s0_code_vaddr, s0_attr_vaddr;
 
     always_comb begin
-        s0_cell       = {s0_row, s0_col};
-        s0_code_vaddr = {mux_layer, s0_cell, 1'b0};
-        s0_attr_vaddr = {mux_layer, s0_cell, 1'b1};
+        s0_cell       = {s0_row, s0_col};                        // 10-bit cell index
+        s0_code_vaddr = {mux_layer, 3'b000, s0_cell[8:0], 1'b0};  // code word (even)
+        s0_attr_vaddr = {mux_layer, 3'b000, s0_cell[8:0], 1'b1};  // attr word (odd)
     end
 
     /* verilator lint_off UNUSEDSIGNAL */
@@ -800,7 +812,7 @@ module gp9001 #(
     logic [11:0] s0_tile_num;
     logic [3:0]  s0_palette;
     logic        s0_flip_x, s0_flip_y, s0_prio;
-    logic [2:0]  s0_fpx, s0_fpy;
+    logic [3:0]  s0_fpx, s0_fpy;   // 4-bit flip coords for 16×16 tiles
 
     always_comb begin
         s0_tile_num = s0_code_word[11:0];
@@ -808,17 +820,17 @@ module gp9001 #(
         s0_flip_x   = s0_attr_word[4];
         s0_flip_y   = s0_attr_word[5];
         s0_prio     = s0_attr_word[6];
-        s0_fpx = s0_flip_x ? (3'd7 - s0_px) : s0_px;
-        s0_fpy = s0_flip_y ? (3'd7 - s0_py) : s0_py;
+        s0_fpx = s0_flip_x ? (4'd15 - s0_px) : s0_px;  // flip over 15 (16-1)
+        s0_fpy = s0_flip_y ? (4'd15 - s0_py) : s0_py;
     end
 
-    // ROM byte address: tile_num*32 + fpy*4 + fpx[2:1]
-    // (4bpp: 8×8 tile = 32 bytes; row = 4 bytes; 2 pixels/byte)
+    // ROM byte address: tile_num*128 + fpy*8 + fpx[3:1]
+    // (4bpp: 16×16 tile = 128 bytes; row = 8 bytes; 2 pixels/byte)
     logic [19:0] s0_rom_addr;
     always_comb begin
-        s0_rom_addr = {3'h0, s0_tile_num, 5'h00}   // tile_num << 5
-                    + {15'h0, s0_fpy, 2'h0}          // fpy << 2
-                    + {18'h0, s0_fpx[2:1]};           // fpx >> 1
+        s0_rom_addr = {2'h0, s0_tile_num, 7'h00}   // tile_num << 7 (tile * 128)
+                    + {13'h0, s0_fpy, 3'h0}          // fpy << 3       (row * 8)
+                    + {17'h0, s0_fpx[3:1]};           // fpx >> 1       (byte in row)
     end
 
     // ── Stage 1 registers: send ROM request, latch metadata ──────────────────

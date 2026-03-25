@@ -32,10 +32,13 @@ RTL_FX68K      := $(ROOT)/chips/m68000/hdl/fx68k/fx68kAlu.sv \
                   $(ROOT)/chips/m68000/hdl/fx68k/uaddrPla.sv \
                   $(ROOT)/chips/m68000/hdl/fx68k/fx68k.sv
 
-# Simulation top (wraps kaneko_arcade + fx68k)
+# Simulation top (wraps kaneko_arcade + fx68k) — berlwall/default
 RTL_TB_TOP     := ../rtl/tb_top.sv
 
-# All RTL sources (full system)
+# GTMR simulation top (PROG_ROM_ABITS=19, different address map)
+RTL_TB_TOP_G   := ../rtl/tb_top_gtmr.sv
+
+# All RTL sources (full system — berlwall default)
 SRCS = \
     $(RTL_KANEKO16) \
     $(RTL_T80) \
@@ -43,6 +46,15 @@ SRCS = \
     $(RTL_FX68K) \
     $(RTL_TOP) \
     $(RTL_TB_TOP)
+
+# GTMR RTL sources
+SRCS_G = \
+    $(RTL_KANEKO16) \
+    $(RTL_T80) \
+    $(RTL_JT6295) \
+    $(RTL_FX68K) \
+    $(RTL_TOP) \
+    $(RTL_TB_TOP_G)
 
 # Include paths
 INCDIRS = \
@@ -72,7 +84,12 @@ SIM_NAME   = sim_kaneko_arcade
 SIM_BINARY = $(SIM_NAME)
 OBJ_BIN    = obj_dir/$(SIM_NAME)
 
-.PHONY: all run clean info
+# GTMR variant
+SIM_NAME_G   = sim_kaneko_arcade_gtmr
+SIM_BINARY_G = $(SIM_NAME_G)
+OBJ_BIN_G    = obj_dir_gtmr/$(SIM_NAME_G)
+
+.PHONY: all gtmr run clean info
 
 all: $(SIM_BINARY)
 
@@ -84,11 +101,21 @@ $(SIM_BINARY): tb_system.cpp sdram_model.h $(SRCS)
 	    -o $(SIM_NAME)
 	@ln -sf $(OBJ_BIN) $(SIM_BINARY) 2>/dev/null || cp $(OBJ_BIN) $(SIM_BINARY)
 
+gtmr: $(SIM_BINARY_G)
+
+$(SIM_BINARY_G): tb_system.cpp sdram_model.h $(SRCS_G)
+	$(VERILATOR) $(VLFLAGS) $(INCDIRS) \
+	    -CFLAGS "$(CFLAGS)" \
+	    --Mdir obj_dir_gtmr \
+	    $(SRCS_G) tb_system.cpp \
+	    -o $(SIM_NAME_G)
+	@ln -sf $(OBJ_BIN_G) $(SIM_BINARY_G) 2>/dev/null || cp $(OBJ_BIN_G) $(SIM_BINARY_G)
+
 run: $(SIM_BINARY)
 	N_FRAMES=$${N_FRAMES:-30} ./$(SIM_BINARY)
 
 clean:
-	rm -rf obj_dir $(SIM_BINARY) *.ppm *.vcd
+	rm -rf obj_dir obj_dir_gtmr $(SIM_BINARY) $(SIM_BINARY_G) *.ppm *.vcd
 
 # Print a summary of what was built
 info:

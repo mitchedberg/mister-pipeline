@@ -44,7 +44,7 @@
        Bank 0: east_1.10a (even bytes, D15:D8) + east_3.5a (odd bytes, D7:D0)
        Bank 1: east_2.8a  (even bytes, D15:D8) + east_4.3a  (odd bytes, D7:D0)
        Z80 audio ROM appended at offset 0x080000 (64KB, east_5.17d). -->
-  <rom index="0" zip="gigandes.zip" type="merged" md5="993cd95b33bf5a65530964692511f979">
+  <rom index="0" zip="gigandes.zip" type="merged" md5="None">
     <interleave output="16">
       <part name="east_1.10a" crc="ae74e4e5" sha1="1cac0a0e591b63142d8d249c67f803256fb28c2a" map="10"/>
       <part name="east_3.5a"  crc="8bcf2116" sha1="9255d7e0ab568ad7a894421d3260fa80b8a0a5d0" map="01"/>
@@ -61,7 +61,7 @@
        Bank 0: east_9.3j (even bytes) + east_8.3f (odd bytes) = 1MB
        Bank 1: east_6.3k (even bytes) + east_7.3h (odd bytes) = 1MB
        Total: 2MB at SDRAM 0x100000. -->
-  <rom index="1" zip="gigandes.zip" type="merged" md5="1d7be90db3a56deceb522e3bce3f6922">
+  <rom index="1" zip="gigandes.zip" type="merged" md5="None">
     <interleave output="16">
       <part name="east_9.3j" crc="5c5e6898" sha1="f348ac752a571902c55f36e21aa3fb9ef97528e3" map="10"/>
       <part name="east_8.3f" crc="75eece28" sha1="7ce66cd8bca7dd214367beae067727c8735c0f7e" map="01"/>

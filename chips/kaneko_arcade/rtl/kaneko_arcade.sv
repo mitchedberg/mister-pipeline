@@ -66,6 +66,11 @@ module kaneko_arcade #(
     parameter logic [23:1] WRAM_BASE   = 23'h100000,   // byte 0x200000 >> 1
     parameter int WRAM_WORDS = 32768,                   // 64KB / 2 = 32K words
 
+    // Program ROM window size: number of address bits covering ROM space.
+    // berlwall default: 20 bits = 1MB (byte 0x000000–0x0FFFFF).
+    // GTMR: 19 bits = 512KB (byte 0x000000–0x07FFFF); avoids aliasing into WRAM at 0x100000.
+    parameter int PROG_ROM_ABITS = 20,
+
     // ── SDRAM base addresses ────────────────────────────────────────────────
     // GFX ROM (sprites + tiles) at SDRAM offset 0x100000
     parameter logic [26:0] GFX_ROM_BASE  = 27'h100000
@@ -246,7 +251,7 @@ assign scan_trigger_w = hblank_prev & ~hblank_r;
 
 // Program ROM: 0x000000–0x0FFFFF (byte), word 0x000000–0x07FFFF (20-bit)
 logic prog_rom_cs;
-assign prog_rom_cs = (cpu_addr[23:20] == 4'b0000) && !cpu_as_n;
+assign prog_rom_cs = (cpu_addr[23:PROG_ROM_ABITS] == '0) && !cpu_as_n;
 
 // Work RAM: 0x100000–0x10FFFF byte → word 0x080000–0x087FFF (15-bit window)
 logic wram_cs;

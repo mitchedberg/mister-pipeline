@@ -859,13 +859,16 @@ logic [1:0]  gfx_pending_byte_sel;
 logic [1:0]  gfx_chan;   // which channel is in-flight
 
 // Byte-lane mux (combinational, outside always_ff to avoid Verilator complaints)
+// gfx_rom_data[31:24] = byte 0 of the 4-byte aligned block (lowest address)
+// gfx_rom_data[7:0]   = byte 3 of the 4-byte aligned block (highest address)
+// gfx_pending_byte_sel[1:0] = original byte address bits [1:0]
 logic [7:0] gfx_byte_out;
 always_comb begin
     case (gfx_pending_byte_sel)
-        2'b00: gfx_byte_out = gfx_rom_data[7:0];
-        2'b01: gfx_byte_out = gfx_rom_data[15:8];
-        2'b10: gfx_byte_out = gfx_rom_data[23:16];
-        2'b11: gfx_byte_out = gfx_rom_data[31:24];
+        2'b00: gfx_byte_out = gfx_rom_data[31:24];  // byte 0 of dword
+        2'b01: gfx_byte_out = gfx_rom_data[23:16];  // byte 1 of dword
+        2'b10: gfx_byte_out = gfx_rom_data[15:8];   // byte 2 of dword
+        2'b11: gfx_byte_out = gfx_rom_data[7:0];    // byte 3 of dword
     endcase
 end
 
@@ -884,26 +887,29 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
         if (!gfx_pending) begin
             if (spr_rom_rd) begin
                 // VDP#0 sprite — highest priority
-                gfx_pending_addr     <= {1'b0, spr_rom_addr_raw[20:0]};
+                // gfx_rom_addr is a HALF-WORD address (testbench does addr*2 + GFX_BASE)
+                // spr_rom_addr_raw is a 25-bit byte address; shift right by 1 for half-word
+                gfx_pending_addr     <= {1'b0, spr_rom_addr_raw[21:1]};
                 gfx_pending_byte_sel <= spr_rom_addr_raw[1:0];
                 gfx_chan             <= 2'b01;
                 gfx_pending          <= 1'b1;
                 gfx_rom_req          <= ~gfx_rom_req;
             end else if (DUAL_VDP && spr_rom_rd_1) begin
                 // VDP#1 sprite
-                gfx_pending_addr     <= {1'b0, spr_rom_addr_1_raw[20:0]};
+                gfx_pending_addr     <= {1'b0, spr_rom_addr_1_raw[21:1]};
                 gfx_pending_byte_sel <= spr_rom_addr_1_raw[1:0];
                 gfx_chan             <= 2'b11;
                 gfx_pending          <= 1'b1;
                 gfx_rom_req          <= ~gfx_rom_req;
             end else if (DUAL_VDP) begin
                 // VDP#0 and VDP#1 BG — round-robin between them; simple even/odd by hpos LSB
+                // bg_rom_addr_raw is a 20-bit byte address; shift right by 1 for half-word
                 if (!pix_hpos[0]) begin
-                    gfx_pending_addr     <= {2'b0, bg_rom_addr_raw};
+                    gfx_pending_addr     <= {3'b0, bg_rom_addr_raw[19:1]};
                     gfx_pending_byte_sel <= bg_rom_addr_raw[1:0];
                     gfx_chan             <= 2'b00;
                 end else begin
-                    gfx_pending_addr     <= {2'b0, bg_rom_addr_1_raw};
+                    gfx_pending_addr     <= {3'b0, bg_rom_addr_1_raw[19:1]};
                     gfx_pending_byte_sel <= bg_rom_addr_1_raw[1:0];
                     gfx_chan             <= 2'b10;
                 end
@@ -911,7 +917,8 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
                 gfx_rom_req <= ~gfx_rom_req;
             end else begin
                 // Single-VDP: VDP#0 BG only
-                gfx_pending_addr     <= {2'b0, bg_rom_addr_raw};
+                // bg_rom_addr_raw is a 20-bit byte address; shift right by 1 for half-word
+                gfx_pending_addr     <= {3'b0, bg_rom_addr_raw[19:1]};
                 gfx_pending_byte_sel <= bg_rom_addr_raw[1:0];
                 gfx_chan             <= 2'b00;
                 gfx_pending          <= 1'b1;

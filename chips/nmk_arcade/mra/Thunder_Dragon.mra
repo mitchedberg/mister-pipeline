@@ -28,7 +28,7 @@
 <misterromdescription>
     <name>Thunder Dragon</name>
     <setname>tdragon</setname>
-    <rbf>NMK16</rbf>
+    <rbf>nmk_arcade</rbf>
     <mameversion>0.245</mameversion>
 
     <switches default="FF,FF">

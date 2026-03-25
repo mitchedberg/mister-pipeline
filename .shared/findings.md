@@ -1,3 +1,32 @@
+## 2026-03-24 — TASK-100: Fix IPL IACK clear in NMK arcade
+
+**Status:** COMPLETE
+**Executed by:** Worker (Claude Sonnet 4.6)
+
+### What was found
+
+The NMK arcade IPL latch pattern in `nmk_arcade.sv` was already correct (IACK-based set/clear, IPL synchronizer FF, VPAn from inta_n). The root bug was a missing `cpu_inta_n` wiring in two places:
+
+1. `chips/m68000/rtl/fx68k_adapter.sv` computed `inta_n` internally but did NOT expose it as an output port. Callers had no way to retrieve the IACK signal.
+2. `chips/nmk_arcade/quartus/emu.sv` never declared `wire cpu_inta_n` and never connected it between `fx68k_adapter` and `nmk_arcade`. The `input logic cpu_inta_n` port in `nmk_arcade.sv` was therefore implicitly driven to 0 (always-IACK), clearing the IPL latch every cycle before the CPU could sample it.
+
+### Fix applied
+
+Three files modified:
+- `chips/m68000/rtl/fx68k_adapter.sv`: Added `output logic cpu_inta_n` port + `assign cpu_inta_n = inta_n`
+- `chips/nmk_arcade/quartus/emu.sv`: Added `wire cpu_inta_n`, `.cpu_inta_n(cpu_inta_n)` to `fx68k_adapter` instantiation, `.cpu_inta_n(cpu_inta_n)` to `nmk_arcade` instantiation
+
+### Verification
+
+`check_rtl.sh nmk_arcade`: ALL CHECKS PASSED.
+Verilator sim (10 frames, tdragon.zip): 286,285 bus cycles, 7,109 wram_wr. TOPSTK/STKTOP entries with SR=0xD0C4 (IPL4 saved, supervisor mode) appear every frame — confirms VBlank interrupt handler executes each frame.
+
+### Note for other cores
+
+`fx68k_adapter.sv` now has the `cpu_inta_n` output port. Any other emu.sv that uses `fx68k_adapter` and has a core module that needs IACK clearing only needs Step B: declare `wire cpu_inta_n` and connect it. See failure_catalog.md entry "cpu_inta_n port declared but unconnected in emu.sv" for the full list of affected cores.
+
+---
+
 ## 2026-03-24 — TASK-202: Dual GP9001 Priority Mixing Audit (Batsugun/Dogyuun)
 
 **Status:** COMPLETE
