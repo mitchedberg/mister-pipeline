@@ -281,8 +281,15 @@ logic palram_cs;
 assign palram_cs = (cpu_addr[23:11] == PALRAM_BASE[23:11]) && !cpu_as_n;
 
 // I/O: 0x700000–0x70000F byte → word 0x380000–0x380007 (3-bit window)
+// berlwall: coin lockout WRITE only at byte 0x700000 (our IO_BASE = 23'h380000 = byte 0x700000)
 logic io_cs;
 assign io_cs = (cpu_addr[23:4] == IO_BASE[23:4]) && !cpu_as_n;
+
+// berlwall joystick inputs: byte 0x680000–0x680005 → word 0x340000–0x340002 (2-bit window)
+//   P1  = 0x680000 (byte), P2 = 0x680002, SYSTEM = 0x680004
+// IO_BASE is 0x700000 (coin lockout), so joystick lives at a SEPARATE decode.
+logic joy_cs;
+assign joy_cs = (cpu_addr[23:4] == 20'h34000) && !cpu_as_n;  // byte 0x680000-0x68000F
 
 // =============================================================================
 // kaneko16 — Graphics Chip (Gates 1–5)
@@ -601,6 +608,60 @@ end
 `endif
 
 // =============================================================================
+// Tilemap VRAM — berlwall: 16KB at 0xC00000–0xC03FFF (8K × 16-bit)
+// =============================================================================
+// MAME berlwall_map: map(0xC00000, 0xC03FFF).m(m_view2[0], vram_map)
+// The CPU both WRITES and READS this RAM (boot march test + tile data).
+// kaneko16.sv's GFX window path (cpu_addr[20:16]==5'd27) has no read-back,
+// so we add a standalone backing RAM here for correct CPU read-back.
+//
+// WRITES: stored in vram_mem here AND bridged to kaneko16 BG VRAM port.
+// READS:  returned from vram_mem (CPU read-back for march test and tile fetch).
+
+localparam int VRAM_ABITS = 13;   // 8K words = 13-bit address
+
+logic [15:0] vram_cpu_dout;
+
+`ifndef QUARTUS
+logic [15:0] vram_mem [0:(1<<VRAM_ABITS)-1];  // 8K × 16-bit = 16KB
+always_ff @(posedge clk_sys) begin
+    if (!vram_cs_n && !cpu_rw) begin
+        if (!cpu_uds_n) vram_mem[cpu_addr[VRAM_ABITS:1]][15:8] <= cpu_dout[15:8];
+        if (!cpu_lds_n) vram_mem[cpu_addr[VRAM_ABITS:1]][ 7:0] <= cpu_dout[ 7:0];
+    end
+end
+always_ff @(posedge clk_sys) begin
+    if (!vram_cs_n) vram_cpu_dout <= vram_mem[cpu_addr[VRAM_ABITS:1]];
+end
+`else
+// Quartus: use altsyncram single-port for CPU read/write
+altsyncram #(
+    .operation_mode         ("SINGLE_PORT"),
+    .width_a                (16),
+    .widthad_a              (VRAM_ABITS),
+    .numwords_a             (1 << VRAM_ABITS),
+    .outdata_reg_a          ("CLOCK0"),
+    .clock_enable_input_a   ("BYPASS"),
+    .clock_enable_output_a  ("BYPASS"),
+    .intended_device_family ("Cyclone V"),
+    .lpm_type               ("altsyncram"),
+    .ram_block_type         ("M10K"),
+    .width_byteena_a        (2),
+    .power_up_uninitialized ("FALSE"),
+    .read_during_write_mode_port_a ("NEW_DATA_NO_NBE_READ")
+) vram_inst (
+    .clock0     (clk_sys),
+    .address_a  (cpu_addr[VRAM_ABITS:1]),
+    .data_a     (cpu_dout),
+    .wren_a     (!vram_cs_n && !cpu_rw),
+    .byteena_a  ({~cpu_uds_n, ~cpu_lds_n}),
+    .q_a        (vram_cpu_dout),
+    .aclr0(1'b0), .addressstall_a(1'b0), .clocken0(1'b1), .clocken1(1'b1),
+    .clocken2(1'b1), .clocken3(1'b1), .eccstatus(), .rden_a(1'b1)
+);
+`endif
+
+// =============================================================================
 // Palette RAM — berlwall: 4KB at 0x400000 (2K × 16-bit)
 // =============================================================================
 // Format: 0bRRRRRGGGGGBBBBB (RGB555, standard Kaneko16 format)
@@ -713,36 +774,60 @@ always_comb begin
 end
 
 // =============================================================================
+// Joystick Data — berlwall inputs at 0x680000-0x680005
+// =============================================================================
+// MAME berlwall_map:
+//   0x680000-0x680001: P1 joystick + buttons (active-low)
+//   0x680002-0x680003: P2 joystick + buttons (active-low)
+//   0x680004-0x680005: SYSTEM (service, coins, active-low)
+// CPU reads byte from lower byte (D[7:0]) of 16-bit bus.
+
+logic [7:0] joy_dout_byte;
+always_comb begin
+    joy_dout_byte = 8'hFF;  // default: no buttons pressed (active-low)
+    case (cpu_addr[2:1])  // A[2:1]: 00=P1, 01=P2, 10=SYSTEM
+        2'b00: joy_dout_byte = joystick_p1;
+        2'b01: joy_dout_byte = joystick_p2;
+        2'b10: joy_dout_byte = {2'b11, service, 1'b1, coin[1], coin[0], 2'b11};
+        default: joy_dout_byte = 8'hFF;
+    endcase
+end
+
+// =============================================================================
 // AY8910 Stub — berlwall reads DIP switches via AY8910 ports
 // =============================================================================
 // berlwall AY8910 × 2:
 //   AY0: 0x800000-0x8001FF (DIP switches on port A/B)
 //   AY1: 0x800200-0x8003FF
-//   MSM6295: 0x800400-0x8005FF
 //
-// Read protocol: CPU address encodes AY register number.
-//   Register addr = cpu_addr[4:1] (berlwall encodes reg in address bits)
-//   Register 14 (0xE) = Port A input → DIP switch 1
-//   Register 15 (0xF) = Port B input → DIP switch 2
+// berlwall reads DIP switches via move.w at byte addresses:
+//   0x80001C (A[4:1]=0b1110=14): AY reg 14 / Port A = DSW1
+//   0x80001E (A[4:1]=0b1111=15): AY reg 15 / Port B = DSW2
 //
-// For simulation: just return DIP values for reg 14/15, 0 for everything else.
+// cpu_addr is [23:1] — bit indices match byte address bit positions.
+// MAME ym2149_r: offset = (byte_addr - 0x800000) / 2 = cpu_addr[4:1] relative to base.
+// So cpu_addr[4:1] == 14 for reg 14, == 15 for reg 15.
 
 logic ay_cs;
 assign ay_cs = (cpu_addr[23:16] == 8'h80) && !cpu_as_n;  // byte 0x800000-0x80FFFF
 
 logic [7:0] ay_dout_byte;
 always_comb begin
-    ay_dout_byte = 8'h00;
+    ay_dout_byte = 8'hFF;  // default: all off (active-low DIP switches)
     if (cpu_addr[9] == 1'b0) begin
-        // AY0: 0x800000-0x8001FF
+        // AY0: byte 0x800000-0x8001FF
+        // cpu_addr is [23:1] (word address with bit indices matching byte addr bits).
+        // MAME ym2149_r: offset = (byte_addr - base) / 2 = A[4:1] (for base=0x800000).
+        // reg 14 = byte 0x80001C → A[4:1] = 4'b1110 = 14 → Port A = DSW1
+        // reg 15 = byte 0x80001E → A[4:1] = 4'b1111 = 15 → Port B = DSW2
         case (cpu_addr[4:1])
-            4'd14:   ay_dout_byte = dipsw1;   // Port A = DIP1
-            4'd15:   ay_dout_byte = dipsw2;   // Port B = DIP2
-            default: ay_dout_byte = 8'h00;
+            4'd14: ay_dout_byte = dipsw1;   // Port A = DSW1 (byte 0x80001C, A[4:1]=14)
+            4'd15: ay_dout_byte = dipsw2;   // Port B = DSW2 (byte 0x80001E, A[4:1]=15)
+            default: ay_dout_byte = 8'hFF;
         endcase
     end
-    // AY1 at 0x800200: no ports connected, return 0
-    // MSM6295 at 0x800400: stub, return 0
+    // AY1 at 0x800200: no ports connected, return 0xFF (default above)
+    // MSM6295 at 0x800400: stub, return 0xFF
 end
 
 // =============================================================================
@@ -1038,12 +1123,16 @@ assign prog_rom_addr = prog_req_addr_r;
 // Priority: kaneko16 > palette RAM > I/O > WRAM > prog ROM > open bus
 
 always_comb begin
-    if (!k16_cs_n || !spr_cs_n || !vram_cs_n)
+    if (!k16_cs_n || !spr_cs_n)
         cpu_din = k16_dout;
+    else if (!vram_cs_n)
+        cpu_din = vram_cpu_dout;          // VRAM backing RAM for CPU read-back
     else if (palram_cs)
         cpu_din = palram_cpu_dout;
+    else if (joy_cs)
+        cpu_din = {8'hFF, joy_dout_byte}; // berlwall joystick at 0x680000-0x680005
     else if (io_cs)
-        cpu_din = {8'hFF, io_dout_byte};
+        cpu_din = {8'hFF, io_dout_byte};  // coin lockout at 0x700000 (write only in berlwall)
     else if (ay_cs)
         cpu_din = {8'hFF, ay_dout_byte};
     else if (wram_cs)
@@ -1069,9 +1158,9 @@ logic dtack_r;
 // AY8910 0x800000+, etc.). Returns 0xFFFF data (from read mux default).
 assign openbus_cs = !cpu_as_n && !prog_rom_cs
                   && k16_cs_n && spr_cs_n && vram_cs_n
-                  && !palram_cs && !io_cs && !wram_cs && !layer_cs && !ay_cs;
+                  && !palram_cs && !joy_cs && !io_cs && !wram_cs && !layer_cs && !ay_cs;
 
-assign any_fast_cs = !k16_cs_n | !spr_cs_n | !vram_cs_n | palram_cs | io_cs | wram_cs | layer_cs | ay_cs | openbus_cs;
+assign any_fast_cs = !k16_cs_n | !spr_cs_n | !vram_cs_n | palram_cs | joy_cs | io_cs | wram_cs | layer_cs | ay_cs | openbus_cs;
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) dtack_r <= 1'b0;
