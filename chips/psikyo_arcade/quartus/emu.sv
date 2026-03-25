@@ -25,14 +25,14 @@
 // ROM loading (ioctl_index values, set in .mra file):
 //   0x00 — Program ROM (2 MB, SDRAM base 0)
 //   0x01 — Sprite / GFX ROM (to SDRAM 0x200000)
-//   0x02 — BG tile ROM (to SDRAM 0x600000)
+//   0x02 — BG tile ROM (to SDRAM 0x900000)
 //   0x03 — Z80 sound ROM (to SDRAM 0xA80000)
 //   0xFE — DIP switch / NVRAM init data
 //
 // SDRAM layout (IS42S16320F, 32 MB):
 //   0x000000 – 0x1FFFFF   2 MB    CPU program ROM
-//   0x200000 – 0x5FFFFF   4 MB    Sprite ROM (PS2001B / Gate 3)
-//   0x600000 – 0x9FFFFF   4 MB    BG tile ROM (PS3103 / Gate 4)
+//   0x200000 – 0x8FFFFF   7 MB    Sprite ROM (PS2001B / Gate 3)
+//   0x900000 – 0xAFFFFF   2 MB    BG tile ROM (PS3103 / Gate 4)
 //   0xA80000 – 0xA87FFF   32KB    Z80 sound ROM
 // -------------------------------------------------------------------------
 
@@ -520,7 +520,7 @@ always_comb begin
     case (ioctl_index)
         8'h00: rom_base_addr = 27'h000000; // CPU program ROM
         8'h01: rom_base_addr = 27'h200000; // Sprite ROM
-        8'h02: rom_base_addr = 27'h600000; // BG tile ROM
+        8'h02: rom_base_addr = 27'h900000; // BG tile ROM (moved above 7MB sprite ROM)
         8'h03: rom_base_addr = 27'hA80000; // Z80 sound ROM
         default: rom_base_addr = 27'h000000;
     endcase

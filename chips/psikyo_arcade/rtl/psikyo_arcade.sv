@@ -43,8 +43,8 @@
 //
 // SDRAM layout:
 //   0x000000–0x1FFFFF   2 MB    Program ROM
-//   0x200000–0x5FFFFF   4 MB    Sprite / GFX ROM (spr_rom_addr is direct)
-//   0x600000–0x9FFFFF   4 MB    BG tile ROM
+//   0x200000–0x8FFFFF   7 MB    Sprite / GFX ROM (Gunbird: u14+u24+u15+u25)
+//   0x900000–0xAFFFFF   2 MB    BG tile ROM (moved above full sprite ROM)
 //
 // =============================================================================
 `default_nettype none
@@ -82,7 +82,7 @@ module psikyo_arcade #(
     // SDRAM base addresses for ROM regions
     parameter logic [26:0] PROM_SDR_BASE  = 27'h000000,  // prog ROM at SDRAM 0x000000
     parameter logic [26:0] SPR_SDR_BASE   = 27'h200000,  // sprite ROM at SDRAM 0x200000
-    parameter logic [26:0] BG_SDR_BASE    = 27'h600000,  // BG tile ROM at SDRAM 0x600000
+    parameter logic [26:0] BG_SDR_BASE    = 27'h900000,  // BG tile ROM at SDRAM 0x900000 (after 7MB sprite ROM at 0x200000–0x8FFFFF)
     parameter logic [26:0] ADPCM_SDR_BASE = 27'hA00000,  // ADPCM ROM at SDRAM 0xA00000
 
     // VBLANK interrupt level (level 4 on Psikyo)

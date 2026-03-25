@@ -136,7 +136,7 @@ module toaplan_v2 #(
     // ── GFX ROM (sprite + BG tiles, from SDRAM) ────────────────────────────────
     // 32-bit wide for tile fetch efficiency (GP9001 reads 4bpp packed bytes).
     // gfx_rom_addr is a WORD address (byte_addr >> 1).
-    output logic [21:0] gfx_rom_addr,
+    output logic [23:0] gfx_rom_addr,
     input  logic [31:0] gfx_rom_data,
     output logic        gfx_rom_req,
     input  logic        gfx_rom_ack,
@@ -854,7 +854,7 @@ endgenerate
 //   2'b10 = VDP#1 BG,  2'b11 = VDP#1 sprite
 
 logic        gfx_pending;
-logic [21:0] gfx_pending_addr;
+logic [23:0] gfx_pending_addr;
 logic [1:0]  gfx_pending_byte_sel;
 logic [1:0]  gfx_chan;   // which channel is in-flight
 
@@ -876,7 +876,7 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         gfx_rom_req          <= 1'b0;
         gfx_pending          <= 1'b0;
-        gfx_pending_addr     <= 22'b0;
+        gfx_pending_addr     <= 24'b0;
         gfx_pending_byte_sel <= 2'b0;
         gfx_chan             <= 2'b00;
         bg_rom_data_r        <= 8'h00;
@@ -889,14 +889,14 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
                 // VDP#0 sprite — highest priority
                 // gfx_rom_addr is a HALF-WORD address (testbench does addr*2 + GFX_BASE)
                 // spr_rom_addr_raw is a 25-bit byte address; shift right by 1 for half-word
-                gfx_pending_addr     <= {1'b0, spr_rom_addr_raw[21:1]};
+                gfx_pending_addr     <= {1'b0, spr_rom_addr_raw[23:1]};
                 gfx_pending_byte_sel <= spr_rom_addr_raw[1:0];
                 gfx_chan             <= 2'b01;
                 gfx_pending          <= 1'b1;
                 gfx_rom_req          <= ~gfx_rom_req;
             end else if (DUAL_VDP && spr_rom_rd_1) begin
                 // VDP#1 sprite
-                gfx_pending_addr     <= {1'b0, spr_rom_addr_1_raw[21:1]};
+                gfx_pending_addr     <= {1'b0, spr_rom_addr_1_raw[23:1]};
                 gfx_pending_byte_sel <= spr_rom_addr_1_raw[1:0];
                 gfx_chan             <= 2'b11;
                 gfx_pending          <= 1'b1;

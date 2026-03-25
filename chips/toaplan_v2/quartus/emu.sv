@@ -31,15 +31,15 @@
 // ROM loading (ioctl_index values, set in .mra file):
 //   0x00 — CPU program ROM (sequential, SDRAM base 0x000000)
 //   0x01 — GFX ROM (GP9001 tile + sprite data, SDRAM 0x100000)
-//   0x02 — ADPCM ROM (OKI M6295 samples, SDRAM 0x500000)
-//   0x03 — Z80 sound CPU ROM (Z80 sound CPU code, SDRAM 0x600000)
+//   0x02 — ADPCM ROM (OKI M6295 samples, SDRAM 0x700000)
+//   0x03 — Z80 sound CPU ROM (Z80 sound CPU code, SDRAM 0x800000)
 //   0xFE — DIP switch / NVRAM init data
 //
 // SDRAM layout (IS42S16320F, 32 MB, Batsugun):
 //   0x000000 – 0x0FFFFF   1MB    CPU program ROM (tp-026-1.bin + others)
-//   0x100000 – 0x4FFFFF   4MB    GFX ROM (tiles + sprites interleaved)
-//   0x500000 – 0x5FFFFF   1MB    ADPCM ROM (OKI M6295 sample data)
-//   0x600000 – 0x607FFF   32KB   Z80 sound CPU ROM
+//   0x100000 – 0x6FFFFF   6MB    GFX ROM (GP9001 #0 4MB + GP9001 #1 2MB)
+//   0x700000 – 0x7FFFFF   1MB    ADPCM ROM (OKI M6295 sample data)
+//   0x800000 – 0x807FFF   32KB   Z80 sound CPU ROM
 //
 // NOTE: Batsugun hardware uses a NEC V25 (not a standard Z80) as the sound CPU.
 // The V25 shares the 68K ROM space via ShareRAM and does not have a separate ROM.
@@ -400,7 +400,7 @@ always_ff @(posedge clk_sys)
 
 // ioctl_index == 0x02: ADPCM ROM load.
 // sdram_b receives all ioctl_wr writes; the .mra file sets ioctl_addr base
-// to 0x500000 for index 0x02, placing sample data in the ADPCM SDRAM region.
+// to 0x700000 for index 0x02, placing sample data in the ADPCM SDRAM region.
 // No extra logic needed here — sdram_b CH0 write path handles all indexes.
 
 //////////////////////////////////////////////////////////////////
@@ -442,7 +442,7 @@ wire [15:0] prog_sdr_data_w;
 wire        prog_sdr_req_w, prog_sdr_ack_w;
 
 // GFX ROM channel — core-side (32-bit, toggle-handshake)
-wire [21:0] gfx_sdr_addr_w;
+wire [23:0] gfx_sdr_addr_w;
 wire [31:0] gfx_sdr_data_w;
 wire        gfx_sdr_req_w, gfx_sdr_ack_w;
 
@@ -453,29 +453,29 @@ wire  [15:0] gfx2_sdram_data;
 wire         gfx2_sdram_ack;
 
 // ADPCM ROM channel — jt6295 uses 18-bit byte address; SDRAM CH3 is 27-bit word address.
-// ADPCM ROM sits at SDRAM byte base 0x500000 (word base 0x280000).
+// ADPCM ROM sits at SDRAM byte base 0x700000 (word base 0x380000).
 wire [23:0] adpcm_rom_addr_w;    // from toaplan_v2 (byte address, base 0 within ADPCM ROM)
 wire        adpcm_rom_req_w;
 wire [15:0] adpcm_rom_data_w;
 wire        adpcm_rom_ack_w;
 
 // Map ADPCM byte address to SDRAM 27-bit word address:
-//   ADPCM ROM byte base in SDRAM = 0x500000
-//   SDRAM word address = (0x500000 + adpcm_rom_addr) >> 1 = 0x280000 + (addr >> 1)
-wire [26:0] adpcm_sdram_word_addr = 27'h280000 + {3'b0, adpcm_rom_addr_w[23:1]};
+//   ADPCM ROM byte base in SDRAM = 0x700000
+//   SDRAM word address = (0x700000 + adpcm_rom_addr) >> 1 = 0x380000 + (addr >> 1)
+wire [26:0] adpcm_sdram_word_addr = 27'h380000 + {3'b0, adpcm_rom_addr_w[23:1]};
 
 // Z80 sound CPU ROM channel — SDRAM CH4 (27-bit word address).
-// Z80 ROM sits at SDRAM byte base 0x600000 (word base 0x300000).
+// Z80 ROM sits at SDRAM byte base 0x800000 (word base 0x400000).
 // toaplan_v2 drives a 16-bit Z80 address; map to SDRAM word addr:
-//   SDRAM word address = (0x600000 + z80_rom_addr) >> 1 = 0x300000 + (addr >> 1)
+//   SDRAM word address = (0x800000 + z80_rom_addr) >> 1 = 0x400000 + (addr >> 1)
 wire [15:0] z80_sdr_addr_w;      // from toaplan_v2 (Z80 16-bit address)
 wire        z80_sdr_req_w;
 wire  [7:0] z80_sdr_data_w;      // byte returned to toaplan_v2
 wire        z80_sdr_ack_w;
 wire [15:0] z80_sdr_data16_w;    // 16-bit word from SDRAM (byte-selected below)
 
-// Z80 ROM SDRAM word address: base 0x300000, add Z80 addr >> 1
-wire [26:0] z80_sdram_word_addr = 27'h300000 + {11'b0, z80_sdr_addr_w[15:1]};
+// Z80 ROM SDRAM word address: base 0x400000, add Z80 addr >> 1
+wire [26:0] z80_sdram_word_addr = 27'h400000 + {11'b0, z80_sdr_addr_w[15:1]};
 
 // Byte-lane select: Z80 addr[0]=0 → lower byte, addr[0]=1 → upper byte
 assign z80_sdr_data_w = z80_sdr_addr_w[0] ? z80_sdr_data16_w[15:8]
@@ -489,17 +489,17 @@ wire signed [15:0] snd_left_w, snd_right_w;
 wire [26:0] prog_sdram_word_addr = {8'b0, prog_sdr_addr_w};
 
 // GFX ROM sits at SDRAM byte offset 0x100000; word addr = 0x80000 + gfx_rom_word_offset
-// gfx_sdr_addr is a 22-bit word address within GFX ROM space
-wire [26:0] gfx_sdram_word_addr  = {5'b0, gfx_sdr_addr_w};
+// gfx_sdr_addr is a 24-bit word address within GFX ROM space
+wire [26:0] gfx_sdram_word_addr  = {3'b0, gfx_sdr_addr_w};
 
 // ROM index → SDRAM base address routing (ioctl_addr resets to 0 per index)
 reg [26:0] rom_base_addr;
 always_comb begin
     case (ioctl_index)
         8'h00: rom_base_addr = 27'h000000; // CPU program ROM
-        8'h01: rom_base_addr = 27'h100000; // GFX ROM (tiles + sprites)
-        8'h02: rom_base_addr = 27'h500000; // ADPCM ROM (OKI M6295)
-        8'h03: rom_base_addr = 27'h600000; // Z80 sound CPU ROM
+        8'h01: rom_base_addr = 27'h100000; // GFX ROM (tiles + sprites, 6MB)
+        8'h02: rom_base_addr = 27'h700000; // ADPCM ROM (OKI M6295)
+        8'h03: rom_base_addr = 27'h800000; // Z80 sound CPU ROM
         default: rom_base_addr = 27'h000000;
     endcase
 end
@@ -529,13 +529,13 @@ sdram_b u_sdram
     .gfx_req    (gfx2_sdram_req),
     .gfx_ack    (gfx2_sdram_ack),
 
-    // CH3: ADPCM ROM — OKI M6295 sample data at SDRAM base 0x500000
+    // CH3: ADPCM ROM — OKI M6295 sample data at SDRAM base 0x700000
     .adpcm_addr (adpcm_sdram_word_addr),
     .adpcm_data (adpcm_rom_data_w),
     .adpcm_req  (adpcm_rom_req_w),
     .adpcm_ack  (adpcm_rom_ack_w),
 
-    // CH4: Z80 sound CPU ROM at SDRAM base 0x600000
+    // CH4: Z80 sound CPU ROM at SDRAM base 0x800000
     .z80_addr   (z80_sdram_word_addr),
     .z80_data   (z80_sdr_data16_w),
     .z80_req    (z80_sdr_req_w),
@@ -705,7 +705,7 @@ toaplan_v2 u_toaplan_v2
     .adpcm_rom_data  (adpcm_rom_data_w),
     .adpcm_rom_ack   (adpcm_rom_ack_w),
 
-    // ── Z80 sound CPU ROM (via SDRAM CH4 at 0x600000) ────────────────────────
+    // ── Z80 sound CPU ROM (via SDRAM CH4 at 0x800000) ────────────────────────
     .z80_rom_addr    (z80_sdr_addr_w),
     .z80_rom_req     (z80_sdr_req_w),
     .z80_rom_data    (z80_sdr_data_w),

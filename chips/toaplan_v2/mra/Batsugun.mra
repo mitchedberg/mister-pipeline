@@ -21,9 +21,9 @@
 
     SDRAM layout:
       0x000000 – 0x07FFFF   512KB  CPU program ROM (tp030_1a.bin)
-      0x100000 – 0x4FFFFF   4MB    GFX ROMs (tiles + sprites, interleaved by MAME loader)
-      0x500000 – 0x53FFFF   256KB  ADPCM ROM (tp030_2.bin / MSM6295 sample data)
-      0x600000 – 0x607FFF   32KB   Z80 sound ROM (ioctl_index 0x03, unused for Batsugun)
+      0x100000 – 0x6FFFFF   6MB    GFX ROMs (GP9001 #0 4MB + GP9001 #1 2MB)
+      0x700000 – 0x73FFFF   256KB  ADPCM ROM (tp030_2.bin / MSM6295 sample data)
+      0x800000 – 0x807FFF   32KB   Z80 sound ROM (ioctl_index 0x03, unused for Batsugun)
 
     CRCs below are from FBNeo d_batsugun.cpp (world set).
     Use: mame -romident batsugun  or  mame -listxml batsugun
@@ -42,24 +42,27 @@
     </rom>
 
     <!-- GFX ROMs (tiles + sprites, index 0x01) -->
-    <!-- SDRAM byte offset 0x100000, 4MB cap = emu.sv window 0x100000–0x4FFFFF -->
-    <!-- tp030_5 and tp030_6 (GP9001 #1, 2MB) omitted — would overflow into ADPCM at 0x500000 -->
+    <!-- SDRAM byte offset 0x100000, 6MB total = 0x100000–0x6FFFFF -->
+    <!-- GP9001 #0: tp030_3l/3h/4l/4h = 4MB; GP9001 #1: tp030_5/6 = 2MB -->
     <rom index="1" zip="batsugun.zip" md5="None" type="merged">
         <!-- GP9001 #0 tile data (4bpp, planes interleaved) -->
         <part name="tp030_3l.bin" crc="3024b793" sha1="e161db940f069279356fca2c5bf2753f07773705"/>   <!-- 1MB plane 0-lo -->
         <part name="tp030_3h.bin" crc="ed75730b" sha1="341f0f728144a049486d996c9bb14078578c6879"/>   <!-- 1MB plane 0-hi -->
         <part name="tp030_4l.bin" crc="fedb9861" sha1="4b0917056bd359b21935358c6bcc729262be6417"/>   <!-- 1MB plane 1-lo -->
         <part name="tp030_4h.bin" crc="d482948b" sha1="31be7dc5cff072403b783bf203b9805ffcad7284"/>   <!-- 1MB plane 1-hi -->
+        <!-- GP9001 #1 tile data -->
+        <part name="tp030_5.bin"  crc="bcf5ba05" sha1="40f6d8c2e7c0c0b64c2059e800f25e4dd7154ec3"/>   <!-- 1MB GP9001 #1 lo -->
+        <part name="tp030_6.bin"  crc="a65a4d52" sha1="4db0a73cd7f8ea5fc08adb04920c2456d1af7551"/>   <!-- 1MB GP9001 #1 hi -->
     </rom>
 
     <!-- ADPCM ROM (OKI M6295 sample data, index 0x02) -->
-    <!-- SDRAM byte offset 0x500000 -->
+    <!-- SDRAM byte offset 0x700000 -->
     <rom index="2" zip="batsugun.zip" md5="None" type="merged">
         <part name="tp030_2.bin" crc="276146f5" sha1="bf11d1f6782cefcad77d52af4f7e6054a8f93440"/>    <!-- 256KB -->
     </rom>
 
     <!-- Z80 sound ROM slot (index 0x03) — unused for Batsugun (uses NEC V25) -->
-    <!-- SDRAM byte offset 0x600000 — leave empty or omit for Batsugun -->
+    <!-- SDRAM byte offset 0x800000 — leave empty or omit for Batsugun -->
     <!-- Other Toaplan V2 games with a standard Z80 sound CPU load their Z80 ROM here -->
 
     <!-- DIP switch defaults (index 0xFE) -->

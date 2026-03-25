@@ -7,8 +7,8 @@
 
   SDRAM layout (byte addresses):
     0x000000  CPU program ROM (512KB: 2×256KB interleaved)
-    0x200000  Sprite ROM (PS2001B / Gate 3, 7 MB)
-    0x600000  BG tile ROM (PS3103 / Gate 4, 2 MB)
+    0x200000  Sprite ROM (PS2001B / Gate 3, 7 MB) → occupies 0x200000–0x8FFFFF
+    0x900000  BG tile ROM (PS3103 / Gate 4, 2 MB)
 
   ROM names from MAME gunbird driver (src/mame/psikyo/psikyo.cpp)
   CRCs verified from MAME 0.245 database.
@@ -26,7 +26,7 @@
   <!--
     index 0: CPU program ROM (2 MB, SDRAM base 0x000000)
     index 1: Sprite ROM (SDRAM base 0x200000)
-    index 2: BG tile ROM (SDRAM base 0x600000)
+    index 2: BG tile ROM (SDRAM base 0x900000)
     0xFE: DIP switches
   -->
 
@@ -42,16 +42,17 @@
   </rom>
 
   <!-- Sprite ROM (Gate 3 — PS2001B) from MAME gunbird set -->
-  <!-- Loaded to SDRAM offset 0x200000 -->
-  <!-- Sprite ROM (Gate 3 — PS2001B): 4MB cap = emu.sv window 0x200000–0x5FFFFF -->
-  <!-- u15 and u25 (upper 3MB) omitted — would overflow into BG tile region at 0x600000 -->
+  <!-- Loaded to SDRAM offset 0x200000; full 7MB occupies 0x200000–0x8FFFFF -->
+  <!-- BG tile ROM moved to 0x900000 so all 4 sprite files fit without overlap -->
   <rom index="1" zip="gunbird.zip" type="merged" md5="None">
     <part name="u14.bin" crc="7d7e8a00" sha1="9f35f5b54ae928e9bf2aa6ad4604f669857955ec" offset="0x000000" length="0x200000"/>
     <part name="u24.bin" crc="5e3ffc9d" sha1="c284eb9ef56c8e6261fe11f91a10c5c5a56c9803" offset="0x200000" length="0x200000"/>
+    <part name="u15.bin" crc="3d4dd4c8" sha1="0954a9046a1da6e003e0bc06c9b5e4bdb94b26f7" offset="0x400000" length="0x200000"/>
+    <part name="u25.bin" crc="0bce5b11" sha1="e8a2a05d9765e8a62a9f6a64fcc0a4a0bba48b2c" offset="0x600000" length="0x100000"/>
   </rom>
 
   <!-- BG tile ROM (Gate 4 — PS3103) from MAME gunbird set -->
-  <!-- Loaded to SDRAM offset 0x600000 -->
+  <!-- Loaded to SDRAM offset 0x900000 -->
   <rom index="2" zip="gunbird.zip" type="merged" md5="None">
     <part name="u33.bin" crc="54494e6b" sha1="f5d090d2d34d908b56b53a246def194929eba990" offset="0x000000" length="0x200000"/>
   </rom>
