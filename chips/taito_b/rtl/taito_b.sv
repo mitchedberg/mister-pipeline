@@ -250,10 +250,10 @@ logic vcu_cs;
 assign vcu_cs = (cpu_addr[23:19] == VCU_BASE[23:19]) && !cpu_as_n;
 
 // TC0260DAR: 8KB window (palette RAM)
-//   nastar: 0x200000 byte → word 0x100000; crimec: 0x800000 byte → word 0x400000
-//   Top 12 bits [23:12] match.
+//   nastar: 0x200000–0x201FFF byte → word 0x100000–0x100FFF; crimec: 0x800000–0x801FFF
+//   8KB = 2^13 bytes → compare top 11 word-addr bits [23:13] (leaving 12 bits free).
 logic dar_cs;
-assign dar_cs = (cpu_addr[23:12] == g_dar_base[23:12]) && !cpu_as_n;
+assign dar_cs = (cpu_addr[23:13] == g_dar_base[23:13]) && !cpu_as_n;
 
 // TC0220IOC: 16 registers max (4-bit word offset)
 //   nastar: 0xA00000 byte → word 0x500000; crimec: 0x200000 byte → word 0x100000

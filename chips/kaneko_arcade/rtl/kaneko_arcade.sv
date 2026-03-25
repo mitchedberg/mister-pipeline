@@ -277,8 +277,9 @@ logic vram_cs_n;
 assign vram_cs_n = !((cpu_addr[23:13] == VRAM_BASE[23:13]) && !cpu_as_n);
 
 // Palette RAM: 0x400000–0x400FFF byte (4KB, word addr 0x200000–0x2007FF, 11-bit window)
+// 4KB = 2^12 bytes; CPU word address has 11 variable bits [11:1]; compare uses [23:12] (12 bits).
 logic palram_cs;
-assign palram_cs = (cpu_addr[23:11] == PALRAM_BASE[23:11]) && !cpu_as_n;
+assign palram_cs = (cpu_addr[23:12] == PALRAM_BASE[23:12]) && !cpu_as_n;
 
 // I/O: 0x700000–0x70000F byte → word 0x380000–0x380007 (3-bit window)
 // berlwall: coin lockout WRITE only at byte 0x700000 (our IO_BASE = 23'h380000 = byte 0x700000)
@@ -675,8 +676,8 @@ logic [15:0] palram_cpu_dout;
 logic [15:0] palram_cpu_raw, palram_pix_raw;
 altsyncram #(
     .operation_mode            ("DUAL_PORT"),
-    .width_a                   (16), .widthad_a (9), .numwords_a (512),
-    .width_b                   (16), .widthad_b (9), .numwords_b (512),
+    .width_a                   (16), .widthad_a (11), .numwords_a (2048),
+    .width_b                   (16), .widthad_b (11), .numwords_b (2048),
     .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
     .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
     .clock_enable_output_b     ("BYPASS"),
@@ -686,9 +687,9 @@ altsyncram #(
     .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
 ) palram_cpu_inst (
     .clock0(clk_sys), .clock1(clk_sys),
-    .address_a(cpu_addr[9:1]),  .data_a(cpu_dout),
+    .address_a(cpu_addr[11:1]),  .data_a(cpu_dout),
     .wren_a(palram_cs && !cpu_rw), .byteena_a({~cpu_uds_n, ~cpu_lds_n}),
-    .address_b(cpu_addr[9:1]),  .q_b(palram_cpu_raw),
+    .address_b(cpu_addr[11:1]),  .q_b(palram_cpu_raw),
     .wren_b(1'b0), .data_b(16'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
     .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
@@ -696,8 +697,8 @@ altsyncram #(
 );
 altsyncram #(
     .operation_mode            ("DUAL_PORT"),
-    .width_a                   (16), .widthad_a (9), .numwords_a (512),
-    .width_b                   (16), .widthad_b (9), .numwords_b (512),
+    .width_a                   (16), .widthad_a (11), .numwords_a (2048),
+    .width_b                   (16), .widthad_b (11), .numwords_b (2048),
     .outdata_reg_b             ("CLOCK1"), .address_reg_b ("CLOCK1"),
     .clock_enable_input_a      ("BYPASS"), .clock_enable_input_b ("BYPASS"),
     .clock_enable_output_b     ("BYPASS"),
@@ -707,9 +708,9 @@ altsyncram #(
     .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
 ) palram_pix_inst (
     .clock0(clk_sys), .clock1(clk_sys),
-    .address_a(cpu_addr[9:1]),           .data_a(cpu_dout),
+    .address_a(cpu_addr[11:1]),           .data_a(cpu_dout),
     .wren_a(palram_cs && !cpu_rw), .byteena_a({~cpu_uds_n, ~cpu_lds_n}),
-    .address_b({1'b0, k16_final_color}), .q_b(palram_pix_raw),
+    .address_b({3'b000, k16_final_color}), .q_b(palram_pix_raw),
     .wren_b(1'b0), .data_b(16'd0), .q_a(),
     .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
     .byteena_b(1'b1), .clocken0(1'b1), .clocken1(1'b1),
@@ -727,12 +728,12 @@ end
 logic [15:0] palette_ram [0:2047];  // 4KB = 2K words (berlwall palette: 0x400000-0x400FFF)
 always_ff @(posedge clk_sys) begin
     if (palram_cs && !cpu_rw) begin
-        if (!cpu_uds_n) palette_ram[cpu_addr[10:1]][15:8] <= cpu_dout[15:8];
-        if (!cpu_lds_n) palette_ram[cpu_addr[10:1]][ 7:0] <= cpu_dout[ 7:0];
+        if (!cpu_uds_n) palette_ram[cpu_addr[11:1]][15:8] <= cpu_dout[15:8];
+        if (!cpu_lds_n) palette_ram[cpu_addr[11:1]][ 7:0] <= cpu_dout[ 7:0];
     end
 end
 always_ff @(posedge clk_sys) begin
-    if (palram_cs) palram_cpu_dout <= palette_ram[cpu_addr[10:1]];
+    if (palram_cs) palram_cpu_dout <= palette_ram[cpu_addr[11:1]];
 end
 /* verilator lint_on WIDTHEXPAND */
 logic [15:0] pal_entry_r;
