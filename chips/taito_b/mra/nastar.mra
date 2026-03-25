@@ -32,14 +32,19 @@
   -->
 
   <!-- CPU program ROM (512KB interleaved) + Z80 audio -->
-  <rom index="0" zip="nastar.zip" type="merged" md5="763cd406e1516a60c4d82be6356f01f2">
-    <!-- CPU: 4x 128KB interleaved (offset 0 and 1 for first pair, then +0x40000 offset and 1) -->
-    <part name="b81-08.50" crc="d6da9169" sha1="33d74315754576e6f879059de033f96f9003f819" offset="0x000000" length="0x020000"/>
-    <part name="b81-13.31" crc="60d176fb" sha1="fbe3a0603bcd23e565b0d474a63742d20a3ce8cc" offset="0x000001" length="0x020000"/>
-    <part name="b81-10.49" crc="53f34344" sha1="9930c3fd9c17f7d9b654221da3896d0ff5778c97" offset="0x040000" length="0x020000"/>
-    <part name="b81-09.30" crc="630d34af" sha1="42452111b10f1d543e03661012dda879218dea62" offset="0x040001" length="0x020000"/>
-    <!-- Z80 audio: 0x080000-0x09FFFF (64KB) -->
-    <part name="b81-11.37" crc="3704bf09" sha1="a0a37b23e3df482c5f5aa43825345ea8affbba34" offset="0x080000" length="0x010000"/>
+  <!-- Two pairs of 128KB chips interleaved to produce 2×256KB = 512KB CPU ROM -->
+  <!-- After both interleave blocks, ioctl_addr = 0x080000, placing Z80 correctly -->
+  <rom index="0" zip="nastar.zip">
+    <interleave output="16">
+      <part name="b81-08.50" crc="d6da9169" map="10"/>  <!-- D15:D8, bank 0 -->
+      <part name="b81-13.31" crc="60d176fb" map="01"/>  <!-- D7:D0,  bank 0 -->
+    </interleave>
+    <interleave output="16">
+      <part name="b81-10.49" crc="53f34344" map="10"/>  <!-- D15:D8, bank 1 -->
+      <part name="b81-09.30" crc="630d34af" map="01"/>  <!-- D7:D0,  bank 1 -->
+    </interleave>
+    <!-- Z80 audio ROM (64KB) — lands at ioctl_addr 0x080000 → SDRAM 0x080000 -->
+    <part name="b81-11.37" crc="3704bf09"/>
   </rom>
 
   <!-- TC0180VCU GFX ROM (1MB interleaved) -->

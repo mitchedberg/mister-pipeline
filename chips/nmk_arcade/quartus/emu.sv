@@ -478,6 +478,21 @@ assign z80_sdr_data   = ch4_data_w;
 // Audio wires from core
 wire signed [15:0] snd_left_w, snd_right_w;
 
+// ROM index → SDRAM base address routing (ioctl_addr resets to 0 per index)
+reg [26:0] rom_base_addr;
+always_comb begin
+    case (ioctl_index)
+        8'h00: rom_base_addr = 27'h000000; // CPU prog ROM
+        8'h01: rom_base_addr = 27'h0C0000; // Sprite ROM
+        8'h02: rom_base_addr = 27'h1C0000; // BG tile ROM
+        8'h03: rom_base_addr = 27'h200000; // ADPCM ROM
+        8'h04: rom_base_addr = 27'h280000; // Z80 sound ROM
+        default: rom_base_addr = 27'h000000;
+    endcase
+end
+wire [26:0] rom_ioctl_addr = rom_base_addr + ioctl_addr;
+wire        rom_ioctl_wr   = ioctl_wr & ioctl_download & (ioctl_index != 8'hFE);
+
 sdram_b u_sdram
 (
     .clk        (clk_sdram),
@@ -485,8 +500,8 @@ sdram_b u_sdram
     .rst_n      (reset_n),
 
     // CH0: HPS ROM download write path
-    .ioctl_wr   (ioctl_wr & ioctl_download),
-    .ioctl_addr (ioctl_addr),
+    .ioctl_wr   (rom_ioctl_wr),
+    .ioctl_addr (rom_ioctl_addr),
     .ioctl_dout (ioctl_dout),
 
     // CH1: CPU program ROM reads
@@ -547,6 +562,7 @@ wire        cpu_as_n;
 wire        cpu_dtack_n;
 wire [2:0]  cpu_ipl_n;
 wire        cpu_reset_n_out;
+wire        cpu_inta_n;     // IACK signal: active-low, FC=111 & ASn=0
 
 fx68k_adapter u_cpu (
     .clk            (clk_sys),
@@ -562,7 +578,8 @@ fx68k_adapter u_cpu (
     .cpu_as_n       (cpu_as_n),
     .cpu_dtack_n    (cpu_dtack_n),
     .cpu_ipl_n      (cpu_ipl_n),
-    .cpu_reset_n_out(cpu_reset_n_out)
+    .cpu_reset_n_out(cpu_reset_n_out),
+    .cpu_inta_n     (cpu_inta_n)
 );
 
 nmk_arcade u_nmk_arcade
@@ -581,6 +598,7 @@ nmk_arcade u_nmk_arcade
     .cpu_as_n    (cpu_as_n),
     .cpu_dtack_n (cpu_dtack_n),
     .cpu_ipl_n   (cpu_ipl_n),
+    .cpu_inta_n  (cpu_inta_n),  // IACK clear for IPL latch
 
     // Program ROM
     .prog_rom_addr (prog_sdr_addr),

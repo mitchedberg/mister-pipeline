@@ -31,12 +31,14 @@
   -->
 
   <!-- CPU program ROM (512KB: 2×256KB interleaved even/odd bytes).
-       4.u46 = even bytes (D15:D8), offset 0, stride 2.
-       5.u39 = odd  bytes (D7:D0),  offset 1, stride 2.
+       4.u46 = even bytes (D15:D8) → map="10"
+       5.u39 = odd  bytes (D7:D0)  → map="01"
        NOTE: Audio (Z80 3.u71 + YMF278B u56/u64) not loaded — audio stubbed. -->
-  <rom index="0" zip="gunbird.zip" type="merged" md5="63b70590c15fc226bd05994b41291121">
-    <part name="4.u46" crc="b78ec99d" sha1="399b79931652d9df1632cd4d7ec3d214e473a5c3" offset="0x000000" length="0x040000"/>
-    <part name="5.u39" crc="925f095d" sha1="301a536119a0320a756e9c6e51fb10e36b90ef16" offset="0x000001" length="0x040000"/>
+  <rom index="0" zip="gunbird.zip">
+    <interleave output="16">
+      <part name="4.u46" crc="b78ec99d" map="10"/>
+      <part name="5.u39" crc="925f095d" map="01"/>
+    </interleave>
   </rom>
 
   <!-- Sprite ROM (Gate 3 — PS2001B) from MAME gunbird set -->

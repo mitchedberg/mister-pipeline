@@ -1,48 +1,60 @@
 <!--
-    The Berlin Wall (Kaneko, 1991)
-    MiSTer MRA file for Kaneko16 core
+    The Berlin Wall (berlwall) — Kaneko 16, 1991
+    MiSTer MRA file for kaneko_arcade core
 
-    MAME driver: kaneko16.cpp, set: berlwall
-    Z80 + OKI M6295 audio: stubbed (silence)
+    MAME driver: kaneko/kaneko16.cpp, set: berlwall (World)
+    Hardware: MC68000 @ 12 MHz, Kaneko VIEW2 sprites, VIEW2-Z tiles, OKI M6295 sound
 
-    SDRAM layout:
-      0x000000 – 0x0FFFFF   1MB   CPU program ROM  (ioctl_index 0x00)
-      0x100000 – 0x2FFFFF   2MB   GFX ROM          (ioctl_index 0x01)
+    SDRAM layout (kaneko_arcade core, byte addresses):
+      0x000000 – 0x0FFFFF   1MB   CPU program ROM    (ioctl_index 0x00)
+      0x100000 – 0x2FFFFF   2MB   GFX ROM            (ioctl_index 0x01)
+      0x300000 – 0x307FFF  32KB   Z80 sound ROM      (ioctl_index 0x02, not used — berlwall has no Z80)
+
+    NOTE: berlwall gfx3 region (8×512KB = 4MB) exceeds the 2MB GFX window.
+    Only gfx1 (bw001+bw002+bw300 = 1.125MB) and gfx2 (bw003 = 512KB) are loaded.
+    Full gfx3 support requires expanding the kaneko_arcade SDRAM GFX window.
+
+    NOTE: OKI M6295 sample ROM (bw000, 256KB) not loaded — no OKI region in SDRAM.
+    Sound will be silent until an OKI SDRAM region is added to the core.
+
+    ROM CRCs verified from MAME 0.273 berlwall set.
+    bw300 (gfx1, 128KB) lives in berlwallt/ subdirectory of merged zip.
 -->
 <misterromdescription>
 
     <name>The Berlin Wall</name>
     <setname>berlwall</setname>
-    <mameversion>0.250</mameversion>
-    <rbf>Kaneko16</rbf>
+    <mameversion>0.245</mameversion>
+    <rbf>kaneko_arcade</rbf>
+    <year>1991</year>
+    <manufacturer>Kaneko</manufacturer>
+    <category>Puzzle</category>
 
-    <rom index="0" zip="berlwall.zip" md5="Unknown">
-        <!-- CPU program ROM: 68000 code, 1MB -->
-        <!-- berlwall: gt-u.u5 + gt-l.u4 interleaved, or single 1MB prog ROM -->
-        <part name="gt-u.u5" crc="4a4f4bef"/>
-        <part name="gt-l.u4" crc="d9ee3f5b"/>
+    <!-- index 0: CPU program ROM (256KB, 68000 interleaved even/odd bytes) -->
+    <rom index="0" zip="berlwall.zip">
+        <interleave output="16">
+            <part name="bw100e_u23-01.u23" crc="76b526ce" map="10"/>  <!-- D15:D8 -->
+            <part name="bw101e_u39-01.u39" crc="78fa7ef2" map="01"/>  <!-- D7:D0  -->
+        </interleave>
     </rom>
 
-    <rom index="1" zip="berlwall.zip" md5="Unknown">
-        <!-- GFX ROM: sprites (VU-001/VU-002) + BG tiles (VIEW2-CHIP) -->
-        <!-- Loaded at SDRAM 0x100000 -->
-        <part name="gt-00.u64" crc="e2343cd0"/>
-        <part name="gt-01.u65" crc="36bd5559"/>
-        <part name="gt-02.u66" crc="2b36f763"/>
-        <part name="gt-03.u67" crc="ca61d5c1"/>
-        <part name="gt-10.u48" crc="a70d0ca6"/>
-        <part name="gt-11.u49" crc="d9c11fd7"/>
-        <part name="gt-12.u50" crc="7a1ab05f"/>
-        <part name="gt-13.u51" crc="a534be65"/>
+    <!-- index 1: GFX ROM (sprites + tiles, loaded to SDRAM 0x100000) -->
+    <!-- gfx1: bw001 + bw002 (sprites, 2×512KB) + bw300 (sprite masks, 128KB from berlwallt/) -->
+    <!-- gfx2: bw003 (tile layer, 512KB) -->
+    <!-- gfx3 (bw004-bw00b, 8×512KB) omitted — exceeds 2MB SDRAM window -->
+    <rom index="1" zip="berlwall.zip">
+        <part name="bw001.u84" crc="bc927260"/>
+        <part name="bw002.u83" crc="223f5465"/>
+        <part name="berlwallt/bw300.u82" crc="b258737a"/>
+        <part name="bw003.u77" crc="fbb4b72d"/>
     </rom>
 
+    <!-- index 0xFE: DIP switch defaults (all ON = active-low) -->
     <rom index="0xFE">
-        <!-- DIP switch defaults: all ON (active-low) -->
         <part repeat="8"> FF </part>
     </rom>
 
     <switches page_id="1" page_name="Switches" base="16" dip_defaults="FF FF">
-        <!-- DIP SW1 -->
         <dip bits="0,2" name="Coin A" ids="4 Coins/1 Credit,3 Coins/1 Credit,2 Coins/1 Credit,1 Coin/1 Credit"/>
         <dip bits="3,5" name="Coin B" ids="1 Coin/2 Credits,1 Coin/3 Credits,1 Coin/4 Credits,Free Play"/>
         <dip bits="6"   name="Demo Sounds" ids="Off,On"/>

@@ -522,6 +522,19 @@ assign z80_sdr_ack_w   = (ch3_owner == 1'b1) ? ch3_ack : z80_sdr_req_w;
 assign adpcm_sdr_data_w = ch3_data_out;
 assign z80_sdr_data_w   = ch3_data_out;
 
+// ROM index → SDRAM base address routing (ioctl_addr resets to 0 per index)
+reg [26:0] rom_base_addr;
+always_comb begin
+    case (ioctl_index)
+        8'h00: rom_base_addr = 27'h000000; // CPU prog ROM
+        8'h01: rom_base_addr = 27'h100000; // GFX ROM (sprites + BG tiles)
+        8'h02: rom_base_addr = 27'h300000; // Z80 sound ROM
+        default: rom_base_addr = 27'h000000;
+    endcase
+end
+wire [26:0] rom_ioctl_addr = rom_base_addr + ioctl_addr;
+wire        rom_ioctl_wr   = ioctl_wr & ioctl_download & (ioctl_index != 8'hFE);
+
 sdram_b u_sdram
 (
     .clk        (clk_sdram),
@@ -529,8 +542,8 @@ sdram_b u_sdram
     .rst_n      (reset_n),
 
     // CH0: HPS ROM download write path
-    .ioctl_wr   (ioctl_wr & ioctl_download),
-    .ioctl_addr (ioctl_addr),
+    .ioctl_wr   (rom_ioctl_wr),
+    .ioctl_addr (rom_ioctl_addr),
     .ioctl_dout (ioctl_dout),
 
     // CH1: CPU program ROM reads (16-bit)
