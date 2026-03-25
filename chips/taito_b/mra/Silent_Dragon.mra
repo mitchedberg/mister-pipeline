@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Silent Dragon (World) — Taito B System, 1992
+  MC68000 @ ?, Z80 @ 4 MHz, YM2610B @ 8 MHz
+  TC0180VCU tilemap, TC0220IOC I/O, TC0140SYT sound
+
+  MAME set: silentd (src/mame/taito/taito_b.cpp)
+
+  SDRAM layout (byte addresses — offsets set by emu.sv rom_base_addr case):
+    0x000000  CPU program ROM (512KB, 4×128KB interleaved)
+    0x080000  Z80 audio program (64KB)
+    0x100000  TC0180VCU GFX ROM (4MB: 4×1MB = east-04 + east-06 + east-03 + east-05)
+    0x200000  ADPCM-A samples (512KB, east-01)
+    0x280000  ADPCM-B samples (512KB, east-02)
+
+  NOTE: Silent Dragon uses YM2610B (OPNB2) instead of standard YM2610.
+  The taito_b core uses jt10 which supports both variants.
+
+  GFX ROM layout (MAME tc0180vcu region, consecutive):
+    east-04: 1MB @ offset 0x000000
+    east-06: 1MB @ offset 0x100000
+    east-03: 1MB @ offset 0x200000
+    east-05: 1MB @ offset 0x300000
+
+  CRCs from MAME 0.245 listxml (taito_b.cpp driver).
+-->
+<misterromdescription>
+  <name>Silent Dragon</name>
+  <setname>silentd</setname>
+  <rbf>taito_b</rbf>
+  <mameversion>0245</mameversion>
+  <year>1992</year>
+  <manufacturer>Taito</manufacturer>
+  <category>Action</category>
+  <buttons names="Attack,Jump,Special,Start,Coin" default="A,B,C,Start,Select"/>
+
+  <!-- CPU program ROM (4×128KB interleaved) + Z80 audio -->
+  <rom index="0" zip="silentd.zip" type="merged" md5="None">
+    <interleave output="16">
+      <part name="east-12-1.ic32" crc="5883d362" map="10"/>  <!-- D15:D8, bank 0 -->
+      <part name="east-15-1.ic10" crc="8c0a72ae" map="01"/>  <!-- D7:D0,  bank 0 -->
+    </interleave>
+    <interleave output="16">
+      <part name="east-11.ic31" crc="35da4428" map="10"/>    <!-- D15:D8, bank 1 -->
+      <part name="east-09.ic9"  crc="2f05b14a" map="01"/>    <!-- D7:D0,  bank 1 -->
+    </interleave>
+    <!-- Z80 audio ROM (64KB) at SDRAM 0x080000 -->
+    <part name="east-13.ic15" crc="651861ab"/>
+  </rom>
+
+  <!-- TC0180VCU GFX ROM (4MB) — loaded to SDRAM 0x100000 -->
+  <rom index="1" zip="silentd.zip" type="merged" md5="None">
+    <part name="east-04.ic28" crc="53237217" offset="0x000000" length="0x100000"/>
+    <part name="east-06.ic29" crc="e6e6dfa7" offset="0x100000" length="0x100000"/>
+    <part name="east-03.ic39" crc="1b9b2846" offset="0x200000" length="0x100000"/>
+    <part name="east-05.ic40" crc="e02472c5" offset="0x300000" length="0x100000"/>
+  </rom>
+
+  <!-- ADPCM-A samples (512KB) — loaded to SDRAM 0x200000 -->
+  <!-- ADPCM-B follows immediately at 0x280000 -->
+  <rom index="2" zip="silentd.zip" type="merged" md5="None">
+    <part name="east-01.ic1" crc="b41fff1a" offset="0x000000" length="0x080000"/>
+    <part name="east-02.ic3" crc="e0de5c39" offset="0x080000" length="0x080000"/>
+  </rom>
+
+  <!-- DIP switch defaults -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>

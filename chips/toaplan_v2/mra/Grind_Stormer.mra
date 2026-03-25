@@ -1,5 +1,5 @@
 <!--
-    V-Five (World) / Grind Stormer (Japan) (1993) — Toaplan
+    Grind Stormer (Japan) / V-Five (World) (1993) — Toaplan
     MiSTer ROM descriptor for Toaplan V2 core
 
     Hardware (from MAME vfive.cpp):
@@ -8,45 +8,39 @@
       GP9001 VDP (SINGLE)
       YM2151 audio ONLY — NO OKI M6295, NO ADPCM ROM
 
-    NOTE: V-Five / Grind Stormer has NO ADPCM ROM.
-    Audio is YM2151 only. Do NOT add an index 2 (ADPCM) section.
-
-    ROM sets:
-      vfive   — V-Five (World)    — clone of grindstm
-      grindstm — Grind Stormer (Japan) — parent set
+    ROM set: grindstm (Japan parent), vfive (World clone)
+    Both sets share the same GFX ROMs (merged ZIP).
 
     SDRAM layout:
-      0x000000 – 0x07FFFF   512KB  CPU program ROM
+      0x000000 – 0x07FFFF   512KB  CPU program ROM (01.bin — Japan version)
       0x100000 – 0x2FFFFF   2MB    GP9001 GFX ROMs (tp027_02.bin + tp027_03.bin)
-      (no ADPCM region — no OKI chip on this hardware)
+      (no ADPCM — no OKI M6295 on this hardware)
 
     CRCs from MAME 0.245 listxml (vfive.cpp driver).
-    vfive uses tp027_01.bin (World); grindstm uses 01.bin (Japan).
-    GFX ROMs are shared between both sets (merged ZIP).
 -->
 
 <misterromdescription>
-    <name>V-Five</name>
-    <setname>vfive</setname>
+    <name>Grind Stormer</name>
+    <setname>grindstm</setname>
     <rbf>toaplan_v2</rbf>
 
     <!-- Program ROM (68K CPU, index 0x00) -->
     <!-- SDRAM byte offset 0x000000 -->
-    <rom index="0" zip="vfive.zip grindstm.zip" md5="None" type="merged">
-        <!-- CPU program ROM — V-Five (World), 512KB -->
-        <part name="tp027_01.bin" crc="731d50f4"/>
+    <rom index="0" zip="grindstm.zip" md5="None" type="merged">
+        <!-- CPU program ROM — Grind Stormer (Japan), 512KB -->
+        <part name="01.bin" crc="4923f790"/>
     </rom>
 
     <!-- GFX ROMs — GP9001 tile data (index 0x01) -->
     <!-- SDRAM byte offset 0x100000; 2MB total -->
-    <rom index="1" zip="vfive.zip grindstm.zip" md5="None" type="merged">
+    <rom index="1" zip="grindstm.zip" md5="None" type="merged">
         <!-- GP9001 GFX ROM 0 — 1MB (gp9001 region offset 0x000000) -->
         <part name="tp027_02.bin" crc="877b45e8"/>
         <!-- GP9001 GFX ROM 1 — 1MB (gp9001 region offset 0x100000) -->
         <part name="tp027_03.bin" crc="b1fc6362"/>
     </rom>
 
-    <!-- NO ADPCM ROM — V-Five uses YM2151 only, no OKI M6295 -->
+    <!-- NO ADPCM ROM — Grind Stormer uses YM2151 only, no OKI M6295 -->
 
     <!-- DIP switch defaults (index 0xFE) -->
     <rom index="254">

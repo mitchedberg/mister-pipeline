@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Space DX (World) — Taito B System, 1992
+  MC68000, Z80 @ 4 MHz, YM2610 @ 8 MHz
+  TC0180VCU tilemap, TC0220IOC I/O, TC0140SYT sound
+
+  MAME set: spacedx (src/mame/taito/taito_b.cpp)
+
+  SDRAM layout (byte addresses — offsets set by emu.sv rom_base_addr case):
+    0x000000  CPU program ROM (512KB interleaved — 2×256KB word interleaved)
+    0x080000  Z80 audio program (64KB)
+    0x100000  TC0180VCU GFX ROM (1MB: d89-02 + d89-01)
+    0x200000  ADPCM-A samples (512KB, d89-03) — no ADPCM-B
+
+  NOTE: spacedx maincpu region uses 2×256KB ROMs (not 4×128KB like nastar).
+  d89-06.ic18 is 256KB (word-interleaved even), d89-xx.ic2 is 256KB (odd).
+
+  GFX ROM layout (MAME tc0180vcu region):
+    d89-02.ic14: 512KB @ offset 0x000000
+    d89-01.ic9:  512KB @ offset 0x080000
+
+  CRCs from MAME 0.245 listxml (taito_b.cpp driver).
+-->
+<misterromdescription>
+  <name>Space DX</name>
+  <setname>spacedx</setname>
+  <rbf>taito_b</rbf>
+  <mameversion>0245</mameversion>
+  <year>1992</year>
+  <manufacturer>Taito</manufacturer>
+  <category>Shooter</category>
+  <buttons names="Shot,Bomb,Start,Coin" default="A,B,Start,Select"/>
+
+  <!-- CPU program ROM (2×256KB interleaved) + Z80 audio -->
+  <rom index="0" zip="spacedx.zip" type="merged" md5="None">
+    <interleave output="16">
+      <part name="d89-06.ic18" crc="7122751e" map="10"/>  <!-- D15:D8, 256KB -->
+      <part name="d89-xx.ic2"  crc="56b0be6c" map="01"/>  <!-- D7:D0,  256KB -->
+    </interleave>
+    <!-- Z80 audio ROM (64KB) at SDRAM 0x080000 -->
+    <part name="d89-07.ic27" crc="bd743401"/>
+  </rom>
+
+  <!-- TC0180VCU GFX ROM (1MB) — loaded to SDRAM 0x100000 -->
+  <rom index="1" zip="spacedx.zip" type="merged" md5="None">
+    <part name="d89-02.ic14" crc="c36544b9" offset="0x000000" length="0x080000"/>
+    <part name="d89-01.ic9"  crc="fffa0660" offset="0x080000" length="0x080000"/>
+  </rom>
+
+  <!-- ADPCM-A samples (512KB) — loaded to SDRAM 0x200000 -->
+  <!-- Space DX has no ADPCM-B ROM -->
+  <rom index="2" zip="spacedx.zip" type="merged" md5="None">
+    <part name="d89-03.ic15" crc="218f31a4" offset="0x000000" length="0x080000"/>
+  </rom>
+
+  <!-- DIP switch defaults -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>

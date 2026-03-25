@@ -1,35 +1,27 @@
 <!--
-    Snow Bros. 2 - With New Elves (1994) — Hanafram / Toaplan (published after Toaplan's closure)
+    Snow Bros. 2 - With New Elves (1994) — Hanafram / Toaplan hardware
     MiSTer ROM descriptor for Toaplan V2 core
 
-    Hardware:
-      MC68000 (exact clock: verify with mame -listxml snowbro2)
+    Hardware (from MAME snowbro2.cpp):
+      MC68000 @ 16 MHz
       GP9001 VDP (single)
       YM2151 + OKI M6295 audio
-      NOTE: Snow Bros 2 was released after Toaplan went bankrupt in 1994.
-      Published by Hanafram. Hardware is Toaplan V2 compatible.
 
-    NOTE: Snow Bros 2 uses SINGLE GP9001 VDP (not dual like Dogyuun/Batsugun).
-    Memory map follows standard single-VDP Toaplan V2 layout.
+    NOTE: Snow Bros 2 was released after Toaplan's 1994 bankruptcy by Hanafram.
+    Hardware is Toaplan V2 compatible (snowbro2.cpp driver).
 
-    ROM set: snowbro2 (from MAME 0.245)
-    Parent: snowbro2
-    Manufacturer: Hanafram (Toaplan hardware)
+    SDRAM layout (byte addresses — offsets set by emu.sv rom_base_addr case):
+      0x000000 – 0x07FFFF   512KB  CPU program ROM (pro-4)
+      0x100000 – 0x4FFFFF   4MB    GP9001 GFX ROMs (rom2-l/rom2-h/rom3-l/rom3-h)
+      0x700000 – 0x77FFFF   512KB  ADPCM ROM (rom4, OKI M6295) ← index 2 → base 0x700000
 
-    SDRAM layout:
-      0x000000 - 0x07FFFF   512KB  CPU program ROM (pro-4)
-      0x100000 - 0x1FFFFF   1MB    GP9001 GFX ROM low (rom2-l)
-      0x200000 - 0x27FFFF   512KB  GP9001 GFX ROM high (rom2-h)
-      0x280000 - 0x37FFFF   1MB    GP9001 GFX ROM 2 low (rom3-l)
-      0x380000 - 0x3FFFFF   512KB  GP9001 GFX ROM 2 high (rom3-h)
-      0x400000 - 0x47FFFF   512KB  ADPCM ROM (rom4)
+    GFX ROM layout (MAME gp9001 region, consecutive in order):
+      rom2-l: 1MB  @ gp9001 offset 0x000000
+      rom2-h: 512KB @ gp9001 offset 0x100000
+      rom3-l: 1MB  @ gp9001 offset 0x180000
+      rom3-h: 512KB @ gp9001 offset 0x280000
 
-    CRCs verified from snowbro2.zip (MAME 0.245 merged ROM set).
-    Verify with: mame -listxml snowbro2
-
-    NOTE: The exact ROM loading order (interleaving, byte-swap) must be verified
-    against MAME snowbro2.cpp driver source before considering this MRA production-ready.
-    The ROM file names and CRCs are correct; the ordering below is approximate.
+    CRCs from MAME 0.245 listxml (snowbro2.cpp driver).
 -->
 
 <misterromdescription>
@@ -37,32 +29,27 @@
     <setname>snowbro2</setname>
     <rbf>toaplan_v2</rbf>
 
-    <!-- DIP switches — defaults from MAME snowbro2 driver -->
-    <nvram index="2" size="2"/>
-
     <!-- Program ROM (68K CPU, index 0x00) -->
     <!-- SDRAM byte offset 0x000000 -->
     <rom index="0" zip="snowbro2.zip" md5="None" type="merged">
-        <!-- CPU program ROM — Snow Bros 2 (World), 512KB -->
-        <part name="pro-4" crc="4c7ee341"/>   <!-- 512KB -->
+        <!-- CPU program ROM — Snow Bros. 2, 512KB -->
+        <part name="pro-4" crc="4c7ee341"/>
     </rom>
 
     <!-- GFX ROMs — GP9001 tile data (index 0x01) -->
-    <!-- SDRAM byte offset 0x100000 -->
-    <!-- NOTE: ROM loading order needs verification against MAME driver source. -->
-    <!-- rom2-l/rom2-h are paired; rom3-l/rom3-h are paired. -->
-    <!-- MAME uses ROM_LOAD16_BYTE for these — verify interleaving. -->
+    <!-- SDRAM byte offset 0x100000; 4MB total -->
+    <!-- Parts loaded in MAME gp9001-region order (offsets 0, 0x100000, 0x180000, 0x280000) -->
     <rom index="1" zip="snowbro2.zip" md5="None" type="merged">
-        <part name="rom2-l" crc="e9d366a9"/>   <!-- 1MB low plane -->
-        <part name="rom2-h" crc="9aab7a62"/>   <!-- 512KB high plane -->
-        <part name="rom3-l" crc="eb06e332"/>   <!-- 1MB low plane -->
-        <part name="rom3-h" crc="df4a952a"/>   <!-- 512KB high plane -->
+        <part name="rom2-l" crc="e9d366a9"/>   <!-- 1MB   @ gp9001 offset 0x000000 -->
+        <part name="rom2-h" crc="9aab7a62"/>   <!-- 512KB @ gp9001 offset 0x100000 -->
+        <part name="rom3-l" crc="eb06e332"/>   <!-- 1MB   @ gp9001 offset 0x180000 -->
+        <part name="rom3-h" crc="df4a952a"/>   <!-- 512KB @ gp9001 offset 0x280000 -->
     </rom>
 
     <!-- ADPCM ROM (OKI M6295 sample data, index 0x02) -->
-    <!-- SDRAM byte offset 0x400000 (approximate — verify against driver) -->
+    <!-- emu.sv maps index 2 → SDRAM base 0x700000 -->
     <rom index="2" zip="snowbro2.zip" md5="None" type="merged">
-        <part name="rom4" crc="638f341e"/>    <!-- 512KB -->
+        <part name="rom4" crc="638f341e"/>     <!-- 512KB -->
     </rom>
 
     <!-- DIP switch defaults (index 0xFE) -->

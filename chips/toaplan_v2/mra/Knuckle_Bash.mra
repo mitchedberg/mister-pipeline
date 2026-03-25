@@ -1,74 +1,74 @@
 <!--
     Knuckle Bash (1993) — Toaplan
-    MiSTer ROM descriptor for Toaplan V2 core (dual GP9001 variant)
+    MiSTer ROM descriptor for Toaplan V2 core
 
-    Hardware:
+    Hardware (from MAME kbash.cpp):
       MC68000 @ 16 MHz
       NEC V25 @ 16 MHz (sound CPU)
-      GP9001 VDP #0 + GP9001 VDP #1 (DUAL graphics processors)
+      GP9001 VDP (SINGLE — kbash uses one GP9001 unlike Dogyuun)
       YM2151 + OKI M6295 audio
 
-    IMPORTANT: Knuckle Bash uses DUAL GP9001 VDPs.
-    This MRA requires the toaplan_v2 core with dual-VDP support enabled.
-    See TASK-202 (chips/toaplan_v2/HARDWARE.md) for dual-VDP implementation status.
+    NOTE: Knuckle Bash uses a SINGLE GP9001 VDP (not dual).
+    MAME set name is "kbash" (in kbash.cpp), NOT "knuckbsh".
 
-    Memory map follows batsugun_state::batsugun_68k_mem pattern:
-      0x300000-0x30000D  GP9001 VDP #0 registers
-      0x400000-0x400FFF  Palette RAM
-      0x500000-0x50000D  GP9001 VDP #1 registers
-
-    ROM set: knuckbsh / knuckbshj (from MAME 0.245)
-    Parent: knuckbsh
+    ROM set: kbash (from MAME 0.245, kbash.cpp)
+    Parent: kbash
     Manufacturer: Toaplan
 
-    NOTE: ROM CRCs below are PLACEHOLDER values.
-    MUST VERIFY with: mame -listxml knuckbsh
-    The core developer must run 'mame -romident knuckbsh' against the actual ROM set
-    before deploying this MRA in production.
+    SDRAM layout (byte addresses — offsets set by emu.sv rom_base_addr case):
+      0x000000 – 0x07FFFF   512KB  CPU program ROM (tp023_01.bin)
+      0x100000 – 0x8FFFFF   8MB    GP9001 GFX ROMs (4× 2MB: tp023_3..6.bin)
+      0x700000 – 0x73FFFF   256KB  ADPCM ROM (tp023_7.bin, OKI M6295)
 
-    Known ROM files for knuckbsh (verify names/CRCs against mame -listxml):
-      tp024_1.u64   68K program ROM (512KB)
-      tp024_2.w30   ADPCM ROM (256KB)
-      tp024_3.w92   GP9001 #0 GFX ROM (1MB)
-      tp024_4.w93   GP9001 #0 GFX ROM (1MB)
-      tp024_5.w16   GP9001 #1 GFX ROM (2MB)
-      tp024_6.w17   GP9001 #1 GFX ROM (2MB)
+    NOTE: The 4 GFX ROMs are each 2MB, totalling 8MB for GP9001 GFX region.
+    ADPCM ROM is 256KB at emu.sv SDRAM base 0x700000 (index 2).
 
-    PLACEHOLDER MRA — CRCs require verification before production use.
+    GFX ROM layout (MAME gp9001 region, consecutive in order):
+      tp023_3.bin: 2MB @ gp9001 offset 0x000000
+      tp023_5.bin: 2MB @ gp9001 offset 0x200000
+      tp023_4.bin: 2MB @ gp9001 offset 0x400000
+      tp023_6.bin: 2MB @ gp9001 offset 0x600000
+
+    CRCs from MAME 0.245 listxml (kbash.cpp driver).
 -->
 
 <misterromdescription>
     <name>Knuckle Bash</name>
-    <setname>knuckbsh</setname>
+    <setname>kbash</setname>
     <rbf>toaplan_v2</rbf>
 
-    <!-- DIP switches — defaults from MAME knuckbsh driver -->
+    <!-- DIP switches — defaults from MAME kbash driver -->
     <nvram index="2" size="2"/>
 
     <!-- Program ROM (68K CPU, index 0x00) -->
     <!-- SDRAM byte offset 0x000000 -->
-    <!-- IMPORTANT: CRC below is a placeholder. Verify with: mame -listxml knuckbsh -->
-    <rom index="0" zip="knuckbsh.zip" md5="None" type="merged">
+    <rom index="0" zip="kbash.zip" md5="None" type="merged">
         <!-- CPU program ROM — Knuckle Bash, 512KB -->
-        <part name="tp024_1.u64" crc="VERIFY_CRC"/>
+        <part name="tp023_01.bin" crc="2965f81d"/>
     </rom>
 
-    <!-- GFX ROMs — GP9001 #0 + GP9001 #1 tile data (index 0x01) -->
-    <!-- SDRAM byte offset 0x100000 -->
-    <!-- Same layout as Dogyuun: #0 tiles at 0x100000, #1 tiles follow -->
-    <rom index="1" zip="knuckbsh.zip" md5="None" type="merged">
-        <!-- GP9001 #0 GFX data — CRC PLACEHOLDER -->
-        <part name="tp024_3.w92" crc="VERIFY_CRC"/>   <!-- 1MB -->
-        <part name="tp024_4.w93" crc="VERIFY_CRC"/>   <!-- 1MB -->
-        <!-- GP9001 #1 GFX data — CRC PLACEHOLDER -->
-        <part name="tp024_5.w16" crc="VERIFY_CRC"/>   <!-- 2MB -->
-        <part name="tp024_6.w17" crc="VERIFY_CRC"/>   <!-- 2MB -->
+    <!-- Z80 (V25) sound ROM — 32KB, loaded via audiocpu region -->
+    <!-- In kbash.cpp: audiocpu region is a separate 32KB ROM at SDRAM 0x???  -->
+    <!-- NOTE: kbash uses a dedicated V25 ROM (tp023_02.bin, 32KB).            -->
+    <!-- This core uses index 0x03 for Z80 ROM → SDRAM base 0x800000          -->
+    <rom index="3" zip="kbash.zip" md5="None" type="merged">
+        <part name="tp023_02.bin" crc="4cd882a1"/>    <!-- 32KB V25 sound ROM -->
+    </rom>
+
+    <!-- GFX ROMs — GP9001 tile data (index 0x01) -->
+    <!-- SDRAM byte offset 0x100000; 8MB total -->
+    <!-- Parts in MAME gp9001-region order (0, 0x200000, 0x400000, 0x600000) -->
+    <rom index="1" zip="kbash.zip" md5="None" type="merged">
+        <part name="tp023_3.bin" crc="32ad508b"/>   <!-- 2MB @ gp9001 offset 0x000000 -->
+        <part name="tp023_5.bin" crc="b84c90eb"/>   <!-- 2MB @ gp9001 offset 0x200000 -->
+        <part name="tp023_4.bin" crc="e493c077"/>   <!-- 2MB @ gp9001 offset 0x400000 -->
+        <part name="tp023_6.bin" crc="9084b50a"/>   <!-- 2MB @ gp9001 offset 0x600000 -->
     </rom>
 
     <!-- ADPCM ROM (OKI M6295 sample data, index 0x02) -->
-    <!-- SDRAM byte offset 0x700000 -->
-    <rom index="2" zip="knuckbsh.zip" md5="None" type="merged">
-        <part name="tp024_2.w30" crc="VERIFY_CRC"/>    <!-- 256KB -->
+    <!-- emu.sv maps index 2 → SDRAM base 0x700000 -->
+    <rom index="2" zip="kbash.zip" md5="None" type="merged">
+        <part name="tp023_7.bin" crc="3732318f"/>    <!-- 256KB -->
     </rom>
 
     <!-- DIP switch defaults (index 0xFE) -->

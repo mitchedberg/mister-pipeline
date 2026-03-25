@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Rastan Saga II (Japan) / Nastar Warrior (World) — Taito B System, 1989
+  MC68000 @ 8 MHz, Z80 @ 4 MHz, YM2610 @ 8 MHz
+  TC0180VCU tilemap, TC0220IOC I/O, TC0260DAR palette DAC, TC0140SYT sound
+
+  Clone of nastar (World). Shares all GFX ROMs with nastar.
+  Only difference: b81-07.31 replaces b81-13.31 (different CPU ROM bank).
+
+  SDRAM layout (byte addresses — offsets set by emu.sv rom_base_addr case):
+    0x000000  CPU program ROM (512KB, 4×128KB interleaved even/odd pairs)
+    0x080000  Z80 audio program (64KB)
+    0x100000  TC0180VCU GFX ROM (1MB)
+    0x200000  ADPCM-A samples (512KB, ymsnd:adpcma)
+    0x280000  ADPCM-B samples (512KB, ymsnd:adpcmb)
+
+  ROM names from MAME rastsag2 driver (src/mame/taito/taito_b.cpp)
+  CRCs from MAME 0.245 listxml.
+-->
+<misterromdescription>
+  <name>Rastan Saga II</name>
+  <setname>rastsag2</setname>
+  <rbf>taito_b</rbf>
+  <mameversion>0245</mameversion>
+  <year>1989</year>
+  <manufacturer>Taito</manufacturer>
+  <category>Action</category>
+  <buttons names="Attack,Jump,Taunt,Start,Coin" default="A,B,C,Start,Select"/>
+
+  <!--
+    index 0: CPU + Z80 program ROMs (loaded sequentially to SDRAM base 0)
+    index 1: TC0180VCU GFX ROM (to SDRAM 0x100000)
+    index 2: ADPCM sample ROMs (to SDRAM 0x200000)
+    0xFE: DIP switches
+  -->
+
+  <!-- CPU program ROM (512KB interleaved) + Z80 audio -->
+  <!-- Two pairs of 128KB chips interleaved to produce 2×256KB = 512KB CPU ROM -->
+  <!-- rastsag2 uses b81-07.31 in place of nastar's b81-13.31 -->
+  <rom index="0" zip="rastsag2.zip nastar.zip" type="merged" md5="None">
+    <interleave output="16">
+      <part name="b81-08.50" crc="d6da9169" map="10"/>  <!-- D15:D8, bank 0 -->
+      <part name="b81-07.31" crc="8edf17d7" map="01"/>  <!-- D7:D0,  bank 0 (rastsag2-specific) -->
+    </interleave>
+    <interleave output="16">
+      <part name="b81-10.49" crc="53f34344" map="10"/>  <!-- D15:D8, bank 1 -->
+      <part name="b81-09.30" crc="630d34af" map="01"/>  <!-- D7:D0,  bank 1 -->
+    </interleave>
+    <!-- Z80 audio ROM (64KB) — lands at ioctl_addr 0x080000 → SDRAM 0x080000 -->
+    <part name="b81-11.37" crc="3704bf09"/>
+  </rom>
+
+  <!-- TC0180VCU GFX ROM (1MB) — shared with nastar -->
+  <!-- Loaded to SDRAM offset 0x100000 -->
+  <rom index="1" zip="rastsag2.zip nastar.zip" type="merged" md5="None">
+    <part name="b81-03.14" crc="551b75e6" offset="0x000000" length="0x080000"/>
+    <part name="b81-04.15" crc="cf734e12" offset="0x080000" length="0x080000"/>
+  </rom>
+
+  <!-- ADPCM sample ROMs (512KB ADPCM-A + 512KB ADPCM-B) — shared with nastar -->
+  <!-- Loaded to SDRAM offset 0x200000 -->
+  <rom index="2" zip="rastsag2.zip nastar.zip" type="merged" md5="None">
+    <part name="b81-02.2" crc="20ec3b86" offset="0x000000" length="0x080000"/>
+    <part name="b81-01.1" crc="b33f796b" offset="0x080000" length="0x080000"/>
+  </rom>
+
+  <!-- DIP switch defaults -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>

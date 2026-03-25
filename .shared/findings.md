@@ -1,3 +1,70 @@
+## 2026-03-25 — MRA Audit: Toaplan V2 + Taito B
+
+**Status:** COMPLETE
+**Executed by:** Worker (Claude Sonnet 4.6)
+
+### Toaplan V2 MRA Issues Found and Fixed
+
+**emu.sv confirmed SDRAM layout (rom_base_addr case):**
+- index 0x00 → 0x000000 (CPU ROM)
+- index 0x01 → 0x100000 (GFX ROM)
+- index 0x02 → 0x700000 (ADPCM ROM)
+- index 0x03 → 0x800000 (Z80 ROM)
+
+**V-Five.mra** — CRITICAL BUG FIXED:
+- V-Five / Grind Stormer has NO OKI M6295 and NO ADPCM ROM (YM2151 only)
+- Old MRA had a spurious index 2 (ADPCM) entry with wrong SDRAM comment (0x500000, old pre-patch address)
+- Removed the index 2 entry entirely; updated ROM CRCs from MAME 0.245
+- MAME driver is `vfive.cpp` (not `toaplan2.cpp`)
+
+**Snow_Bros_2.mra** — COMMENT FIXED:
+- ADPCM comment said 0x400000 but emu.sv places index 2 at 0x700000
+- Corrected comment; GFX ROM order verified against MAME gp9001 region offsets
+- Indexes and ROM CRCs were already correct
+
+**Knuckle_Bash.mra** — COMPLETE REWRITE:
+- Wrong setname: `knuckbsh` → correct is `kbash` (MAME kbash.cpp driver, not toaplan2.cpp)
+- Wrong ROM names and CRCs (all were VERIFY_CRC placeholders)
+- Knuckle Bash uses SINGLE GP9001 (not dual)
+- Has 4× 2MB GFX ROMs (8MB total) vs the placeholder's 4× 1MB
+- Has separate 32KB V25 sound ROM (tp023_02.bin) loaded as index 3
+- Added Grind_Stormer.mra as separate file for the Japan parent set
+
+**Batsugun.mra, Dogyuun.mra** — CORRECT, no changes needed.
+
+### Toaplan V2 MRAs Created
+- `Grind_Stormer.mra` — grindstm (Japan parent of V-Five), available on rpmini: NO (grindstm.zip not present)
+
+### Taito B MRA Issues Found
+
+**viofight (Violence Fight)** — INCOMPATIBLE HARDWARE:
+- Uses YM2203 + OKI M6295 + PC060HA sound comm (NOT YM2610 + TC0140SYT)
+- The existing violence_fight.mra will not work on the taito_b core
+- SDRAM comment corrected (was 0x300000, should be 0x200000 per emu.sv index 2 → 0x200000)
+
+**masterw (Master of Weapon)** — INCOMPATIBLE HARDWARE:
+- Uses YM2203 (not YM2610) — not supported by current taito_b core
+- No MRA created
+
+**bshark (B-Shark)** — WRONG HARDWARE FAMILY:
+- In taito_z.cpp (not taito_b.cpp) — different hardware entirely
+- No MRA created
+
+**pbobble.mra** — REMOVED (duplicate of puzzle_bobble.mra with incorrect ROM data)
+
+### Taito B MRAs Created
+- `Rastan_Saga_II.mra` — rastsag2 (Japan clone of nastar), rpmini: nastar.zip present (shared ROMs)
+- `Ashura_Blaster.mra` — ashura, rpmini: ashura.zip present
+- `Silent_Dragon.mra` — silentd, rpmini: silentd.zip present
+- `Ryujin.mra` — ryujin, rpmini: ryujin.zip present
+- `Space_DX.mra` — spacedx, rpmini: spacedx.zip present
+
+### ROM Availability Summary (rpmini)
+Available: batsugun, dogyuun, grindstm, snowbro2, nastar, crimec, pbobble, pbobble2/3/4, viofight, ashura, silentd, ryujin, spacedx, bshark, ballbros
+NOT available: knuckbsh/kbash, vfive, rastsag2 (shares nastar.zip), tetrist, masterw
+
+---
+
 ## 2026-03-24 — TASK-100: Fix IPL IACK clear in NMK arcade
 
 **Status:** COMPLETE

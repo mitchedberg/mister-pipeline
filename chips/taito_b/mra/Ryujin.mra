@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Ryujin (Japan) — Taito B System, 1991
+  MC68000, Z80 @ 4 MHz, YM2610B @ 8 MHz
+  TC0180VCU tilemap, TC0220IOC I/O, TC0140SYT sound
+
+  MAME set: ryujin (src/mame/taito/taito_b.cpp)
+
+  NOTE: Ryujin uses YM2610B (OPNB2). The taito_b core uses jt10 which supports both
+  YM2610 and YM2610B variants.
+
+  SDRAM layout (byte addresses — offsets set by emu.sv rom_base_addr case):
+    0x000000  CPU program ROM (512KB, 4×128KB interleaved)
+    0x080000  Z80 audio program (64KB)
+    0x100000  TC0180VCU GFX ROM (2MB: ryujin-07 + ryujin-06)
+    0x200000  ADPCM-A samples (512KB, ryujin-08) — no ADPCM-B
+
+  GFX ROM layout (MAME tc0180vcu region):
+    ryujin-07.ic28: 1MB @ offset 0x000000
+    ryujin-06.ic39: 1MB @ offset 0x100000
+
+  CRCs from MAME 0.245 listxml (taito_b.cpp driver).
+-->
+<misterromdescription>
+  <name>Ryujin</name>
+  <setname>ryujin</setname>
+  <rbf>taito_b</rbf>
+  <mameversion>0245</mameversion>
+  <year>1991</year>
+  <manufacturer>Taito</manufacturer>
+  <category>Action</category>
+  <buttons names="Attack,Jump,Start,Coin" default="A,B,Start,Select"/>
+
+  <!-- CPU program ROM (4×128KB interleaved) + Z80 audio -->
+  <rom index="0" zip="ryujin.zip" type="merged" md5="None">
+    <interleave output="16">
+      <part name="rjn_02.ic32" crc="5fd353d5" map="10"/>  <!-- D15:D8, bank 0 -->
+      <part name="rjn_01.ic10" crc="f775e4b6" map="01"/>  <!-- D7:D0,  bank 0 -->
+    </interleave>
+    <interleave output="16">
+      <part name="ruj_04.ic31" crc="0c153cab" map="10"/>  <!-- D15:D8, bank 1 -->
+      <part name="ruj_03.ic9"  crc="7695f89c" map="01"/>  <!-- D7:D0,  bank 1 -->
+    </interleave>
+    <!-- Z80 audio ROM (64KB) at SDRAM 0x080000 -->
+    <part name="ruj_05.ic15" crc="95270b16"/>
+  </rom>
+
+  <!-- TC0180VCU GFX ROM (2MB) — loaded to SDRAM 0x100000 -->
+  <rom index="1" zip="ryujin.zip" type="merged" md5="None">
+    <part name="ryujin-07.ic28" crc="34f50980" offset="0x000000" length="0x100000"/>
+    <part name="ryujin-06.ic39" crc="1b85ff34" offset="0x100000" length="0x100000"/>
+  </rom>
+
+  <!-- ADPCM-A samples (512KB) — loaded to SDRAM 0x200000 -->
+  <!-- Ryujin has no ADPCM-B ROM -->
+  <rom index="2" zip="ryujin.zip" type="merged" md5="None">
+    <part name="ryujin-08.ic1" crc="480d040d" offset="0x000000" length="0x080000"/>
+  </rom>
+
+  <!-- DIP switch defaults -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>

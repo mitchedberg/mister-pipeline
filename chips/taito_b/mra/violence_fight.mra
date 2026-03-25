@@ -6,11 +6,10 @@
 
   MAME set: viofight (src/mame/taito/taito_b.cpp)
 
-  SDRAM layout (byte addresses):
-    0x000000  CPU program ROM (maincpu, 512KB interleaved)
-    0x080000  Z80 audio program (audiocpu, 64KB)
+  SDRAM layout (byte addresses — offsets set by emu.sv rom_base_addr case):
+    0x000000  CPU program ROM (maincpu, 512KB interleaved) + Z80 audio (64KB at 0x080000)
     0x100000  TC0180VCU GFX ROM (2MB)
-    0x300000  OKI ADPCM samples (512KB)
+    0x200000  OKI ADPCM samples (512KB) ← index 2 → emu.sv base 0x200000
 
   ROM CRCs from MAME viofight set.
 -->
