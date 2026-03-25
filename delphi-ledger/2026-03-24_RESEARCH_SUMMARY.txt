@@ -1,0 +1,225 @@
+================================================================================
+MIDWAY Y-UNIT FPGA RESEARCH SUMMARY
+March 24, 2026
+================================================================================
+
+TASK COMPLETED: Research and download Midway Y-Unit FPGA source code for analysis.
+
+DELIVERABLES:
+================================================================================
+
+1. PRIMARY ANALYSIS DOCUMENTS (written this session):
+   ├─ 2026-03-24_midway-source-analysis.md (comprehensive, ~20 KB)
+   │  └─ 11-part deep analysis covering architecture, DMA, VRAM, bandwidth,
+   │     why scanline buffer fails, and actionable recommendations
+   │
+   ├─ 2026-03-24_scanline-buffer-feasibility.md (focused, ~24 KB)
+   │  └─ Detailed explanation of staging RAM problem and why only
+   │     Smash TV + Total Carnage support scanline buffering
+   │
+   └─ README_midway_analysis.md (navigation guide)
+      └─ Quick reference, implementation checklist, community contacts
+
+2. SOURCE MATERIALS (downloaded from public repositories):
+   └─ midway-y-unit-source/ (718 MB)
+      └─ Midway/Y-Unit/
+         ├─ midway_yunit.md (technical overview from Coin-Op Collection)
+         ├─ public_documents/ (8 Y-Unit game service manuals + schematics)
+         │  ├─ Smash TV, Trog, High Impact Football, Strike Force
+         │  ├─ Super High Impact, Terminator 2, Total Carnage, Mortal Kombat
+         │  └─ [Each ~5-10 MB PDF with full schematics]
+         │
+         └─ Z-Unit/ (predecessor system for reference)
+            ├─ midway_zunit.md
+            └─ NARC service manual
+
+KEY FINDINGS:
+================================================================================
+
+1. SOURCE CODE AVAILABILITY: ❌ NOT PUBLIC
+   └─ Coin-Op Collection FPGA source is closed-source
+   └─ Only compiled .core files (Analogue Pocket) available on GitHub
+   └─ Pramod's MiSTer Y-Unit source never released to public
+
+2. SCANLINE BUFFER APPROACH: ⚠️ VIABLE ONLY FOR 2 GAMES
+   └─ Works: Smash TV, Total Carnage (direct framebuffer, no staging)
+   └─ Fails: All other Y-Unit games (use hidden VRAM rows for sprite prep)
+   └─ Root cause: Games assume unified address space; scanline buffer
+      splits BRAM (visible rows 0-1) from SDRAM (hidden rows 256+)
+   └─ Result: CPU reads stale sprite data, animation corrupts
+
+3. STAGING RAM ARCHITECTURE: 🔴 CRITICAL BLOCKER
+   └─ 6 of 8 Y-Unit games use off-screen "staging" VRAM rows
+   └─ Sprite composition happens in rows 256-511 (hidden from display)
+   └─ Game assumes simultaneous:
+      • CPU reads from staging (row 300+) for animation frame lookup
+      • DMA writes to visible framebuffer (rows 0-255) for display
+   └─ Scanline buffer breaks this by splitting memory into two domains
+
+4. BANDWIDTH REALITY: 📊
+   └─ Pramod spent 6+ months optimizing MiSTer implementation
+   └─ Tried: 125 MHz SDRAM, CAS=2, careful arbitration
+   └─ Peak demand: 65-95 MB/s (DMA + CPU + Autoerase + line output)
+   └─ MiSTer available: ~200 MB/s @ 125 MHz 16-bit SDRAM
+   └─ Problem: Contention during HBlank locks entire VRAM
+   └─ Solution (Coin-Op): 128 MHz SDRAM + 32-bit burst DMA writes
+
+5. FEASIBILITY BY PLATFORM:
+   ✅ Analogue Pocket (52K ALM, 128 MHz SDRAM): ALL 8 GAMES (RC6 released)
+   ⚠️  MiSTer DE10-Nano (40K ALM, 125 MHz SDRAM): 2 GAMES ONLY (Smash TV + Total Carnage)
+   ❌ Full Y-Unit on MiSTer: NOT FEASIBLE without larger FPGA or external DDR
+
+TECHNICAL ARCHITECTURE:
+================================================================================
+
+TMS34010 CPU CORE:
+• 32-bit internal, 16-bit external (CPU-to-RAM)
+• 1-bit addressing (converts to byte addresses for DRAM)
+• Integrated memory controller + shift buffer
+• Integrated GPU (FILL instruction for bulk clear, MOVE with transparency)
+• Implementation: 7000+ lines Verilog (per Pramod's blog)
+
+Y-UNIT MEMORY:
+• VRAM: 512 KB unified address space (256 KB Palette + 256 KB Bitmap)
+• DMA: 32-bit fetch from Image ROM, 6-bit pixel live deswizzling
+• DMA Modes: 9 options (palette swap, transparency, solid color fills)
+• Autoerase: Hardware PLD (most games) OR GPU FILL (Strike Force, T2)
+• Pixel clock: 8 MHz (41 ns/pixel throughput requirement)
+• Resolution: ~400×256 @ 6bpp
+
+VRAM ARBITRATION (4-way):
+1. DMA (highest priority during game loop): 32 MB/s
+2. CPU (random reads/writes): 8-16 MB/s
+3. Autoerase PLD (during HBlank): 15-25 MB/s
+4. Line buffer output (CRT): 8-16 MB/s
+
+GAME CATEGORIES:
+Type A (2 games - Staging-Free):
+  • Smash TV, Total Carnage
+  • Write directly to visible framebuffer
+  • ✅ Scanline buffer viable
+  
+Type B (6 games - Staging-Dependent):
+  • Mortal Kombat, High Impact, Trog, Strike Force, T2, Super High Impact
+  • Use hidden VRAM rows for sprite composition
+  • ❌ Scanline buffer breaks memory model
+
+RECOMMENDATIONS:
+================================================================================
+
+OPTION A: QUICK WIN (Recommended for MVP)
+Scope: Smash TV only (1 game)
+Effort: 4-6 weeks
+Risk: LOW
+Path:
+  1. Implement TMS34010 CPU core (microcode engine, memory controller)
+  2. Build DMA blitter (32-bit ROM fetch, 6bpp deswizzle, 9 modes)
+  3. Add VRAM controller with autoerase support
+  4. Implement line buffer + CRT output (scanline approach OK here)
+  5. Build TAS validation harness (frame-by-frame vs MAME)
+  6. Ship as proof-of-concept
+
+OPTION B: CONSERVATIVE (2-game support)
+Scope: Smash TV + Total Carnage (both staging-free)
+Effort: 6-8 weeks
+Risk: LOW
+Path: Option A + bulk FILL instruction (replace autoerase PLD)
+
+OPTION C: AMBITIOUS (Full Y-Unit, high risk)
+Scope: All 8 games
+Effort: 14-20 weeks
+Risk: HIGH (will likely hit SDRAM bandwidth ceiling)
+Path:
+  1. Full VRAM in SDRAM (don't use scanline buffer)
+  2. Optimize SDRAM controller for 128 MHz + CAS=2
+  3. Implement shift buffer + multi-line pattern support
+  4. Test against all 8 games in MAME
+  5. May require Analogue Pocket-class FPGA to fully succeed
+
+SOURCES & FURTHER READING:
+================================================================================
+
+PRIMARY DOCUMENTATION (now in this package):
+  └─ Coin-Op Collection Development-Documentation
+     ├─ /Midway/Y-Unit/midway_yunit.md (complete technical overview)
+     ├─ /Midway/Y-Unit/public_documents/ (service manuals for all games)
+     └─ /Midway/Z-Unit/ (predecessor system, useful for context)
+
+ONLINE RESOURCES:
+  Coin-Op Collection:
+    • GitHub: https://github.com/Coin-OpCollection/Development-Documentation
+    • MiSTer Distribution: https://github.com/Coin-OpCollection/Distribution-MiSTerFPGA
+    • Patreon: https://www.patreon.com/coin_opcollection
+
+  Pramod Somashekar (TMS34010 expert):
+    • Blog: https://www.pram0d.com (search "TMS34010" or "NARC")
+    • GitHub: https://github.com/psomashekar
+    • Key post: "New Core Work: TMS34010, NARC & Smash TV" (Dec 2022)
+    • Key post: "FPGA Core Development Series: Part 1" (Jul 2022)
+
+  Community:
+    • MiSTer FPGA Forum: https://misterfpga.org/viewtopic.php?t=7542
+    • System16.com: Midway Y-Unit hardware reference
+    • MAME source: TMS34010 emulation (validation reference)
+
+IMPLEMENTATION CHECKLIST (If Proceeding):
+================================================================================
+
+PRE-WORK:
+  [ ] Download service manuals from midway-y-unit-source/
+  [ ] Study Pramod's TMS34010 blog posts (2-3 hours read)
+  [ ] Review Coin-Op Y-Unit technical doc (1-2 hours)
+  [ ] Extract ROM from physical board or MAME dump
+
+PHASE 1: CPU CORE (Weeks 1-3)
+  [ ] Implement TMS34010 instruction decoder
+  [ ] Build microcode engine (ALU, shift, memory operations)
+  [ ] Add memory controllers (1-bit to 16-bit address translation)
+  [ ] Implement interrupt handling (LINT0, LINT1, NMI)
+  [ ] Test: Simple assembly program (loops, memory ops)
+
+PHASE 2: DMA & VRAM (Weeks 4-5)
+  [ ] Build DMA blitter (6bpp deswizzle, 9 modes)
+  [ ] Implement VRAM controller (4-way arbitration)
+  [ ] Add autoerase/bulk FILL logic
+  [ ] Test: DMA single sprite draw to VRAM
+
+PHASE 3: VIDEO OUTPUT (Week 6)
+  [ ] Implement line buffer (BRAM dual-port)
+  [ ] Add CRT sync generation (HSYNC, VSYNC, BLANK)
+  [ ] Test: Text output to screen
+
+PHASE 4: INTEGRATION & VALIDATION (Week 7-8)
+  [ ] Combine all modules
+  [ ] Build TAS validation harness (MAME frame dump comparison)
+  [ ] Test: Smash TV boot through POST screens
+  [ ] Iterate: Fix divergence bugs (likely CPU/memory controller issues)
+
+PHASE 5: EXTEND (If applicable)
+  [ ] Add Total Carnage support (bulk FILL variant)
+  [ ] Test other games (expect bandwidth issues)
+  [ ] Document findings for community
+
+NEXT STEPS:
+================================================================================
+
+1. Review the two analysis documents (start with 2026-03-24_midway-source-analysis.md
+   Parts 1-3 for executive summary)
+
+2. Decide on scope:
+   • Quick win (Smash TV only) → 4-6 weeks
+   • Conservative (Smash TV + Total Carnage) → 6-8 weeks
+   • Ambitious (full Y-Unit) → 14-20 weeks, high risk
+
+3. Study Pramod's blog + service manuals for target game(s)
+
+4. Reach out to Coin-Op Collection / Pramod on forums (if proceeding beyond
+   research phase)
+
+5. Start prototype: TMS34010 core validation (get CPU running simple loop
+   before attempting DMA)
+
+================================================================================
+RESEARCH STATUS: COMPLETE
+RECOMMENDATION: Proceed with Option A (Smash TV, 4-6 week prototype)
+================================================================================
