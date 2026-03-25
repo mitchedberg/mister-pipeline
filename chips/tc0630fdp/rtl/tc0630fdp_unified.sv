@@ -373,13 +373,13 @@ module tc0630fdp_unified (
     output logic [ 3:0]      src_blend,
     output logic [ 3:0]      dst_blend,
     output logic             do_blend,
-    output logic             pixel_valid_out,
+    output logic             pixel_valid_out
 
     // ── Debug / testbench pixel outputs (simulation only) ─────────────────────
 `ifndef QUARTUS
-    output logic [3:0][12:0] bg_pixel_out,
-    output logic [ 8:0]      text_pixel_out,
-    output logic [ 7:0]      pivot_pixel_out
+    ,output logic [3:0][12:0] bg_pixel_out
+    ,output logic [ 8:0]      text_pixel_out
+    ,output logic [ 7:0]      pivot_pixel_out
 `endif
 );
 
@@ -752,13 +752,13 @@ logic tx_done;
 // Fetch geometry (for text layer): vpos+1
 logic [2:0] tx_fetch_py_clk;
 logic [5:0] tx_fetch_row_clk;
+logic [8:0] next_vpos;  // temp: vpos+1 for text fetch geometry
 
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         tx_fetch_py_clk  <= 3'b0;
         tx_fetch_row_clk <= 6'b0;
     end else if (hblank_rise_clk) begin
-        automatic logic [8:0] next_vpos;
         next_vpos        = vpos + 9'd1;
         tx_fetch_py_clk  <= next_vpos[2:0];
         tx_fetch_row_clk <= next_vpos[8:3];
@@ -837,6 +837,7 @@ logic [4:0] pv_fetch_row_clk;
 logic [5:0] pv_xscr_tile_clk;
 logic [2:0] pv_pix_off_clk;
 logic [5:0] pv_bank_off_clk;
+logic [7:0] canvas_y;  // temp: pivot canvas row for fetch geometry
 
 always_ff @(posedge clk) begin
     if (!rst_n) begin
@@ -846,7 +847,6 @@ always_ff @(posedge clk) begin
         pv_pix_off_clk   <= 3'b0;
         pv_bank_off_clk  <= 6'd0;
     end else if (hblank_rise_clk) begin
-        automatic logic [7:0] canvas_y;
         canvas_y = 8'(vpos + 9'd1) + 8'(pv_yscroll_int);
         pv_fetch_py_clk  <= canvas_y[2:0];
         pv_fetch_row_clk <= canvas_y[7:3];
@@ -1026,14 +1026,15 @@ end
 
 // Text write decode (from TX_PIXEL state)
 logic signed [9:0] tx_scol_c;
+logic [9:0] col10;  // temp: text screen column (tile_col*8 + px_idx)
 always_comb begin
     tx_scol_c  = $signed({1'b0, tx_col, 3'b000}) - $signed({7'b0, 3'b0}) + $signed({7'b0, tx_px_idx});
     // Screen col = tile_col*8 + px_idx (no scroll for text layer)
     tx_lb_wen   = 1'b0;
     tx_lb_waddr = 9'b0;
     tx_lb_wdata = 9'b0;
+    col10 = 10'b0;
     if (phase == PHASE_TEXT && tx_state == TX_PIXEL) begin
-        automatic logic [9:0] col10;
         col10 = {4'b0, tx_col[5:0]} * 10'd8 + {7'b0, tx_px_idx};
         if (col10 < 10'd320) begin
             tx_lb_waddr = col10[8:0];
@@ -1049,12 +1050,13 @@ assign _tx_scol_unused = ^tx_scol_c;
 /* verilator lint_on UNUSED */
 
 // Pivot write decode (from PV_PIXEL state)
+logic signed [10:0] col_s;  // temp: pivot screen column (signed)
 always_comb begin
     pv_lb_wen   = 1'b0;
     pv_lb_waddr = 9'b0;
     pv_lb_wdata = 8'b0;
+    col_s = 11'sb0;
     if (phase == PHASE_PIVOT && ls_pivot_en_8x && pv_state == PV_PIXEL) begin
-        automatic logic signed [10:0] col_s;
         col_s = pv_scol_base_s + $signed({8'b0, pv_px_idx});
         if (col_s >= 11'sd0 && col_s < 11'sd320) begin
             pv_lb_waddr = 9'(col_s[8:0]);
@@ -1165,8 +1167,8 @@ end
 logic [12:0] bg_lb_rdata [0:3];
 logic [ 8:0] tx_lb_rdata;
 logic [ 7:0] pv_lb_rdata;
+genvar gi_bg_rd;
 generate
-    genvar gi_bg_rd;
     for (gi_bg_rd = 0; gi_bg_rd < 4; gi_bg_rd++) begin : gen_bg_rd
         assign bg_lb_rdata[gi_bg_rd] = bg_linebuf[gi_bg_rd][bg_snap_col[gi_bg_rd]];
     end
@@ -1644,11 +1646,12 @@ assign pvt_pal9 = {5'b0, pv_lb_rdata[7:4]};
 // Sub-stage A (combinational): PF0 vs PF1, PF2 vs PF3
 logic [4:0] a01_prio; logic [8:0] a01_pal; logic [3:0] a01_pen;
 logic [8:0] a01_dst;  logic [1:0] a01_bmode;
+// temp regs for sub-stage A PF01 arbitration
+logic [4:0] w0p; logic [8:0] w0l;
+logic [3:0] w0n; logic [8:0] w0d;
+logic [1:0] w0b;
 
 always_comb begin
-    automatic logic [4:0] w0p; automatic logic [8:0] w0l;
-    automatic logic [3:0] w0n; automatic logic [8:0] w0d;
-    automatic logic [1:0] w0b;
     if (pf_pen[0] != 4'd0) begin
         w0p = pf_prio[0]; w0l = pf_pal[0]; w0n = pf_pen[0]; w0d = 9'b0; w0b = 2'b00;
     end else begin
@@ -1668,11 +1671,12 @@ end
 
 logic [4:0] a23_prio; logic [8:0] a23_pal; logic [3:0] a23_pen;
 logic [8:0] a23_dst;  logic [1:0] a23_bmode;
+// temp regs for sub-stage A PF23 arbitration
+logic [4:0] w2p; logic [8:0] w2l;
+logic [3:0] w2n; logic [8:0] w2d;
+logic [1:0] w2b;
 
 always_comb begin
-    automatic logic [4:0] w2p; automatic logic [8:0] w2l;
-    automatic logic [3:0] w2n; automatic logic [8:0] w2d;
-    automatic logic [1:0] w2b;
     if (pf_pen[2] != 4'd0) begin
         w2p = pf_prio[2]; w2l = pf_pal[2]; w2n = pf_pen[2]; w2d = 9'b0; w2b = 2'b00;
     end else begin
@@ -1749,15 +1753,15 @@ logic [8:0] win_pal;
 logic [3:0] win_pen;
 logic [8:0] win_dst;
 logic [1:0] win_bmode;
+// temp regs for sub-stage B arbitration (merged/sprite/pivot stages)
+logic [4:0] wm_prio; logic [8:0] wm_pal; logic [3:0] wm_pen;
+logic [8:0] wm_dst;  logic [1:0] wm_bmode;
+logic [4:0] ws_prio; logic [8:0] ws_pal; logic [3:0] ws_pen;
+logic [8:0] ws_dst;  logic [1:0] ws_bmode;
+logic [4:0] wp_prio; logic [8:0] wp_pal; logic [3:0] wp_pen;
+logic [8:0] wp_dst;  logic [1:0] wp_bmode;
 
 always_comb begin
-    automatic logic [4:0] wm_prio; automatic logic [8:0] wm_pal; automatic logic [3:0] wm_pen;
-    automatic logic [8:0] wm_dst;  automatic logic [1:0] wm_bmode;
-    automatic logic [4:0] ws_prio; automatic logic [8:0] ws_pal; automatic logic [3:0] ws_pen;
-    automatic logic [8:0] ws_dst;  automatic logic [1:0] ws_bmode;
-    automatic logic [4:0] wp_prio; automatic logic [8:0] wp_pal; automatic logic [3:0] wp_pen;
-    automatic logic [8:0] wp_dst;  automatic logic [1:0] wp_bmode;
-
     // Merge PF01 vs PF23
     if (p23_pen != 4'd0 && (p01_pen == 4'd0 || p23_prio > p01_prio)) begin
         wm_prio = p23_prio; wm_pal = p23_pal; wm_pen = p23_pen;
