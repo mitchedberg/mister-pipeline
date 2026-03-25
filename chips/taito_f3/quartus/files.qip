@@ -42,13 +42,15 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/mb8421.sv
 # =========================================================================
 # 68EC020 CPU (Motorola 68020 Emulation)
 # =========================================================================
-# TG68K: VHDL-based 68020 core (25 MHz capable, Taito F3 uses ~10 MHz)
-# tg68k_adapter.sv: SystemVerilog interface wrapper
+# TG68K: synthesizable Verilog netlist (~2,300 ALMs less than VHDL quartet)
+# Replaces: TG68K_ALU.vhd, TG68K_Pack.vhd, TG68K.vhd, TG68KdotC_Kernel.vhd
+# tg68k_adapter.sv: SystemVerilog 16→32-bit bus coalescer wrapper
+# CPU=2'b11 (68020 mode) set inside tg68k_adapter.sv
+#
+# Note: TG68KdotC_Kernel_synth.v is also used by tg68k_adapter_m68k.sv (Taito Z).
+# Using the same synth.v for F3 eliminates VHDL elaboration on Cyclone V.
 
-set_global_assignment -name VHDL_FILE ../../m68020/hdl/tg68k/TG68K_ALU.vhd
-set_global_assignment -name VHDL_FILE ../../m68020/hdl/tg68k/TG68K_Pack.vhd
-set_global_assignment -name VHDL_FILE ../../m68020/hdl/tg68k/TG68K.vhd
-set_global_assignment -name VHDL_FILE ../../m68020/hdl/tg68k/TG68KdotC_Kernel.vhd
+set_global_assignment -name VERILOG_FILE ../../m68020/hdl/tg68k/TG68KdotC_Kernel_synth.v
 set_global_assignment -name SYSTEMVERILOG_FILE ../../m68020/rtl/tg68k_adapter.sv
 
 # =========================================================================

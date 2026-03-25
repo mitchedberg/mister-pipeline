@@ -133,6 +133,11 @@ logic [1:0]  tg_busstate;     // bus state: 00=fetch,10=rd,11=wr,01=idle (bussta
 logic [2:0]  tg_fc;           // function codes                  (FC port)
 logic        tg_skipFetch;    // internal skip-fetch hint        (skipFetch port)
 logic        tg_clr_berr;     // bus error clear (unused here)   (clr_berr port)
+// synth.v additional outputs (not in VHDL — declare wires to avoid open-output warnings)
+logic        tg_longword;     // longword access indicator       (unused)
+logic [31:0] tg_regin_out;    // debug register output           (unused)
+logic [3:0]  tg_cacr_out;     // cache control register          (unused in this context)
+logic [31:0] tg_vbr_out;      // VBR output                      (unused; VBR used internally)
 
 // tg_rw: 1=read, 0=write — directly matches nWr polarity (nWr=0 means write)
 // tg_as_n: derived from busstate; AS is active whenever the CPU is doing a
@@ -159,37 +164,29 @@ assign tg_clkena = (tg_busstate == 2'b01) ? 1'b1              // CPU idle — al
                  : !cpu_dtack_n;                               // wait for bus ack
 
 // -------------------------------------------------------------------------
-// TG68KdotC_Kernel instantiation
-// Port name mapping (stub expectation → actual kernel port):
-//   reset        → nReset        (active-low reset)
-//   data_read    → data_in       (16-bit read data input)
-//   addr         → addr_out      (32-bit byte address output)
-//   as_n         → NOT A PORT    (derived from busstate above)
-//   uds_n        → nUDS          (active-low upper data strobe)
-//   lds_n        → nLDS          (active-low lower data strobe)
-//   rw           → nWr           (0=write, 1=read — same polarity)
-//   reset_cpu_n  → nResetOut     (CPU RESET instruction output)
-//   dtack        → NOT A PORT    (consumed via clkena_in above)
-//   IPL          → IPL           (no rename)
-//   data_write   → data_write    (no rename)
-//   busstate     → busstate      (no rename)
-//   FC           → FC            (no rename)
-// Additional kernel ports not in original stub:
-//   IPL_autovector → tied 0      (not used; auto-vector via VPA/VMA in TG68K.vhd top)
-//   berr           → tied 0      (bus error; handled at integration level)
-//   clr_berr       → ignored
-//   skipFetch      → ignored
+// TG68KdotC_Kernel instantiation (TG68KdotC_Kernel_synth.v — synthesizable Verilog)
+//
+// Using the pre-synthesized Verilog netlist (TG68KdotC_Kernel_synth.v) instead
+// of the VHDL files.  The synth.v module has no parameters — all mode bits are
+// controlled dynamically via the CPU[1:0] port at elaboration time (same as VHDL).
+// Saves ~2,300 ALMs vs VHDL elaboration overhead on Quartus 17.0 Lite.
+//
+// Port mapping (synth.v uses identical port names to VHDL kernel):
+//   CPU=2'b11     → MC68020 mode (68020 extended addressing, bitfield, 32-bit mul/div)
+//   clkena_in     → DTACK-gated clock enable (see tg_clkena above)
+//   data_in       → 16-bit read data from bus coalescer
+//   IPL           → interrupt priority level (active-low)
+//   IPL_autovector→ 0 (IACK handled at integration level; no auto-vector)
+//   berr          → 0 (bus error not used at this level)
+//   addr_out      → 32-bit byte address
+//   data_write    → 16-bit write data
+//   busstate      → bus state: 00=fetch, 10=read, 11=write, 01=idle
+//   nWr           → 0=write, 1=read
+//   nUDS/nLDS     → data strobes (active-low)
+//   nResetOut     → CPU RESET instruction output
+//   clr_berr/skipFetch → unused (ignored)
 // -------------------------------------------------------------------------
-TG68KdotC_Kernel #(
-    .SR_Read       (2),    // switchable with CPU(0) → 68020 privileged SR reads
-    .VBR_Stackframe(2),    // switchable with CPU(0) → 68020 extended stack frames
-    .extAddr_Mode  (2),    // switchable with CPU(1) → 68020 extended addressing
-    .MUL_Mode      (2),    // switchable with CPU(1) → 32-bit multiply
-    .DIV_Mode      (2),    // switchable with CPU(1) → 32-bit divide
-    .BitField      (2),    // switchable with CPU(1) → bitfield instructions
-    .BarrelShifter (2),    // switchable with CPU(1) → barrel shifter
-    .MUL_Hardware  (1)     // use hardware multiplier
-) u_tg68k (
+TG68KdotC_Kernel u_tg68k (
     .CPU           (2'b11),          // 68020 mode
     .clk           (clk),
     .nReset        (rst_n),          // active-low reset (from sync'd rst_n)
@@ -207,7 +204,11 @@ TG68KdotC_Kernel #(
     .nLDS          (tg_lds_n),       // lower data strobe (active-low)
     .nResetOut     (tg_reset_out_n), // CPU RESET instruction output
     .clr_berr      (tg_clr_berr),    // bus error clear (ignored)
-    .skipFetch     (tg_skipFetch)    // skip fetch hint (ignored)
+    .skipFetch     (tg_skipFetch),   // skip fetch hint (ignored)
+    .longword      (tg_longword),    // longword indicator (unused)
+    .regin_out     (tg_regin_out),   // debug register output (unused)
+    .CACR_out      (tg_cacr_out),    // cache control (unused in this context)
+    .VBR_out       (tg_vbr_out)      // VBR output (unused externally)
 );
 
 // =============================================================================
@@ -433,7 +434,8 @@ end
 // =============================================================================
 /* verilator lint_off UNUSED */
 logic _unused;
-assign _unused = ^{ipl_n, read_hi, saved_rw, active_addr, tg_fc, tg_skipFetch, tg_clr_berr};
+assign _unused = ^{ipl_n, read_hi, saved_rw, active_addr, tg_fc, tg_skipFetch, tg_clr_berr,
+                   tg_longword, tg_regin_out, tg_cacr_out, tg_vbr_out};
 /* verilator lint_on UNUSED */
 
 endmodule
