@@ -453,6 +453,59 @@ This is better than runtime address remapping:
 // so a single 16-bit SDRAM read gives 4 adjacent horizontal pixels
 ```
 
+### 6.4 ioctl_index Routing — MANDATORY for multi-ROM systems
+
+**Problem:** `ioctl_addr` is reset to 0 by the HPS framework for each new `<rom index>` transfer.
+Without explicit routing, every ROM overwrites SDRAM[0x000000]. The DIP switch entry
+(`ioctl_index == 0xFE`) also writes 0xFF bytes starting at 0x000000, corrupting the 68000
+reset vector and causing the CPU to immediately fault after the download completes.
+
+**Fix — always include both pieces in emu.sv:**
+
+```systemverilog
+// 1. Map each ROM index to its SDRAM base address
+//    ioctl_addr resets to 0 per index, so we add the base here
+reg [26:0] rom_base_addr;
+always_comb begin
+    case (ioctl_index)
+        8'h00: rom_base_addr = 27'h000000; // CPU prog ROM
+        8'h01: rom_base_addr = 27'h0C0000; // Sprite ROM
+        8'h02: rom_base_addr = 27'h1C0000; // BG tile ROM
+        8'h03: rom_base_addr = 27'h200000; // ADPCM ROM
+        8'h04: rom_base_addr = 27'h280000; // Z80 sound ROM
+        default: rom_base_addr = 27'h000000;
+    endcase
+end
+wire [26:0] rom_ioctl_addr = rom_base_addr + ioctl_addr;
+
+// 2. Exclude DIP switch data (0xFE) from SDRAM writes
+//    DIP data goes to the dsw[] register array, not SDRAM
+wire rom_ioctl_wr = ioctl_wr & ioctl_download & (ioctl_index != 8'hFE);
+
+// 3. DIP switch capture — separate from SDRAM path
+logic [7:0] dsw[4];
+always_ff @(posedge clk_sys)
+    if (ioctl_wr && (ioctl_index == 8'hFE) && !ioctl_addr[24:2])
+        dsw[ioctl_addr[1:0]] <= ioctl_dout;
+
+// 4. Wire SDRAM write channel with routed address and gated write enable
+sdram_b u_sdram (
+    .ioctl_wr   (rom_ioctl_wr),    // NOT raw ioctl_wr
+    .ioctl_addr (rom_ioctl_addr),  // NOT raw ioctl_addr
+    .ioctl_dout (ioctl_dout),
+    ...
+);
+```
+
+**SDRAM layout rule:** For every ROM region, verify `window_size = next_region_base - this_region_base >= rom_size`.
+If a ROM is larger than its window, it will overwrite the next region. Move the next base address out.
+
+**Reference:** chips/nmk_arcade/quartus/emu.sv lines 356–494 — the canonical working example.
+
+**MRA note:** Use `md5="None"` on all `<rom>` elements during development. A mismatched `md5=` hash
+causes the HPS to silently reject the ROM load — the download appears to complete but the game never
+boots. Only add a verified hash for a pinned released ROM set.
+
 ---
 
 ## 7. GP9001 (Toaplan V2) Specifics
@@ -514,7 +567,7 @@ Always diff `.qsf` before committing. Revert if it has grown unexpectedly.
 7. **Using ioctl_download polling instead of ioctl_wr pulses** — misses words
 8. **Tying rst_cpu to rst_sys** — OSD reset kills in-flight SDRAM transactions
 9. **SDRAM_DQML/DQMH always 0** — works for 16-bit reads but corrupts byte writes
-10. **Ignoring ioctl_index routing** — all ROMs dumped to same SDRAM address
+10. **Ignoring ioctl_index routing** — all ROMs dumped to same SDRAM address; DIP switch (0xFE) corrupts reset vector (see Section 6.4)
 11. **Timer-based interrupt clear** — race condition with CPU init code
 12. **Combinational chip selects** — false SDRAM requests at bus cycle trailing edge
 13. **Unregistered IPL lines** — Verilator evaluates after fx68k, sample is one cycle late
