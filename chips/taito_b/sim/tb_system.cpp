@@ -480,12 +480,14 @@ int main(int argc, char** argv) {
                                        ((int)rtb->u_cpu->__PVT__FC1 << 1) |
                                         (int)rtb->u_cpu->__PVT__FC0;
                     static uint64_t stall_zone_last = 0;
+                    uint32_t cpu_addr2 = ((uint32_t)top->dbg_cpu_addr << 1) & 0xFFFFFF;
                     if (iter - stall_zone_last >= 500) {
                         stall_zone_last = iter;
                         fprintf(stderr,
-                            "  STALL bc=%d CS=%d busy=%d ca=%d intPend=%d pswI=%d iIpl=%d rIpl=%d rInt=%d ASn=%d FC=%d\n",
-                            bus_cycles, dar_cs_r, dar_busy, dar_ca,
-                            cpu_int_pend, cpu_pswI, cpu_iIpl, cpu_rIpl, cpu_rInt, cpu_asn, cpu_fc);
+                            "  STALL bc=%d addr=%06X CS=%d busy=%d ca=%d intPend=%d pswI=%d iIpl=%d rIpl=%d rInt=%d ASn=%d FC=%d dtack_n=%d\n",
+                            bus_cycles, cpu_addr2, dar_cs_r, dar_busy, dar_ca,
+                            cpu_int_pend, cpu_pswI, cpu_iIpl, cpu_rIpl, cpu_rInt, cpu_asn, cpu_fc,
+                            (int)top->dbg_cpu_dtack_n);
                     }
                 }
 

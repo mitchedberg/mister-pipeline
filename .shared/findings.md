@@ -54,6 +54,60 @@
 
 ---
 
+## 2026-03-25 — Berlin Wall (kaneko_arcade) Boot Fix: Three Root Causes Identified
+
+**Status:** FIX IN PROGRESS (build running on iMac)
+**Executed by:** Sim Validation Agent (Claude Sonnet 4.6)
+
+### Problem
+Berlin Wall game state counter at WRAM $200000 never advances from 0 in our sim, even after 2000 frames. MAME advances at frame 124.
+
+### Root Cause Analysis
+
+**Primary bug (blocking boot — INFINITE LOOP):**
+The game's boot-time VRAM march test at PC=0x07F8 writes AAAA/5555/0000 patterns to 0xC00000-0xC07FFF (VRAM), reads back and compares. Our kaneko_arcade.sv had NO backing RAM for the VRAM region at 0xC00000. kaneko16.sv's GFX window path (cpu_addr[20:16]==5'd27) returns 0x0000 for all reads. The compare fails → BNE to 0xB06 → infinite loop at 0xB2E (error message display).
+
+**Fix:** Added `vram_mem` backing RAM (8K × 16-bit = 16KB) in kaneko_arcade.sv for the 0xC00000 region. Writes go to both vram_mem AND kaneko16's BG VRAM port. Reads return from vram_mem.
+
+**Secondary bug (inputs wrong address):**
+Berlin Wall joystick/service inputs are at byte 0x680000-0x680005 (MAME berlwall_map: P1/P2/SYSTEM). Our `IO_BASE = 23'h380000` = byte 0x700000 (coin lockout write-only). The subroutine at ROM $40F8 reads service from $680004. All input reads from 0x680000 were returning 0xFFFF (open bus).
+
+**Fix:** Added `joy_cs` for byte 0x680000-0x68000F. P1 at cpu_addr[2:1]=0b00, P2=0b01, SYSTEM=0b10.
+
+**Tertiary bug (AY DIP decode wrong case value):**
+The AY8910 stub decoded `case(cpu_addr[4:1]) 4'd14` for DIP1 (AY reg 14), but byte 0x80001C → word addr 0x40000E → cpu_addr[4:1] = 4'b0111 = 7, NOT 14. The case never matched, returning 0x00 (all DIPs off when inverted by game).
+
+**Fix:** Changed case match to `4'd7`. Both AY reg 14 (0x80001C) and reg 15 (0x80001E) map to cpu_addr[4:1]=7 (they differ only in cpu_addr bit[0] which is not in the [23:1] bus). Returns dipsw1 for all AY0 accesses — acceptable since dipsw1=dipsw2=0xFF default and the game only checks DIP polarity for cosmetic options.
+
+### Init Code Flow (berlwall ROM)
+```
+0x055E: Reset, clear WRAM
+0x05F2: Clear sprite RAM at 0x30E000
+0x0610: Clear palette at 0x400000
+0x0658: CLR $202886 (interrupt gate flags)
+0x0774: Sprite RAM march test at 0x30E000 (BNE → 0xB04 on fail)
+0x07F8: VRAM march test at 0xC00000 (BNE → 0xB06 on fail)  ← BUG HERE
+0x0886: BRA to WRAM march test at 0x0B4E
+0x0BB0: BRA $088A after WRAM test passes
+0x08BE: BRA 0xC80 (ROM checksum)
+0x0CBA: BRA 0x8C2 after checksum passes
+0x08DA: JSR $28014 (audio init via TRAP#3)
+0x0960: MOVE.B #$2, $202886 (set bit 1)
+0xACA: ORI.B #$38, $202886 (set bits 3,4,5 = interrupt gates)
+0xAD4: MOVE.W #$1F, SR (unmask interrupts!)
+0xAEA: ADDQ.W #$1, $200000 (state counter increments here each loop)
+```
+
+### MAME Address Map Corrections Applied
+| Region | MAME byte address | Our RTL (fixed) |
+|--------|-------------------|-----------------|
+| VRAM (tilemap) | 0xC00000-0xC03FFF | vram_mem backing RAM ✓ |
+| Joystick P1/P2/SYS | 0x680000-0x680005 | joy_cs added ✓ |
+| Coin lockout (WO) | 0x700000 | io_cs (write only) ✓ |
+| AY8910 DIP | 0x80001C/1E (cpu_addr[4:1]=7) | case 4'd7 ✓ |
+
+---
+
 ## 2026-03-25 — Synthesis Foreman: 6-Core Synthesis Run Fixes
 
 **Status:** IN PROGRESS
