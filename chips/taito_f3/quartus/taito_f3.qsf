@@ -152,3 +152,4 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_
 # debug ports
 # unified pipeline
 # pll fix
+# pll freq fix
