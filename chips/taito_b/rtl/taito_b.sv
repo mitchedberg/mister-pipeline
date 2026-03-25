@@ -240,9 +240,11 @@ end
 // must ensure cpu_addr is stable when these selects are used.
 
 // CPU Program ROM: 0x000000–0x07FFFF byte (512KB)
-//   Correct: byte 0x000000–0x07FFFF → word 0x000000–0x03FFFF → bits [23:18] == 6'b000000
+//   cpu_addr = aob[23:1] where aob is the byte address.
+//   cpu_addr[23:19] == 0 covers bytes 0x000000–0x07FFFF (512KB).
+//   (cpu_addr[23:18] was wrong: only covered 0x000000–0x03FFFF = 256KB)
 logic prog_rom_cs;
-assign prog_rom_cs = (cpu_addr[23:18] == 6'b000000) && !cpu_as_n;
+assign prog_rom_cs = (cpu_addr[23:19] == 5'b00000) && !cpu_as_n;
 
 // TC0180VCU: 512KB window (19-bit word offset → top 5 bits of 23-bit word addr)
 //   Same base (0x400000 byte → word 0x200000) for both supported games.
@@ -969,27 +971,35 @@ assign cpu_dtack_n = cpu_as_n       ? 1'b1
 // clear holds the interrupt indefinitely until the CPU actually acknowledges it.
 //
 // iack_cycle is passed from tb_top.sv where FC signals are available.
-// On IACK, we clear the HIGHEST active interrupt (the one being acknowledged).
+// During IACK, cpu_addr[3:1] = the interrupt level being acknowledged.
+// Use this to clear ONLY the specific latch for the acknowledged level.
+// This prevents the IRQ4 IACK from also clearing the IRQ2 latch (a cascade
+// bug where both latches cleared on the same IACK cycle, preventing IRQ2
+// handler from running).
 
 logic ipl_h_active, ipl_l_active;
+
+// iack_h: CPU is acknowledging the int_h level (IRQ4 for nastar)
+// iack_l: CPU is acknowledging the int_l level (IRQ2 for nastar)
+logic iack_h, iack_l;
+assign iack_h = iack_cycle && (cpu_addr[3:1] == g_int_h);
+assign iack_l = iack_cycle && (cpu_addr[3:1] == g_int_l);
 
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
         ipl_h_active <= 1'b0;
         ipl_l_active <= 1'b0;
     end else begin
-        // int_h: latch on VCU pulse, clear on IACK when int_h is the active level
+        // int_h: latch on VCU pulse, clear on IACK specifically for int_h level
         if (vcu_int_h)
             ipl_h_active <= 1'b1;
-        else if (iack_cycle && ipl_h_active &&
-                 (g_int_h >= g_int_l || !ipl_l_active))
+        else if (iack_h && ipl_h_active)
             ipl_h_active <= 1'b0;
 
-        // int_l: latch on VCU pulse, clear on IACK when int_l is the active level
+        // int_l: latch on VCU pulse, clear on IACK specifically for int_l level
         if (vcu_int_l)
             ipl_l_active <= 1'b1;
-        else if (iack_cycle && ipl_l_active &&
-                 (g_int_l > g_int_h || !ipl_h_active))
+        else if (iack_l && ipl_l_active)
             ipl_l_active <= 1'b0;
     end
 end

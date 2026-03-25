@@ -266,10 +266,11 @@ assign layer_cs = (cpu_addr[23:16] == LAYER_BASE[23:16]) && !cpu_as_n;
 logic k16_cs_n;
 assign k16_cs_n = !((cpu_addr[23:16] == K16_BASE[23:16]) && !cpu_as_n);
 
-// Kaneko16 Sprite RAM: 0x400000–0x400FFF byte → word 0x200000–0x2007FF (11-bit)
-// Sprite RAM: 0x30E000–0x30FFFF (8KB, word addr 0x187000–0x187FFF, 12-bit window)
+// Sprite RAM: 0x30E000–0x30FFFF (8KB, word addr 0x187000–0x187FFF, 11-bit window)
+// Use cpu_addr[23:13] (11 bits) to cover the full 8KB = two 4KB pages (0x30Exxx + 0x30Fxxx).
+// cpu_addr[23:12] (12 bits) only covered the first 4KB page; the upper half was open bus.
 logic spr_cs_n;
-assign spr_cs_n = !((cpu_addr[23:12] == SPR_BASE[23:12]) && !cpu_as_n);
+assign spr_cs_n = !((cpu_addr[23:13] == SPR_BASE[23:13]) && !cpu_as_n);
 
 // Kaneko16 Tilemap VRAM: 0x500000–0x507FFF byte → word 0x280000–0x283FFF (14-bit)
 // Tilemap VRAM: 0xC00000–0xC03FFF (16KB, word addr 0x600000–0x601FFF, 13-bit window)

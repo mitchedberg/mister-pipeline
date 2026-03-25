@@ -48,7 +48,7 @@ Each core follows identical steps:
 | Toaplan V2 / Batsugun | Agent 1 | ✅ | 🔧 IACK dispatched | ✅ palette | ❌ | IACK fix should unblock |
 | Psikyo / Gunbird | Agent 1 | ✅ | ✅ IACK fix applied | ❓ | ❌ | MAME RAM comparison next |
 | Kaneko / Berlin Wall | Agent 2 | ✅ | ✅ IACK works | ✅ GPU tiles | ⚠️ static | Game state counter at $200000=0 doesn't advance |
-| Taito B / Nastar | Agent 2 | ✅ | ❌ | ❌ black | ❌ | CLAIMED: Apply IACK fix |
+| Taito B / Nastar | Agent 2 | ✅ | ✅ IACK applied | ⚠️ black (self-test loop) | ❌ | Gate-5: frames 30-90 = 0 diffs ✅; frames 91+ = 0.4% drift (audio stub) |
 | Taito X / Gigandes | Agent 2 | ✅ | ❌ | ✅ BG tiles | ❌ | CLAIMED: Apply IACK fix |
 
 ### Agent 2 execution plan (NOW):

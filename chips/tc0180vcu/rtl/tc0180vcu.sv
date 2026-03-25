@@ -567,6 +567,9 @@ end
 // Interrupt Generation
 // INTH fires at VBLANK start; INTL fires ~8 lines later.
 // Both are pulse outputs — the external PAL latches and decodes them.
+//
+// intl_delay counts SCANLINES (hblank_fall events) not clock cycles.
+// MAME: intl fires at screen.time_until_pos(vpos + 8) = 8 scanlines.
 // =============================================================================
 logic [ 3:0] intl_delay;
 always_ff @(posedge clk) begin
@@ -581,7 +584,9 @@ always_ff @(posedge clk) begin
             int_h      <= 1'b1;
             intl_delay <= 4'd8;
         end
-        if (intl_delay != 4'b0) begin
+        // Count down only on hblank_fall (once per scanline) so the delay
+        // is in scanlines, matching MAME's time_until_pos(vpos + 8).
+        if (intl_delay != 4'b0 && hblank_fall) begin
             intl_delay <= intl_delay - 4'd1;
             if (intl_delay == 4'd1) int_l <= 1'b1;
         end
