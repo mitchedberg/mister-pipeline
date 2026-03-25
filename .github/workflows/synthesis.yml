@@ -64,11 +64,11 @@ jobs:
           FAIL=0
           for f in $FILES; do
             echo "── Linting $f ──"
-            # Skip integration files that instantiate vendor modules (jt*, T80s, fx68k*).
+            # Skip integration files that instantiate vendor modules (jt*, jtframe*, T80s, fx68k*).
             # These are top-level wiring files already covered by chip synthesis workflows.
             # Submodule vendor sources are not checked out here, so lint would error on
             # "Cannot find file containing module: ..." which is not a RTL bug.
-            if grep -qE '^\s*\b(jt03|jt51|jt6295|jt10|jt12|jt49|T80s|fx68k|fx68k_adapter)\b' "$f"; then
+            if grep -qE '^\s*\b(jt03|jt51|jt6295|jt10|jt12|jt49|jtframe_[A-Za-z0-9_]+|T80s|fx68k|fx68k_adapter)\b' "$f"; then
               echo "  SKIP: $f (vendor-dependent integration file — covered by chip synthesis)"
               continue
             fi
