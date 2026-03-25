@@ -1,7 +1,7 @@
 # Taito B System — MiSTer FPGA Core
 
-**Status:** VALIDATED | CI GREEN | 100% WRAM match (2299/2299 frames)
-**Synthesis:** Quartus 17.0, DE-10 Nano (Cyclone V)
+**Status:** REVALIDATING | shared TC0180VCU Quartus hardening in progress | hardware pending
+**Synthesis:** Quartus 17.0, DE-10 Nano (Cyclone V), fresh full build pending
 **MAME driver:** `taito/taito_b.cpp`
 
 ---
@@ -49,10 +49,11 @@ All games share the same chip set; per-game ROM layout differences are handled b
 
 ## Validation
 
-- **Match rate:** 100% — 2299/2299 frames WRAM byte-perfect (Nastar reference)
-- **CI run:** GREEN (Quartus exit 0, setup −56.224ns, 11,460/41,910 ALMs 27%)
+- **Local gate-5:** 99.6666% WRAM match for frames 25–499 (Nastar, 2026-03-25 revalidation run)
+- **Early boot variance:** frames 1–24 still diverge from MAME golden; gameplay-range match remains in prior gate-5 class
+- **CI run:** full Taito B Quartus rebuild pending for the shared `tc0180vcu` hardening pass
 - **Multi-game support:** `game_id` input wire selects address map at runtime. Nastar=0 (default), Crime City=1. Set via MRA ioctl_index=0xFF header byte. Crime City pending full validation.
-- **Known issues:** None
+- **Known issues:** hardware validation still pending on the current shared-TC0180VCU branch
 
 ---
 
