@@ -272,10 +272,11 @@ assign k16_cs_n = !((cpu_addr[23:16] == K16_BASE[23:16]) && !cpu_as_n);
 logic spr_cs_n;
 assign spr_cs_n = !((cpu_addr[23:13] == SPR_BASE[23:13]) && !cpu_as_n);
 
-// Kaneko16 Tilemap VRAM: 0x500000–0x507FFF byte → word 0x280000–0x283FFF (14-bit)
-// Tilemap VRAM: 0xC00000–0xC03FFF (16KB, word addr 0x600000–0x601FFF, 13-bit window)
+// Kaneko16 Tilemap VRAM: 0xC00000–0xC03FFF byte (16KB, word addr 0x600000–0x601FFF)
+// Use cpu_addr[23:14] (10 bits) to cover full 16KB = four 4KB pages (0xC00xxx-0xC03xxx).
+// cpu_addr[23:13] (11 bits) only covered the first 8KB; the upper half was open bus.
 logic vram_cs_n;
-assign vram_cs_n = !((cpu_addr[23:13] == VRAM_BASE[23:13]) && !cpu_as_n);
+assign vram_cs_n = !((cpu_addr[23:14] == VRAM_BASE[23:14]) && !cpu_as_n);
 
 // Palette RAM: 0x400000–0x400FFF byte (4KB, word addr 0x200000–0x2007FF, 11-bit window)
 // 4KB = 2^12 bytes; CPU word address has 11 variable bits [11:1]; compare uses [23:12] (12 bits).

@@ -376,6 +376,12 @@ int main(int argc, char** argv) {
                 //   0x000490-0x0004C0:   TRAP #3 handler
                 //   0x028014-0x028020:   MCU protection stub
                 //   0x000ADE-0x000AF0:   state counter increment path
+                // Track BC at 100000 boundaries to find where CPU is executing
+                static uint32_t next_bc_check = 100000;
+                if (bus_cycles >= (int)next_bc_check && !prev_asn && asn_c) {
+                    fprintf(stderr, "  [bc_check %7d] current_addr=%06X\n", bus_cycles, addr_c);
+                    next_bc_check += 100000;
+                }
                 bool in_milestone = (!asn_c && iter > RESET_ITERS) &&
                     ((addr_c >= 0x000B4E && addr_c <= 0x000B82) ||
                      (addr_c >= 0x000880 && addr_c <= 0x0008A0) ||
