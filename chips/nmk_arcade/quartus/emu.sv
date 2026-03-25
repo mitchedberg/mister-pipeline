@@ -579,7 +579,8 @@ fx68k_adapter u_cpu (
     .cpu_dtack_n    (cpu_dtack_n),
     .cpu_ipl_n      (cpu_ipl_n),
     .cpu_reset_n_out(cpu_reset_n_out),
-    .cpu_inta_n     (cpu_inta_n)
+    .cpu_inta_n     (cpu_inta_n),
+    .cpu_fc         ()         // not needed by nmk_arcade
 );
 
 nmk_arcade u_nmk_arcade

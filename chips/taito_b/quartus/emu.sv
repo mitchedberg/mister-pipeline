@@ -568,6 +568,8 @@ wire        cpu_as_n;
 wire        cpu_dtack_n; // taito_b → CPU
 wire [2:0]  cpu_ipl_n;   // taito_b → CPU
 wire        cpu_reset_n_out;
+wire        cpu_inta_n;  // IACK signal: active-low when FC=111 & ASn=0
+wire        iack_cycle = ~cpu_inta_n;  // taito_b uses active-high iack_cycle
 
 fx68k_adapter u_cpu (
     .clk            (clk_sys),
@@ -583,7 +585,9 @@ fx68k_adapter u_cpu (
     .cpu_as_n       (cpu_as_n),
     .cpu_dtack_n    (cpu_dtack_n),
     .cpu_ipl_n      (cpu_ipl_n),
-    .cpu_reset_n_out(cpu_reset_n_out)
+    .cpu_reset_n_out(cpu_reset_n_out),
+    .cpu_inta_n     (cpu_inta_n),
+    .cpu_fc         ()             // not needed directly by taito_b
 );
 
 // Z80 debug bus outputs (all driven internally by T80s inside taito_b)
@@ -612,6 +616,7 @@ taito_b u_taito_b
     .cpu_as_n    (cpu_as_n),
     .cpu_dtack_n (cpu_dtack_n),
     .cpu_ipl_n   (cpu_ipl_n),
+    .iack_cycle  (iack_cycle),
 
     // ── Z80 Sound CPU (now internal T80s; ports are debug outputs) ────────────
     .z80_addr      (z80_addr_dbg),

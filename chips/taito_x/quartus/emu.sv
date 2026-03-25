@@ -494,6 +494,8 @@ wire        cpu_as_n;
 wire        cpu_dtack_n;
 wire [2:0]  cpu_ipl_n;
 wire        cpu_reset_n_out;
+wire [2:0]  cpu_fc;     // function codes — taito_x uses these for IACK detect
+wire        cpu_inta_n; // not directly used by taito_x but wired for completeness
 
 fx68k_adapter u_cpu
 (
@@ -510,7 +512,9 @@ fx68k_adapter u_cpu
     .cpu_as_n        (cpu_as_n),
     .cpu_dtack_n     (cpu_dtack_n),
     .cpu_ipl_n       (cpu_ipl_n),
-    .cpu_reset_n_out (cpu_reset_n_out)
+    .cpu_reset_n_out (cpu_reset_n_out),
+    .cpu_inta_n      (cpu_inta_n),
+    .cpu_fc          (cpu_fc)
 );
 
 //////////////////////////////////////////////////////////////////
@@ -744,6 +748,7 @@ taito_x #(
     .cpu_as_n        (cpu_as_n),
     .cpu_dtack_n     (cpu_dtack_n),
     .cpu_ipl_n       (cpu_ipl_n),
+    .cpu_fc          (cpu_fc),
 
     // Z80 sound bus
     .z80_addr        (z80_addr),
