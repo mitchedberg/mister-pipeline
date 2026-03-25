@@ -87,7 +87,13 @@ module fx68k_adapter (
     // Drive to core module's cpu_inta_n input so the IPL latch can clear on IACK.
     // Without this connection, cpu_inta_n defaults to 0 (always-IACK), which
     // clears the IPL latch every cycle and prevents interrupts from being taken.
-    output logic        cpu_inta_n
+    output logic        cpu_inta_n,
+
+    // ── Function codes output ─────────────────────────────────────────────────
+    // FC[2:0] = {FC2, FC1, FC0} from fx68k. Exposed so cores that do
+    // level-specific IACK decode (e.g. kaneko_arcade) can read them directly.
+    // cpu_fc = 3'b111 when the CPU is in an interrupt-acknowledge cycle.
+    output logic [2:0]  cpu_fc
 );
 
 // =============================================================================
@@ -228,6 +234,7 @@ assign cpu_as_n      = fx_ASn;
 assign cpu_reset_n_out = fx_oRESETn;
 assign cpu_halted_n    = fx_oHALTEDn;
 assign cpu_inta_n      = inta_n;        // expose IACK signal to caller
+assign cpu_fc          = {fx_FC2, fx_FC1, fx_FC0}; // expose raw function codes
 
 // =============================================================================
 // Unused signal suppression (prevent lint warnings)
