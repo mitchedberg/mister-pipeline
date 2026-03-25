@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Battle K-Road — Psikyo SH201B, 1994
+  MC68EC020 @ 16 MHz, Z80 audiocpu @ 8 MHz
+  PS2001B sprites, PS3103 tilemap (2 layers), YM2610 audio
+
+  MAME set: btlkroad (src/mame/psikyo/psikyo.cpp)
+  Native resolution: 320×240 (vertical shooter, rotated 90° CW for display)
+  Genre: Fighting (not a vertical shooter, but same hardware)
+
+  SDRAM layout (byte addresses):
+    0x000000  CPU program ROM (512KB: 2×256KB interleaved)
+    0x200000  Sprite ROM (PS2001B, 6 MB) — u14+u24+u15 (no u25)
+    0x900000  BG tile ROM (PS3103, 2 MB)
+    0xA80000  Z80 audio ROM (128KB)
+
+  ROM CRCs from MAME btlkroad set (MAME 0.245 listxml).
+-->
+<misterromdescription>
+  <name>Battle K-Road</name>
+  <setname>btlkroad</setname>
+  <rbf>psikyo_arcade</rbf>
+  <mameversion>0245</mameversion>
+  <year>1994</year>
+  <manufacturer>Psikyo</manufacturer>
+  <category>Fighter</category>
+  <rotation>0</rotation>
+  <buttons names="Shot,Bomb,Btn3,Start,Coin" default="A,B,C,Start,Select"/>
+
+  <!--
+    index 0: CPU program ROM (512KB, SDRAM base 0x000000)
+    index 1: Sprite ROM (6 MB, SDRAM base 0x200000)
+    index 2: BG tile ROM (2 MB, SDRAM base 0x900000)
+    index 3: Z80 audio ROM (128KB, SDRAM base 0xA80000)
+    0xFE: DIP switches
+  -->
+
+  <!-- CPU program ROM (2×256KB interleaved even/odd).
+       4-u46.bin = even bytes (D15:D8), MAME region "maincpu" offset=0
+       5-u39.bin = odd  bytes (D7:D0),  MAME region "maincpu" offset=2 -->
+  <rom index="0" zip="btlkroad.zip" type="merged" md5="None">
+    <interleave output="16">
+      <part name="4-u46.bin" crc="8a7a28b4" sha1="f7197be673dfd0ddf46998af81792b81d8fe9fbf" map="10"/>
+      <part name="5-u39.bin" crc="933561fa" sha1="f6f3b1e14b1cfeca26ef8260ac4771dc1531c357" map="01"/>
+    </interleave>
+  </rom>
+
+  <!-- Sprite ROM (PS2001B, 6 MB) — loaded at SDRAM 0x200000
+       MAME region "sprites": u14@0, u24@0x200000, u15@0x400000 (no u25 = 6MB total) -->
+  <rom index="1" zip="btlkroad.zip" type="merged" md5="None">
+    <part name="u14.bin" crc="282d89c3" sha1="3b4b17f4a37efa2f7e232488aaba7c77d10c84d2" offset="0x000000" length="0x200000"/>
+    <part name="u24.bin" crc="bbe9d3d1" sha1="9da0b0b993e8271a8119e9c2f602e52325983f79" offset="0x200000" length="0x200000"/>
+    <part name="u15.bin" crc="d4d1b07c" sha1="232109db8f6e137fbc8826f38a96057067cb19dc" offset="0x400000" length="0x200000"/>
+  </rom>
+
+  <!-- BG tile ROM (PS3103, 2 MB) — loaded at SDRAM 0x900000
+       MAME region "tiles" offset=0 -->
+  <rom index="2" zip="btlkroad.zip" type="merged" md5="None">
+    <part name="u33.bin" crc="4c8577f1" sha1="d27043514632954a06667ac63f4a4e4a31870511" offset="0x000000" length="0x200000"/>
+  </rom>
+
+  <!-- Z80 audio ROM (3-u71.bin, 128KB) — MAME region "audiocpu"
+       Loaded to SDRAM 0xA80000 -->
+  <rom index="3" zip="btlkroad.zip" type="merged" md5="None">
+    <part name="3-u71.bin" crc="22411fab" sha1="1094cb51712e40ae65d0082b408572bdec06ae8b" offset="0x000000" length="0x020000"/>
+  </rom>
+
+  <!-- DIP switch defaults -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>

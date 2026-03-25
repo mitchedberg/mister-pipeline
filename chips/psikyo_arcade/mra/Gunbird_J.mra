@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Gunbird (gunbird) — Psikyo SH201B, 1994
-  MC68EC020 @ 16 MHz (emulated as MC68000 @ 16 MHz — placeholder)
-  PS2001B sprites, PS3103 tilemap (2 layers), YM2610 audio (Z80 @ 8 MHz)
+  Gunbird (Japan) — Psikyo SH201B, 1994
+  MC68EC020 @ 16 MHz, Z80 audiocpu @ 8 MHz
+  PS2001B sprites, PS3103 tilemap (2 layers), YM2610 audio
+
+  MAME set: gunbirdj (clone of gunbird, src/mame/psikyo/psikyo.cpp)
   Native resolution: 320×240 (vertical shooter, rotated 90° CW for display)
 
   SDRAM layout (byte addresses):
-    0x000000  CPU program ROM (512KB: 2×256KB interleaved)
-    0x200000  Sprite ROM (PS2001B / Gate 3, 7 MB) → occupies 0x200000–0x8FFFFF
-    0x900000  BG tile ROM (PS3103 / Gate 4, 2 MB)
-    0xA80000  Z80 audio ROM (128KB)
+    0x000000  CPU program ROM (512KB: 2×256KB interleaved, Japan-specific)
+    0x200000  Sprite ROM (PS2001B, 7 MB) — shared with gunbird parent
+    0x900000  BG tile ROM (PS3103, 2 MB) — shared with gunbird parent
+    0xA80000  Z80 audio ROM (128KB) — shared with gunbird parent
 
-  ROM names from MAME gunbird driver (src/mame/psikyo/psikyo.cpp)
-  CRCs verified from MAME 0.245 listxml.
+  ROM CRCs from MAME gunbirdj set (MAME 0.245 listxml).
 -->
 <misterromdescription>
-  <name>Gunbird</name>
-  <setname>gunbird</setname>
+  <name>Gunbird (Japan)</name>
+  <setname>gunbirdj</setname>
   <rbf>psikyo_arcade</rbf>
   <mameversion>0245</mameversion>
   <year>1994</year>
@@ -24,6 +25,7 @@
   <category>Shooter / Vertical</category>
   <rotation>270</rotation>
   <buttons names="Shot,Bomb,Btn3,Start,Coin" default="A,B,C,Start,Select"/>
+
   <!--
     index 0: CPU program ROM (512KB, SDRAM base 0x000000)
     index 1: Sprite ROM (7 MB, SDRAM base 0x200000)
@@ -32,19 +34,18 @@
     0xFE: DIP switches
   -->
 
-  <!-- CPU program ROM (512KB: 2×256KB interleaved even/odd bytes).
-       4.u46 = even bytes (D15:D8), MAME region "maincpu" offset=0
-       5.u39 = odd  bytes (D7:D0),  MAME region "maincpu" offset=2 -->
-  <rom index="0" zip="gunbird.zip">
+  <!-- CPU program ROM (Japan version — 2×256KB interleaved even/odd).
+       1.u46 = even bytes (D15:D8), MAME region "maincpu" offset=0
+       2.u39 = odd  bytes (D7:D0),  MAME region "maincpu" offset=2
+       Sprite/BG/audio ROMs merged from gunbird parent. -->
+  <rom index="0" zip="gunbird.zip" type="merged" md5="None">
     <interleave output="16">
-      <part name="4.u46" crc="b78ec99d" map="10"/>
-      <part name="5.u39" crc="925f095d" map="01"/>
+      <part name="gunbirdj/1.u46" crc="474abd69" sha1="27f37333075f9c92849101aad4875e69004d747b" map="10"/>
+      <part name="gunbirdj/2.u39" crc="3e3e661f" sha1="b5648546f390539b0f727a9a62d1b9516254ae21" map="01"/>
     </interleave>
   </rom>
 
-  <!-- Sprite ROM (Gate 3 — PS2001B) from MAME gunbird set -->
-  <!-- Loaded to SDRAM offset 0x200000; full 7MB occupies 0x200000–0x8FFFFF -->
-  <!-- BG tile ROM moved to 0x900000 so all 4 sprite files fit without overlap -->
+  <!-- Sprite ROM (PS2001B, 7 MB) — loaded at SDRAM 0x200000 (merged from parent) -->
   <rom index="1" zip="gunbird.zip" type="merged" md5="None">
     <part name="u14.bin" crc="7d7e8a00" sha1="9f35f5b54ae928e9bf2aa6ad4604f669857955ec" offset="0x000000" length="0x200000"/>
     <part name="u24.bin" crc="5e3ffc9d" sha1="c284eb9ef56c8e6261fe11f91a10c5c5a56c9803" offset="0x200000" length="0x200000"/>
@@ -52,20 +53,17 @@
     <part name="u25.bin" crc="ef652e0c" sha1="6dd994a15ced31d1bbd1a3b0e9d8d86eca33e217" offset="0x600000" length="0x100000"/>
   </rom>
 
-  <!-- BG tile ROM (Gate 4 — PS3103) from MAME gunbird set -->
-  <!-- Loaded to SDRAM offset 0x900000 -->
+  <!-- BG tile ROM (PS3103, 2 MB) — loaded at SDRAM 0x900000 (merged from parent) -->
   <rom index="2" zip="gunbird.zip" type="merged" md5="None">
     <part name="u33.bin" crc="54494e6b" sha1="f5d090d2d34d908b56b53a246def194929eba990" offset="0x000000" length="0x200000"/>
   </rom>
 
-  <!-- Z80 audio ROM (3.u71, 128KB) — MAME region "audiocpu" -->
-  <!-- Loaded to SDRAM 0xA80000 (Z80 ROM base in emu.sv) -->
+  <!-- Z80 audio ROM (3.u71, 128KB) — merged from gunbird parent -->
   <rom index="3" zip="gunbird.zip" type="merged" md5="None">
     <part name="3.u71" crc="2168e4ba" sha1="ca7ad6acb5f806ce2528e7b52c19e8cceecb8543" offset="0x000000" length="0x020000"/>
   </rom>
 
   <!-- DIP switch defaults -->
-  <!-- Byte 0: lives, difficulty; Byte 1: credits, misc -->
   <rom index="0xFE" type="ram" size="0x4">
     <part>00 ff ff ff</part>
   </rom>

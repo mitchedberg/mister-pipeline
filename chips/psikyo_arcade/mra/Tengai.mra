@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Tengai (World) — Psikyo SH201B, 1996
+  MC68EC020 @ 16 MHz, LZ8420M audiocpu @ 8 MHz, PIC16C57 MCU
+  PS2001B sprites, PS3103 tilemap (2 layers), YMF278B OPL4 audio
+
+  MAME set: tengai (src/mame/psikyo/psikyo.cpp)
+  Native resolution: 320×240 (vertical shooter, rotated 90° CW for display)
+
+  SDRAM layout (byte addresses):
+    0x000000  CPU program ROM (1 MB: 2×512KB interleaved)
+    0x200000  Sprite ROM (PS2001B, 6 MB) — u20+u22+u21 = fits in 7MB window
+    0x900000  BG tile ROM (PS3103, 4 MB)
+    0xA80000  Z80/LZ8420M audio ROM (128KB)
+
+  NOTE: YMF278B sample ROMs (u61 2MB + u62 2MB) have no ioctl_index in
+  current emu.sv — audio samples are not loaded (audio partially stubbed).
+
+  ROM CRCs from MAME tengai set (MAME 0.245 listxml).
+-->
+<misterromdescription>
+  <name>Tengai</name>
+  <setname>tengai</setname>
+  <rbf>psikyo_arcade</rbf>
+  <mameversion>0245</mameversion>
+  <year>1996</year>
+  <manufacturer>Psikyo</manufacturer>
+  <category>Shooter / Vertical</category>
+  <rotation>270</rotation>
+  <buttons names="Shot,Bomb,Btn3,Start,Coin" default="A,B,C,Start,Select"/>
+
+  <!--
+    index 0: CPU program ROM (1 MB, SDRAM base 0x000000)
+    index 1: Sprite ROM (6 MB, SDRAM base 0x200000)
+    index 2: BG tile ROM (4 MB, SDRAM base 0x900000)
+    index 3: LZ8420M audio ROM (128KB, SDRAM base 0xA80000)
+    0xFE: DIP switches
+  -->
+
+  <!-- CPU program ROM (2×512KB interleaved even/odd).
+       4-u41.bin = even bytes (D15:D8), MAME region "maincpu" offset=2 → hi byte
+       5-u40.bin = odd  bytes (D7:D0),  MAME region "maincpu" offset=0 → lo byte
+       Same hi/lo convention as s1945 (u41=hi verified). -->
+  <rom index="0" zip="tengai.zip" type="merged" md5="None">
+    <interleave output="16">
+      <part name="4-u41.bin" crc="0d53196c" sha1="454bb4695b13ce44ca5dac7c6d4142a8b9afa798" map="10"/>
+      <part name="5-u40.bin" crc="90088195" sha1="8ec48d581ecd14b3dad36edc65d5a273324cf3c1" map="01"/>
+    </interleave>
+  </rom>
+
+  <!-- Sprite ROM (PS2001B, 6 MB) — loaded at SDRAM 0x200000
+       MAME region "sprites": u20@0, u22@0x200000, u21@0x400000 (6MB fits in 7MB window) -->
+  <rom index="1" zip="tengai.zip" type="merged" md5="None">
+    <part name="u20.bin" crc="ed42ef73" sha1="74693fcc83a2654ddb18fd513d528033863d6116" offset="0x000000" length="0x200000"/>
+    <part name="u22.bin" crc="8d21caee" sha1="2a68af8b2be2158dcb152c434e91a75871478d41" offset="0x200000" length="0x200000"/>
+    <part name="u21.bin" crc="efe34eed" sha1="7891495b443a5acc7b2f17fe694584f6cb0afacc" offset="0x400000" length="0x200000"/>
+  </rom>
+
+  <!-- BG tile ROM (PS3103, 4 MB) — loaded at SDRAM 0x900000
+       MAME region "tiles" offset=0 (single 4MB ROM) -->
+  <rom index="2" zip="tengai.zip" type="merged" md5="None">
+    <part name="u34.bin" crc="2a2e2eeb" sha1="f1d99353c0affc5c908985e6f2a5724e5223cccc" offset="0x000000" length="0x400000"/>
+  </rom>
+
+  <!-- LZ8420M audio ROM (1-u63.bin, 128KB) — MAME region "audiocpu"
+       Loaded to SDRAM 0xA80000 -->
+  <rom index="3" zip="tengai.zip" type="merged" md5="None">
+    <part name="1-u63.bin" crc="2025e387" sha1="334b0eb3b416d46ccaadff3eee6f1abba63285fb" offset="0x000000" length="0x020000"/>
+  </rom>
+
+  <!-- DIP switch defaults -->
+  <rom index="0xFE" type="ram" size="0x4">
+    <part>00 ff ff ff</part>
+  </rom>
+</misterromdescription>

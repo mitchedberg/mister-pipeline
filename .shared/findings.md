@@ -1,3 +1,92 @@
+## 2026-03-25 — MRA Completion: Psikyo Arcade
+
+**Status:** COMPLETE
+**Executed by:** Worker (Claude Sonnet 4.6)
+
+### Psikyo Arcade MRA Set
+
+**emu.sv SDRAM layout confirmed (authoritative):**
+- index 0x00 → 0x000000 CPU ROM
+- index 0x01 → 0x200000 Sprite ROM (7MB window: 0x200000–0x8FFFFF)
+- index 0x02 → 0x900000 BG tile ROM
+- index 0x03 → 0xA80000 Z80 audio ROM
+- index 0xFE → DIP switches
+
+**Bugs fixed in existing MRAs:**
+
+1. `Gunbird.mra` — Two wrong CRCs for sprite ROMs:
+   - u15.bin: `3d4dd4c8` → `a827bfb5` (verified via MAME 0.245 listxml)
+   - u25.bin: `0bce5b11` → `ef652e0c` (verified via MAME 0.245 listxml)
+   - Added Z80 audio ROM (index 3): 3.u71 crc=`2168e4ba`
+
+2. `Samurai_Aces.mra` — Z80 ROM was incorrectly embedded in index 0 at offset 0x080000 (putting it in CPU ROM space). Fixed:
+   - Removed Z80 from index 0
+   - Added index 3 for Z80 ROM (3-u58.bin → SDRAM 0xA80000)
+   - Fixed SDRAM header comment: BG was listed as 0x600000 → corrected to 0x900000
+
+3. `Strikers_1945.mra` — Z80 ROM was inline in index 0 (same bug as samuraia). Fixed:
+   - Removed Z80 from index 0
+   - Added index 3 for Z80 ROM (3-u63.bin → SDRAM 0xA80000)
+   - Fixed SDRAM header comment: BG was listed as 0x600000 → corrected to 0x900000
+   - NOTE: s1945 has 8MB sprites but SDRAM window is 7MB. u23.bin (SDRAM 0x800000–0x9FFFFF)
+     has its upper 1MB overwritten by BG ROM load. This is a hardware constraint — cannot fit
+     all 8MB without expanding the sprite window in emu.sv/sdram_b.
+
+**New MRAs created:**
+
+| File | MAME Set | Year | Sprites | BG | Audio | Notes |
+|------|----------|------|---------|-----|-------|-------|
+| Gunbird_J.mra | gunbirdj | 1994 | 7MB | 2MB | YM2610 | Clone of gunbird |
+| Battle_K-Road.mra | btlkroad | 1994 | 6MB | 2MB | YM2610 | Fighting game, fits 7MB window |
+| Tengai.mra | tengai | 1996 | 6MB | 4MB | YMF278B | 1MB prog ROM; YMF sample ROMs not loaded (no ioctl index) |
+| Strikers_1945_J.mra | s1945j | 1995 | 8MB | 2MB | YMF278B | 8MB sprite overlap issue same as parent |
+| Strikers_1945_K.mra | s1945k | 1995 | 8MB | 2MB | YMF278B | 8MB sprite overlap issue same as parent |
+| Samurai_Aces_J.mra | sngkace | 1993 | 2MB | 2MB | YM2610 | Sengoku Ace Japan title |
+
+**NOT created — incompatible hardware:**
+- dragnblz, gunbird2, tgm2 → Psikyo SH403 (different board, different core required)
+- s1945ii, s1945iii, s1945p → Psikyo SH403 hardware (not in psikyo.cpp SH201B driver)
+- gunbirdk → Korea variant (different progrom sizes 512KB each, in gunbird.zip — could add later)
+- sngkacea → Additional sngkace variant (in samuraia.zip — could add later)
+- tengaij → Japan variant of tengai (in tengai.zip)
+
+**All CRCs verified** against actual ROMs in MAME 0.245 merged set on rpmini.
+
+---
+
+## 2026-03-25 — Synthesis Foreman: 6-Core Synthesis Run Fixes
+
+**Status:** IN PROGRESS
+**Executed by:** Synthesis Foreman (Claude Sonnet 4.6)
+
+### Errors Fixed This Session
+
+**toaplan_v2 (3 bugs):**
+1. `FITTER_EFFORT "AGGRESSIVE FIT"` illegal in Quartus 17.0 → changed to `"STANDARD FIT"` (toaplan_v2.qsf + standalone.qsf)
+2. `OPTIMIZATION_MODE "AGGRESSIVE AREA"` illegal in Quartus 17.0 → changed to `"BALANCED"` (same files)
+3. `sprite_entry_t` in `toaplan_v2.sv` was missing `bank_slot [2:0]` field — when Quartus parsed toaplan_v2.sv first, the `ifndef SPRITE_ENTRY_T_DEFINED` guard fired and gp9001.sv's struct was not registered, causing `g4_e.bank_slot not declared` error. Fixed by adding `bank_slot` to toaplan_v2.sv's struct definition.
+
+**kaneko_arcade (2 bugs — fixed by parallel agent):**
+1. `cpu_fc` port missing from fx68k_adapter — kaneko_arcade uses FC[2:0] for level-specific IACK decode; added output port `cpu_fc = {FC2,FC1,FC0}` to fx68k_adapter.sv
+2. `OPTIMIZATION_MODE "AGGRESSIVE AREA"` → `"BALANCED"` in kaneko_arcade.qsf
+
+### ALM Results (Confirmed Passing)
+
+| Core | ALMs | % Used | Status |
+|------|------|--------|--------|
+| nmk_arcade | 19,328 / 41,910 | 46% | PASS |
+| taito_x | 12,381 / 41,910 | 30% | PASS |
+| taito_b | 11,560 / 41,910 | 28% | PASS |
+| toaplan_v2 | pending | — | run in progress |
+| kaneko_arcade | pending | — | run in progress |
+| psikyo_arcade | pending | — | run in progress |
+
+### Pattern Added to Failure Catalog
+- `AGGRESSIVE AREA` / `AGGRESSIVE FIT` are illegal values in Quartus 17.0 — use `BALANCED` / `STANDARD FIT`
+- `ifndef` struct guards are order-dependent — all definitions must be identical across files or use a shared package
+
+---
+
 ## 2026-03-25 — MRA Completion: Kaneko Arcade + Taito X
 
 **Status:** COMPLETE

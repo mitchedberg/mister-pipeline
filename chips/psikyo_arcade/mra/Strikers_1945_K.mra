@@ -1,27 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Strikers 1945 (World) — Psikyo SH201B, 1995
+  Strikers 1945 (Korea) — Psikyo SH201B, 1995
   MC68EC020 @ 16 MHz, Z80 audiocpu @ 8 MHz, PIC16C57 MCU
   PS2001B sprites, PS3103 tilemap (2 layers), YMF278B OPL4 audio
 
-  MAME set: s1945 (src/mame/psikyo/psikyo.cpp)
+  MAME set: s1945k (clone of s1945, src/mame/psikyo/psikyo.cpp)
   Native resolution: 320×240 (vertical shooter, rotated 90° CW for display)
 
   SDRAM layout (byte addresses):
-    0x000000  CPU program ROM (512KB: 2×256KB interleaved)
-    0x200000  Sprite ROM (PS2001B, 8 MB) — NOTE: SDRAM window is 7MB (0x200000–0x8FFFFF).
-              u23.bin (sprite offset 0x600000 = SDRAM 0x800000–0x9FFFFF) is 2MB;
-              its upper 1MB (0x900000–0x9FFFFF) is overwritten when BG ROM loads.
-              Last 1MB of sprite data (1024 tile entries) is unavailable.
-    0x900000  BG tile ROM (PS3103, 2 MB)
-    0xA80000  Z80 audio ROM (128KB)
+    0x000000  CPU program ROM (512KB: 2×256KB interleaved, Korea-specific)
+    0x200000  Sprite ROM (PS2001B, 8 MB) — merged from s1945 parent
+    0x900000  BG tile ROM (PS3103, 2 MB) — merged from s1945 parent
+    0xA80000  Z80 audio ROM (128KB) — merged from s1945 parent
 
-  ROM CRCs from MAME s1945 set (MAME 0.245 listxml).
-  Interleave order verified 2026-03-23: 3s.u41=hi (D15:D8), 2s.u40=lo (D7:D0).
+  NOTE: Sprite ROM is 8MB but SDRAM window is 7MB (0x200000–0x8FFFFF).
+  Last 1MB of u23.bin (SDRAM 0x900000–0x9FFFFF) is overwritten by BG ROM.
+
+  ROM CRCs from MAME s1945k set (MAME 0.245 listxml).
 -->
 <misterromdescription>
-  <name>Strikers 1945</name>
-  <setname>s1945</setname>
+  <name>Strikers 1945 (Korea)</name>
+  <setname>s1945k</setname>
   <rbf>psikyo_arcade</rbf>
   <mameversion>0245</mameversion>
   <year>1995</year>
@@ -38,20 +37,19 @@
     0xFE: DIP switches
   -->
 
-  <!-- CPU program ROM (2×256KB interleaved even/odd).
-       3s.u41 = even bytes (D15:D8), MAME region "maincpu" offset=2 → hi byte
-       2s.u40 = odd  bytes (D7:D0),  MAME region "maincpu" offset=0 → lo byte
-       Verified: 3s.u41=hi gives SSP=0x00FF80FF, PC=0x000400 (correct boot). -->
+  <!-- CPU program ROM (Korea version — 2×256KB interleaved even/odd).
+       9.u41 = even bytes (D15:D8), MAME region "maincpu" offset=2 → hi byte
+       10.u40 = odd  bytes (D7:D0), MAME region "maincpu" offset=0 → lo byte
+       Merged from s1945 parent ZIP. -->
   <rom index="0" zip="s1945.zip" type="merged" md5="None">
     <interleave output="16">
-      <part name="3s.u41" crc="f87e871a" sha1="567167c7fcfb622f78e211d74b04060c3d29d6b7" map="10"/>
-      <part name="2s.u40" crc="9b10062a" sha1="cf963bba157422b659d8d64b4493eb7d69cd07b7" map="01"/>
+      <part name="s1945k/9.u41" crc="29cc6d7d" sha1="aeee9e88922c25c75885483d115e064c6b71540b" map="10"/>
+      <part name="s1945k/10.u40" crc="5a32af36" sha1="2eada37fd043c097a11bcf4e3e0bebb473bbc0df" map="01"/>
     </interleave>
   </rom>
 
-  <!-- Sprite ROM (PS2001B, 8 MB) — loaded at SDRAM 0x200000
-       MAME region "sprites": u20@0, u22@0x200000, u21@0x400000, u23@0x600000
-       WARNING: sprite SDRAM window ends at 0x8FFFFF; u23 upper 1MB overlaps BG. -->
+  <!-- Sprite ROM (PS2001B, 8 MB) — loaded at SDRAM 0x200000 (merged from parent)
+       WARNING: last 1MB of u23.bin overlaps BG ROM at 0x900000. -->
   <rom index="1" zip="s1945.zip" type="merged" md5="None">
     <part name="u20.bin" crc="28a27fee" sha1="913f3bc4d0c6fb6b776a020c8099bf96f16fd06f" offset="0x000000" length="0x200000"/>
     <part name="u22.bin" crc="ca152a32" sha1="63efee83cb5982c77ca473288b3d1a96b89e6388" offset="0x200000" length="0x200000"/>
@@ -59,14 +57,12 @@
     <part name="u23.bin" crc="48710332" sha1="db38b732a09b31ce55a96ec62987baae9b7a00c1" offset="0x600000" length="0x200000"/>
   </rom>
 
-  <!-- BG tile ROM (PS3103, 2 MB) — loaded at SDRAM 0x900000
-       MAME region "tiles" offset=0 -->
+  <!-- BG tile ROM (PS3103, 2 MB) — loaded at SDRAM 0x900000 (merged from parent) -->
   <rom index="2" zip="s1945.zip" type="merged" md5="None">
     <part name="u34.bin" crc="aaf83e23" sha1="1c75d09ff42c0c215f8c66c699ca75688c95a05e" offset="0x000000" length="0x200000"/>
   </rom>
 
-  <!-- Z80 audio ROM (3-u63.bin, 128KB) — MAME region "audiocpu"
-       Loaded to SDRAM 0xA80000 (Z80 ROM base in emu.sv) -->
+  <!-- Z80 audio ROM (3-u63.bin, 128KB) — merged from parent -->
   <rom index="3" zip="s1945.zip" type="merged" md5="None">
     <part name="3-u63.bin" crc="42d40ae1" sha1="530a5a3f78ac489b84a631ea6ce21010a4f4d31b" offset="0x000000" length="0x020000"/>
   </rom>

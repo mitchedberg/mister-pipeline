@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Samurai Aces (World) — Psikyo SH201B, 1993
+  Sengoku Ace (Japan) / Samurai Aces (Japan) — Psikyo SH201B, 1993
   MC68EC020 @ 16 MHz, Z80 audiocpu @ 4 MHz
   PS2001B sprites, PS3103 tilemap (2 layers), YM2610 audio
 
-  MAME set: samuraia (src/mame/psikyo/psikyo.cpp)
+  MAME set: sngkace (clone of samuraia, src/mame/psikyo/psikyo.cpp)
   Native resolution: 320×240 (vertical shooter, rotated 90° CW for display)
 
   SDRAM layout (byte addresses):
-    0x000000  CPU program ROM (512KB: 2×256KB interleaved)
-    0x200000  Sprite ROM (PS2001B, 2 MB)
-    0x900000  BG tile ROM (PS3103, 2 MB)
-    0xA80000  Z80 audio ROM (128KB)
+    0x000000  CPU program ROM (512KB: 2×256KB interleaved, Japan-specific)
+    0x200000  Sprite ROM (PS2001B, 2 MB) — merged from samuraia parent
+    0x900000  BG tile ROM (PS3103, 2 MB) — merged from samuraia parent
+    0xA80000  Z80 audio ROM (128KB) — merged from samuraia parent
 
-  ROM CRCs from MAME samuraia set (MAME 0.245 listxml).
+  ROM CRCs from MAME sngkace set (MAME 0.245 listxml).
 -->
 <misterromdescription>
-  <name>Samurai Aces</name>
-  <setname>samuraia</setname>
+  <name>Sengoku Ace (Japan)</name>
+  <setname>sngkace</setname>
   <rbf>psikyo_arcade</rbf>
   <mameversion>0245</mameversion>
   <year>1993</year>
@@ -34,31 +34,29 @@
     0xFE: DIP switches
   -->
 
-  <!-- CPU program ROM (2×256KB interleaved even/odd).
-       4-u127.bin = even bytes (D15:D8), MAME region "maincpu" offset=0
-       5-u126.bin = odd  bytes (D7:D0),  MAME region "maincpu" offset=2 -->
+  <!-- CPU program ROM (Japan version — 2×256KB interleaved even/odd).
+       1-u127.bin = even bytes (D15:D8), MAME region "maincpu" offset=0
+       2-u126.bin = odd  bytes (D7:D0),  MAME region "maincpu" offset=2
+       Merged from samuraia parent ZIP. -->
   <rom index="0" zip="samuraia.zip" type="merged" md5="None">
     <interleave output="16">
-      <part name="4-u127.bin" crc="8c9911ca" sha1="821ba648b9a1d495c600cbf4606f2dbddc6f9e6f" map="10"/>
-      <part name="5-u126.bin" crc="d20c3ef0" sha1="264e5a7e45e130a9e7152468733337668dc5b65f" map="01"/>
+      <part name="sngkace/1-u127.bin" crc="6c45b2f8" sha1="08473297e174f3a6d67043f3b16f4e6b9c68b826" map="10"/>
+      <part name="sngkace/2-u126.bin" crc="845a6760" sha1="3b8fed294e28d9d8ef5cb5ec88b9ade396146a48" map="01"/>
     </interleave>
   </rom>
 
-  <!-- Sprite ROM (PS2001B, 2 MB) — loaded at SDRAM 0x200000
-       MAME region "sprites" offset=0 -->
+  <!-- Sprite ROM (PS2001B, 2 MB) — loaded at SDRAM 0x200000 (merged from parent) -->
   <rom index="1" zip="samuraia.zip" type="merged" md5="None">
     <part name="u14.bin" crc="00a546cb" sha1="30a8679b49928d5fcbe58b5eecc2ebd08173adf8" offset="0x000000" length="0x200000"/>
   </rom>
 
-  <!-- BG tile ROM (PS3103, 2 MB) — loaded at SDRAM 0x900000
-       MAME region "tiles" offsets 0/0x100000 -->
+  <!-- BG tile ROM (PS3103, 2 MB) — loaded at SDRAM 0x900000 (merged from parent) -->
   <rom index="2" zip="samuraia.zip" type="merged" md5="None">
     <part name="u34.bin" crc="e6a75bd8" sha1="1aa84ea54584b6c8b2846194b48bf6d2afa67fee" offset="0x000000" length="0x100000"/>
     <part name="u35.bin" crc="c4ca0164" sha1="c75422de2e0127cdc23d8c223b674a5bd85b00fb" offset="0x100000" length="0x100000"/>
   </rom>
 
-  <!-- Z80 audio ROM (3-u58.bin, 128KB) — MAME region "audiocpu"
-       Loaded to SDRAM 0xA80000 (Z80 ROM base in emu.sv) -->
+  <!-- Z80 audio ROM (3-u58.bin, 128KB) — merged from parent -->
   <rom index="3" zip="samuraia.zip" type="merged" md5="None">
     <part name="3-u58.bin" crc="310f5c76" sha1="dbfd1c5a7a514bccd89fc4f7191744cf76bb745d" offset="0x000000" length="0x020000"/>
   </rom>
