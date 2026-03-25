@@ -38,9 +38,12 @@
 //   ROM_ADPCM  — path to ADPCM ROM binary        (SDRAM 0xA00000)
 //   ROM_Z80    — path to Z80 sound ROM binary    (SDRAM 0xA80000, 32 KB byte-wide)
 //   DUMP_VCD   — set to "1" to enable VCD trace (slow)
+//   RAM_DUMP   — path to output binary RAM dump file (4B frame# + 65536B WRAM/frame)
 //
 // Output:
 //   frame_NNNN.ppm — one PPM file per vertical frame
+//   RAM dump: per-frame, 4B LE frame number + 65536B work_ram lower half (0xFE0000-0xFEFFFF)
+//             Matches golden format from MAME Lua capture scripts.
 // =============================================================================
 
 // Musashi 68EC020 CPU emulator (C headers, standalone)
@@ -57,6 +60,7 @@ extern "C" {
 #endif
 
 #include "Vtb_top.h"
+#include "Vtb_top___024root.h"    // access to internal arrays (work_ram)
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
@@ -95,6 +99,12 @@ static uint8_t g_hsync_prev = 1;
 // IACK handshake: set by psikyo_int_ack(), consumed in the main loop to pulse
 // cpu_inta_n=0 into the DUT so the RTL IPL latch clears on IACK.
 static bool g_iack_pending = false;
+
+// RAM dump state (set via RAM_DUMP env var)
+// Format: per-frame, 4B LE frame number + 65536B work_ram lower half (0xFE0000-0xFEFFFF)
+// Matches golden dump format from MAME Lua capture scripts.
+static FILE*  g_ram_dump_file    = nullptr;
+static bool   g_ram_dump_enabled = false;
 
 // SDRAM channels
 static ToggleSdramChannel* g_prog_ch  = nullptr;
@@ -150,7 +160,7 @@ static int          g_nframes = 30;  // set in main() from N_FRAMES env var
 //  3. VCD dump (if enabled)
 //  4. Updates SDRAM models
 //  5. Captures pixels (if any)
-//  6. Handles vsync → frame save
+//  6. Handles vsync → frame save + RAM dump
 // =============================================================================
 
 static void rtl_tick_rising()
@@ -230,10 +240,35 @@ static void rtl_tick_rising()
     if (g_vsync_prev == 1 && vsync_now == 0) {
         char fname[80];
         snprintf(fname, sizeof(fname), "frame_%04d.ppm", g_frame_num);
-        int bus_cyc = (int)(g_iter / 2);  // approximate bus cycle count
         if (g_fb && g_fb->write_ppm(fname))
             fprintf(stderr, "Frame %4d written: %s  (iter=%" PRIu64 ")\n",
                     g_frame_num, fname, g_iter);
+
+        // ── RAM dump: write 4B LE frame# + 65536B work_ram lower half ──────────
+        // work_ram[0..131071] = 16-bit words; lower 64KB = indices 0x10000..0x17FFF
+        // → matches MAME golden: 0xFE0000-0xFEFFFF
+        // Address decode: byte 0xFE0000 → word 0x7F0000 → cpu_addr[17:1] = 0x10000
+        //   (lower 17 bits of word address: 0x7F0000 & 0x1FFFF = 0x10000 = 65536)
+        if (g_ram_dump_enabled && g_ram_dump_file) {
+            // 4-byte LE frame number header
+            uint8_t hdr[4];
+            uint32_t fn = (uint32_t)g_frame_num;
+            hdr[0] = fn & 0xFF; hdr[1] = (fn >> 8) & 0xFF;
+            hdr[2] = (fn >> 16) & 0xFF; hdr[3] = (fn >> 24) & 0xFF;
+            fwrite(hdr, 1, 4, g_ram_dump_file);
+            // Lower 32768 words of work_ram = 65536 bytes (0xFE0000-0xFEFFFF)
+            // Verilator stores 16-bit words; write big-endian to match MAME byte dump.
+            static constexpr int WRAM_FE0000_IDX = 0x10000;  // 65536
+            uint8_t buf[65536];
+            auto& wram = g_top->rootp->tb_top__DOT__u_psikyo__DOT__work_ram;
+            for (int i = 0; i < 32768; i++) {
+                uint16_t w = (uint16_t)wram[WRAM_FE0000_IDX + i];
+                buf[i * 2 + 0] = (uint8_t)(w >> 8);   // high byte
+                buf[i * 2 + 1] = (uint8_t)(w & 0xFF); // low byte
+            }
+            fwrite(buf, 1, 65536, g_ram_dump_file);
+            fflush(g_ram_dump_file);
+        }
 
         ++g_frame_num;
         if (g_frame_num >= g_nframes) g_done = true;
@@ -481,17 +516,29 @@ int main(int argc, char** argv)
     Verilated::commandArgs(argc, argv);
 
     // ── Configuration from environment ──────────────────────────────────────
-    const char* env_frames = getenv("N_FRAMES");
-    const char* env_prog   = getenv("ROM_PROG");
-    const char* env_spr    = getenv("ROM_SPR");
-    const char* env_bg     = getenv("ROM_BG");
-    const char* env_adpcm  = getenv("ROM_ADPCM");
-    const char* env_z80    = getenv("ROM_Z80");
-    const char* env_vcd    = getenv("DUMP_VCD");
+    const char* env_frames   = getenv("N_FRAMES");
+    const char* env_prog     = getenv("ROM_PROG");
+    const char* env_spr      = getenv("ROM_SPR");
+    const char* env_bg       = getenv("ROM_BG");
+    const char* env_adpcm    = getenv("ROM_ADPCM");
+    const char* env_z80      = getenv("ROM_Z80");
+    const char* env_vcd      = getenv("DUMP_VCD");
+    const char* env_ram_dump = getenv("RAM_DUMP");
 
     int n_frames = env_frames ? atoi(env_frames) : 30;
     if (n_frames < 1) n_frames = 1;
     g_nframes = n_frames;
+
+    // ── Open RAM dump file if requested ─────────────────────────────────────
+    if (env_ram_dump && env_ram_dump[0] != '\0') {
+        g_ram_dump_file = fopen(env_ram_dump, "wb");
+        if (!g_ram_dump_file) {
+            fprintf(stderr, "ERROR: cannot open RAM dump file: %s\n", env_ram_dump);
+        } else {
+            g_ram_dump_enabled = true;
+            fprintf(stderr, "RAM dump enabled: %s\n", env_ram_dump);
+        }
+    }
 
     fprintf(stderr, "Psikyo Arcade simulation (Musashi 68EC020): %d frames\n", n_frames);
 
@@ -503,6 +550,39 @@ int main(int argc, char** argv)
     if (env_adpcm) sdram.load(env_adpcm, 0xA00000);
     if (env_z80)   sdram.load_bytes(env_z80, 0xA80000);
     g_sdram = &sdram;
+
+    // ── Psikyo F-line trap patch ──────────────────────────────────────────────
+    // Psikyo games use 0xFFFE as a custom system call / sync instruction.
+    // In MAME this is handled by a custom F-line exception handler, but the ROM's
+    // built-in F-line handler at 0x000516 is an infinite loop:
+    //   007C 0700 60FE = ORI #0x0700, SR; BRA.S -2
+    // There are 2000+ occurrences of 0xFFFE as 32-bit address extension words in the ROM,
+    // but the actual F-line trap sites (where 0xFFFE appears at instruction boundaries)
+    // cause exceptions when hit by Musashi.
+    //
+    // 68020 exception frame layout when entering handler (m68ki_stack_frame_0000):
+    //   push_16(vector<<2)  → [SP+6..7] = format/vector word
+    //   push_32(PPC)        → [SP+2..5] = saved PC (address of 0xFFFE instruction)
+    //   push_16(SR)         → [SP+0..1] = saved SR
+    //
+    // Fix: advance saved PC by 4 bytes (F-line opcode word + 1 argument word), then RTE.
+    //   ADDQ.L #4, 2(SP)  = 59AF 0002   (4 bytes)
+    //   RTE               = 4E73         (2 bytes)
+    //
+    // This replaces the first 6 bytes of the handler (007C 0700 60FE) at ROM 0x000516.
+    {
+        uint32_t handler_wi = 0x000516 / 2;  // = 0x28B
+        uint16_t expected0 = 0x007C;  // ORI.W (to SR) — expected first word
+        if (sdram.mem[handler_wi] == expected0) {
+            sdram.mem[handler_wi + 0] = 0x59AF;  // ADDQ.L #4, (d16,A7)
+            sdram.mem[handler_wi + 1] = 0x0002;  // displacement = 2 (SP+2 = saved PC)
+            sdram.mem[handler_wi + 2] = 0x4E73;  // RTE
+            fprintf(stderr, "F-line handler patched at 0x000516: ADDQ.L #4,2(SP); RTE\n");
+        } else {
+            fprintf(stderr, "WARNING: F-line handler at 0x000516 = 0x%04X, expected 0x%04X — skipping patch\n",
+                    sdram.mem[handler_wi], expected0);
+        }
+    }
 
     // ── SDRAM channels ───────────────────────────────────────────────────────
     ToggleSdramChannel prog_ch(sdram);
@@ -599,8 +679,7 @@ int main(int argc, char** argv)
     // CPU frequency: 16 MHz → 1 instruction per ~32 ns → at 32 MHz sys clock
     // = 2 RTL clocks per CPU state clock.
     // Typical 68020 instruction: 2-10 cycles at 16 MHz = 4-20 RTL clocks.
-    // We execute 1 CPU instruction per loop iteration, then run 2 "idle" RTL
-    // ticks to advance video timing between instructions.
+    // We execute 1 CPU instruction per loop iteration, then run idle RTL ticks.
     //
     // When Musashi makes memory bus accesses (bus_read16/bus_write16), those
     // consume RTL ticks internally via rtl_tick_rising(). The bus cycle adds
@@ -634,9 +713,16 @@ int main(int argc, char** argv)
         }
 
         // ── Execute one CPU instruction ─────────────────────────────────────
-        // m68k_execute(1) runs exactly 1 instruction and returns cycles used
+        // m68k_execute(1) runs exactly 1 instruction and returns cycles used.
+        // We snapshot g_iter before/after to measure how many RTL rising edges
+        // the bus accesses consumed (g_iter increments by 2 per rtl_tick_rising()
+        // call: +1 on rising edge, +1 on falling edge).
+        uint64_t iter_before = g_iter;
         int cpu_cycles = m68k_execute(1);
         ++cpu_insns;
+        uint64_t iter_after = g_iter;
+        // Convert half-cycle delta to rising-edge count (each call = 2 half-cycles)
+        int bus_rising = (int)((iter_after - iter_before) / 2);
 
         // ── IACK pulse: clear RTL IPL latch on interrupt acknowledge ─────────
         // psikyo_int_ack() sets g_iack_pending when Musashi acknowledges an IRQ.
@@ -652,20 +738,22 @@ int main(int argc, char** argv)
         }
 
         // ── Run idle RTL ticks to advance video/audio timing ─────────────────
-        // Each CPU cycle = 2 RTL clocks at 32 MHz (CPU runs at 16 MHz)
-        // cpu_cycles from Musashi is in 16 MHz cycles.
-        // bus_read16/bus_write16 already ran RTL ticks for memory accesses.
-        // Here we run any remaining ticks for the non-memory part of the cycle.
-        // We run at least 1 RTL tick per instruction to ensure video advances.
-        int idle_ticks = (cpu_cycles * 2) / 4;  // scaled down to avoid over-running
+        // Each CPU cycle = 2 RTL clocks at 32 MHz (CPU runs at 16 MHz).
+        // Target: cpu_cycles * 2 RTL rising edges total per instruction.
+        // bus_rising already consumed that many rising edges during memory accesses.
+        // Run remaining idle ticks to hit the target timing.
+        // Always run at least 1 idle tick to ensure video timing advances.
+        int target_rising = cpu_cycles * 2;
+        int idle_ticks = target_rising - bus_rising;
         if (idle_ticks < 1) idle_ticks = 1;
         rtl_ticks(idle_ticks);
 
         // ── Progress report ──────────────────────────────────────────────────
         if ((cpu_insns % 1000000) == 0) {
-            fprintf(stderr, "  insn=%" PRIu64 " iter=%" PRIu64 " frame=%d  PC=%06X\n",
+            fprintf(stderr, "  insn=%" PRIu64 " iter=%" PRIu64 " frame=%d  PC=%06X  SR=%04X\n",
                     cpu_insns, g_iter, g_frame_num,
-                    m68k_get_reg(nullptr, M68K_REG_PC));
+                    m68k_get_reg(nullptr, M68K_REG_PC),
+                    m68k_get_reg(nullptr, M68K_REG_SR));
         }
     }
 
@@ -673,6 +761,11 @@ int main(int argc, char** argv)
     if (g_vcd) {
         g_vcd->close();
         delete g_vcd;
+    }
+    if (g_ram_dump_file) {
+        fclose(g_ram_dump_file);
+        g_ram_dump_file = nullptr;
+        fprintf(stderr, "RAM dump closed.\n");
     }
     g_top->final();
     delete g_top;
