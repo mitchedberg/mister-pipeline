@@ -424,30 +424,46 @@ logic [15:0] pal_ram_dout;
 logic        pal_ram_wel_n;
 logic        pal_ram_weh_n;
 
-// TC0260DAR drives RA[13:0] for both CPU and pixel access (muxed internally)
 `ifdef QUARTUS
-// Two 8-bit MLABs (one per byte lane).  Byte-slice writes to a 16-bit MLAB
-// trigger Warning 10999 and fall back to flip-flops.  With per-lane arrays
-// each array has a full-byte write-enable — the pattern Quartus 17.0 infers
-// cleanly as MLAB.  Combinational read reconstructed from {hi, lo}.
-(* ramstyle = "MLAB" *) logic [7:0] pal_ram_hi [0:8191]; // [15:8]
-(* ramstyle = "MLAB" *) logic [7:0] pal_ram_lo [0:8191]; // [ 7:0]
+// TC0260DAR time-multiplexes CPU and pixel access onto a single palette address
+// bus, so one explicit SINGLE_PORT M10K is sufficient here. Inferred MLAB byte
+// lanes do not support the required read-during-write behavior in Quartus 17.0
+// and get flattened into flip-flops, which explodes the fit by ~131K registers.
+altsyncram #(
+    .operation_mode              ("SINGLE_PORT"),
+    .width_a                     (16),
+    .widthad_a                   (13),
+    .numwords_a                  (8192),
+    .outdata_reg_a               ("UNREGISTERED"),
+    .clock_enable_input_a        ("BYPASS"),
+    .clock_enable_output_a       ("BYPASS"),
+    .intended_device_family      ("Cyclone V"),
+    .lpm_type                    ("altsyncram"),
+    .ram_block_type              ("M10K"),
+    .width_byteena_a             (2),
+    .power_up_uninitialized      ("FALSE"),
+    .read_during_write_mode_port_a ("NEW_DATA_NO_NBE_READ")
+) pal_ram_inst (
+    .clock0         ( clk_sys                              ),
+    .address_a      ( pal_ram_addr[12:0]                  ),
+    .data_a         ( pal_ram_din                         ),
+    .wren_a         ( !pal_ram_wel_n || !pal_ram_weh_n    ),
+    .byteena_a      ( {~pal_ram_weh_n, ~pal_ram_wel_n}    ),
+    .q_a            ( pal_ram_dout                        ),
+    .aclr0          ( 1'b0                                ),
+    .addressstall_a ( 1'b0                                ),
+    .clocken0       ( 1'b1                                ),
+    .clocken1       ( 1'b1                                ),
+    .clocken2       ( 1'b1                                ),
+    .clocken3       ( 1'b1                                ),
+    .eccstatus      (                                     ),
+    .rden_a         ( 1'b1                                )
+);
 `else
 logic [15:0] pal_ram [0:8191];
-`endif
-
-always_ff @(posedge clk_sys) begin
-`ifdef QUARTUS
-    if (!pal_ram_weh_n) pal_ram_hi[pal_ram_addr[12:0]] <= pal_ram_din[15:8];
-    if (!pal_ram_wel_n) pal_ram_lo[pal_ram_addr[12:0]] <= pal_ram_din[ 7:0];
-`else
     if (!pal_ram_wel_n) pal_ram[pal_ram_addr[12:0]][7:0]  <= pal_ram_din[7:0];
     if (!pal_ram_weh_n) pal_ram[pal_ram_addr[12:0]][15:8] <= pal_ram_din[15:8];
-`endif
 end
-`ifdef QUARTUS
-assign pal_ram_dout = {pal_ram_hi[pal_ram_addr[12:0]], pal_ram_lo[pal_ram_addr[12:0]]};
-`else
 assign pal_ram_dout = pal_ram[pal_ram_addr[12:0]];
 `endif
 
