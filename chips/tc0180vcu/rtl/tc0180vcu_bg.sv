@@ -139,7 +139,7 @@ always_comb begin
     lpb_c        = 9'(256) - {1'b0, lpb_ctrl};       // 9-bit; 256-0=256, 256-255=1
     fetch_vpos_c = {1'b0, vpos} + 9'd1;               // next scanline, 9-bit
     block_c      = fetch_vpos_c / lpb_c;              // division; result ≤ 255
-    scroll_off_c = block_c * (lpb_c << 1);            // block * 2 * lpb, fits in 10 bits
+    scroll_off_c = block_c * {lpb_c, 1'b0};           // block * 2 * lpb, keep width explicit
 end
 
 // =============================================================================
