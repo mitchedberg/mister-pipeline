@@ -51,7 +51,7 @@ All games share the same chip set; per-game ROM layout differences are handled b
 
 - **Local gate-5:** 99.6666% WRAM match for frames 25–499 (Nastar, 2026-03-25 revalidation run)
 - **Early boot variance:** frames 1–24 still diverge from MAME golden; gameplay-range match remains in prior gate-5 class
-- **CI run:** full Taito B Quartus rebuild pending for the shared `tc0180vcu` registered-port Quartus fix
+- **CI run:** full Taito B Quartus rebuild pending for the shared `tc0180vcu` split-RAM readback fix
 - **Multi-game support:** `game_id` input wire selects address map at runtime. Nastar=0 (default), Crime City=1. Set via MRA ioctl_index=0xFF header byte. Crime City pending full validation.
 - **Known issues:** hardware validation still pending on the current shared-TC0180VCU branch
 

@@ -338,15 +338,16 @@ altsyncram #(
     .outdata_reg_b          ("UNREGISTERED"),
     .numwords_a             (4096),
     .numwords_b             (4096),
+    .width_byteena_a        (2),
     .read_during_write_mode_mixed_ports ("DONT_CARE")
-) sprite_ram_inst (
+) sprite_eng_inst (
     .clock0    (clk),
     .clock1    (clk),
     .address_a (cpu_addr[11:0]),
     .data_a    (cpu_din),
     .wren_a    (sel_sprite && cpu_we),
     .byteena_a (cpu_be),
-    .q_a       (sprite_dout),
+    .q_a       (),
     .address_b (spr_eng_rd_addr),
     .q_b       (spr_eng_q),
     .wren_b    (1'b0),
@@ -363,6 +364,42 @@ altsyncram #(
     .eccstatus (),
     .rden_a    (1'b1),
     .rden_b    (1'b1)
+);
+
+altsyncram #(
+    .operation_mode              ("DUAL_PORT"),
+    .width_a                     (16), .widthad_a (12), .numwords_a (4096),
+    .width_b                     (16), .widthad_b (12), .numwords_b (4096),
+    .outdata_reg_b               ("CLOCK1"),
+    .address_reg_b               ("CLOCK1"),
+    .clock_enable_input_a        ("BYPASS"),
+    .clock_enable_input_b        ("BYPASS"),
+    .clock_enable_output_b       ("BYPASS"),
+    .intended_device_family      ("Cyclone V"),
+    .lpm_type                    ("altsyncram"),
+    .ram_block_type              ("M10K"),
+    .width_byteena_a             (2),
+    .power_up_uninitialized      ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) sprite_cpu_inst (
+    .clock0         ( clk                    ),
+    .clock1         ( clk                    ),
+    .address_a      ( cpu_addr[11:0]         ),
+    .data_a         ( cpu_din                ),
+    .wren_a         ( sel_sprite && cpu_we   ),
+    .byteena_a      ( cpu_be                 ),
+    .address_b      ( cpu_addr[11:0]         ),
+    .q_b            ( sprite_dout            ),
+    .wren_b         ( 1'b0                   ),
+    .data_b         ( 16'd0                  ),
+    .q_a            (                        ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 1'b1                   ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                   )
 );
 
 `endif
@@ -454,15 +491,16 @@ altsyncram #(
     .rdcontrol_reg_b        ("CLOCK1"),
     .numwords_a             (1024),
     .numwords_b             (1024),
+    .width_byteena_a        (2),
     .read_during_write_mode_mixed_ports ("DONT_CARE")
-) scroll_ram_inst (
+) scroll_pxl_inst (
     .clock0    (clk),
     .clock1    (clk),
     .address_a (cpu_addr[9:0]),
     .data_a    (cpu_din),
     .wren_a    (sel_scroll && cpu_we),
     .byteena_a (cpu_be),
-    .q_a       (scroll_dout),
+    .q_a       (),
     .address_b (scroll_addr_b),
     .q_b       (scroll_q_b),
     .wren_b    (1'b0),
@@ -479,6 +517,42 @@ altsyncram #(
     .eccstatus (),
     .rden_a    (1'b1),
     .rden_b    (1'b1)
+);
+
+altsyncram #(
+    .operation_mode              ("DUAL_PORT"),
+    .width_a                     (16), .widthad_a (10), .numwords_a (1024),
+    .width_b                     (16), .widthad_b (10), .numwords_b (1024),
+    .outdata_reg_b               ("CLOCK1"),
+    .address_reg_b               ("CLOCK1"),
+    .clock_enable_input_a        ("BYPASS"),
+    .clock_enable_input_b        ("BYPASS"),
+    .clock_enable_output_b       ("BYPASS"),
+    .intended_device_family      ("Cyclone V"),
+    .lpm_type                    ("altsyncram"),
+    .ram_block_type              ("M10K"),
+    .width_byteena_a             (2),
+    .power_up_uninitialized      ("FALSE"),
+    .read_during_write_mode_port_b ("NEW_DATA_NO_NBE_READ")
+) scroll_cpu_inst (
+    .clock0         ( clk                    ),
+    .clock1         ( clk                    ),
+    .address_a      ( cpu_addr[9:0]          ),
+    .data_a         ( cpu_din                ),
+    .wren_a         ( sel_scroll && cpu_we   ),
+    .byteena_a      ( cpu_be                 ),
+    .address_b      ( cpu_addr[9:0]          ),
+    .q_b            ( scroll_dout            ),
+    .wren_b         ( 1'b0                   ),
+    .data_b         ( 16'd0                  ),
+    .q_a            (                        ),
+    .aclr0          ( 1'b0 ), .aclr1          ( 1'b0  ),
+    .addressstall_a ( 1'b0 ), .addressstall_b ( 1'b0  ),
+    .byteena_b      ( 1'b1                   ),
+    .clocken0       ( 1'b1 ), .clocken1       ( 1'b1  ),
+    .clocken2       ( 1'b1 ), .clocken3       ( 1'b1  ),
+    .eccstatus      (      ), .rden_a         (       ),
+    .rden_b         ( 1'b1                   )
 );
 
 `endif
