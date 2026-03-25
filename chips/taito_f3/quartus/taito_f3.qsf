@@ -153,3 +153,4 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_
 # unified pipeline
 # pll fix
 # pll freq fix
+# pll
