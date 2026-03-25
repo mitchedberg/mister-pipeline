@@ -150,16 +150,25 @@ end
 // TX video read port: async combinational read (second port, no clock)
 logic [14:0] tx_vram_rd_addr;
 logic [15:0] tx_vram_q;
+logic        tx_vram_rd;
+logic        tx_vram_ok;
 assign tx_vram_q = vram[tx_vram_rd_addr];
+assign tx_vram_ok = tx_vram_rd;
 
 // BG/FG video read ports: async combinational reads (third + fourth ports)
 logic [14:0] bg_vram_rd_addr;
 logic [15:0] bg_vram_q;
+logic        bg_vram_rd;
+logic        bg_vram_ok;
 assign bg_vram_q = vram[bg_vram_rd_addr];
+assign bg_vram_ok = bg_vram_rd;
 
 logic [14:0] fg_vram_rd_addr;
 logic [15:0] fg_vram_q;
+logic        fg_vram_rd;
+logic        fg_vram_ok;
 assign fg_vram_q = vram[fg_vram_rd_addr];
+assign fg_vram_ok = fg_vram_rd;
 
 `else
 
@@ -171,14 +180,40 @@ assign fg_vram_q = vram[fg_vram_rd_addr];
 logic [15:0] vram_dout;
 logic [14:0] tx_vram_rd_addr;
 logic [15:0] tx_vram_q;
+logic        tx_vram_rd;
+logic        tx_vram_ok;
+logic [14:0] bg_vram_rd_addr;
+logic [15:0] bg_vram_q;
+logic        bg_vram_rd;
+logic        bg_vram_ok;
+logic [14:0] fg_vram_rd_addr;
+logic [15:0] fg_vram_q;
+logic        fg_vram_rd;
+logic        fg_vram_ok;
+logic [14:0] vram_pxl_addr_b;
+logic [15:0] vram_pxl_q;
+
+always_comb begin
+    if (tx_vram_rd)      vram_pxl_addr_b = tx_vram_rd_addr;
+    else if (bg_vram_rd) vram_pxl_addr_b = bg_vram_rd_addr;
+    else if (fg_vram_rd) vram_pxl_addr_b = fg_vram_rd_addr;
+    else                 vram_pxl_addr_b = 15'b0;
+end
+
+assign tx_vram_q  = vram_pxl_q;
+assign bg_vram_q  = vram_pxl_q;
+assign fg_vram_q  = vram_pxl_q;
+assign tx_vram_ok = tx_vram_rd;
+assign bg_vram_ok = bg_vram_rd;
+assign fg_vram_ok = fg_vram_rd;
 
 // ── TX/BG/FG pixel read RAM ───────────────────────────────────────────────
 altsyncram #(
     .operation_mode              ("DUAL_PORT"),
     .width_a                     (16), .widthad_a (15), .numwords_a (32768),
     .width_b                     (16), .widthad_b (15), .numwords_b (32768),
-    .outdata_reg_b               ("CLOCK1"),
-    .address_reg_b               ("CLOCK1"),
+    .outdata_reg_b               ("UNREGISTERED"),
+    .address_reg_b               ("UNREGISTERED"),
     .clock_enable_input_a        ("BYPASS"),
     .clock_enable_input_b        ("BYPASS"),
     .clock_enable_output_b       ("BYPASS"),
@@ -195,8 +230,8 @@ altsyncram #(
     .data_a         ( cpu_din                ),
     .wren_a         ( sel_vram && cpu_we     ),
     .byteena_a      ( cpu_be                 ),
-    .address_b      ( tx_vram_rd_addr        ),
-    .q_b            ( tx_vram_q              ),
+    .address_b      ( vram_pxl_addr_b        ),
+    .q_b            ( vram_pxl_q             ),
     .wren_b         ( 1'b0                   ),
     .data_b         ( 16'd0                  ),
     .q_a            (                        ),
@@ -246,17 +281,6 @@ altsyncram #(
     .rden_b         ( 1'b1                   )
 );
 
-// For Quartus: BG/FG VRAM reads are muxed onto port B (time-multiplexed with TX).
-// Since TX finishes first (320 cycles) and BG/FG run after, there is no conflict.
-// Mux: when BG or FG is actively reading, override port B address.
-// (Stub for now — Quartus gate target not yet active for BG/FG.)
-logic [14:0] bg_vram_rd_addr;
-logic [15:0] bg_vram_q;
-logic [14:0] fg_vram_rd_addr;
-logic [15:0] fg_vram_q;
-assign bg_vram_q = 16'b0;  // stub
-assign fg_vram_q = 16'b0;  // stub
-
 `endif
 
 // =============================================================================
@@ -283,28 +307,47 @@ assign spr_eng_q = sprite_ram[spr_eng_rd_addr];
 `else
 
 logic [15:0] sprite_dout;
+logic [11:0] spr_eng_rd_addr;
+logic [15:0] spr_eng_q;
 altsyncram #(
-    .operation_mode         ("SINGLE_PORT"),
+    .operation_mode         ("DUAL_PORT"),
     .width_a                (16),
     .widthad_a              (12),
+    .width_b                (16),
+    .widthad_b              (12),
     .intended_device_family ("Cyclone V"),
     .lpm_type               ("altsyncram"),
     .ram_block_type         ("M10K"),
     .outdata_reg_a          ("UNREGISTERED"),
-    .numwords_a             (4096)
+    .outdata_reg_b          ("UNREGISTERED"),
+    .numwords_a             (4096),
+    .numwords_b             (4096),
+    .read_during_write_mode_mixed_ports ("DONT_CARE")
 ) sprite_ram_inst (
     .clock0    (clk),
+    .clock1    (clk),
     .address_a (cpu_addr[11:0]),
     .data_a    (cpu_din),
     .wren_a    (sel_sprite && cpu_we),
     .byteena_a (cpu_be),
-    .q_a       (sprite_dout)
+    .q_a       (sprite_dout),
+    .address_b (spr_eng_rd_addr),
+    .q_b       (spr_eng_q),
+    .wren_b    (1'b0),
+    .data_b    (16'd0),
+    .aclr0     (1'b0),
+    .aclr1     (1'b0),
+    .addressstall_a (1'b0),
+    .addressstall_b (1'b0),
+    .byteena_b (1'b1),
+    .clocken0  (1'b1),
+    .clocken1  (1'b1),
+    .clocken2  (1'b1),
+    .clocken3  (1'b1),
+    .eccstatus (),
+    .rden_a    (1'b1),
+    .rden_b    (1'b1)
 );
-
-// Sprite engine read port stub (Quartus — true dual-port M10K needed for synthesis)
-logic [11:0] spr_eng_rd_addr;
-logic [15:0] spr_eng_q;
-assign spr_eng_q = 16'b0;  // stub
 
 `endif
 
@@ -330,40 +373,82 @@ end
 // Async read ports for FG and BG submodules
 logic [ 9:0] fg_scroll_rd_addr;
 logic [15:0] fg_scroll_q;
+logic        fg_scroll_rd;
+logic        fg_scroll_ok;
 assign fg_scroll_q = scroll_ram[fg_scroll_rd_addr];
+assign fg_scroll_ok = fg_scroll_rd;
 
 logic [ 9:0] bg_scroll_rd_addr;
 logic [15:0] bg_scroll_q;
+logic        bg_scroll_rd;
+logic        bg_scroll_ok;
 assign bg_scroll_q = scroll_ram[bg_scroll_rd_addr];
+assign bg_scroll_ok = bg_scroll_rd;
 
 `else
 
 logic [15:0] scroll_dout;
+logic [ 9:0] fg_scroll_rd_addr;
+logic [15:0] fg_scroll_q;
+logic        fg_scroll_rd;
+logic        fg_scroll_ok;
+logic [ 9:0] bg_scroll_rd_addr;
+logic [15:0] bg_scroll_q;
+logic        bg_scroll_rd;
+logic        bg_scroll_ok;
+logic [ 9:0] scroll_addr_b;
+logic [15:0] scroll_q_b;
+
+always_comb begin
+    if (bg_scroll_rd)      scroll_addr_b = bg_scroll_rd_addr;
+    else if (fg_scroll_rd) scroll_addr_b = fg_scroll_rd_addr;
+    else                   scroll_addr_b = 10'b0;
+end
+
+assign bg_scroll_q  = scroll_q_b;
+assign fg_scroll_q  = scroll_q_b;
+assign bg_scroll_ok = bg_scroll_rd;
+assign fg_scroll_ok = fg_scroll_rd;
+
 altsyncram #(
-    .operation_mode         ("SINGLE_PORT"),
+    .operation_mode         ("DUAL_PORT"),
     .width_a                (16),
     .widthad_a              (10),
+    .width_b                (16),
+    .widthad_b              (10),
     .intended_device_family ("Cyclone V"),
     .lpm_type               ("altsyncram"),
     .ram_block_type         ("M10K"),
     .outdata_reg_a          ("UNREGISTERED"),
-    .numwords_a             (1024)
+    .outdata_reg_b          ("UNREGISTERED"),
+    .numwords_a             (1024),
+    .numwords_b             (1024),
+    .read_during_write_mode_mixed_ports ("DONT_CARE")
 ) scroll_ram_inst (
     .clock0    (clk),
+    .clock1    (clk),
     .address_a (cpu_addr[9:0]),
     .data_a    (cpu_din),
     .wren_a    (sel_scroll && cpu_we),
     .byteena_a (cpu_be),
-    .q_a       (scroll_dout)
+    .q_a       (scroll_dout),
+    .address_b (scroll_addr_b),
+    .q_b       (scroll_q_b),
+    .wren_b    (1'b0),
+    .data_b    (16'd0),
+    .aclr0     (1'b0),
+    .aclr1     (1'b0),
+    .addressstall_a (1'b0),
+    .addressstall_b (1'b0),
+    .byteena_b (1'b1),
+    .clocken0  (1'b1),
+    .clocken1  (1'b1),
+    .clocken2  (1'b1),
+    .clocken3  (1'b1),
+    .eccstatus (),
+    .rden_a    (1'b1),
+    .rden_b    (1'b1)
 );
-
-// Stub scroll ports for Quartus
-logic [ 9:0] fg_scroll_rd_addr;
-logic [15:0] fg_scroll_q;
-logic [ 9:0] bg_scroll_rd_addr;
-logic [15:0] bg_scroll_q;
-assign fg_scroll_q = 16'b0;
-assign bg_scroll_q = 16'b0;
 
 `endif
 
@@ -609,6 +694,8 @@ tc0180vcu_tx u_tx (
     .hpos         (hpos),
     .vram_rd_addr (tx_vram_rd_addr),
     .vram_q       (tx_vram_q),
+    .vram_rd      (tx_vram_rd),
+    .vram_ok      (tx_vram_ok),
     .tx_tilebank0 (tx_tilebank0),
     .tx_tilebank1 (tx_tilebank1),
     .tx_rampage   (tx_rampage),
@@ -685,8 +772,12 @@ tc0180vcu_bg #(.PLANE(1)) u_bg (
     .start         (bg_start),
     .vram_rd_addr  (bg_vram_rd_addr),
     .vram_q        (bg_vram_q),
+    .vram_rd       (bg_vram_rd),
+    .vram_ok       (bg_vram_ok),
     .scroll_rd_addr(bg_scroll_rd_addr),
     .scroll_q      (bg_scroll_q),
+    .scroll_rd     (bg_scroll_rd),
+    .scroll_ok     (bg_scroll_ok),
     .bank0         (bg_bank0),
     .bank1         (bg_bank1),
     .lpb_ctrl      (bg_lpb_ctrl),
@@ -711,8 +802,12 @@ tc0180vcu_bg #(.PLANE(0)) u_fg (
     .start         (fg_start),
     .vram_rd_addr  (fg_vram_rd_addr),
     .vram_q        (fg_vram_q),
+    .vram_rd       (fg_vram_rd),
+    .vram_ok       (fg_vram_ok),
     .scroll_rd_addr(fg_scroll_rd_addr),
     .scroll_q      (fg_scroll_q),
+    .scroll_rd     (fg_scroll_rd),
+    .scroll_ok     (fg_scroll_ok),
     .bank0         (fg_bank0),
     .bank1         (fg_bank1),
     .lpb_ctrl      (fg_lpb_ctrl),

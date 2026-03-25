@@ -29,6 +29,8 @@ module tc0180vcu_tx (
     // VRAM async read port (combinational: vram_q valid same cycle as vram_rd_addr)
     output logic [14:0] vram_rd_addr,
     input  logic [15:0] vram_q,
+    output logic        vram_rd,
+    input  logic        vram_ok,
 
     // Control register fields (from parent)
     input  logic [ 5:0] tx_tilebank0,   // GFX bank when tile word bit[11]=0
@@ -116,6 +118,8 @@ always_comb begin
         vram_rd_addr = 15'b0;
 end
 
+assign vram_rd = (state == TX_VRAM);
+
 // =============================================================================
 // GFX ROM address (combinational, state-dependent)
 // =============================================================================
@@ -147,17 +151,77 @@ always_comb begin
 end
 
 // =============================================================================
-// Line buffer: 512 × 8-bit
-// Written in TX_P2 (8 pixels per tile simultaneously).
-// Read combinationally during active display.
+// Tile line buffer: 64 × 64-bit
+// One packed 8-pixel word per tile column. This keeps the write-side at one
+// address per cycle so Quartus infers real RAM instead of a large bank of FFs.
 // =============================================================================
+logic [63:0] tilebuf_wdata;
+logic [63:0] tilebuf_rdata;
+logic [5:0]  tilebuf_raddr;
+logic        tilebuf_we;
+
+assign tilebuf_raddr = hpos[8:3];
+assign tilebuf_we    = (state == TX_P2) && gfx_ok;
+
+always_comb begin
+    for (int px = 0; px < 8; px++) begin
+        tilebuf_wdata[px*8 +: 8] = {
+            tx_color_r,
+            gfx_data[7-px],
+            gfx_b2_r[7-px],
+            gfx_b1_r[7-px],
+            gfx_b0_r[7-px]
+        };
+    end
+end
+
 `ifdef QUARTUS
-(* ramstyle = "MLAB" *) logic [7:0] linebuf [0:511];
+altsyncram #(
+    .width_a            (64),
+    .widthad_a          (6),
+    .numwords_a         (64),
+    .width_b            (64),
+    .widthad_b          (6),
+    .numwords_b         (64),
+    .operation_mode     ("DUAL_PORT"),
+    .ram_block_type     ("M10K"),
+    .outdata_reg_a      ("UNREGISTERED"),
+    .outdata_reg_b      ("UNREGISTERED"),
+    .read_during_write_mode_mixed_ports ("DONT_CARE"),
+    .intended_device_family ("Cyclone V")
+) u_tilebuf (
+    .clock0    (clk),
+    .address_a (tx_col),
+    .data_a    (tilebuf_wdata),
+    .wren_a    (tilebuf_we),
+    .address_b (tilebuf_raddr),
+    .q_b       (tilebuf_rdata),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_a(1'b1), .byteena_b(1'b1), .clock1(1'b0), .clocken0(1'b1),
+    .clocken1(1'b1), .clocken2(1'b1), .clocken3(1'b1),
+    .data_b({64{1'b0}}), .eccstatus(), .q_a(), .rden_a(1'b1), .rden_b(1'b1),
+    .wren_b(1'b0)
+);
 `else
-logic [7:0] linebuf [0:511];
+logic [63:0] tilebuf [0:63];
+always_ff @(posedge clk) begin
+    if (tilebuf_we) tilebuf[tx_col] <= tilebuf_wdata;
+end
+assign tilebuf_rdata = tilebuf[tilebuf_raddr];
 `endif
 
-assign tx_pixel = linebuf[hpos];
+always_comb begin
+    case (hpos[2:0])
+        3'd0: tx_pixel = tilebuf_rdata[ 7: 0];
+        3'd1: tx_pixel = tilebuf_rdata[15: 8];
+        3'd2: tx_pixel = tilebuf_rdata[23:16];
+        3'd3: tx_pixel = tilebuf_rdata[31:24];
+        3'd4: tx_pixel = tilebuf_rdata[39:32];
+        3'd5: tx_pixel = tilebuf_rdata[47:40];
+        3'd6: tx_pixel = tilebuf_rdata[55:48];
+        default: tx_pixel = tilebuf_rdata[63:56];
+    endcase
+end
 
 // =============================================================================
 // FSM, register updates, and line buffer writes
@@ -181,7 +245,7 @@ always_ff @(posedge clk) begin
             end
 
             TX_VRAM: begin
-                if (gfx_ok) begin
+                if (vram_ok && gfx_ok) begin
                     tx_color_r <= color_c;
                     gfx_base_r <= gfx_base_c;
                     gfx_b0_r   <= gfx_data;   // plane 0
@@ -205,17 +269,6 @@ always_ff @(posedge clk) begin
 
             TX_P2: begin
                 if (gfx_ok) begin
-                    // plane 3 is gfx_data (gfx_addr = gfx_base_r+17 combinationally)
-                    // Decode 8 pixels and write to line buffer
-                    for (int px = 0; px < 8; px++) begin
-                        linebuf[9'(tx_col) * 9'd8 + 9'(unsigned'(px))] <= {
-                            tx_color_r,
-                            gfx_data[7-px],    // plane 3 (MSB = leftmost pixel)
-                            gfx_b2_r[7-px],    // plane 2
-                            gfx_b1_r[7-px],    // plane 1
-                            gfx_b0_r[7-px]     // plane 0
-                        };
-                    end
                     if (tx_col == 6'd63) begin
                         state <= TX_IDLE;      // all 64 tiles done
                     end else begin

@@ -57,6 +57,8 @@ module tc0180vcu_bg #(parameter PLANE = 0) (
     // VRAM async read port (combinational)
     output logic [14:0] vram_rd_addr,
     input  logic [15:0] vram_q,
+    output logic        vram_rd,
+    input  logic        vram_ok,
 
     // Scroll RAM async read port (combinational)
     output logic [ 9:0] scroll_rd_addr,
@@ -64,6 +66,8 @@ module tc0180vcu_bg #(parameter PLANE = 0) (
     /* verilator lint_off UNUSEDSIGNAL */
     input  logic [15:0] scroll_q,
     /* verilator lint_on UNUSEDSIGNAL */
+    output logic        scroll_rd,
+    input  logic        scroll_ok,
 
     // Control fields
     // bank[3] not used: VRAM is 32K words (15-bit), max bank offset is bank[2:0]<<12
@@ -91,18 +95,19 @@ module tc0180vcu_bg #(parameter PLANE = 0) (
 // =============================================================================
 typedef enum logic [3:0] {
     BG_IDLE = 4'd0,
-    BG_SYRD = 4'd1,   // latch scrollY (scrollX already latched on start edge)
-    BG_INIT = 4'd2,   // compute fetch geometry
-    BG_CODE = 4'd3,   // latch tile code from VRAM
-    BG_ATTR = 4'd4,   // latch attr; compute + latch gfx base addresses
-    BG_GFX0 = 4'd5,   // latch plane0 left half
-    BG_GFX1 = 4'd6,   // latch plane1 left half
-    BG_GFX2 = 4'd7,   // latch plane2 left half
-    BG_GFX3 = 4'd8,   // plane3 left; decode 8 left pixels into left_px[]
-    BG_GFX4 = 4'd9,   // latch plane0 right half
-    BG_GFX5 = 4'd10,  // latch plane1 right half
-    BG_GFX6 = 4'd11,  // latch plane2 right half
-    BG_GFX7 = 4'd12   // plane3 right; write 16 pixels to linebuf; advance
+    BG_SX   = 4'd1,   // latch scrollX
+    BG_SYRD = 4'd2,   // latch scrollY
+    BG_INIT = 4'd3,   // compute fetch geometry
+    BG_CODE = 4'd4,   // latch tile code from VRAM
+    BG_ATTR = 4'd5,   // latch attr; compute + latch gfx base addresses
+    BG_GFX0 = 4'd6,   // latch plane0 left half
+    BG_GFX1 = 4'd7,   // latch plane1 left half
+    BG_GFX2 = 4'd8,   // latch plane2 left half
+    BG_GFX3 = 4'd9,   // plane3 left; decode 8 left pixels into packed register
+    BG_GFX4 = 4'd10,  // latch plane0 right half
+    BG_GFX5 = 4'd11,  // latch plane1 right half
+    BG_GFX6 = 4'd12,  // latch plane2 right half
+    BG_GFX7 = 4'd13   // plane3 right; write packed tile word; advance
 } bg_state_t;
 
 bg_state_t   state;
@@ -174,8 +179,8 @@ logic [7:0]  gfx_r0_r;         // plane0 right
 logic [7:0]  gfx_r1_r;         // plane1 right
 logic [7:0]  gfx_r2_r;         // plane2 right
 
-// Left-half decoded pixels (latched in BG_GFX3, written to linebuf in BG_GFX7)
-logic [9:0]  left_px [0:7];
+// Left-half decoded pixels packed as 8 × 10-bit entries.
+logic [79:0] left_pack_r;
 
 // =============================================================================
 // Combinational: attr decode (valid during BG_ATTR state)
@@ -255,6 +260,8 @@ always_comb begin
     endcase
 end
 
+assign vram_rd = (state == BG_CODE) || (state == BG_ATTR);
+
 // =============================================================================
 // Scroll RAM address (combinational, state-dependent)
 // Uses scroll_off_c (computed from lpb_ctrl and vpos) to select the correct
@@ -262,11 +269,13 @@ end
 // =============================================================================
 always_comb begin
     case (state)
-        BG_IDLE: scroll_rd_addr = SCROLL_BASE + scroll_off_c;          // scrollX for this block
+        BG_SX:   scroll_rd_addr = SCROLL_BASE + scroll_off_c;          // scrollX for this block
         BG_SYRD: scroll_rd_addr = SCROLL_BASE + scroll_off_c + 10'd1;  // scrollY for this block
         default: scroll_rd_addr = 10'b0;
     endcase
 end
+
+assign scroll_rd = (state == BG_SX) || (state == BG_SYRD);
 
 // =============================================================================
 // GFX ROM address (combinational, state-dependent)
@@ -293,17 +302,96 @@ always_comb begin
 end
 
 // =============================================================================
-// Line buffer: 512 × 10-bit
-// Write: linebuf[tile_col*16 + px] during BG_GFX3 (left) and BG_GFX7 (right)
-// Read:  layer_pixel = linebuf[(hpos + scrollX_frac) & 511]  (async)
+// Tile line buffer: 32 × 160-bit
+// One packed 16-pixel word per tile. This keeps writes single-address and lets
+// Quartus map the storage into RAM instead of 16 parallel FF write ports.
 // =============================================================================
+logic [159:0] tilebuf_wdata;
+logic [159:0] tilebuf_rdata;
+logic [4:0]   tilebuf_raddr;
+logic [8:0]   read_idx_c;
+logic         tilebuf_we;
+
+assign read_idx_c   = (9'(hpos) + {5'b0, scroll_x_frac_r}) & 9'h1FF;
+assign tilebuf_raddr = read_idx_c[8:4];
+assign tilebuf_we    = (state == BG_GFX7) && gfx_ok;
+
+always_comb begin
+    logic [79:0] right_pack_c;
+    right_pack_c = '0;
+    for (int px = 0; px < 8; px++) begin
+        logic [2:0] b;
+        b = tile_flipx_r ? 3'(px) : 3'(7 - px);
+        right_pack_c[px*10 +: 10] = {
+            tile_color_r,
+            gfx_data[b],
+            gfx_r2_r[b],
+            gfx_r1_r[b],
+            gfx_r0_r[b]
+        };
+    end
+    tilebuf_wdata = {right_pack_c, left_pack_r};
+end
+
 `ifdef QUARTUS
-(* ramstyle = "MLAB" *) logic [9:0] linebuf [0:511];
+altsyncram #(
+    .width_a            (160),
+    .widthad_a          (5),
+    .numwords_a         (32),
+    .width_b            (160),
+    .widthad_b          (5),
+    .numwords_b         (32),
+    .operation_mode     ("DUAL_PORT"),
+    .ram_block_type     ("M10K"),
+    .outdata_reg_a      ("UNREGISTERED"),
+    .outdata_reg_b      ("UNREGISTERED"),
+    .read_during_write_mode_mixed_ports ("DONT_CARE"),
+    .intended_device_family ("Cyclone V")
+) u_tilebuf (
+    .clock0    (clk),
+    .address_a (tile_col),
+    .data_a    (tilebuf_wdata),
+    .wren_a    (tilebuf_we),
+    .address_b (tilebuf_raddr),
+    .q_b       (tilebuf_rdata),
+    .aclr0(1'b0), .aclr1(1'b0), .addressstall_a(1'b0), .addressstall_b(1'b0),
+    .byteena_a(1'b1), .byteena_b(1'b1), .clock1(1'b0), .clocken0(1'b1),
+    .clocken1(1'b1), .clocken2(1'b1), .clocken3(1'b1),
+    .data_b({160{1'b0}}), .eccstatus(), .q_a(), .rden_a(1'b1), .rden_b(1'b1),
+    .wren_b(1'b0)
+);
 `else
-logic [9:0] linebuf [0:511];
+logic [159:0] tilebuf [0:31];
+always_ff @(posedge clk) begin
+    if (tilebuf_we) tilebuf[tile_col] <= tilebuf_wdata;
+end
+assign tilebuf_rdata = tilebuf[tilebuf_raddr];
 `endif
 
-assign layer_pixel = linebuf[(9'(hpos) + {5'b0, scroll_x_frac_r}) & 9'h1FF];
+always_comb begin
+    if (tilebuf_raddr >= 5'd22) begin
+        layer_pixel = 10'b0;
+    end else begin
+        case (read_idx_c[3:0])
+            4'd0: layer_pixel = tilebuf_rdata[  9:  0];
+            4'd1: layer_pixel = tilebuf_rdata[ 19: 10];
+            4'd2: layer_pixel = tilebuf_rdata[ 29: 20];
+            4'd3: layer_pixel = tilebuf_rdata[ 39: 30];
+            4'd4: layer_pixel = tilebuf_rdata[ 49: 40];
+            4'd5: layer_pixel = tilebuf_rdata[ 59: 50];
+            4'd6: layer_pixel = tilebuf_rdata[ 69: 60];
+            4'd7: layer_pixel = tilebuf_rdata[ 79: 70];
+            4'd8: layer_pixel = tilebuf_rdata[ 89: 80];
+            4'd9: layer_pixel = tilebuf_rdata[ 99: 90];
+            4'd10: layer_pixel = tilebuf_rdata[109:100];
+            4'd11: layer_pixel = tilebuf_rdata[119:110];
+            4'd12: layer_pixel = tilebuf_rdata[129:120];
+            4'd13: layer_pixel = tilebuf_rdata[139:130];
+            4'd14: layer_pixel = tilebuf_rdata[149:140];
+            default: layer_pixel = tilebuf_rdata[159:150];
+        endcase
+    end
+end
 
 // =============================================================================
 // FSM + register updates + line buffer writes
@@ -336,26 +424,31 @@ always_ff @(posedge clk) begin
         gfx_r0_r         <= 8'b0;
         gfx_r1_r         <= 8'b0;
         gfx_r2_r         <= 8'b0;
-        for (int i = 0; i < 8; i++) left_px[i] <= 10'b0;
+        left_pack_r      <= '0;
     end else begin
         case (state)
 
             // ── Idle ─────────────────────────────────────────────────────────
-            // scroll_rd_addr = SCROLL_BASE (scrollX) is driven while in IDLE.
-            // On start pulse: latch scrollX from scroll_q and advance to BG_SYRD.
+            // On start pulse: move to BG_SX and request the first scroll word.
             BG_IDLE: begin
                 if (start) begin
+                    state <= BG_SX;
+                end
+            end
+
+            BG_SX: begin
+                if (scroll_ok) begin
                     scroll_x_frac_r  <= scroll_q[3:0];
                     scroll_x_tile_r  <= scroll_q[9:4];
                     state            <= BG_SYRD;
                 end
             end
 
-            // ── Scroll fetch ─────────────────────────────────────────────────
-            // scroll_rd_addr = SCROLL_BASE+1 (scrollY) while in BG_SYRD.
             BG_SYRD: begin
-                scroll_y_r <= scroll_q[9:0];
-                state      <= BG_INIT;
+                if (scroll_ok) begin
+                    scroll_y_r <= scroll_q[9:0];
+                    state      <= BG_INIT;
+                end
             end
 
             // ── Compute fetch geometry ────────────────────────────────────────
@@ -375,18 +468,22 @@ always_ff @(posedge clk) begin
             // ── Per-tile fetch loop ──────────────────────────────────────────
 
             BG_CODE: begin
-                tile_code_r <= vram_q[14:0];
-                state       <= BG_ATTR;
+                if (vram_ok) begin
+                    tile_code_r <= vram_q[14:0];
+                    state       <= BG_ATTR;
+                end
             end
 
             BG_ATTR: begin
-                tile_color_r <= attr_color_c;
-                tile_flipx_r <= attr_flipx_c;
-                // gfx_screen_left/right_c are combinational from tile_code_r
-                // and attr_flipx/y_c (current vram_q).
-                gfx_base_l_r <= gfx_screen_left_c;
-                gfx_base_r_r <= gfx_screen_right_c;
-                state        <= BG_GFX0;
+                if (vram_ok) begin
+                    tile_color_r <= attr_color_c;
+                    tile_flipx_r <= attr_flipx_c;
+                    // gfx_screen_left/right_c are combinational from tile_code_r
+                    // and attr_flipx/y_c (current vram_q).
+                    gfx_base_l_r <= gfx_screen_left_c;
+                    gfx_base_r_r <= gfx_screen_right_c;
+                    state        <= BG_GFX0;
+                end
             end
 
             BG_GFX0: begin
@@ -412,13 +509,15 @@ always_ff @(posedge clk) begin
                 if (gfx_ok) begin
                     // plane3 left = gfx_data; decode 8 left-half pixels
                     for (int px = 0; px < 8; px++) begin
-                        automatic logic [2:0] b;
+                        logic [2:0] b;
                         b = tile_flipx_r ? 3'(px) : 3'(7 - px);
-                        left_px[px] <= {tile_color_r,
-                                        gfx_data[b],
-                                        gfx_b2_r[b],
-                                        gfx_b1_r[b],
-                                        gfx_b0_r[b]};
+                        left_pack_r[px*10 +: 10] <= {
+                            tile_color_r,
+                            gfx_data[b],
+                            gfx_b2_r[b],
+                            gfx_b1_r[b],
+                            gfx_b0_r[b]
+                        };
                     end
                     state <= BG_GFX4;
                 end
@@ -445,24 +544,6 @@ always_ff @(posedge clk) begin
 
             BG_GFX7: begin
                 if (gfx_ok) begin
-                    // plane3 right = gfx_data; write 16 pixels to linebuf
-                    // Left half: linebuf[tile_col*16 + 0..7]
-                    for (int px = 0; px < 8; px++) begin
-                        automatic logic [8:0] pos;
-                        pos = {tile_col, 4'b0000} | 9'(px);
-                        linebuf[pos] <= left_px[px];
-                    end
-                    // Right half: linebuf[tile_col*16 + 8..15]
-                    for (int px = 0; px < 8; px++) begin
-                        automatic logic [2:0] b;
-                        automatic logic [8:0] pos;
-                        automatic logic [9:0] pix;
-                        b   = tile_flipx_r ? 3'(px) : 3'(7 - px);
-                        pos = {tile_col, 4'b1000} | 9'(px);
-                        pix = {tile_color_r, gfx_data[b], gfx_r2_r[b], gfx_r1_r[b], gfx_r0_r[b]};
-                        linebuf[pos] <= pix;
-                    end
-
                     if (tile_col == 5'd21) begin
                         state <= BG_IDLE;
                     end else begin
