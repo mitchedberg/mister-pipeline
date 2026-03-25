@@ -1,3 +1,51 @@
+## 2026-03-24 — TASK-100: Fix IPL timer->IACK clear in NMK arcade (RTL worker)
+
+**Status:** COMPLETE
+**Executed by:** RTL worker (Claude Sonnet 4.6)
+
+### What was found
+
+The NMK arcade RTL (`nmk_arcade.sv`) already contained the correct IACK-based IPL
+set/clear latch with synchronizer FF (lines 863-898). The timer-based clear described
+in the task checklist was not present in the current state of the file.
+
+The actual gap was in two other files:
+
+1. `chips/m68000/rtl/fx68k_adapter.sv` — did NOT expose `cpu_inta_n` as an output port.
+   The internal `inta_n` signal was computed correctly and wired to `VPAn`, but no port
+   allowed downstream modules to sample it.
+
+2. `chips/nmk_arcade/quartus/emu.sv` — did not declare `wire cpu_inta_n`, did not
+   connect it to `fx68k_adapter`, and did not pass it to the `nmk_arcade` module.
+   Because `nmk_arcade`'s `cpu_inta_n` input was left unconnected, it defaulted to 0
+   (always-IACK), causing the IPL latch to clear on every cycle the instant it was set.
+   Result: CPU never took any VBLANK interrupt.
+
+### Fixes applied
+
+- `chips/m68000/rtl/fx68k_adapter.sv`: Added `output logic cpu_inta_n` port and
+  `assign cpu_inta_n = inta_n;` in the output assignment section.
+- `chips/nmk_arcade/quartus/emu.sv`: Declared `wire cpu_inta_n`, wired it to
+  `fx68k_adapter.cpu_inta_n`, and passed it to `nmk_arcade.cpu_inta_n`.
+
+The sim `tb_top.sv` was already correct (directly derives `inta_n` from FC pins and
+passes it to `nmk_arcade` at line 206).
+
+### Verification
+
+- `check_rtl.sh nmk_arcade`: all 10 checks pass (WARNs only in vendor sys/ files).
+- `make -C chips/nmk_arcade/sim/`: Verilator build succeeds, binary `sim_nmk_arcade`
+  produced. No new errors or warnings.
+
+### Impact on other cores
+
+`fx68k_adapter.sv` is shared. Any core using it that does not connect `cpu_inta_n`
+will have the same bug. The failure catalog entry (added by a prior session) lists:
+psikyo_arcade, taito_x, toaplan_v2, kaneko_arcade, taito_z as needing their emu.sv
+wiring verified. fx68k_adapter now has the output port; only emu.sv wiring remains.
+
+---
+
 ## 2026-03-24 — TASK-301: ESD 16-bit arcade system (RTL worker)
 
 **Status:** COMPLETE
@@ -8103,7 +8151,16 @@ Full 2000-frame attract-loop verification was run for all 7 games in the pipelin
   - 0x1002D2: 1398/1406 frames (99.4%)
   - 0x1002A9, 0x1002AB, 0x1002B5, 0x1002B7: 1396/1406 frames (99.3%)
   - 0x1003D6, 0x1003D8, 0x1003D9: 1396/1406 frames (99.3%)
-- **Root cause:** Cluster at 0x1002A9-0x1002D2 (35 bytes) and 0x1003D6-0x1003D9 (4 bytes) = bounded region that diverges after game initializes. These addresses are in the GP9001 state / game timer region. Values start same then diverge — classic timer/counter that runs at slightly different rate in sim vs MAME.
+- **Root cause (analyzed 2026-03-24):** The divergence at 0x1002D0-0x1002D3 is NOT a timer counter — it is a 32-bit function pointer / init-table pointer stored by ROM function at 0x01F5D4:
+  - `LEA 0x18(PC), A0` → A0 = 0x01F5EE (default table start)
+  - `BTST #1, $00700001` → tests bit 1 of joystick port (P1 DOWN, active-low)
+  - If bit CLEAR (Z=1): BEQ taken → stores 0x01F5EE (MAME's case)
+  - If bit SET (Z=0): `LEA 0x1C(PC), A0` → A0=0x01F600 → MOVE.L A0, WRAM (sim's case)
+  - **Sim stores 0x01F600, MAME stores 0x01F5EE (2-byte offset apart).**
+  - Difference is an I/O bit state divergence at boot — game takes different init table branch.
+  - The ~15 stable diffs/frame are the downstream cascade of this different table.
+- **Video timing fix (commit ebc35db):** Video timing corrected from wrong 416×264@8MHz to MAME-exact 432×262@6.75MHz. Frame rate now 59.637 Hz (was 72.8 Hz). CPU cycles per frame now 268K (was 220K). Does NOT fix the 0x1002D2 divergence (which is I/O-state, not timing), but makes timing semantically correct.
+- **Next step:** Investigate why $700001 bit 1 reads differently in sim vs MAME at boot. Check if there's a DIP switch decode for this bit or if the game is testing something else.
 
 #### 4. Gigandes (Taito X) — 96.133% byte accuracy
 - **Frames compared:** 2000 (direct 0:0 alignment)
@@ -8117,20 +8174,22 @@ Full 2000-frame attract-loop verification was run for all 7 games in the pipelin
   - 0xF00062, 0xF0094B, 0xF00A36, 0xF004CD, 0xF004CF: 1991-1995 frames
 - **Root cause:** Stable bounded divergence at a small WRAM region (0xF00050-0xF00070). Frame 5: sim=0xF6 at 0xF00057, golden=0xFA. The 0x04 delta is a scroll position or speed variable that diverges at initialization and stays constant. No cascading. A game variable initialized differently between sim and MAME (possibly Z80 communication state or YM2610 timer callback).
 
-#### 5. Ballbros (Taito X) — 99.617% byte accuracy
+#### 5. Ballbros (Taito X) — 99.730% byte accuracy [FIXED 2026-03-24]
 - **Frames compared:** 2000 (direct 0:0 alignment)
 - **Exact match frames:** 0/2000 (0.000%)
-- **Byte accuracy:** 99.617% (62.8 avg diffs/frame, 16KB compare region)
-- **First divergence:** Frame 0 (27 diffs)
-- **Diff pattern:** Very stable, ~6-105 diffs/frame. Min 6 diffs (frame 10+).
+- **Byte accuracy:** 99.730% (44.3 avg diffs/frame, 16KB compare region)
+- **Previous result:** 99.617% (invalid — sim was running without ROMs, comparison was meaningless)
+- **First divergence:** Frame 0 (frame-parity scroll diff)
+- **Diff pattern:** Very stable, ~5-479 diffs/frame. Min 5 diffs.
 - **Top divergent addresses:**
-  - 0xF02901: 1998/2000 frames — constant difference (sim=0x44, golden=0x25 from frame 2)
-  - 0xF02032-0xF0204A: 1915/2000 frames — scroll/coordinate registers (sim 0x20 offset from golden)
-  - 0xF03F75-0xF03F7B: 1588-1608 frames
-- **Root cause:** Two independent issues:
-  1. 0xF02901 (byte): Initialized to different value at frame 2 (0x44 vs 0x25). Likely a dip-switch or config byte read during boot that the sim resolves differently.
-  2. 0xF02032 region: Constant 0x20 offset in scroll/position registers — sim and MAME start at different initial scroll positions.
-- **Assessment:** Very close to clean (99.6%). Both diffs are initialization-time divergences that don't cascade.
+  - 0xF02901: **0/2000 frames (FIXED)** — was 1998/2000 with sim=0x44, golden=0x25
+  - 0xF02032-0xF02042: 1915/2000 frames — frame parity artifact (double-buffered scroll registers)
+  - 0xF03F67-0xF03F7B: 1517-1608 frames — Z80 timer/sound counters (not an RTL bug)
+- **Fixes applied:**
+  1. `io_cs` decode: `cpu_addr[23:2] == 22'h140000` → `cpu_addr[23:3] == 21'h0A0000` (covers 0x500000-0x500007)
+  2. DIP switch values corrected to match MAME golden: DIPSW1=0xDF, DIPSW2=0x9E
+  3. ROM loading: sim must be run with `ROM_PROG`, `ROM_Z80`, `ROM_GFX` env vars pointing to actual ballbros ROMs
+- **Assessment:** 99.730% with real game running. Remaining diffs are frame-parity artifacts and Z80 sound state — not RTL bugs. Core is gate-5 PASSING.
 
 #### 6. Berlin Wall (Kaneko16) — 98.269% byte accuracy
 - **Frames compared:** 2000 (direct 0:0 alignment)
@@ -8164,7 +8223,7 @@ Full 2000-frame attract-loop verification was run for all 7 games in the pipelin
 | Gunbird | Psikyo | 2000 | 3 (0.15%) | 91.616% | Frame 12 exact, init table missing at 0xFF00F8 |
 | Truxton II | Toaplan V2 | 1406 (aligned) | 8 (0.57%) | 95.258% | Boot offset 591 frames |
 | Gigandes | Taito X | 2000 | 0 | 96.133% | Stable 595 diffs, bounded |
-| Ballbros | Taito X | 2000 | 0 | 99.617% | Very clean, init differences only |
+| Ballbros | Taito X | 2000 | 0 | **99.730%** | 0xF02901 FIXED (io_cs+DIP); scroll=parity artifact |
 | Berlin Wall | Kaneko16 | 2000 | 10 (0.50%) | 98.269% | 2 WRAM values not initialized in sim |
 | Nastar Warrior | Taito B | 2000 | 2000 (100%) | 100.000% | Sim regression only, MAME-vs-sim 93% |
 
@@ -8235,4 +8294,73 @@ Full 2000-frame attract-loop verification was run for all 7 games in the pipelin
 ### Top Divergent Addresses
 
 0xFF00F8-0xFF010A (10 × 16-bit entries): 1996/2000 frames (99.8%). Countdown table written at frame 13 in MAME but not in sim.
+
+---
+
+## 2026-03-24 — BALLBROS (Taito X) 0xF02901 FIX: io_cs decode + DIP values corrected
+
+**Status:** COMPLETE — 0xF02901 fully resolved, accuracy improved to 99.730%
+**Executed by:** Claude Sonnet 4.6
+
+### Root Cause Analysis
+
+The original 99.617% result was based on a **sim running without ROMs** (CPU executing zeros from blank SDRAM). The comparison was meaningless — comparing all-zeros sim RAM vs mostly-zeros MAME golden gave 99.617% just because MAME only writes ~570 bytes to WRAM in the first few frames.
+
+Two separate issues were found and fixed:
+
+**Issue 1: io_cs decode only covered 0x500000-0x500003 (4 bytes), not 0x500000-0x500007 (8 bytes)**
+
+The old decode: `cpu_addr[23:2] == 22'h140000` covered only the first 4 byte addresses.
+The DIP init subroutine at ROM 0x004302 reads DIP2 nibbles from byte addresses 0x500005 and 0x500007.
+With the old decode, those reads returned open bus (0xFFFF) instead of actual DIP2 values.
+
+Fixed to: `cpu_addr[23:3] == 21'h0A0000` — covers all 8 bytes 0x500000-0x500007.
+
+**Issue 2: Wrong DIP switch values (0xFF/0xFF) didn't match MAME's golden DIP settings**
+
+MAME's ballbros golden was generated with DIPSW1=0xDF, DIPSW2=0x9E (confirmed by reverse-engineering the WRAM values at 0xF028FE and 0xF02900 in frame 2). The sim was using 0xFF/0xFF which gives the same result as open bus for the DIP2 nibble reads (both produce 0xFF when the nibble is all-F).
+
+Correct DIP values for ballbros: DIPSW1=0xDF DIPSW2=0x9E.
+
+### Formula Trace (DIP2 → 0xF02901)
+
+ROM subroutine at 0x004302:
+1. MOVE.B 0x500005, D0 → DIP2 lo nibble (0x9E & 0xF = 0xE)
+2. MOVE.B 0x500007, D1 → DIP2 hi nibble (0x9E >> 4 = 0x9)
+3. AND.W D3(=0xF), D0/D1 → mask to 4 bits
+4. LSL.W #4, D1 → D1 = 0x90
+5. OR.W D1, D0 → D0 = 0x9E
+6. NOT.W D0 → D0 = 0xFF61
+7. EORI.W #0x44, D0 → D0 = 0xFF25
+8. MOVE.W D0, 0xF02900 → low byte = 0x25 ✓
+
+### Results
+
+| Metric | Before Fix | After Fix |
+|--------|-----------|-----------|
+| Byte accuracy | 99.617% (invalid — no ROMs) | **99.730%** (real game) |
+| 0xF02901 diffs | 1998/2000 | **0/2000** |
+| Avg diffs/frame | 62.8 (vs. zero sim) | 44.3 (vs. real game) |
+
+### Remaining Diffs (not RTL bugs)
+
+1. **0xF02032-0xF02042 (scroll registers, ~1915 frames):** Frame parity artifact — game double-buffers scroll registers, sim and MAME capture at different VBlank phases. Alternating pattern confirms this is not a real RTL bug.
+
+2. **0xF03F67-0xF03F7B (~1500-1608 frames):** Dynamic timer/sound counter data. Values change frame-by-frame (e.g., frame 71: gold=0x0D32 vs sim=0x0520). Z80 sound code updates these — the simplified Z80 stub doesn't reproduce them exactly. Not an RTL bug.
+
+### Files Changed
+
+- `chips/taito_x/rtl/taito_x.sv` line 261: `io_cs` decode changed from `cpu_addr[23:2] == 22'h140000` to `cpu_addr[23:3] == 21'h0A0000`
+- `chips/taito_x/sim/tb_system.cpp`: Updated DIP switch comment to document ballbros values (DIPSW1=0xDF DIPSW2=0x9E)
+
+### How to Run
+
+```bash
+cd chips/taito_x/sim
+N_FRAMES=2000 DIPSW1=DF DIPSW2=9E RAM_DUMP=/tmp/BALLBROS_RAM_DUMP_FIXED.bin \
+  ROM_PROG=/tmp/ballbros_roms/ballbros_prog.bin \
+  ROM_Z80=/tmp/ballbros_roms/ballbros_z80.bin \
+  ROM_GFX=/tmp/ballbros_roms/ballbros_gfx.bin \
+  ./sim_taito_x
+```
 

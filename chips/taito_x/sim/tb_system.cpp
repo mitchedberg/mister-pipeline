@@ -217,11 +217,11 @@ int main(int argc, char** argv) {
     top->joystick_p2 = 0xFF;
     top->coin        = 0x3;
     top->service     = 1;
-    top->dipsw1      = dipsw1_val;  // from DIPSW1 env var (default 0xFF = all off, MAME default)
-    top->dipsw2      = dipsw2_val;  // from DIPSW2 env var (default 0xFF = all off, MAME default)
-    // Game-specific DIP values (set via env vars):
+    top->dipsw1      = dipsw1_val;  // from DIPSW1 env var (default 0xFF = all off)
+    top->dipsw2      = dipsw2_val;  // from DIPSW2 env var (default 0xFF = all off)
+    // Game-specific DIP values matching MAME defaults (required for golden comparison):
     //   Gigandes: DIPSW1=0xDF DIPSW2=0x98 (difficulty=Easy, debug=Off, 3 lives)
-    //   Ballbros: DIPSW1=0xFF DIPSW2=0xFF (all off — MAME default)
+    //   Ballbros: DIPSW1=0xDF DIPSW2=0x9E (MAME default — confirmed from RAM analysis)
 
     // ── Simulation state ─────────────────────────────────────────────────────
     int      frame_num       = 0;
