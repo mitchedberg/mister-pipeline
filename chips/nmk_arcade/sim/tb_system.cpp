@@ -674,7 +674,7 @@ int main(int argc, char** argv) {
         // ── Posedge eval ─────────────────────────────────────────────────────
         top->clk_sys = 1;
         top->eval();
-        if (vcd) vcd->dump((vluint64_t)(cycle * 2 + 1));
+        if (vcd) vcd->dump((uint64_t)(cycle * 2 + 1));
 
         // ── Capture pixel (on posedge, after DUT has settled) ────────────────
         // Capture when inside the active display area, driven by our own
@@ -839,7 +839,7 @@ int main(int argc, char** argv) {
         top->enPhi1 = 0;
         top->enPhi2 = 0;
         top->eval();
-        if (vcd) vcd->dump((vluint64_t)(cycle * 2));
+        if (vcd) vcd->dump((uint64_t)(cycle * 2));
 
         ++cycle;
 
@@ -1185,7 +1185,7 @@ int main(int argc, char** argv) {
         }
 
         top->eval();
-        if (vcd) vcd->dump((vluint64_t)vcd_ts);
+        if (vcd) vcd->dump((uint64_t)vcd_ts);
         ++vcd_ts;
 
         // ── Pixel capture (on rising edge, after eval) ────────────────────

@@ -1482,7 +1482,7 @@ int main(int argc, char** argv) {
         top->clk_cpu = 1;
         if (pix_tick) top->clk_pix = 1;
         top->eval();
-        if (vcd) vcd->dump((vluint64_t)(iter * 2 + 1));
+        if (vcd) vcd->dump((uint64_t)(iter * 2 + 1));
 
         // ── EEPROM 93C46 tick ─────────────────────────────────────────────────
         // io_portd is updated by posedge eval (port D latch in RTL).
@@ -1857,7 +1857,7 @@ int main(int argc, char** argv) {
         }
 
         top->eval();
-        if (vcd) vcd->dump((vluint64_t)(iter * 2 + 2));
+        if (vcd) vcd->dump((uint64_t)(iter * 2 + 2));
 
     } // end main loop
 

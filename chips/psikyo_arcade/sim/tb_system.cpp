@@ -183,7 +183,7 @@ static void rtl_tick_rising()
     // ── Clock rising edge ──────────────────────────────────────────────────
     g_top->clk_sys = 1;
     g_top->eval();
-    if (g_vcd) g_vcd->dump((vluint64_t)g_vcd_ts++);
+    if (g_vcd) g_vcd->dump((uint64_t)g_vcd_ts++);
     ++g_iter;
 
     // ── SDRAM channels ──────────────────────────────────────────────────────
@@ -282,7 +282,7 @@ static void rtl_tick_rising()
     g_top->clk_pix   = 0;
     g_top->clk_sound = 0;
     g_top->eval();
-    if (g_vcd) g_vcd->dump((vluint64_t)g_vcd_ts++);
+    if (g_vcd) g_vcd->dump((uint64_t)g_vcd_ts++);
     ++g_iter;
 }
 

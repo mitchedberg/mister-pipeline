@@ -607,7 +607,7 @@ int main(int argc, char** argv) {
         }
 
         top->eval();
-        if (vcd) vcd->dump((vluint64_t)vcd_ts);
+        if (vcd) vcd->dump((uint64_t)vcd_ts);
         ++vcd_ts;
 
         // ── Pixel capture (on rising edge, after eval) ────────────────────────

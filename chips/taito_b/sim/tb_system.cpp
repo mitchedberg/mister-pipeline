@@ -39,6 +39,7 @@
 
 #include "Vtb_top.h"
 #include "Vtb_top_tb_top.h"
+#include "Vtb_top_fx68k.h"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
@@ -392,10 +393,28 @@ int main(int argc, char** argv) {
                             (unsigned)(top->dbg_cpu_dout & 0xFFFF));
                 }
 
+                // Track reads from non-ROM addresses (WRAM, VCU, IOC, palette)
+                static int nonrom_rd_count = 0;
+                if (!asn && rwn && prev_asn && addr >= 0x200000) {
+                    ++nonrom_rd_count;
+                    if (nonrom_rd_count <= 500)
+                        fprintf(stderr, "  RD#%d addr=%06X dout=%04X bc=%d\n",
+                                nonrom_rd_count, addr, (unsigned)(top->dbg_cpu_dout & 0xFFFF),
+                                bus_cycles);
+                }
+
                 // Track writes to key address ranges
                 static int pal_wr_count = 0;
                 static int wram_wr_count = 0;
+                static int all_wr_count  = 0;
                 if (!asn && !rwn && prev_asn) {
+                    ++all_wr_count;
+                    // Log ALL non-WRAM writes (WRAM suppressed after first 14)
+                    bool is_wram = (addr >= 0x600000 && addr <= 0x607FFF);
+                    if (!is_wram)
+                        fprintf(stderr, "  WR#%d addr=%06X data=%04X bc=%d\n",
+                                all_wr_count, addr, (unsigned)top->dbg_cpu_din,
+                                bus_cycles);
                     // Palette RAM: 0x200000-0x201FFF (nastar)
                     if (addr >= 0x200000 && addr <= 0x201FFF) {
                         ++pal_wr_count;
@@ -415,8 +434,59 @@ int main(int argc, char** argv) {
 
                 // Periodic write summary
                 if (bus_cycles > 0 && (bus_cycles % 50000) == 0 && prev_asn && asn) {
-                    fprintf(stderr, "  [%dK bus] pal_wr=%d wram_wr=%d frame=%d\n",
-                            bus_cycles/1000, pal_wr_count, wram_wr_count, frame_num);
+                    auto* r = top->tb_top;
+                    int ipl_h = (int)r->__PVT__u_taito_b__DOT__ipl_h_active;
+                    int ipl_sync = (int)r->__PVT__u_taito_b__DOT__ipl_sync & 7;
+                    fprintf(stderr, "  [%dK bus] pal_wr=%d wram_wr=%d frame=%d ipl_h=%d ipl_sync=%d\n",
+                            bus_cycles/1000, pal_wr_count, wram_wr_count, frame_num, ipl_h, ipl_sync);
+                }
+
+                // Log when interrupt state changes + key VCU events
+                {
+                    auto* r = top->tb_top;
+                    static int prev_ipl_h = 0;
+                    static int prev_ipl_sync = 7;
+                    int ipl_h        = (int)r->__PVT__u_taito_b__DOT__ipl_h_active;
+                    int ipl_syn      = (int)r->__PVT__u_taito_b__DOT__ipl_sync & 7;
+                    int vcu_ih       = (int)r->__PVT__u_taito_b__DOT__vcu_int_h;
+                    if (vcu_ih)
+                        fprintf(stderr, "  *** VCU int_h PULSE bc=%d frame=%d\n", bus_cycles, frame_num);
+                    if (ipl_h != prev_ipl_h) {
+                        fprintf(stderr, "  *** ipl_h_active: %d->%d  bc=%d frame=%d\n",
+                                prev_ipl_h, ipl_h, bus_cycles, frame_num);
+                        prev_ipl_h = ipl_h;
+                    }
+                    if (ipl_syn != prev_ipl_sync) {
+                        fprintf(stderr, "  *** ipl_sync: %d->%d  bc=%d frame=%d\n",
+                                prev_ipl_sync, ipl_syn, bus_cycles, frame_num);
+                        prev_ipl_sync = ipl_syn;
+                    }
+                }
+
+                // Targeted stall-zone diagnostics: only when bc is near the stall zone
+                if (bus_cycles >= 2059000 && bus_cycles <= 2065000) {
+                    auto* rtb = top->tb_top;
+                    auto* rcpu = rtb->u_cpu;
+                    int dar_cs_r  = (int)rtb->__PVT__u_taito_b__DOT__u_dar__DOT__CS;
+                    int dar_busy  = (int)rtb->__PVT__u_taito_b__DOT__u_dar__DOT__busy;
+                    int dar_ca    = (int)rtb->__PVT__u_taito_b__DOT__u_dar__DOT__cpu_access;
+                    int cpu_int_pend = (int)rcpu->intPend;
+                    int cpu_pswI     = (int)rcpu->pswI & 7;
+                    int cpu_iIpl     = (int)rcpu->iIpl & 7;
+                    int cpu_rIpl     = (int)rcpu->rIpl & 7;
+                    int cpu_rInt     = (int)rcpu->__PVT__sequencer__DOT__rInterrupt;
+                    int cpu_asn      = (int)top->dbg_cpu_as_n;
+                    int cpu_fc       = ((int)rtb->u_cpu->__PVT__FC2 << 2) |
+                                       ((int)rtb->u_cpu->__PVT__FC1 << 1) |
+                                        (int)rtb->u_cpu->__PVT__FC0;
+                    static uint64_t stall_zone_last = 0;
+                    if (iter - stall_zone_last >= 500) {
+                        stall_zone_last = iter;
+                        fprintf(stderr,
+                            "  STALL bc=%d CS=%d busy=%d ca=%d intPend=%d pswI=%d iIpl=%d rIpl=%d rInt=%d ASn=%d FC=%d\n",
+                            bus_cycles, dar_cs_r, dar_busy, dar_ca,
+                            cpu_int_pend, cpu_pswI, cpu_iIpl, cpu_rIpl, cpu_rInt, cpu_asn, cpu_fc);
+                    }
                 }
 
                 // Stuck-DTACK detector: if ASn=0 and DTACKn=1 for >10000 consecutive
@@ -432,12 +502,16 @@ int main(int argc, char** argv) {
                         } else if (!dtack_stall_reported &&
                                    (iter - dtack_stall_start) > 10000) {
                             dtack_stall_reported = true;
+                            auto* r2 = top->tb_top;
+                            int ipl_sync2 = (int)r2->__PVT__u_taito_b__DOT__ipl_sync & 7;
+                            int ipl_h2    = (int)r2->__PVT__u_taito_b__DOT__ipl_h_active;
                             fprintf(stderr,
                                 "*** STUCK DTACK: addr=%06X RW=%d iter=%lu bc=%d "
-                                "(stalled for %lu iters)\n",
+                                "(stalled for %lu iters) ipl_sync=%d ipl_h=%d\n",
                                 dtack_stall_addr, (int)rwn,
                                 (unsigned long)iter, bus_cycles,
-                                (unsigned long)(iter - dtack_stall_start));
+                                (unsigned long)(iter - dtack_stall_start),
+                                ipl_sync2, ipl_h2);
                         }
                     } else {
                         dtack_stall_start   = 0;
@@ -465,7 +539,7 @@ int main(int argc, char** argv) {
         }
 
         top->eval();
-        if (vcd) vcd->dump((vluint64_t)vcd_ts);
+        if (vcd) vcd->dump((uint64_t)vcd_ts);
         ++vcd_ts;
 
         // ── Pixel capture (on pixel clock edge only, using C++-driven timing) ──
