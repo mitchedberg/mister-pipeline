@@ -155,17 +155,16 @@ logic [15:0] work_ram [0:32767];  // 32K words
 // The loop exits when work_ram[0x4000] < work_ram[0x7815] (unsigned 16-bit compare).
 // In MAME, the Z80 increments 0x208000; we stub this by setting the threshold > 0.
 // Setting work_ram[0x7815]=1 ensures the V60 exits the boot wait on its first pass.
+// Cyclone V BRAM initializes to 0 by default in synthesis.
+// In simulation, initialize the boot stub to skip V60 init wait:
+//   Boot loop at 0x7F938 compares work_ram[0x7828] vs work_ram[0x7815].
+//   Setting work_ram[0x7815]=1 ensures the V60 exits on first pass (0 < 1).
+`ifndef QUARTUS
 initial begin
     for (int i = 0; i < 32768; i++) work_ram[i] = 16'h0000;
-    // Boot loop exit condition analysis (from V60 bootrom trace):
-    //   MOV.W R0, [R25 + 0x7050]  where R25=0x208000 → reads addr 0x20F050 = work_ram[0x7828]
-    //   CMP.W R0, [R11 + 0x1A]    where R11=0x20F010 → reads addr 0x20F02A = work_ram[0x7815]
-    //   BL8 +6                     → exits if R0 (unsigned) < [R11+0x1A]
-    // With work_ram[0x7828]=0 (R0=0) and work_ram[0x7815]=1 (threshold=1):
-    //   0 < 1 → BL8 fires → boot loop exits on first pass.
-    work_ram[16'h7815] = 16'h0001;   // threshold = 1
-    // work_ram[0x7828] stays 0 (R0 will be 0, < threshold=1)
+    work_ram[16'h7815] = 16'h0001;  // boot stub: V60 init wait exit condition
 end
+`endif
 
 logic        wram_cs;
 logic [15:0] wram_rdata;

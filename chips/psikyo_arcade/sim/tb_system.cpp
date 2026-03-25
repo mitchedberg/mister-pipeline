@@ -25,16 +25,15 @@
 //
 // SDRAM layout (byte addresses, per Gunbird.mra):
 //   0x000000  CPU program ROM (2 MB)
-//   0x200000  Sprite ROM      (4 MB, PS2001B)
-//   0x600000  BG tile ROM     (4 MB, PS3103)
-//   0xA00000  ADPCM ROM       (YM2610B)
+//   0x200000  Sprite ROM      (7 MB, PS2001B — u14/u24/u15/u25, fills 0x200000-0x8FFFFF)
+//   0x900000  BG tile ROM     (2 MB, PS3103  — u33, fills 0x900000-0xAFFFFF)
 //   0xA80000  Z80 sound ROM   (32 KB, per emu.sv)
 //
 // Environment variables:
 //   N_FRAMES   — number of vertical frames to simulate (default 30)
 //   ROM_PROG   — path to CPU program ROM binary  (SDRAM 0x000000, 2 MB)
-//   ROM_SPR    — path to sprite ROM binary       (SDRAM 0x200000, 4 MB)
-//   ROM_BG     — path to BG tile ROM binary      (SDRAM 0x600000, 4 MB)
+//   ROM_SPR    — path to sprite ROM binary       (SDRAM 0x200000, 7 MB)
+//   ROM_BG     — path to BG tile ROM binary      (SDRAM 0x900000, 2 MB)
 //   ROM_ADPCM  — path to ADPCM ROM binary        (SDRAM 0xA00000)
 //   ROM_Z80    — path to Z80 sound ROM binary    (SDRAM 0xA80000, 32 KB byte-wide)
 //   DUMP_VCD   — set to "1" to enable VCD trace (slow)
@@ -546,7 +545,7 @@ int main(int argc, char** argv)
     SdramModel sdram;
     if (env_prog)  sdram.load(env_prog,  0x000000);
     if (env_spr)   sdram.load(env_spr,   0x200000);
-    if (env_bg)    sdram.load(env_bg,    0x600000);
+    if (env_bg)    sdram.load(env_bg,    0x900000);  // BG base moved to 0x900000 (psikyo_arcade.sv BG_SDR_BASE)
     if (env_adpcm) sdram.load(env_adpcm, 0xA00000);
     if (env_z80)   sdram.load_bytes(env_z80, 0xA80000);
     g_sdram = &sdram;
