@@ -142,12 +142,13 @@ logic  [2:0]         ch_sel;     // active channel (0=ioctl,1=cpu,2=gfx,3=adpcm,
 
 // Row-open tracking (one entry per bank)
 logic [12:0]         open_row  [0:3];
-logic  [1:0]         open_bank_valid;  // not per-bank; use open_valid[bank]
 logic                open_valid[0:3];  // is a row currently open in this bank?
 
 // CH0: ioctl byte-pair buffer (clk_sys domain → clk domain via small FIFO)
 logic  [7:0]         ioctl_lo_byte;    // buffered low byte
-logic                ioctl_lo_valid;   // low byte is waiting
+/* verilator lint_off UNUSEDSIGNAL */
+logic                ioctl_lo_valid;   // low byte is waiting (consumed internally)
+/* verilator lint_on UNUSEDSIGNAL */
 
 // CH0 FIFO: 4-entry deep, 27-bit address + 16-bit data + 2-bit DQM
 localparam FIFO_DEPTH = 4;
@@ -156,9 +157,7 @@ logic [44:0]         wr_fifo [0:FIFO_DEPTH-1]; // {dqm[1:0], data[15:0], addr[26
 logic [FIFO_AW-1:0]  wr_wptr, wr_rptr;
 logic                wr_fifo_full, wr_fifo_empty;
 
-// CDC synchronisers (2-FF, clk domain) for ioctl_wr
-logic  [1:0]         ioctl_wr_sync;
-logic                ioctl_wr_clk;    // single-cycle pulse in clk domain
+// (ioctl_wr is used directly in the clk_sys always block; no CDC needed for this path)
 
 // CDC synchronisers for read channels (req → clk domain)
 logic  [1:0]         cpu_req_sync,   gfx_req_sync,   adpcm_req_sync,  z80_req_sync;
@@ -167,7 +166,10 @@ logic                cpu_req_prev,   gfx_req_prev,   adpcm_req_prev,  z80_req_pr
 logic                cpu_req_pend,   gfx_req_pend,   adpcm_req_pend,  z80_req_pend; // pending in clk domain
 
 // Latched addresses (captured when req edge detected)
+// Bits [26] and [12:11] are not used by this controller's row/bank/col mapping — suppress lint
+/* verilator lint_off UNUSEDSIGNAL */
 logic [26:0]         cpu_addr_lat,   gfx_addr_lat,   adpcm_addr_lat,  z80_addr_lat;
+/* verilator lint_on UNUSEDSIGNAL */
 
 // Read data registers
 logic [15:0]         cpu_data_r,     gfx_data_r,     adpcm_data_r,    z80_data_r;
@@ -218,7 +220,7 @@ always_ff @(posedge clk_sys or negedge rst_n) begin
                 // Odd byte: form word and push into FIFO (if space)
                 if (!wr_fifo_full) begin
                     // word addr = ioctl_addr[26:1], data = {hi, lo}
-                    wr_fifo[wr_wptr] <= {2'b00, ioctl_dout, ioctl_lo_byte, ioctl_addr[26:1]};
+                    wr_fifo[wr_wptr] <= {1'b0, 2'b00, ioctl_dout, ioctl_lo_byte, ioctl_addr[26:1]};
                     wr_wptr          <= wr_wptr + 1'b1;
                 end
                 ioctl_lo_valid <= 1'b0;
@@ -446,8 +448,10 @@ always_ff @(posedge clk or negedge rst_n) begin
                 else if (!wr_fifo_empty) begin
                     // CH0 write
                     begin
+                        /* verilator lint_off UNUSEDSIGNAL */
                         automatic logic [44:0] entry = wr_fifo[wr_rptr];
                         automatic logic [25:0] waddr = entry[25:0];  // word address [26:1]
+                        /* verilator lint_on UNUSEDSIGNAL */
                         wr_data  <= entry[41:26];                     // data[15:0]
                         dqm_r    <= entry[43:42];                     // dqm[1:0]
                         row_addr <= waddr[25:13];                     // row = addr[25:13]
@@ -569,13 +573,13 @@ always_ff @(posedge clk or negedge rst_n) begin
                 dqm_out <= dqm_r;
                 open_valid[bank_sel] <= 1'b0; // auto-precharge closes row
                 wr_rptr <= wr_rptr + 1'b1;   // consume FIFO entry
-                wait_cnt <= tRP_CYCLES;
+                wait_cnt <= 3'(tRP_CYCLES);
                 state    <= S_WRITE_W;
             end
 
             S_WRITE_W: begin
                 // Hold data one extra cycle, then release bus
-                dq_oe <= (wait_cnt == tRP_CYCLES);
+                dq_oe <= (wait_cnt == 3'(tRP_CYCLES));
                 if (wait_cnt == 0) state <= S_IDLE;
                 else wait_cnt <= wait_cnt - 1'b1;
             end
