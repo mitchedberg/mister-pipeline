@@ -8,6 +8,7 @@ on:
     branches:
       - master
       - main
+      - sim-batch2
   pull_request:
     paths:
       - 'chips/taito_b/**'
