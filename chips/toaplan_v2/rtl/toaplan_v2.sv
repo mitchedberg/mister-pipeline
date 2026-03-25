@@ -51,6 +51,7 @@ typedef struct packed {
     logic        prio;      // 0 = below BG, 1 = above BG
     logic [3:0]  palette;
     logic [1:0]  size;      // 0=8×8, 1=16×16, 2=32×32, 3=64×64
+    logic [2:0]  bank_slot; // object bank slot index — must match gp9001.sv definition
     logic        valid;
 } sprite_entry_t;
 `endif
