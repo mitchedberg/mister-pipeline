@@ -192,28 +192,44 @@ logic        fg_vram_rd;
 logic        fg_vram_ok;
 logic [14:0] vram_pxl_addr_b;
 logic [15:0] vram_pxl_q;
+logic [1:0]  vram_pxl_sel_c;
+logic [1:0]  vram_pxl_sel_r;
 
 always_comb begin
-    if (tx_vram_rd)      vram_pxl_addr_b = tx_vram_rd_addr;
-    else if (bg_vram_rd) vram_pxl_addr_b = bg_vram_rd_addr;
-    else if (fg_vram_rd) vram_pxl_addr_b = fg_vram_rd_addr;
-    else                 vram_pxl_addr_b = 15'b0;
+    if (tx_vram_rd) begin
+        vram_pxl_addr_b = tx_vram_rd_addr;
+        vram_pxl_sel_c  = 2'd1;
+    end else if (bg_vram_rd) begin
+        vram_pxl_addr_b = bg_vram_rd_addr;
+        vram_pxl_sel_c  = 2'd2;
+    end else if (fg_vram_rd) begin
+        vram_pxl_addr_b = fg_vram_rd_addr;
+        vram_pxl_sel_c  = 2'd3;
+    end else begin
+        vram_pxl_addr_b = 15'b0;
+        vram_pxl_sel_c  = 2'd0;
+    end
+end
+
+always_ff @(posedge clk) begin
+    if (!rst_n) vram_pxl_sel_r <= 2'd0;
+    else        vram_pxl_sel_r <= vram_pxl_sel_c;
 end
 
 assign tx_vram_q  = vram_pxl_q;
 assign bg_vram_q  = vram_pxl_q;
 assign fg_vram_q  = vram_pxl_q;
-assign tx_vram_ok = tx_vram_rd;
-assign bg_vram_ok = bg_vram_rd;
-assign fg_vram_ok = fg_vram_rd;
+assign tx_vram_ok = (vram_pxl_sel_r == 2'd1);
+assign bg_vram_ok = (vram_pxl_sel_r == 2'd2);
+assign fg_vram_ok = (vram_pxl_sel_r == 2'd3);
 
 // ── TX/BG/FG pixel read RAM ───────────────────────────────────────────────
 altsyncram #(
     .operation_mode              ("DUAL_PORT"),
     .width_a                     (16), .widthad_a (15), .numwords_a (32768),
     .width_b                     (16), .widthad_b (15), .numwords_b (32768),
-    .outdata_reg_b               ("UNREGISTERED"),
-    .address_reg_b               ("UNREGISTERED"),
+    .outdata_reg_b               ("CLOCK1"),
+    .rdcontrol_reg_b             ("CLOCK1"),
     .clock_enable_input_a        ("BYPASS"),
     .clock_enable_input_b        ("BYPASS"),
     .clock_enable_output_b       ("BYPASS"),
@@ -398,17 +414,31 @@ logic        bg_scroll_rd;
 logic        bg_scroll_ok;
 logic [ 9:0] scroll_addr_b;
 logic [15:0] scroll_q_b;
+logic [1:0]  scroll_sel_c;
+logic [1:0]  scroll_sel_r;
 
 always_comb begin
-    if (bg_scroll_rd)      scroll_addr_b = bg_scroll_rd_addr;
-    else if (fg_scroll_rd) scroll_addr_b = fg_scroll_rd_addr;
-    else                   scroll_addr_b = 10'b0;
+    if (bg_scroll_rd) begin
+        scroll_addr_b = bg_scroll_rd_addr;
+        scroll_sel_c  = 2'd1;
+    end else if (fg_scroll_rd) begin
+        scroll_addr_b = fg_scroll_rd_addr;
+        scroll_sel_c  = 2'd2;
+    end else begin
+        scroll_addr_b = 10'b0;
+        scroll_sel_c  = 2'd0;
+    end
+end
+
+always_ff @(posedge clk) begin
+    if (!rst_n) scroll_sel_r <= 2'd0;
+    else        scroll_sel_r <= scroll_sel_c;
 end
 
 assign bg_scroll_q  = scroll_q_b;
 assign fg_scroll_q  = scroll_q_b;
-assign bg_scroll_ok = bg_scroll_rd;
-assign fg_scroll_ok = fg_scroll_rd;
+assign bg_scroll_ok = (scroll_sel_r == 2'd1);
+assign fg_scroll_ok = (scroll_sel_r == 2'd2);
 
 altsyncram #(
     .operation_mode         ("DUAL_PORT"),
@@ -420,7 +450,8 @@ altsyncram #(
     .lpm_type               ("altsyncram"),
     .ram_block_type         ("M10K"),
     .outdata_reg_a          ("UNREGISTERED"),
-    .outdata_reg_b          ("UNREGISTERED"),
+    .outdata_reg_b          ("CLOCK1"),
+    .rdcontrol_reg_b        ("CLOCK1"),
     .numwords_a             (1024),
     .numwords_b             (1024),
     .read_during_write_mode_mixed_ports ("DONT_CARE")
