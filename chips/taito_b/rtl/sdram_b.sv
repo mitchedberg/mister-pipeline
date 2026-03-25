@@ -76,11 +76,11 @@ module sdram_b (
 // Parameters
 // =============================================================================
 
-// Refresh period: 7.8 µs × 143 MHz = 1115.4 → use 1114 so we fire slightly early
-localparam REFRESH_CYCLES = 11'd1114;
+// Refresh period: 7.8 µs × 133.333 MHz = 1040 → use 1036 for margin (never exceed 7.8 µs)
+localparam REFRESH_CYCLES = 11'd1036;
 
-// Initialisation delay: 200 µs × 143 MHz = 28600 → round up to 28700
-localparam INIT_DELAY     = 15'd28700;
+// Initialisation delay: 200 µs × 133.333 MHz = 26666 → round up to 26700
+localparam INIT_DELAY     = 15'd26700;
 
 // Timing counts (in clock cycles, zero-based → subtract 1 for counter terminal)
 localparam tRP_CYCLES  = 2'd2;   // PRECHARGE recovery
@@ -543,8 +543,8 @@ always_ff @(posedge clk or negedge rst_n) begin
 
             S_READ_W: begin
                 dqm_out <= 2'b00;
-                if (wait_cnt == tRC_CYCLES - 3) begin
-                    // Capture SDRAM_DQ at CAS=2 latency (2 clocks after READ)
+                if (wait_cnt == tRC_CYCLES - 2) begin
+                    // Capture SDRAM_DQ at CAS=2 latency (2 clocks after READ command)
                     case (ch_sel)
                         3'd1: begin cpu_data_r  <= SDRAM_DQ; cpu_ack_r  <= cpu_req_clk;  end
                         3'd2: begin gfx_data_r  <= SDRAM_DQ; gfx_ack_r  <= gfx_req_clk;  end
