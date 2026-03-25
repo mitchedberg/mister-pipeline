@@ -54,17 +54,13 @@ module taito_b #(
     // Set 1 for upper byte (D[15:8]), 0 for lower byte (D[7:0])
     parameter logic        IOC_UPPER_BYTE = 1'b1,
 
-    // ── SDRAM base addresses for TC0140SYT ADPCM ROM fetches ───────────────
-    // nastar: 1MB GFX @ 0x200000, ADPCM-A 512KB @ 0x300000, ADPCM-B 512KB @ 0x380000
-    // (Using the worst-case SDRAM layout from mame_research.md §Q2)
-    parameter logic [26:0] ADPCMA_ROM_BASE = 27'h200000,
-    parameter logic [26:0] ADPCMB_ROM_BASE = 27'h280000,
+    // ── Local ROM bank offsets (per-bank address space inside the SDRAM frontend)
+    // ADPCM-A starts at byte 0 inside the ADPCM bank; ADPCM-B follows after 512KB.
+    parameter logic [26:0] ADPCMA_ROM_BASE = 27'h000000,
+    parameter logic [26:0] ADPCMB_ROM_BASE = 27'h080000,
 
-    // ── GFX ROM SDRAM base address ─────────────────────────────────────────
-    // TC0180VCU gfx_addr[22:0] is a byte offset within GFX ROM.
-    // SDRAM address = GFX_ROM_BASE + { gfx_addr[22:1], 1'b0 }  (16-bit word access)
-    // nastar: 1MB GFX at SDRAM offset 0x100000
-    parameter logic [26:0] GFX_ROM_BASE    = 27'h100000
+    // GFX fetches use a local byte address inside the dedicated GFX bank.
+    parameter logic [26:0] GFX_ROM_BASE    = 27'h000000
 ) (
     // ── Clocks / Reset ──────────────────────────────────────────────────────
     input  logic        clk_sys,         // master system clock (e.g. 48 MHz)
@@ -117,10 +113,11 @@ module taito_b #(
     input  logic        prog_rom_ack,    // acknowledge toggle
 
     // ── GFX ROM SDRAM Interface ─────────────────────────────────────────────
-    // 16-bit word access; gfx_rom_addr is a word address in SDRAM.
-    output logic [26:0] gfx_rom_addr,    // SDRAM word address for GFX ROM
-    input  logic [15:0] gfx_rom_data,    // SDRAM read data (16-bit word)
-    output logic        gfx_rom_req,     // request toggle (toggle to request)
+    // Byte-addressed fetch path. The VCU stalls on gfx_rom_ack instead of
+    // assuming combinational ROM data.
+    output logic [26:0] gfx_rom_addr,    // local byte address inside GFX bank
+    input  logic  [7:0] gfx_rom_data,    // SDRAM read data (single byte)
+    output logic        gfx_rom_req,     // request toggle
     input  logic        gfx_rom_ack,     // acknowledge toggle
 
     // ── SDRAM Interface (TC0140SYT ADPCM) ───────────────────────────────────
@@ -293,6 +290,7 @@ logic        vcu_int_h, vcu_int_l;
 logic [22:0] vcu_gfx_addr;
 logic  [7:0] vcu_gfx_data;
 logic        vcu_gfx_rd;
+logic        vcu_gfx_ok;
 logic [12:0] vcu_pixel_out;
 logic        vcu_pixel_valid;
 
@@ -322,6 +320,7 @@ tc0180vcu u_vcu (
     .gfx_addr    (vcu_gfx_addr),
     .gfx_data    (vcu_gfx_data),
     .gfx_rd      (vcu_gfx_rd),
+    .gfx_ok      (vcu_gfx_ok),
 
     // Pixel output → TC0260DAR
     .pixel_out   (vcu_pixel_out),
@@ -381,31 +380,38 @@ logic prog_dtack_now;
 assign prog_dtack_now = prog_rom_cs && prog_req_pending && (prog_rom_req == prog_rom_ack);
 
 // =============================================================================
-// GFX ROM SDRAM Bridge — Zero-Latency Combinatorial Access
+// GFX ROM SDRAM Bridge — Explicit Request/Ready
 //
-// TC0180VCU's BG/FG/TX FSMs advance one state per clock and read gfx_data
-// combinatorially on the same clock edge as gfx_rd is asserted.  There is no
-// stall handshake — the FSM cannot wait for an async SDRAM reply.
-//
-// Pattern: identical to NMK arcade bg_rom bridge (see nmk_arcade.sv §BG ROM).
-//   · gfx_rom_addr is driven combinatorially from vcu_gfx_addr every cycle.
-//   · The testbench performs a direct SDRAM lookup every eval() and drives
-//     gfx_rom_data synchronously (no latency counter needed).
-//   · gfx_rom_req toggles on gfx_rd for bus-activity tracing; the testbench
-//     mirrors gfx_rom_ack = gfx_rom_req immediately (zero-latency ack).
-//
-// Result: vcu_gfx_data reflects the correct GFX ROM byte on the same clock
-// cycle that the BG/FG/TX FSM reads it, matching real-hardware behaviour.
+// The TC0180VCU now exposes a real fetch handshake: it holds gfx_rd high until
+// gfx_ok is returned, then consumes the byte and advances. This mirrors the
+// community SDRAM flow instead of pretending external memory is combinational.
 // =============================================================================
+logic        gfx_req_pending;
+logic [26:0] gfx_req_addr_r;
+logic  [7:0] gfx_rom_data_r;
+logic        gfx_ack_now;
 
-// Direct combinatorial address: word addr = GFX_ROM_BASE + byte_addr[22:1]
-assign gfx_rom_addr = GFX_ROM_BASE + {4'b0, vcu_gfx_addr[22:1]};
-// Byte select: Taito GFX ROMs are big-endian — even byte addr → data[15:8]
-assign vcu_gfx_data = vcu_gfx_addr[0] ? gfx_rom_data[7:0] : gfx_rom_data[15:8];
-// Toggle req on each gfx_rd strobe for bus tracing; tb always acks immediately.
+assign gfx_ack_now  = gfx_req_pending && (gfx_rom_req == gfx_rom_ack);
+assign gfx_rom_addr = gfx_req_addr_r;
+assign vcu_gfx_data = gfx_ack_now ? gfx_rom_data : gfx_rom_data_r;
+assign vcu_gfx_ok   = gfx_ack_now;
+
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n) gfx_rom_req <= 1'b0;
-    else if (vcu_gfx_rd) gfx_rom_req <= ~gfx_rom_req;
+    if (!reset_n) begin
+        gfx_rom_req     <= 1'b0;
+        gfx_req_pending <= 1'b0;
+        gfx_req_addr_r  <= '0;
+        gfx_rom_data_r  <= 8'h00;
+    end else begin
+        if (vcu_gfx_rd && !gfx_req_pending) begin
+            gfx_req_addr_r  <= GFX_ROM_BASE + {4'b0, vcu_gfx_addr};
+            gfx_req_pending <= 1'b1;
+            gfx_rom_req     <= ~gfx_rom_req;
+        end else if (gfx_ack_now) begin
+            gfx_rom_data_r  <= gfx_rom_data;
+            gfx_req_pending <= 1'b0;
+        end
+    end
 end
 
 // =============================================================================
@@ -720,8 +726,7 @@ jt10 u_ym2610 (
 // Z80 ROM SDRAM reads: when z80_rom_cs0_n or z80_rom_cs1_n is active and the
 // Z80 asserts RD_n (memory read), we toggle z80_rom_req to the SDRAM CH4 and
 // hold WAIT_n low until z80_rom_ack toggles back to match.
-// Word address: 27'h040000 + {z80_rom_a15, z80_rom_a14, z80_addr[13:1]}
-// (SDRAM base 0x080000 = word 0x040000; ROM is 16-bit word-organised)
+// Local byte address inside the dedicated Z80 ROM bank.
 //
 // Z80 internal 2KB work RAM (0xC000–0xC7FF, mirrored to 0xDFFF).
 logic [7:0] z80_ram [0:2047];
@@ -779,7 +784,7 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
 end
 
 assign z80_rom_req  = z80_rom_req_r;
-assign z80_rom_addr = 27'h040000 + {z80_rom_a15, z80_rom_a14, z80_addr[13:1]};
+assign z80_rom_addr = {11'b0, z80_rom_a15, z80_rom_a14, z80_addr[13:0]};
 
 // Z80 data input mux:
 //   ROM data | YM2610 dout | RAM dout | SYT nibble | open bus (0xFF)
@@ -1047,8 +1052,7 @@ assign vsync_n  = vsync_n_in;
 logic _unused;
 assign _unused = ^{vcu_pixel_valid, pal_ram_addr[13],
                    z80_rfsh_n, z80_halt_n, z80_busak_n, z80_m1_n,
-                   z80_rom_cs_prev, z80_rd_n_prev,
-                   gfx_rom_ack};   // ack kept as port for tb compatibility; unused in RTL
+                   z80_rom_cs_prev, z80_rd_n_prev};
 /* verilator lint_on UNUSED */
 
 endmodule

@@ -68,6 +68,7 @@ module tc0180vcu_sprite (
     output logic [22:0] gfx_addr,
     input  logic [ 7:0] gfx_data,
     output logic        gfx_rd,
+    input  logic        gfx_ok,
 
     // Framebuffer write port
     output logic        fb_wr,
@@ -605,24 +606,58 @@ always_ff @(posedge clk) begin
 
             // ----------------------------------------------------------------
             SP_ROWL0: begin
-                row_x_base_r <= tile_ox_r;
-                row_y_r      <= tile_oy_r + {4'b0, sy_idx};
-                gfx_l0_r     <= gfx_data;
-                state        <= SP_ROWL1;
+                if (gfx_ok) begin
+                    row_x_base_r <= tile_ox_r;
+                    row_y_r      <= tile_oy_r + {4'b0, sy_idx};
+                    gfx_l0_r     <= gfx_data;
+                    state        <= SP_ROWL1;
+                end
             end
 
-            SP_ROWL1: begin gfx_l1_r <= gfx_data; state <= SP_ROWL2; end
-            SP_ROWL2: begin gfx_l2_r <= gfx_data; state <= SP_ROWL3; end
-            SP_ROWL3: begin gfx_l3_r <= gfx_data; state <= SP_ROWR0; end
+            SP_ROWL1: begin
+                if (gfx_ok) begin
+                    gfx_l1_r <= gfx_data;
+                    state    <= SP_ROWL2;
+                end
+            end
+            SP_ROWL2: begin
+                if (gfx_ok) begin
+                    gfx_l2_r <= gfx_data;
+                    state    <= SP_ROWL3;
+                end
+            end
+            SP_ROWL3: begin
+                if (gfx_ok) begin
+                    gfx_l3_r <= gfx_data;
+                    state    <= SP_ROWR0;
+                end
+            end
 
-            SP_ROWR0: begin gfx_r0_r <= gfx_data; state <= SP_ROWR1; end
-            SP_ROWR1: begin gfx_r1_r <= gfx_data; state <= SP_ROWR2; end
-            SP_ROWR2: begin gfx_r2_r <= gfx_data; state <= SP_ROWR3; end
+            SP_ROWR0: begin
+                if (gfx_ok) begin
+                    gfx_r0_r <= gfx_data;
+                    state    <= SP_ROWR1;
+                end
+            end
+            SP_ROWR1: begin
+                if (gfx_ok) begin
+                    gfx_r1_r <= gfx_data;
+                    state    <= SP_ROWR2;
+                end
+            end
+            SP_ROWR2: begin
+                if (gfx_ok) begin
+                    gfx_r2_r <= gfx_data;
+                    state    <= SP_ROWR3;
+                end
+            end
 
             SP_ROWR3: begin
-                gfx_r3_r <= gfx_data;
-                sx_idx   <= 4'b0;
-                state    <= SP_WRTZ;
+                if (gfx_ok) begin
+                    gfx_r3_r <= gfx_data;
+                    sx_idx   <= 4'b0;
+                    state    <= SP_WRTZ;
+                end
             end
 
             // ----------------------------------------------------------------

@@ -35,10 +35,11 @@ module tc0180vcu_tx (
     input  logic [ 5:0] tx_tilebank1,   // GFX bank when tile word bit[11]=1
     input  logic [ 3:0] tx_rampage,     // TX VRAM page (4-bit)
 
-    // GFX ROM interface (combinational: gfx_data valid same cycle as gfx_addr)
+    // GFX ROM interface
     output logic [22:0] gfx_addr,
     input  logic [ 7:0] gfx_data,
     output logic        gfx_rd,
+    input  logic        gfx_ok,
 
     // Pixel output (async read from line buffer, indexed by hpos)
     // Format: {color[3:0], pixel_index[3:0]}
@@ -180,42 +181,47 @@ always_ff @(posedge clk) begin
             end
 
             TX_VRAM: begin
-                // vram_q is combinationally valid (async VRAM read)
-                // gfx_base_c / color_c derived combinationally from vram_q
-                // gfx_data already reflects plane0 (gfx_addr = gfx_base_c, set above)
-                tx_color_r <= color_c;
-                gfx_base_r <= gfx_base_c;
-                gfx_b0_r   <= gfx_data;   // plane 0
-                state      <= TX_P0;
+                if (gfx_ok) begin
+                    tx_color_r <= color_c;
+                    gfx_base_r <= gfx_base_c;
+                    gfx_b0_r   <= gfx_data;   // plane 0
+                    state      <= TX_P0;
+                end
             end
 
             TX_P0: begin
-                gfx_b1_r <= gfx_data;     // plane 1
-                state    <= TX_P1;
+                if (gfx_ok) begin
+                    gfx_b1_r <= gfx_data;     // plane 1
+                    state    <= TX_P1;
+                end
             end
 
             TX_P1: begin
-                gfx_b2_r <= gfx_data;     // plane 2
-                state    <= TX_P2;
+                if (gfx_ok) begin
+                    gfx_b2_r <= gfx_data;     // plane 2
+                    state    <= TX_P2;
+                end
             end
 
             TX_P2: begin
-                // plane 3 is gfx_data (gfx_addr = gfx_base_r+17 combinationally)
-                // Decode 8 pixels and write to line buffer
-                for (int px = 0; px < 8; px++) begin
-                    linebuf[9'(tx_col) * 9'd8 + 9'(unsigned'(px))] <= {
-                        tx_color_r,
-                        gfx_data[7-px],    // plane 3 (MSB = leftmost pixel)
-                        gfx_b2_r[7-px],    // plane 2
-                        gfx_b1_r[7-px],    // plane 1
-                        gfx_b0_r[7-px]     // plane 0
-                    };
-                end
-                if (tx_col == 6'd63) begin
-                    state <= TX_IDLE;      // all 64 tiles done
-                end else begin
-                    tx_col <= tx_col + 6'd1;
-                    state  <= TX_VRAM;
+                if (gfx_ok) begin
+                    // plane 3 is gfx_data (gfx_addr = gfx_base_r+17 combinationally)
+                    // Decode 8 pixels and write to line buffer
+                    for (int px = 0; px < 8; px++) begin
+                        linebuf[9'(tx_col) * 9'd8 + 9'(unsigned'(px))] <= {
+                            tx_color_r,
+                            gfx_data[7-px],    // plane 3 (MSB = leftmost pixel)
+                            gfx_b2_r[7-px],    // plane 2
+                            gfx_b1_r[7-px],    // plane 1
+                            gfx_b0_r[7-px]     // plane 0
+                        };
+                    end
+                    if (tx_col == 6'd63) begin
+                        state <= TX_IDLE;      // all 64 tiles done
+                    end else begin
+                        tx_col <= tx_col + 6'd1;
+                        state  <= TX_VRAM;
+                    end
                 end
             end
 

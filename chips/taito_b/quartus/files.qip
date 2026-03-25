@@ -30,6 +30,18 @@ set_global_assignment -name QIP_FILE rtl/pll.qip
 
 set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/taito_b.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sdram_b.sv
+set_global_assignment -name VERILOG_FILE ../../../vendor/jtframe/hdl/jtframe_board_sdram.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/jtframe/hdl/clocking/jtframe_frac_cen.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/jtframe/hdl/sdram/jtframe_rom_1slot.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/jtframe/hdl/sdram/jtframe_rom_2slots.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/jtframe/hdl/sdram/jtframe_romrq.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/jtframe/hdl/sdram/jtframe_romrq_bcache.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/jtframe/hdl/sdram/jtframe_ramslot_ctrl.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/jtframe/hdl/sdram/jtframe_sdram64.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/jtframe/hdl/sdram/jtframe_sdram64_bank.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/jtframe/hdl/sdram/jtframe_sdram64_init.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/jtframe/hdl/sdram/jtframe_sdram64_latch.v
+set_global_assignment -name VERILOG_FILE ../../../vendor/jtframe/hdl/sdram/jtframe_sdram64_rfsh.v
 
 # =========================================================================
 # SUPPORT CHIPS (shared across Taito families)

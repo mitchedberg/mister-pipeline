@@ -33,7 +33,7 @@ module tb_top (
 
     // ── GFX ROM SDRAM ────────────────────────────────────────────────────────────
     output logic [26:0] gfx_rom_addr,
-    input  logic [15:0] gfx_rom_data,
+    input  logic  [7:0] gfx_rom_data,
     output logic        gfx_rom_req,
     input  logic        gfx_rom_ack,
 

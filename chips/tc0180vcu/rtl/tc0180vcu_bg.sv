@@ -76,10 +76,11 @@ module tc0180vcu_bg #(parameter PLANE = 0) (
     // lpb = 256 - lpb_ctrl;  lpb_ctrl=0 → lpb=256 (one global block, backward compat)
     input  logic [ 7:0] lpb_ctrl,
 
-    // GFX ROM (combinational)
+    // GFX ROM
     output logic [22:0] gfx_addr,
     input  logic [ 7:0] gfx_data,
     output logic        gfx_rd,
+    input  logic        gfx_ok,
 
     // Pixel output (async read from line buffer)
     output logic [ 9:0] layer_pixel
@@ -388,52 +389,86 @@ always_ff @(posedge clk) begin
                 state        <= BG_GFX0;
             end
 
-            BG_GFX0: begin gfx_b0_r <= gfx_data; state <= BG_GFX1; end
-            BG_GFX1: begin gfx_b1_r <= gfx_data; state <= BG_GFX2; end
-            BG_GFX2: begin gfx_b2_r <= gfx_data; state <= BG_GFX3; end
-
-            BG_GFX3: begin
-                // plane3 left = gfx_data; decode 8 left-half pixels
-                for (int px = 0; px < 8; px++) begin
-                    automatic logic [2:0] b;
-                    b = tile_flipx_r ? 3'(px) : 3'(7 - px);
-                    left_px[px] <= {tile_color_r,
-                                    gfx_data[b],
-                                    gfx_b2_r[b],
-                                    gfx_b1_r[b],
-                                    gfx_b0_r[b]};
+            BG_GFX0: begin
+                if (gfx_ok) begin
+                    gfx_b0_r <= gfx_data;
+                    state    <= BG_GFX1;
                 end
-                state <= BG_GFX4;
+            end
+            BG_GFX1: begin
+                if (gfx_ok) begin
+                    gfx_b1_r <= gfx_data;
+                    state    <= BG_GFX2;
+                end
+            end
+            BG_GFX2: begin
+                if (gfx_ok) begin
+                    gfx_b2_r <= gfx_data;
+                    state    <= BG_GFX3;
+                end
             end
 
-            BG_GFX4: begin gfx_r0_r <= gfx_data; state <= BG_GFX5; end
-            BG_GFX5: begin gfx_r1_r <= gfx_data; state <= BG_GFX6; end
-            BG_GFX6: begin gfx_r2_r <= gfx_data; state <= BG_GFX7; end
+            BG_GFX3: begin
+                if (gfx_ok) begin
+                    // plane3 left = gfx_data; decode 8 left-half pixels
+                    for (int px = 0; px < 8; px++) begin
+                        automatic logic [2:0] b;
+                        b = tile_flipx_r ? 3'(px) : 3'(7 - px);
+                        left_px[px] <= {tile_color_r,
+                                        gfx_data[b],
+                                        gfx_b2_r[b],
+                                        gfx_b1_r[b],
+                                        gfx_b0_r[b]};
+                    end
+                    state <= BG_GFX4;
+                end
+            end
+
+            BG_GFX4: begin
+                if (gfx_ok) begin
+                    gfx_r0_r <= gfx_data;
+                    state    <= BG_GFX5;
+                end
+            end
+            BG_GFX5: begin
+                if (gfx_ok) begin
+                    gfx_r1_r <= gfx_data;
+                    state    <= BG_GFX6;
+                end
+            end
+            BG_GFX6: begin
+                if (gfx_ok) begin
+                    gfx_r2_r <= gfx_data;
+                    state    <= BG_GFX7;
+                end
+            end
 
             BG_GFX7: begin
-                // plane3 right = gfx_data; write 16 pixels to linebuf
-                // Left half: linebuf[tile_col*16 + 0..7]
-                for (int px = 0; px < 8; px++) begin
-                    automatic logic [8:0] pos;
-                    pos = {tile_col, 4'b0000} | 9'(px);
-                    linebuf[pos] <= left_px[px];
-                end
-                // Right half: linebuf[tile_col*16 + 8..15]
-                for (int px = 0; px < 8; px++) begin
-                    automatic logic [2:0] b;
-                    automatic logic [8:0] pos;
-                    automatic logic [9:0] pix;
-                    b   = tile_flipx_r ? 3'(px) : 3'(7 - px);
-                    pos = {tile_col, 4'b1000} | 9'(px);
-                    pix = {tile_color_r, gfx_data[b], gfx_r2_r[b], gfx_r1_r[b], gfx_r0_r[b]};
-                    linebuf[pos] <= pix;
-                end
+                if (gfx_ok) begin
+                    // plane3 right = gfx_data; write 16 pixels to linebuf
+                    // Left half: linebuf[tile_col*16 + 0..7]
+                    for (int px = 0; px < 8; px++) begin
+                        automatic logic [8:0] pos;
+                        pos = {tile_col, 4'b0000} | 9'(px);
+                        linebuf[pos] <= left_px[px];
+                    end
+                    // Right half: linebuf[tile_col*16 + 8..15]
+                    for (int px = 0; px < 8; px++) begin
+                        automatic logic [2:0] b;
+                        automatic logic [8:0] pos;
+                        automatic logic [9:0] pix;
+                        b   = tile_flipx_r ? 3'(px) : 3'(7 - px);
+                        pos = {tile_col, 4'b1000} | 9'(px);
+                        pix = {tile_color_r, gfx_data[b], gfx_r2_r[b], gfx_r1_r[b], gfx_r0_r[b]};
+                        linebuf[pos] <= pix;
+                    end
 
-                if (tile_col == 5'd21) begin
-                    state <= BG_IDLE;
-                end else begin
-                    tile_col <= tile_col + 5'd1;
-                    state    <= BG_CODE;
+                    if (tile_col == 5'd21) begin
+                        state <= BG_IDLE;
+                    end else begin
+                        tile_col <= tile_col + 5'd1;
+                        state    <= BG_CODE;
+                    end
                 end
             end
 

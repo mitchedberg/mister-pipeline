@@ -109,6 +109,25 @@ After Taito B passes hardware:
 - move `nmk_arcade`, `psikyo_arcade`, `kaneko_arcade`, `toaplan_v2`, `taito_x` one at a time
 - delete duplicated custom controllers instead of maintaining them in parallel
 
+## Pilot Execution Workflow
+
+For the pilot core, the expected proof chain is:
+
+1. Touch only the pilot core and shared memory/refactor files.
+2. Run repo-local checks relevant to the touched files.
+3. Push to a synthesis-enabled branch (`sim-batch2`, `main`, or `master` per current CI filters).
+4. Let GitHub run:
+   - `Quartus Synthesis Gates`
+   - core-specific synthesis workflow (`Taito B Synthesis`)
+5. If synthesis succeeds:
+   - download the `taito_b_rbf` artifact
+   - deploy the new `taito_b.rbf` to MiSTer
+   - preserve/update MRA files as needed
+6. Confirm the behavioral side is still aligned with the existing golden workflow:
+   - Taito B / Nastar gate-5 baseline is already documented in `.shared/findings.md`
+   - if the memory frontend changes logical timing, re-run the Nastar golden comparison
+7. Only after a clean MiSTer hardware boot should the pattern be propagated to other cores.
+
 ## Rules Going Forward
 
 1. No new per-core SDRAM controller files unless a core has a genuinely different memory device.

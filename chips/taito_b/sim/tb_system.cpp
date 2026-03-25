@@ -4,7 +4,7 @@
 // Wraps tb_top.sv (which includes taito_b + fx68k CPU) and drives:
 //   - Clock (32 MHz) and reset
 //   - Video timing generator (320×240 @ ~60 Hz, H_TOTAL=416, V_TOTAL=264)
-//   - SDRAM channels: prog (toggle-handshake), gfx (zero-latency direct), sdr, z80
+//   - SDRAM channels: prog, gfx, sdr, z80 (all request/ack based)
 //   - Sound clock enable: 4 MHz (1 pulse every 8 sys clocks)
 //   - clk_pix2x: driven high every cycle (TC0260DAR ce_double stub)
 //   - Player inputs (all held at 0xFF = no input, active-low)
@@ -12,19 +12,18 @@
 // The CPU (fx68k) and Z80 (T80s) are inside tb_top.sv/taito_b.sv and execute
 // the real Nastar Warrior ROMs.
 //
-// SDRAM layout (from nastar.mra / emu.sv):
-//   0x000000 — CPU program ROM (512KB, interleaved even/odd)
-//   0x080000 — Z80 audio program ROM (64KB)
-//   0x100000 — TC0180VCU GFX ROM (1MB)
-//   0x200000 — ADPCM-A samples (512KB, ymsnd:adpcma)
-//   0x280000 — ADPCM-B samples (512KB, ymsnd:adpcmb)
+// JTFRAME banked layout used by the SDRAM frontend:
+//   prog bank  — CPU program ROM, local base 0x000000
+//   gfx bank   — TC0180VCU GFX ROM, local base 0x000000
+//   adpcm bank — ADPCM-A samples at 0x000000, ADPCM-B immediately after
+//   z80 bank   — Z80 audio program ROM, local base 0x000000
 //
 // Environment variables:
 //   N_FRAMES   — number of vertical frames to simulate (default 30)
-//   ROM_PROG   — path to CPU program ROM binary  (SDRAM 0x000000, interleaved 16-bit)
-//   ROM_Z80    — path to Z80 audio ROM binary    (SDRAM 0x080000)
-//   ROM_GFX    — path to GFX ROM binary          (SDRAM 0x100000)
-//   ROM_ADPCM  — path to ADPCM ROM binary        (SDRAM 0x200000, A+B concatenated)
+//   ROM_PROG   — path to CPU program ROM binary
+//   ROM_Z80    — path to Z80 audio ROM binary
+//   ROM_GFX    — path to GFX ROM binary
+//   ROM_ADPCM  — path to ADPCM ROM binary (A+B concatenated)
 //   DUMP_VCD   — set to "1" to enable VCD trace (slow)
 //
 // Output:
@@ -186,19 +185,21 @@ int main(int argc, char** argv) {
     }
 
     // ── Load ROM data ────────────────────────────────────────────────────────
-    SdramModel sdram;
-    if (env_prog)  sdram.load(env_prog,  0x000000);   // CPU program ROM (512KB interleaved)
-    if (env_z80)   sdram.load(env_z80,   0x080000);   // Z80 audio ROM (64KB)
-    if (env_gfx)   sdram.load(env_gfx,   0x100000);   // GFX ROM (1MB)
-    if (env_adpcm) sdram.load(env_adpcm, 0x200000);   // ADPCM-A+B samples (up to 1MB)
+    SdramModel prog_sdram;
+    SdramModel gfx_sdram;
+    SdramModel adpcm_sdram;
+    SdramModel z80_sdram;
+
+    if (env_prog)  prog_sdram.load(env_prog,   0x000000);
+    if (env_gfx)   gfx_sdram.load(env_gfx,     0x000000);
+    if (env_adpcm) adpcm_sdram.load(env_adpcm, 0x000000);
+    if (env_z80)   z80_sdram.load(env_z80,     0x000000);
 
     // ── SDRAM channels ───────────────────────────────────────────────────────
-    // All four channels use 16-bit toggle handshake.
-    // taito_b internally selects the correct byte for Z80 ROM reads.
-    ToggleSdramChannel prog_ch(sdram);   // CPU program ROM
-    // gfx_ch removed: GFX ROM uses zero-latency direct lookup (NMK bg_rom pattern)
-    ToggleSdramChannel sdr_ch(sdram);    // TC0140SYT ADPCM (sdr_addr/data/req/ack)
-    ToggleSdramChannel z80_ch(sdram);    // Z80 audio ROM (16-bit, byte selected in RTL)
+    ToggleSdramChannel     prog_ch(prog_sdram);
+    ToggleSdramChannelByte gfx_ch(gfx_sdram);
+    ToggleSdramChannel     sdr_ch(adpcm_sdram);
+    ToggleSdramChannel     z80_ch(z80_sdram);
 
     // ── Verilator init ──────────────────────────────────────────────────────
     Verilated::fatalOnError(false);  // suppress fx68k assertion halts during CPU reset
@@ -357,12 +358,9 @@ int main(int argc, char** argv) {
                 top->prog_rom_ack  = r.ack;
             }
             {
-                // GFX ROM: zero-latency direct lookup (NMK bg_rom pattern).
-                // TC0180VCU BG/FG/TX FSMs advance 1 state/cycle and read
-                // gfx_data combinatorially — no stall handshake is possible.
-                // Drive data directly from gfx_rom_addr every cycle; ack=req.
-                top->gfx_rom_data = sdram.read_word((uint32_t)top->gfx_rom_addr & ~1u);
-                top->gfx_rom_ack  = top->gfx_rom_req;  // always ack immediately
+                auto r = gfx_ch.tick(top->gfx_rom_req, top->gfx_rom_addr);
+                top->gfx_rom_data = r.data;
+                top->gfx_rom_ack  = r.ack;
             }
             {
                 auto r = sdr_ch.tick(top->sdr_req, top->sdr_addr);

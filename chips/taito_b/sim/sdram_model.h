@@ -124,7 +124,7 @@ private:
 // =============================================================================
 class ToggleSdramChannelByte {
 public:
-    static constexpr int LATENCY = 3;
+    static constexpr int LATENCY = 1;
 
     explicit ToggleSdramChannelByte(const SdramModel& sdram)
         : sdram_(sdram), ack_(0), last_req_(0), countdown_(0),

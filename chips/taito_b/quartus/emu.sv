@@ -552,7 +552,7 @@ wire [15:0] cpu_sdr_data;
 wire        cpu_sdr_req, cpu_sdr_ack;
 
 wire [26:0] gfx_sdr_addr;
-wire [15:0] gfx_sdr_data;
+wire  [7:0] gfx_sdr_data;
 wire        gfx_sdr_req, gfx_sdr_ack;
 
 wire [26:0] adpcm_sdr_addr;
@@ -563,18 +563,37 @@ wire [26:0] z80_sdr_addr;
 wire [15:0] z80_sdr_data;
 wire        z80_sdr_req, z80_sdr_ack;
 
-// ROM index → SDRAM base address routing (ioctl_addr resets to 0 per index)
-reg [26:0] rom_base_addr;
+// ROM download routing into the JTFRAME banked layout.
+reg  [1:0] rom_ioctl_ba;
+reg [26:0] rom_ioctl_addr;
 always_comb begin
+    rom_ioctl_ba   = 2'b00;
+    rom_ioctl_addr = 27'd0;
     case (ioctl_index)
-        8'h00: rom_base_addr = 27'h000000; // CPU prog ROM + Z80 ROM
-        8'h01: rom_base_addr = 27'h100000; // TC0180VCU GFX ROM
-        8'h02: rom_base_addr = 27'h200000; // ADPCM sample ROMs (YM2610)
-        default: rom_base_addr = 27'h000000;
+        8'h00: begin
+            if (ioctl_addr < 27'h080000) begin
+                rom_ioctl_ba   = 2'd0;          // 68000 program ROM bank
+                rom_ioctl_addr = ioctl_addr;
+            end else begin
+                rom_ioctl_ba   = 2'd3;          // Z80 ROM bank
+                rom_ioctl_addr = ioctl_addr - 27'h080000;
+            end
+        end
+        8'h01: begin
+            rom_ioctl_ba   = 2'd1;              // GFX ROM bank
+            rom_ioctl_addr = ioctl_addr;
+        end
+        8'h02: begin
+            rom_ioctl_ba   = 2'd2;              // ADPCM ROM bank
+            rom_ioctl_addr = ioctl_addr;
+        end
+        default: begin
+            rom_ioctl_ba   = 2'b00;
+            rom_ioctl_addr = 27'd0;
+        end
     endcase
 end
-wire [26:0] rom_ioctl_addr = rom_base_addr + ioctl_addr;
-wire        rom_ioctl_wr   = ioctl_wr & ioctl_download & (ioctl_index != 8'hFE);
+wire        rom_ioctl_wr = ioctl_wr & ioctl_download & (ioctl_index <= 8'h02);
 
 sdram_b u_sdram
 (
@@ -584,6 +603,7 @@ sdram_b u_sdram
 
     // CH0: HPS ROM download write path
     .ioctl_wr   (rom_ioctl_wr),
+    .ioctl_ba   (rom_ioctl_ba),
     .ioctl_addr (rom_ioctl_addr),
     .ioctl_dout (ioctl_dout),
 
