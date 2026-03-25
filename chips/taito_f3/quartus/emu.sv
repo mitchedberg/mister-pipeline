@@ -310,6 +310,7 @@ hps_io #(.CONF_STR(CONF_STR)) u_hps_io
 
 wire clk_sys;       // 53.372 MHz — core system clock
 wire clk_sdram;     // 143.0 MHz  — SDRAM interface clock (from PLL outclk_1)
+wire clk_8x;        // 192.0 MHz  — unified pixel pipeline clock (from PLL outclk_2)
 wire pll_locked;
 
 pll u_pll
@@ -317,7 +318,8 @@ pll u_pll
 	.refclk   (CLK_50M),
 	.rst      (1'b0),
 	.outclk_0 (clk_sys),    // 53.372 MHz
-	.outclk_1 (clk_sdram),  // 143.0  MHz
+	.outclk_1 (clk_sdram),  // 143.0  MHz (133 MHz in PLL; phase-shifted for SDRAM)
+	.outclk_2 (clk_8x),     // 192.0  MHz — unified pipeline
 	.locked   (pll_locked)
 );
 
@@ -485,6 +487,7 @@ taito_f3 u_taito_f3
 (
     .clk_sys    (clk_sys),
     .clk_pix    (ce_pix),
+    .clk_8x     (clk_8x),
     .reset_n    (reset_n),
 
     // Sound CPU bus (stub)

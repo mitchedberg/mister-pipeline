@@ -8,8 +8,9 @@
 module pll (
 		input  wire  refclk,   //  refclk.clk
 		input  wire  rst,      //   reset.reset
-		output wire  outclk_0, // outclk0.clk
-		output wire  outclk_1, // outclk1.clk
+		output wire  outclk_0, // outclk0.clk  53.372 MHz
+		output wire  outclk_1, // outclk1.clk  133.333 MHz (SDRAM, phase-shifted)
+		output wire  outclk_2, // outclk2.clk  192.0 MHz   (unified pipeline)
 		output wire  locked    //  locked.export
 	);
 
@@ -18,6 +19,7 @@ module pll (
 		.rst      (rst),      //   reset.reset
 		.outclk_0 (outclk_0), // outclk0.clk
 		.outclk_1 (outclk_1), // outclk1.clk
+		.outclk_2 (outclk_2), // outclk2.clk
 		.locked   (locked)    //  locked.export
 	);
 

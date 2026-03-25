@@ -48,6 +48,7 @@ module taito_f3 (
     // ── Clocks / Reset ────────────────────────────────────────────────────────
     input  logic        clk_sys,        // 26.686 MHz system clock
     input  logic        clk_pix,        // pixel clock enable (1-pulse per clk_sys, ÷4)
+    input  logic        clk_8x,         // 192 MHz — unified pixel pipeline clock
     input  logic        reset_n,        // active-low async reset
 
     // ── 68EC020 CPU Bus (driven from tg68k_adapter) ──────────────────────────
@@ -294,6 +295,8 @@ assign fda_cpu_cs = palette_cs && !cpu_as_n;
 tc0630fdp u_fdp (
     .clk             (clk_sys),
     .pix_cen         (clk_pix),
+    .clk_4x          (clk_8x),   // clk_4x role filled by clk_8x (sprite_render still uses it)
+    .clk_8x          (clk_8x),   // unified pipeline clock
     .async_rst_n     (reset_n),
 
     // CPU interface (16-bit, pixel-clock domain within FDP)

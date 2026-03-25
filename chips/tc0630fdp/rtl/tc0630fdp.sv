@@ -59,6 +59,9 @@ module tc0630fdp (
     // Phase 1: 4× pixel clock for time-multiplexed BG engine (≈96 MHz).
     // Required when QUARTUS is defined; may be tied to clk in simulation.
     input  logic        clk_4x,
+    // Phase 2: 8× pixel clock for unified pipeline (≈192 MHz).
+    // Required when QUARTUS is defined; may be tied to clk_4x in simulation.
+    input  logic        clk_8x,
 
     // ── CPU Interface (68EC020 bus, 16-bit) ────────────────────────────────
     input  logic        cpu_cs,         // chip select (active high)
@@ -1201,32 +1204,11 @@ tc0630fdp_lineram u_lineram (
 );
 
 // =============================================================================
-// tc0630fdp_text — Text layer engine (Step 2)
+// Phase 2: tc0630fdp_unified — Unified 8× pipeline replacing bg_4x, text,
+//          pivot, and colmix with a single shared-datapath module.
 // =============================================================================
-tc0630fdp_text u_text (
-    .clk          (clk),
-    .clk_4x       (clk_4x),
-    .rst_n        (rst_n),
-    .hblank       (hblank),
-    .vpos         (vpos),
-    .text_rd_addr (text_rd_addr_w),
-    .text_q       (text_q_w),
-    .char_rd_addr (char_rd_addr_w),
-    .char_q       (char_q_w),
-    .hpos         (hpos),
-    .text_pixel   (text_pixel_out)
-);
-
-// =============================================================================
-// Phase 1: tc0630fdp_bg_4x — single time-multiplexed BG engine at 4× clock
-// =============================================================================
-// Replaces 4 independent tc0630fdp_bg instances with one instance running at
-// clk_4x (≈96 MHz), cycling through layers PF1–PF4 within each HBLANK period.
-// Estimated savings: ~3 BG engines × ~14K ALMs = ~42K–55K ALMs.
-//
-// GFX ROM: uses a single shared read port (bg_gfx_addr[0] / bg_gfx_data[0]).
-// The four bg_gfx_addr/data/rd arrays are declared for simulation compatibility;
-// under QUARTUS only index [0] is driven.
+// GFX ROM: single shared read port (bg_gfx_addr[0] / bg_gfx_data[0]).
+// All four bg_gfx_addr/data/rd arrays kept for simulation; only [0] driven.
 // =============================================================================
 logic [21:0] bg_mux_gfx_addr;
 logic [31:0] bg_mux_gfx_data;
@@ -1239,7 +1221,7 @@ assign bg_mux_gfx_data = 32'b0;  // GFX ROM stubbed to 0 in synthesis (SDRAM in 
 assign bg_gfx_addr[0]  = bg_mux_gfx_addr;
 assign bg_gfx_rd  [0]  = bg_mux_gfx_rd;
 assign bg_mux_gfx_data = bg_gfx_data[0];
-// Tie off unused BG GFX ports (indices 1–3 no longer driven by bg instance)
+// Tie off unused BG GFX ports (indices 1–3 no longer driven by unified instance)
 assign bg_gfx_addr[1] = 22'b0;
 assign bg_gfx_addr[2] = 22'b0;
 assign bg_gfx_addr[3] = 22'b0;
@@ -1248,30 +1230,120 @@ assign bg_gfx_rd  [2] = 1'b0;
 assign bg_gfx_rd  [3] = 1'b0;
 `endif
 
-tc0630fdp_bg_4x u_bg_4x (
+// TC0650FDA blend interface wires — driven by unified module, consumed by u_fda.
+logic [12:0] colmix_src_pal;
+logic [12:0] colmix_dst_pal;
+logic [ 3:0] colmix_src_blend;
+logic [ 3:0] colmix_dst_blend;
+logic        colmix_do_blend;
+logic        colmix_pixel_valid_out;
+
+// Colmix palette read ports (driven by unified, wired to palette RAM below)
+logic [12:0] colmix_pal_addr_src;
+logic [12:0] colmix_pal_addr_dst;
+logic [15:0] colmix_pal_rdata_src;
+logic [15:0] colmix_pal_rdata_dst;
+
+tc0630fdp_unified u_unified (
     .clk             (clk),
-    .clk_4x          (clk_4x),
+    .clk_8x          (clk_8x),
     .rst_n           (rst_n),
+
+    // Video timing (pixel clock domain)
     .hblank          (hblank),
     .vpos            (vpos),
     .hpos            (hpos),
+    .pixel_valid     (pixel_valid),
+
+    // Scroll and layer control
     .pf_xscroll      (pf_xscroll_p),
     .pf_yscroll      (pf_yscroll_p),
     .extend_mode     (extend_mode),
+
+    // Per-scanline Line RAM outputs
     .ls_rowscroll    (ls_rowscroll),
     .ls_alt_tilemap  (ls_alt_tilemap),
     .ls_zoom_x       (ls_zoom_x),
     .ls_zoom_y       (ls_zoom_y),
     .ls_colscroll    (ls_colscroll),
     .ls_pal_add      (ls_pal_add),
-    .ls_mosaic_en    (ls_pf_mosaic_en),
+    .ls_pf_prio      (ls_pf_prio),
+    .ls_spr_prio     (ls_spr_prio),
+    // clip planes
+    .ls_clip_left    (ls_clip_left),
+    .ls_clip_right   (ls_clip_right),
+    .ls_pf_clip_en   (ls_pf_clip_en),
+    .ls_pf_clip_inv  (ls_pf_clip_inv),
+    .ls_pf_clip_sense(ls_pf_clip_sense),
+    .ls_spr_clip_en  (ls_spr_clip_en),
+    .ls_spr_clip_inv (ls_spr_clip_inv),
+    .ls_spr_clip_sense(ls_spr_clip_sense),
+    // alpha blend
+    .ls_a_src        (ls_a_src),
+    .ls_a_dst        (ls_a_dst),
+    .ls_pf_blend     (ls_pf_blend),
+    .ls_spr_blend    (ls_spr_blend),
+    // reverse blend B
+    .ls_b_src        (ls_b_src),
+    .ls_b_dst        (ls_b_dst),
+    // mosaic
     .ls_mosaic_rate  (ls_mosaic_rate),
+    .ls_pf_mosaic_en (ls_pf_mosaic_en),
+    .ls_spr_mosaic_en(ls_spr_mosaic_en),
+    // pivot layer
+    .ls_pivot_en     (ls_pivot_en),
+    .ls_pivot_bank   (ls_pivot_bank),
+    .ls_pivot_blend  (ls_pivot_blend),
+
+    // PF RAM read ports (4 independent)
     .pf_rd_addr      (pf_rd_addr_w_p),
     .pf_q            (pf_q_w_p),
+
+    // GFX ROM read port (shared — BG layers only)
     .gfx_addr        (bg_mux_gfx_addr),
-    .gfx_data        (bg_mux_gfx_data),
     .gfx_rd          (bg_mux_gfx_rd),
-    .bg_pixel        (bg_pixel_out)
+    .gfx_data        (bg_mux_gfx_data),
+
+    // Text/Char RAM read ports
+    .text_rd_addr    (text_rd_addr_w),
+    .text_q          (text_q_w),
+    .char_rd_addr    (char_rd_addr_w),
+    .char_q          (char_q_w),
+
+    // Pivot RAM read port
+    .pvt_rd_addr     (pvt_engine_rd_addr),
+    .pvt_q           (pvt_engine_q),
+    .pixel_xscroll   (pixel_xscroll),
+    .pixel_yscroll   (pixel_yscroll),
+
+    // Sprite pixel input from sprite_render
+    .spr_pixel       (spr_pixel_out),
+
+    // Palette RAM interface
+    .pal_addr_src    (colmix_pal_addr_src),
+    .pal_addr_dst    (colmix_pal_addr_dst),
+    .pal_rdata_src   (colmix_pal_rdata_src),
+    .pal_rdata_dst   (colmix_pal_rdata_dst),
+
+    // Compositor pixel outputs
+    .colmix_pixel_out(colmix_pixel_out),
+    .blend_rgb_out   (blend_rgb_out),
+
+    // TC0650FDA blend interface
+    .src_pal         (colmix_src_pal),
+    .dst_pal         (colmix_dst_pal),
+    .src_blend       (colmix_src_blend),
+    .dst_blend       (colmix_dst_blend),
+    .do_blend        (colmix_do_blend),
+    .pixel_valid_out (colmix_pixel_valid_out)
+
+`ifndef QUARTUS
+    ,
+    // Debug / testbench outputs
+    .bg_pixel_out    (bg_pixel_out),
+    .text_pixel_out  (text_pixel_out),
+    .pivot_pixel_out (pivot_pixel_out)
+`endif
 );
 
 // =============================================================================
@@ -1317,35 +1389,11 @@ tc0630fdp_sprite_render u_sprite_render (
 );
 
 // =============================================================================
-// tc0630fdp_pivot — Pivot/Pixel layer engine (Step 16)
-// =============================================================================
-tc0630fdp_pivot u_pivot (
-    .clk            (clk),
-    .clk_4x         (clk_4x),
-    .rst_n          (rst_n),
-    .hblank         (hblank),
-    .vpos           (vpos),
-    .ls_pivot_en    (ls_pivot_en),
-    .ls_pivot_bank  (ls_pivot_bank),
-    .ls_pivot_blend (ls_pivot_blend),
-    .pixel_xscroll  (pixel_xscroll),
-    .pixel_yscroll  (pixel_yscroll),
-    .pvt_rd_addr    (pvt_engine_rd_addr),
-    .pvt_q          (pvt_engine_q),
-    .hpos           (hpos),
-    .pivot_pixel    (pivot_pixel_out)
-);
-
-// =============================================================================
 // Palette RAM (8192 × 16-bit) — Step 13
-// Two async read ports for colmix (src + dst), one testbench write port.
+// Two registered read ports for unified compositor (src + dst), one testbench write port.
 // Format: bits[15:12]=R(4), bits[11:8]=G(4), bits[7:4]=B(4), bits[3:0]=don't care.
+// colmix_pal_addr_src/dst and colmix_pal_rdata_src/dst declared in unified block above.
 // =============================================================================
-// Colmix palette read ports
-logic [12:0] colmix_pal_addr_src;
-logic [12:0] colmix_pal_addr_dst;
-logic [15:0] colmix_pal_rdata_src;
-logic [15:0] colmix_pal_rdata_dst;
 
 `ifdef QUARTUS
 // altsyncram DUAL_PORT: src read path (port A = testbench write, port B = src read)
@@ -1429,64 +1477,6 @@ always_ff @(posedge clk) begin
     end
 end
 `endif
-
-// =============================================================================
-// tc0630fdp_colmix — Layer Compositor (Step 14: +Alpha Blend Mode B)
-// =============================================================================
-// TC0650FDA blend interface wires — drive tc0650fda u_fda below.
-logic [12:0] colmix_src_pal;
-logic [12:0] colmix_dst_pal;
-logic [ 3:0] colmix_src_blend;
-logic [ 3:0] colmix_dst_blend;
-logic        colmix_do_blend;
-logic        colmix_pixel_valid_out;
-
-tc0630fdp_colmix u_colmix (
-    .clk               (clk),
-    .rst_n             (rst_n),
-    .hpos              (hpos),
-    .vpos              (vpos),
-    .pixel_valid       (pixel_valid),
-    .text_pixel        (text_pixel_out),
-    .bg_pixel          (bg_pixel_out),
-    .spr_pixel         (spr_pixel_out),
-    // Step 16: pivot layer
-    .pivot_pixel       (pivot_pixel_out),
-    .ls_pivot_blend    (ls_pivot_blend),
-    .ls_pf_prio        (ls_pf_prio),
-    .ls_spr_prio       (ls_spr_prio),
-    .ls_clip_left      (ls_clip_left),
-    .ls_clip_right     (ls_clip_right),
-    .ls_pf_clip_en     (ls_pf_clip_en),
-    .ls_pf_clip_inv    (ls_pf_clip_inv),
-    .ls_pf_clip_sense  (ls_pf_clip_sense),
-    .ls_spr_clip_en    (ls_spr_clip_en),
-    .ls_spr_clip_inv   (ls_spr_clip_inv),
-    .ls_spr_clip_sense (ls_spr_clip_sense),
-    // Step 13: alpha blend
-    .ls_a_src          (ls_a_src),
-    .ls_a_dst          (ls_a_dst),
-    .ls_pf_blend       (ls_pf_blend),
-    .ls_spr_blend      (ls_spr_blend),
-    // Step 14: reverse blend B coefficients
-    .ls_b_src          (ls_b_src),
-    .ls_b_dst          (ls_b_dst),
-    // Step 13: palette read ports
-    .pal_addr_src      (colmix_pal_addr_src),
-    .pal_addr_dst      (colmix_pal_addr_dst),
-    .pal_rdata_src     (colmix_pal_rdata_src),
-    .pal_rdata_dst     (colmix_pal_rdata_dst),
-    // existing outputs
-    .colmix_pixel_out  (colmix_pixel_out),
-    .blend_rgb_out     (blend_rgb_out),
-    // TC0650FDA blend interface outputs
-    .src_pal           (colmix_src_pal),
-    .dst_pal           (colmix_dst_pal),
-    .src_blend         (colmix_src_blend),
-    .dst_blend         (colmix_dst_blend),
-    .do_blend          (colmix_do_blend),
-    .pixel_valid_out   (colmix_pixel_valid_out)
-);
 
 // =============================================================================
 // tc0650fda — Palette RAM + Alpha Blend + DAC (Step 17)
