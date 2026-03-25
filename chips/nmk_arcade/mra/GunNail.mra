@@ -1,0 +1,79 @@
+<!--
+    GunNail (1993) — NMK / Tecmo
+    MiSTer ROM descriptor for NMK arcade core
+
+    Hardware:
+      MC68000 @ 10 MHz
+      NMK004 MCU (TMP90840 sound controller, via protcpu slot)
+      NMK215 graphics descrambler
+      YM2203 FM + OKI M6295 x2
+
+    MAME driver: nmk16.cpp, set: gunnail
+    ROM set CRCs verified from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 512KB interleaved from 2x256KB)
+      0x0C0000   Sprite ROM (2MB)
+      0x1C0000   BG tile ROM (128KB fgtile + 1MB bgtile)
+      0x200000   ADPCM ROM (512KB OKI M6295 bank 0, oki1)
+      0x280000   ADPCM ROM (512KB OKI M6295 bank 1, oki2)
+      0x300000   NMK004 MCU code (64KB)
+
+    NOTE: GunNail uses the NMK215 graphics descrambler chip. If the FPGA
+    core does not implement NMK215 descrambling, sprite and BG graphics
+    will appear scrambled/corrupt. GFX data loaded as-is (MAME descrambles on load).
+-->
+<misterromdescription>
+    <name>GunNail</name>
+    <setname>gunnail</setname>
+    <rbf>nmk_arcade</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Flip Screen"  ids="0,0" bits="0,0" values="Off,On"/>
+        <dip name="Language"     ids="0,0" bits="1,1" values="English,Japanese"/>
+        <dip name="Difficulty"   ids="0,0" bits="3,2" values="Easy,Normal,Hard,Hardest"/>
+        <dip name="Demo Sounds"  ids="1,1" bits="1,1" values="Off,On"/>
+    </switches>
+
+    <!-- CPU Program ROM (512KB interleaved) — loaded at SDRAM 0x000000 -->
+    <rom index="0" zip="gunnail.zip" md5="None">
+        <interleave output="16">
+            <part name="3e.u131" crc="61d985b2" map="10"/>  <!-- even bytes → D15:D8 -->
+            <part name="3o.u133" crc="f114e89c" map="01"/>  <!-- odd bytes  → D7:D0  -->
+        </interleave>
+    </rom>
+
+    <!-- Sprite ROM (2MB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="gunnail.zip" md5="None">
+        <part name="92077-7.u134" crc="d49169b3"/>
+    </rom>
+
+    <!-- BG/FG Tile ROM — loaded at SDRAM 0x1C0000 -->
+    <!-- fgtile (128KB) + bgtile (1MB) -->
+    <rom index="2" zip="gunnail.zip" md5="None">
+        <part name="1.u21"      crc="3d00a9f4"/>  <!-- fgtile 128KB -->
+        <part name="92077-4.u19" crc="a9ea2804"/> <!-- bgtile 1MB -->
+    </rom>
+
+    <!-- ADPCM ROM bank 0 (512KB, oki1) — loaded at SDRAM 0x200000 -->
+    <rom index="3" zip="gunnail.zip" md5="None">
+        <part name="92077-5.u56" crc="feb83c73"/>
+    </rom>
+
+    <!-- ADPCM ROM bank 1 (512KB, oki2) — loaded at SDRAM 0x280000 -->
+    <rom index="4" zip="gunnail.zip" md5="None">
+        <part name="92077-6.u57" crc="6d133f0d"/>
+    </rom>
+
+    <!-- NMK004 MCU sound code (64KB) — loaded at SDRAM 0x300000 -->
+    <rom index="5" zip="gunnail.zip" md5="None">
+        <part name="92077_2.u101" crc="cd4e55f8"/>
+    </rom>
+
+    <!-- DIP switches (index 0xFE) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

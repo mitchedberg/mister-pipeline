@@ -15,7 +15,7 @@
 
 import v60_decode_pkg::*;
 
-module v60_decode_00_3f (
+module v60_decode_00_3f /* synthesis keep_hierarchy on */ (
     // Instruction buffer (10 bytes fetched)
     input  logic [7:0]  ibuf [0:9],
     // Register file (read-only)
@@ -346,7 +346,7 @@ module v60_decode_00_3f (
     // =========================================================================
     // Combinational decode logic
     // =========================================================================
-    always_comb begin
+    always @(*) begin
         // Default: trap on unknown opcode
         d = decode_zero();
 
@@ -525,6 +525,13 @@ module v60_decode_00_3f (
                 int          upd_len1, upd_len2;
                 logic [31:0] upd_next_pc;
                 logic [31:0] upd_new_psw, upd_cur_psw;
+
+                // Default all locals to prevent latch inference (Quartus 20 always_comb rule)
+                upd_is_reg1 = 1'b0; upd_is_imm1 = 1'b0;
+                upd_is_reg2 = 1'b0; upd_is_imm2 = 1'b0;
+                upd_val1 = '0; upd_val2 = '0;
+                upd_len1 = 0; upd_len2 = 0;
+                upd_next_pc = '0; upd_new_psw = '0; upd_cur_psw = '0;
 
                 d = decode_zero();
 

@@ -1,0 +1,78 @@
+<!--
+    Saboten Bombers (1992) — NMK / Tecmo
+    MiSTer ROM descriptor for NMK arcade core
+
+    Hardware:
+      MC68000 @ 10 MHz
+      NMK004 MCU (TMP90840 sound controller, via protcpu slot)
+      NMK-215 protection MCU (8KB, nmk-215.bin) — program copy-protection
+      NMK215 graphics descrambler
+      YM2203 FM + OKI M6295 x2
+
+    MAME driver: nmk16.cpp, set: sabotenb
+    ROM set CRCs verified from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 512KB interleaved from 2x256KB)
+      0x0C0000   Sprite ROM (2MB)
+      0x1C0000   BG tile ROM (64KB fgtile + 2MB bgtile)
+      0x200000   ADPCM ROM (1MB OKI M6295 bank 0, oki1)
+      0x280000   ADPCM ROM (1MB OKI M6295 bank 1, oki2)
+
+    WARNING: Saboten Bombers uses the NMK-215 protection MCU. The FPGA core
+    does not implement this protection. The game will likely hang during boot.
+    The protection MCU code (nmk-215.bin) is NOT loaded by this MRA.
+    The NMK004 MCU is combined in the protcpu slot — index 5 not used.
+
+    NOTE: NMK215 graphics descrambler required for correct GFX rendering.
+-->
+<misterromdescription>
+    <name>Saboten Bombers</name>
+    <setname>sabotenb</setname>
+    <rbf>nmk_arcade</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Flip Screen"  ids="0,0" bits="0,0" values="Off,On"/>
+        <dip name="Language"     ids="0,0" bits="1,1" values="English,Japanese"/>
+        <dip name="Difficulty"   ids="0,0" bits="3,2" values="Easy,Normal,Hard,Hardest"/>
+        <dip name="Lives"        ids="0,0" bits="7,6" values="1,2,3,4"/>
+        <dip name="Demo Sounds"  ids="1,1" bits="1,1" values="Off,On"/>
+    </switches>
+
+    <!-- CPU Program ROM (512KB interleaved) — loaded at SDRAM 0x000000 -->
+    <rom index="0" zip="sabotenb.zip" md5="None">
+        <interleave output="16">
+            <part name="ic76.sb1" crc="b2b0b2cf" map="10"/>  <!-- even bytes → D15:D8 -->
+            <part name="ic75.sb2" crc="367e87b7" map="01"/>  <!-- odd bytes  → D7:D0  -->
+        </interleave>
+    </rom>
+
+    <!-- Sprite ROM (2MB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="sabotenb.zip" md5="None">
+        <part name="ic100.sb5" crc="b20f166e"/>
+    </rom>
+
+    <!-- BG/FG Tile ROM — loaded at SDRAM 0x1C0000 -->
+    <!-- fgtile (64KB) + bgtile (2MB) -->
+    <rom index="2" zip="sabotenb.zip" md5="None">
+        <part name="ic35.sb3" crc="eb7bc99d"/>  <!-- fgtile 64KB -->
+        <part name="ic32.sb4" crc="24c62205"/>  <!-- bgtile 2MB -->
+    </rom>
+
+    <!-- ADPCM ROM bank 0 (1MB, oki1) — loaded at SDRAM 0x200000 -->
+    <rom index="3" zip="sabotenb.zip" md5="None">
+        <part name="ic30.sb6" crc="288407af"/>
+    </rom>
+
+    <!-- ADPCM ROM bank 1 (1MB, oki2) — loaded at SDRAM 0x280000 -->
+    <rom index="4" zip="sabotenb.zip" md5="None">
+        <part name="ic27.sb7" crc="43e33a7e"/>
+    </rom>
+
+    <!-- DIP switches (index 0xFE) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

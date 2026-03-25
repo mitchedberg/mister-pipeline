@@ -22,7 +22,7 @@
 <misterromdescription>
   <name>Super Spacefortress Macross</name>
   <setname>macross</setname>
-  <rbf>NMK16</rbf>
+  <rbf>nmk_arcade</rbf>
   <mameversion>0.245</mameversion>
 
   <switches default="FF,FF">

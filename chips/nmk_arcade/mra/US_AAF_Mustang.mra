@@ -1,0 +1,85 @@
+<!--
+    US AAF Mustang (1990) — UPL
+    MiSTer ROM descriptor for NMK arcade core
+
+    Hardware:
+      MC68000 @ 8 MHz
+      NMK004 MCU (TMP90840 sound controller)
+      YM2203 FM + OKI M6295
+
+    MAME driver: nmk16.cpp, set: mustang
+    ROM set CRCs verified from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 256KB interleaved from 2x128KB)
+      0x0C0000   Sprite ROM (1MB)
+      0x1C0000   BG tile ROM (128KB fgtile + 512KB bgtile)
+      0x200000   ADPCM ROM (512KB OKI M6295 bank 0, oki1)
+      0x280000   ADPCM ROM (512KB OKI M6295 bank 1, oki2)
+      0x300000   NMK004 MCU code (64KB, nmk004 region)
+
+    NOTE: CPU runs at 8 MHz on mustang hardware; core runs at 10 MHz — 25% overclock.
+    Gameplay timing is slightly fast but broadly functional.
+
+    NOTE: oki2 (90058-6) loaded at index 4 instead of Z80 slot since mustang has
+    no separate Z80; NMK004 handles audio on the TMP90840.
+    Core only uses oki1 path directly; oki2 bank switching via NMK004 MCU.
+-->
+<misterromdescription>
+    <name>US AAF Mustang</name>
+    <setname>mustang</setname>
+    <rbf>nmk_arcade</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Demo Sounds"  ids="0,0" bits="1,1" values="Off,On"/>
+        <dip name="Coin A"       ids="0,0" bits="7,5" values="1 Coin/1 Credit,1 Coin/2 Credits,1 Coin/3 Credits,1 Coin/4 Credits,2 Coins/1 Credit,3 Coins/1 Credit,4 Coins/1 Credit,Free Play"/>
+        <dip name="Flip Screen"  ids="1,1" bits="0,0" values="Off,On"/>
+        <dip name="Difficulty"   ids="1,1" bits="3,2" values="Easy,Normal,Hard,Hardest"/>
+        <dip name="Lives"        ids="1,1" bits="7,6" values="2,3,4,5"/>
+    </switches>
+
+    <!-- CPU Program ROM (256KB interleaved) — loaded at SDRAM 0x000000 -->
+    <!-- 68000: even bytes (D15:D8), odd bytes (D7:D0) -->
+    <rom index="0" zip="mustang.zip" md5="None">
+        <interleave output="16">
+            <part name="2.bin" crc="bd9f7c89" map="10"/>  <!-- even bytes → D15:D8 -->
+            <part name="3.bin" crc="0eec36a5" map="01"/>  <!-- odd bytes  → D7:D0  -->
+        </interleave>
+    </rom>
+
+    <!-- Sprite ROM (512KB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="mustang.zip" md5="None">
+        <part name="90058-8" crc="560bff04"/>
+        <part name="90058-9" crc="b9d72a03"/>
+    </rom>
+
+    <!-- BG/FG Tile ROM — loaded at SDRAM 0x1C0000 -->
+    <!-- fgtile (64KB) + bgtile (512KB) -->
+    <rom index="2" zip="mustang.zip" md5="None">
+        <part name="90058-1" crc="81ccfcad"/>  <!-- fgtile 128KB -->
+        <part name="90058-4" crc="a07a2002"/>  <!-- bgtile 512KB -->
+    </rom>
+
+    <!-- ADPCM ROM bank 0 (512KB, oki1) — loaded at SDRAM 0x200000 -->
+    <rom index="3" zip="mustang.zip" md5="None">
+        <part name="90058-5" crc="c60c883e"/>
+    </rom>
+
+    <!-- ADPCM ROM bank 1 (512KB, oki2) — loaded at SDRAM 0x280000 -->
+    <rom index="4" zip="mustang.zip" md5="None">
+        <part name="90058-6" crc="233c1776"/>
+    </rom>
+
+    <!-- NMK004 MCU sound code (64KB) — loaded at SDRAM 0x300000 -->
+    <!-- Index 5: MCU code slot (TMP90840); used for Z80/NMK004 sound ROM -->
+    <rom index="5" zip="mustang.zip" md5="None">
+        <part name="90058-7" crc="920a93c8"/>
+    </rom>
+
+    <!-- DIP switches (index 0xFE) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

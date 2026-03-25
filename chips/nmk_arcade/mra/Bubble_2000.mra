@@ -1,0 +1,83 @@
+<!--
+    Bubble 2000 (1998) — Afega (Tuning license)
+    MiSTer ROM descriptor for NMK arcade core
+
+    Hardware:
+      MC68000 @ 12 MHz
+      Z80 @ 4 MHz (audiocpu)
+      OKI M6295 x1 (no YM2203 FM)
+      Late-era NMK16-derived hardware by Afega
+
+    MAME driver: nmk16.cpp, set: bubl2000
+    ROM set CRCs verified from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 256KB interleaved from 2x128KB)
+      0x0C0000   Sprite ROM (512KB: 2x256KB)
+      0x1C0000   BG tile ROM (64KB fgtile + 6x512KB bgtile)
+      0x200000   ADPCM ROM (256KB OKI M6295, oki1)
+      0x280000   Z80 audiocpu ROM (64KB)
+
+    NOTE: Bubble 2000 uses Z80 audiocpu (no NMK004 MCU). Audio will NOT work.
+    CPU runs at 12 MHz; core runs at 10 MHz — 17% underclock.
+    This is an Afega game from 1998, a later clone of NMK16 hardware.
+    No YM2203 FM chip — OKI M6295 only for all sound.
+
+    NOTE: bgtile has 6 ROMs (3MB total). Only the first window fits in the
+    128KB BG ROM slot in the standard SDRAM layout. Additional tile ROMs
+    will be truncated. Extended BG ROM support requires RTL changes.
+-->
+<misterromdescription>
+    <name>Bubble 2000</name>
+    <setname>bubl2000</setname>
+    <rbf>nmk_arcade</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Difficulty"   ids="0,0" bits="3,2" values="Easy,Normal,Hard,Hardest"/>
+        <dip name="Demo Sounds"  ids="1,1" bits="1,1" values="Off,On"/>
+    </switches>
+
+    <!-- CPU Program ROM (256KB interleaved) — loaded at SDRAM 0x000000 -->
+    <rom index="0" zip="bubl2000.zip" md5="None">
+        <interleave output="16">
+            <part name="rom10.112" crc="87f960d7" map="10"/>  <!-- even bytes → D15:D8 -->
+            <part name="rom11.107" crc="b386041a" map="01"/>  <!-- odd bytes  → D7:D0  -->
+        </interleave>
+    </rom>
+
+    <!-- Sprite ROM (512KB from 2x256KB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="bubl2000.zip" md5="None">
+        <part name="rom08.11" crc="519dfd82"/>  <!-- 256KB -->
+        <part name="rom09.14" crc="04fcb5c6"/>  <!-- 256KB -->
+    </rom>
+
+    <!-- BG/FG Tile ROM — loaded at SDRAM 0x1C0000 -->
+    <!-- fgtile (64KB) + bgtile (3MB from 6x512KB) -->
+    <!-- NOTE: Only first ~128KB BG window accessible without extended BG ROM RTL -->
+    <rom index="2" zip="bubl2000.zip" md5="None">
+        <part name="rom03.4"  crc="f4c15588"/>  <!-- fgtile 64KB -->
+        <part name="rom06.6"  crc="ac1aabf5"/>  <!-- bgtile 512KB -->
+        <part name="rom07.9"  crc="69aff769"/>  <!-- bgtile 512KB -->
+        <part name="rom13.7"  crc="3a5b7226"/>  <!-- bgtile 512KB -->
+        <part name="rom04.1"  crc="46acd054"/>  <!-- bgtile 512KB -->
+        <part name="rom05.3"  crc="37deb6a1"/>  <!-- bgtile 512KB -->
+        <part name="rom12.2"  crc="1fdc59dd"/>  <!-- bgtile 512KB -->
+    </rom>
+
+    <!-- ADPCM ROM (256KB, oki1) — loaded at SDRAM 0x200000 -->
+    <rom index="3" zip="bubl2000.zip" md5="None">
+        <part name="rom02.95" crc="859a86e5"/>
+    </rom>
+
+    <!-- Z80 audiocpu ROM (64KB) — loaded at SDRAM 0x280000 -->
+    <rom index="4" zip="bubl2000.zip" md5="None">
+        <part name="rom01.92" crc="5d8cf28e"/>
+    </rom>
+
+    <!-- DIP switches (index 0xFE) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

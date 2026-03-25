@@ -1,0 +1,75 @@
+<!--
+    Acrobat Mission (1991) — UPL (Taito license)
+    MiSTer ROM descriptor for NMK arcade core
+
+    Hardware:
+      MC68000 @ 10 MHz
+      NMK004 MCU (TMP90840 sound controller)
+      YM2203 FM + OKI M6295
+
+    MAME driver: nmk16.cpp, set: acrobatm
+    ROM set CRCs verified from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 256KB interleaved from 2x128KB)
+      0x0C0000   Sprite ROM (1.5MB: 1MB + 512KB)
+      0x1C0000   BG tile ROM (64KB fgtile + 1MB bgtile)
+      0x200000   ADPCM ROM (512KB OKI M6295 bank 0, oki1)
+      0x280000   ADPCM ROM (512KB OKI M6295 bank 1, oki2)
+      0x300000   NMK004 MCU code (64KB)
+-->
+<misterromdescription>
+    <name>Acrobat Mission</name>
+    <setname>acrobatm</setname>
+    <rbf>nmk_arcade</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Demo Sounds"  ids="0,0" bits="0,0" values="Off,On"/>
+        <dip name="Difficulty"   ids="0,0" bits="5,4" values="Hardest,Easy,Hard,Normal"/>
+        <dip name="Lives"        ids="0,0" bits="7,6" values="2,3,4,5"/>
+        <dip name="Flip Screen"  ids="1,1" bits="1,1" values="Off,On"/>
+    </switches>
+
+    <!-- CPU Program ROM (256KB interleaved) — loaded at SDRAM 0x000000 -->
+    <rom index="0" zip="acrobatm.zip" md5="None">
+        <interleave output="16">
+            <part name="2.ic100" crc="3fe487f4" map="10"/>  <!-- even bytes → D15:D8 -->
+            <part name="1.ic101" crc="17175753" map="01"/>  <!-- odd bytes  → D7:D0  -->
+        </interleave>
+    </rom>
+
+    <!-- Sprite ROM (1.5MB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="acrobatm.zip" md5="None">
+        <part name="am-01.ic42" crc="5672bdaa"/>  <!-- 1MB -->
+        <part name="am-02.ic29" crc="b4c0ace3"/>  <!-- 512KB -->
+    </rom>
+
+    <!-- BG/FG Tile ROM — loaded at SDRAM 0x1C0000 -->
+    <!-- fgtile (64KB) + bgtile (1MB) -->
+    <rom index="2" zip="acrobatm.zip" md5="None">
+        <part name="3.ic79"    crc="d86c186e"/>  <!-- fgtile 64KB -->
+        <part name="am-03.ic8" crc="7c12afed"/>  <!-- bgtile 1MB -->
+    </rom>
+
+    <!-- ADPCM ROM bank 0 (512KB, oki1) — loaded at SDRAM 0x200000 -->
+    <rom index="3" zip="acrobatm.zip" md5="None">
+        <part name="am-05.ic54" crc="3b8c2b0e"/>
+    </rom>
+
+    <!-- ADPCM ROM bank 1 (512KB, oki2) — loaded at SDRAM 0x280000 -->
+    <rom index="4" zip="acrobatm.zip" md5="None">
+        <part name="am-04.ic53" crc="c1517cd4"/>
+    </rom>
+
+    <!-- NMK004 MCU sound code (64KB) — loaded at SDRAM 0x300000 -->
+    <rom index="5" zip="acrobatm.zip" md5="None">
+        <part name="4.ic74" crc="176905fb"/>
+    </rom>
+
+    <!-- DIP switches (index 0xFE) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

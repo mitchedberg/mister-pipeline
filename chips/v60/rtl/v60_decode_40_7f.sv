@@ -11,7 +11,7 @@
 
 import v60_decode_pkg::*;
 
-module v60_decode_40_7f (
+module v60_decode_40_7f /* synthesis keep_hierarchy on */ (
     input  logic [7:0]  ibuf [0:9],
     input  logic [31:0] reg_file [0:63],
     input  logic        f_z, f_s, f_ov, f_cy,
@@ -212,7 +212,7 @@ module v60_decode_40_7f (
             branch16.pc_val = pc + 32'd3;
     endfunction
 
-    always_comb begin
+    always @(*) begin
         d = decode_zero();
 
         case (ibuf[0])
@@ -229,6 +229,13 @@ module v60_decode_40_7f (
                 logic [31:0] mea_dst;
                 int          mea_len1, mea_len2;
                 logic [31:0] mea_next_pc;
+
+                // Defaults to prevent latch inference in always_comb
+                mea_sz = 2'd0; mea_m1 = 1'b0; mea_m2 = 1'b0;
+                mea_is_reg1 = 1'b0; mea_is_imm1 = 1'b0;
+                mea_is_reg2 = 1'b0; mea_is_imm2 = 1'b0;
+                mea_ea = '0; mea_dst = '0;
+                mea_len1 = 0; mea_len2 = 0; mea_next_pc = '0;
 
                 d = decode_zero();
                 mea_sz = (ibuf[0] == 8'h40) ? 2'd0 :
@@ -332,6 +339,13 @@ module v60_decode_40_7f (
                 int          u2_l1, u2_l2;
                 logic [31:0] u2_np, u2_cp;
                 logic [31:0] u2_npc;
+
+                // Defaults to prevent latch inference in always_comb
+                u2_is_r1 = 1'b0; u2_is_i1 = 1'b0;
+                u2_is_r2 = 1'b0; u2_is_i2 = 1'b0;
+                u2_v1 = '0; u2_v2 = '0;
+                u2_l1 = 0; u2_l2 = 0;
+                u2_np = '0; u2_cp = '0; u2_npc = '0;
 
                 d = decode_zero();
 

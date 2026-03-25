@@ -1,0 +1,81 @@
+<!--
+    Hacha Mecha Fighter (1991) — NMK
+    MiSTer ROM descriptor for NMK arcade core
+
+    Hardware:
+      MC68000 @ 10 MHz
+      NMK004 MCU (TMP90840 sound controller)
+      TMP91640 protection MCU (nmk-113.bin, 16KB) — program copy-protection
+      YM2203 FM + OKI M6295 x2
+
+    MAME driver: nmk16.cpp, set: hachamf
+    ROM set CRCs verified from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 256KB interleaved from 2x128KB)
+      0x0C0000   Sprite ROM (1MB)
+      0x1C0000   BG tile ROM (128KB fgtile + 1MB bgtile)
+      0x200000   ADPCM ROM (512KB OKI M6295 bank 0, oki1)
+      0x280000   ADPCM ROM (512KB OKI M6295 bank 1, oki2)
+      0x300000   NMK004 MCU code (64KB)
+
+    WARNING: Hacha Mecha Fighter uses a TMP91640 protection MCU (nmk-113.bin).
+    The FPGA core does not implement this protection. The game will likely
+    hang or crash during boot. A decrypted/patched set (hachamfb) may be needed.
+    The protection MCU code is NOT loaded by this MRA.
+-->
+<misterromdescription>
+    <name>Hacha Mecha Fighter</name>
+    <setname>hachamf</setname>
+    <rbf>nmk_arcade</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Flip Screen"  ids="0,0" bits="0,0" values="Off,On"/>
+        <dip name="Language"     ids="0,0" bits="1,1" values="English,Japanese"/>
+        <dip name="Difficulty"   ids="0,0" bits="3,2" values="Easy,Normal,Hard,Hardest"/>
+        <dip name="Lives"        ids="0,0" bits="7,6" values="1,2,3,4"/>
+        <dip name="Demo Sounds"  ids="1,1" bits="1,1" values="Off,On"/>
+    </switches>
+
+    <!-- CPU Program ROM (256KB interleaved) — loaded at SDRAM 0x000000 -->
+    <rom index="0" zip="hachamf.zip" md5="None">
+        <interleave output="16">
+            <part name="7.93" crc="9d847c31" map="10"/>  <!-- even bytes → D15:D8 -->
+            <part name="6.94" crc="de6408a0" map="01"/>  <!-- odd bytes  → D7:D0  -->
+        </interleave>
+    </rom>
+
+    <!-- Sprite ROM (1MB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="hachamf.zip" md5="None">
+        <part name="91076-8.57" crc="7fd0f556"/>
+    </rom>
+
+    <!-- BG/FG Tile ROM — loaded at SDRAM 0x1C0000 -->
+    <!-- fgtile (128KB) + bgtile (1MB) -->
+    <rom index="2" zip="hachamf.zip" md5="None">
+        <part name="5.95"        crc="29fb04a2"/>  <!-- fgtile 128KB -->
+        <part name="91076-4.101" crc="df9653a4"/>  <!-- bgtile 1MB -->
+    </rom>
+
+    <!-- ADPCM ROM bank 0 (512KB, oki1) — loaded at SDRAM 0x200000 -->
+    <rom index="3" zip="hachamf.zip" md5="None">
+        <part name="91076-2.46" crc="3f1e67f2"/>
+    </rom>
+
+    <!-- ADPCM ROM bank 1 (512KB, oki2) — loaded at SDRAM 0x280000 -->
+    <rom index="4" zip="hachamf.zip" md5="None">
+        <part name="91076-3.45" crc="b25ed93b"/>
+    </rom>
+
+    <!-- NMK004 MCU sound code (64KB) — loaded at SDRAM 0x300000 -->
+    <rom index="5" zip="hachamf.zip" md5="None">
+        <part name="1.70" crc="9e6f48fc"/>
+    </rom>
+
+    <!-- DIP switches (index 0xFE) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

@@ -1,0 +1,79 @@
+<!--
+    Many Block (1991) — Bee-Oh
+    MiSTer ROM descriptor for NMK arcade core
+
+    Hardware:
+      MC68000 @ 10 MHz
+      Z80 @ 3 MHz (audiocpu — differs from NMK004 MCU games)
+      OKI M6295 x1 (no YM2203 FM)
+      Puzzle / block game on NMK16-derived hardware
+
+    MAME driver: nmk16.cpp, set: manybloc
+    ROM set CRCs verified from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 256KB interleaved from 2x128KB)
+      0x0C0000   Sprite ROM (512KB: 4x128KB)
+      0x1C0000   BG tile ROM (64KB fgtile + 512KB bgtile)
+      0x200000   ADPCM ROM (512KB OKI M6295, oki1 concatenated from 2x256KB)
+      0x280000   Z80 audiocpu ROM (64KB)
+
+    NOTE: Many Block uses a Z80 audiocpu instead of the NMK004 MCU.
+    Audio will NOT work correctly with the NMK004-targeted FPGA core.
+
+    NOTE: Many Block is a puzzle game variant of NMK16 hardware (Bee-Oh manufacturer).
+    Control scheme and game logic are significantly different from NMK's shooters.
+-->
+<misterromdescription>
+    <name>Many Block</name>
+    <setname>manybloc</setname>
+    <rbf>nmk_arcade</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Demo Sounds"  ids="0,0" bits="2,2" values="On,Off"/>
+        <dip name="Difficulty"   ids="0,0" bits="6,5" values="Normal,Easy,Hard,Hardest"/>
+        <dip name="Flip Screen"  ids="0,0" bits="7,7" values="Off,On"/>
+    </switches>
+
+    <!-- CPU Program ROM (256KB interleaved) — loaded at SDRAM 0x000000 -->
+    <rom index="0" zip="manybloc.zip" md5="None">
+        <interleave output="16">
+            <part name="1-u33.bin" crc="07473154" map="10"/>  <!-- even bytes → D15:D8 -->
+            <part name="2-u35.bin" crc="04acd8c1" map="01"/>  <!-- odd bytes  → D7:D0  -->
+        </interleave>
+    </rom>
+
+    <!-- Sprite ROM (512KB from 4x128KB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="manybloc.zip" md5="None">
+        <part name="8-u54b.bin"  crc="03eede77"/>  <!-- 128KB -->
+        <part name="10-u86b.bin" crc="9eab216f"/>  <!-- 128KB -->
+        <part name="9-u53b.bin"  crc="dfcfa040"/>  <!-- 128KB -->
+        <part name="11-u85b.bin" crc="fe747dd5"/>  <!-- 128KB -->
+    </rom>
+
+    <!-- BG/FG Tile ROM — loaded at SDRAM 0x1C0000 -->
+    <!-- fgtile (64KB) + bgtile (512KB from 2x256KB) -->
+    <rom index="2" zip="manybloc.zip" md5="None">
+        <part name="12-u39.bin" crc="413b5438"/>  <!-- fgtile 64KB -->
+        <part name="5-u97.bin"  crc="536699e6"/>  <!-- bgtile 256KB -->
+        <part name="4-u96.bin"  crc="28af2640"/>  <!-- bgtile 256KB -->
+    </rom>
+
+    <!-- ADPCM ROM (512KB from 2x256KB, oki1) — loaded at SDRAM 0x200000 -->
+    <rom index="3" zip="manybloc.zip" md5="None">
+        <part name="6-u131.bin" crc="79a4ae75"/>  <!-- 256KB -->
+        <part name="7-u132.bin" crc="21db875e"/>  <!-- 256KB -->
+    </rom>
+
+    <!-- Z80 audiocpu ROM (64KB) — loaded at SDRAM 0x280000 -->
+    <rom index="4" zip="manybloc.zip" md5="None">
+        <part name="3-u146.bin" crc="7bf5fafa"/>
+    </rom>
+
+    <!-- DIP switches (index 0xFE) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

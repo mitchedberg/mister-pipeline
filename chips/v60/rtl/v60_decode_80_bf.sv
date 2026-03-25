@@ -11,7 +11,7 @@
 
 import v60_decode_pkg::*;
 
-module v60_decode_80_bf (
+module v60_decode_80_bf /* synthesis keep_hierarchy on */ (
     input  logic [7:0]  ibuf [0:9],
     input  logic [31:0] reg_file [0:63],
     input  logic        f_z, f_s, f_ov, f_cy,
@@ -126,7 +126,7 @@ module v60_decode_80_bf (
         exec2.op_no_am = 1'b0; exec2.op_is_ext = is_ext; exec2.op_ext_op = ext;
     endfunction
 
-    always_comb begin
+    always @(*) begin
         d = decode_zero();
 
         case (ibuf[0])

@@ -1,0 +1,81 @@
+<!--
+    Vandyke (Japan) (1990) — UPL
+    MiSTer ROM descriptor for NMK arcade core
+
+    Hardware:
+      MC68000 @ 10 MHz
+      NMK004 MCU (TMP90840 sound controller)
+      YM2151 FM (differs from tdragon which uses YM2203) + OKI M6295
+
+    MAME driver: nmk16.cpp, set: vandyke
+    ROM set CRCs verified from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 256KB interleaved from 2x128KB)
+      0x0C0000   Sprite ROM (2MB: 4x512KB)
+      0x1C0000   BG tile ROM (64KB fgtile + 512KB bgtile)
+      0x200000   ADPCM ROM (512KB OKI M6295 bank 0, oki1)
+      0x280000   ADPCM ROM (512KB OKI M6295 bank 1, oki2)
+      0x300000   NMK004 MCU code (64KB)
+
+    NOTE: Vandyke uses YM2151 (OPM) instead of YM2203 (OPN). The FPGA core
+    targets YM2203. FM music will not play correctly until YM2151 support is added.
+    OKI M6295 sound effects will work normally.
+-->
+<misterromdescription>
+    <name>Vandyke</name>
+    <setname>vandyke</setname>
+    <rbf>nmk_arcade</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Demo Sounds"  ids="0,0" bits="5,5" values="Off,On"/>
+        <dip name="Difficulty"   ids="0,0" bits="7,6" values="Easy,Normal,Hard,Hardest"/>
+        <dip name="Lives"        ids="0,0" bits="0,0" values="2,3"/>
+        <dip name="Flip Screen"  ids="1,1" bits="0,0" values="Off,On"/>
+    </switches>
+
+    <!-- CPU Program ROM (256KB interleaved) — loaded at SDRAM 0x000000 -->
+    <rom index="0" zip="vandyke.zip" md5="None">
+        <interleave output="16">
+            <part name="vdk-1.16" crc="c1d01c59" map="10"/>  <!-- even bytes → D15:D8 -->
+            <part name="vdk-2.15" crc="9d741cc2" map="01"/>  <!-- odd bytes  → D7:D0  -->
+        </interleave>
+    </rom>
+
+    <!-- Sprite ROM (2MB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="vandyke.zip" md5="None">
+        <part name="vdk-07.202" crc="42d41f06"/>  <!-- 512KB -->
+        <part name="vdk-06.203" crc="d54722a8"/>  <!-- 512KB -->
+        <part name="vdk-04.2-1" crc="0a730547"/>  <!-- 512KB -->
+        <part name="vdk-05.3-1" crc="ba456d27"/>  <!-- 512KB -->
+    </rom>
+
+    <!-- BG/FG Tile ROM — loaded at SDRAM 0x1C0000 -->
+    <!-- fgtile (64KB) + bgtile (512KB) -->
+    <rom index="2" zip="vandyke.zip" md5="None">
+        <part name="vdk-3.222" crc="5a547c1b"/>   <!-- fgtile 64KB -->
+        <part name="vdk-01.13" crc="195a24be"/>   <!-- bgtile 512KB -->
+    </rom>
+
+    <!-- ADPCM ROM bank 0 (512KB, oki1) — loaded at SDRAM 0x200000 -->
+    <rom index="3" zip="vandyke.zip" md5="None">
+        <part name="vdk-02.126" crc="b2103274"/>
+    </rom>
+
+    <!-- ADPCM ROM bank 1 (512KB, oki2) — loaded at SDRAM 0x280000 -->
+    <rom index="4" zip="vandyke.zip" md5="None">
+        <part name="vdk-03.165" crc="631776d3"/>
+    </rom>
+
+    <!-- NMK004 MCU sound code (64KB) — loaded at SDRAM 0x300000 -->
+    <rom index="5" zip="vandyke.zip" md5="None">
+        <part name="vdk-4.127" crc="eba544f0"/>
+    </rom>
+
+    <!-- DIP switches (index 0xFE) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

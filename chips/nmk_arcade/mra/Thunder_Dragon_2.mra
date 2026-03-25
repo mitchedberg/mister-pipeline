@@ -1,0 +1,82 @@
+<!--
+    Thunder Dragon 2 (1993) — NMK
+    MiSTer ROM descriptor for NMK arcade core
+
+    Hardware:
+      MC68000 @ 10 MHz
+      Z80 @ 4 MHz (audiocpu — differs from earlier NMK004 MCU games)
+      NMK112 OKI ROM bank controller
+      YM2203 FM + OKI M6295 x2 (with NMK112 4-bank switching)
+
+    MAME driver: nmk16.cpp, set: tdragon2
+    ROM set CRCs verified from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 512KB)
+      0x0C0000   Sprite ROM (4MB: 2x2MB)
+      0x1C0000   BG tile ROM (128KB fgtile + 2MB bgtile)
+      0x200000   ADPCM ROM (2MB OKI M6295 bank 0, oki1 via NMK112)
+      0x280000   ADPCM ROM (2MB OKI M6295 bank 1, oki2 via NMK112)
+      ???        Z80 audiocpu ROM (128KB)
+
+    NOTE: Thunder Dragon 2 uses a Z80 audiocpu instead of the NMK004 MCU.
+    The FPGA core's audio path targets the NMK004/TMP90840 architecture.
+    Audio will NOT work correctly — Z80 sound driver requires separate implementation.
+
+    NOTE: NMK112 OKI bank controller provides extended ADPCM ROM addressing.
+    The 2MB ADPCM ROMs exceed the standard 512KB ADPCM window. Only the
+    first 512KB of each bank will be accessible without NMK112 RTL support.
+
+    NOTE: The Z80 audiocpu ROM (5.bin, 128KB) maps to ioctl_index 4 (Z80 slot).
+-->
+<misterromdescription>
+    <name>Thunder Dragon 2</name>
+    <setname>tdragon2</setname>
+    <rbf>nmk_arcade</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Service Mode"  ids="0,0" bits="0,0" values="Off,On"/>
+        <dip name="Demo Sounds"   ids="0,0" bits="1,1" values="Off,On"/>
+        <dip name="Flip Screen"   ids="0,0" bits="2,2" values="Off,On"/>
+        <dip name="Difficulty"    ids="0,0" bits="5,4" values="Easy,Normal,Hard,Hardest"/>
+        <dip name="Lives"         ids="0,0" bits="7,6" values="1,2,3,4"/>
+    </switches>
+
+    <!-- CPU Program ROM (512KB) — loaded at SDRAM 0x000000 -->
+    <!-- tdragon2 maincpu is a single 512KB ROM (not interleaved) -->
+    <rom index="0" zip="tdragon2.zip" md5="None">
+        <part name="6.rom" crc="ca348caf"/>
+    </rom>
+
+    <!-- Sprite ROM (4MB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="tdragon2.zip" md5="None">
+        <part name="ww930917.7" crc="b98873cb"/>  <!-- 2MB -->
+        <part name="ww930918.8" crc="baee84b2"/>  <!-- 2MB -->
+    </rom>
+
+    <!-- BG/FG Tile ROM — loaded at SDRAM 0x1C0000 -->
+    <!-- fgtile (128KB) + bgtile (2MB) -->
+    <rom index="2" zip="tdragon2.zip" md5="None">
+        <part name="1.bin"       crc="d488aafa"/>  <!-- fgtile 128KB -->
+        <part name="ww930914.2"  crc="f968c65d"/>  <!-- bgtile 2MB -->
+    </rom>
+
+    <!-- ADPCM ROM bank 0 (2MB, oki1 via NMK112) — loaded at SDRAM 0x200000 -->
+    <!-- WARNING: Only first 512KB accessible without NMK112 bank RTL -->
+    <rom index="3" zip="tdragon2.zip" md5="None">
+        <part name="ww930916.4" crc="07c35fe6"/>
+    </rom>
+
+    <!-- Z80 audiocpu ROM (128KB) — loaded at SDRAM 0x280000 -->
+    <!-- NOTE: This is a Z80 program, not an OKI bank — different from standard NMK004 layout -->
+    <rom index="4" zip="tdragon2.zip" md5="None">
+        <part name="5.bin" crc="b870be61"/>
+    </rom>
+
+    <!-- DIP switches (index 0xFE) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

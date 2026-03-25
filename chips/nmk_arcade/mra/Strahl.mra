@@ -1,0 +1,84 @@
+<!--
+    Koutetsu Yousai Strahl / Iron Fortress Strahl (World) (1992) — UPL
+    MiSTer ROM descriptor for NMK arcade core
+
+    Hardware:
+      MC68000 @ 12 MHz
+      NMK004 MCU (TMP90840 sound controller)
+      YM2203 FM + OKI M6295 x2
+      Has bg2tile region (second BG layer tileset)
+
+    MAME driver: nmk16.cpp, set: strahl
+    ROM set CRCs verified from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 256KB interleaved from 2x128KB)
+      0x0C0000   Sprite ROM (1.5MB: 3x512KB)
+      0x1C0000   BG tile ROM (64KB fgtile + 256KB bgtile)
+      0x200000   ADPCM ROM (512KB OKI M6295 bank 0, oki1)
+      0x280000   ADPCM ROM (512KB OKI M6295 bank 1, oki2)
+      0x300000   NMK004 MCU code (64KB)
+
+    NOTE: Strahl CPU runs at 12 MHz; core runs at 10 MHz — 17% underclock.
+    Game may run slightly slow. bg2tile (512KB, str6b1w1.776) is NOT loaded —
+    second BG layer tile ROM requires extended RTL support.
+-->
+<misterromdescription>
+    <name>Strahl</name>
+    <setname>strahl</setname>
+    <rbf>nmk_arcade</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Coin A"       ids="0,0" bits="2,0" values="1 Coin/1 Credit,1 Coin/2 Credits,1 Coin/3 Credits,1 Coin/4 Credits,5 Coins/1 Credit,4 Coins/1 Credit,3 Coins/1 Credit,2 Coins/1 Credit"/>
+        <dip name="Coin B"       ids="0,0" bits="5,3" values="1 Coin/1 Credit,1 Coin/2 Credits,1 Coin/3 Credits,1 Coin/4 Credits,5 Coins/1 Credit,4 Coins/1 Credit,3 Coins/1 Credit,2 Coins/1 Credit"/>
+        <dip name="Flip Screen"  ids="0,0" bits="6,6" values="Off,On"/>
+        <dip name="Demo Sounds"  ids="0,0" bits="7,7" values="On,Off"/>
+        <dip name="Lives"        ids="1,1" bits="1,0" values="2,3,4,5"/>
+        <dip name="Difficulty"   ids="1,1" bits="3,2" values="Easy,Normal,Hard,Hardest"/>
+    </switches>
+
+    <!-- CPU Program ROM (256KB interleaved) — loaded at SDRAM 0x000000 -->
+    <rom index="0" zip="strahl.zip" md5="None">
+        <interleave output="16">
+            <part name="strahl-02.ic82" crc="e6709a0d" map="10"/>  <!-- even bytes → D15:D8 -->
+            <part name="strahl-01.ic83" crc="bfd021cf" map="01"/>  <!-- odd bytes  → D7:D0  -->
+        </interleave>
+    </rom>
+
+    <!-- Sprite ROM (1.5MB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="strahl.zip" md5="None">
+        <part name="strl3-01.32" crc="d8337f15"/>  <!-- 512KB -->
+        <part name="strl4-02.57" crc="2a38552b"/>  <!-- 512KB -->
+        <part name="strl5-03.58" crc="a0e7d210"/>  <!-- 512KB -->
+    </rom>
+
+    <!-- BG/FG Tile ROM — loaded at SDRAM 0x1C0000 -->
+    <!-- fgtile (64KB) + bgtile (256KB) -->
+    <!-- NOTE: bg2tile (512KB, str6b1w1.776) requires second BG plane RTL — not loaded -->
+    <rom index="2" zip="strahl.zip" md5="None">
+        <part name="strahl-3.73"  crc="2273b33e"/>  <!-- fgtile 64KB -->
+        <part name="str7b2r0.275" crc="5769e3e1"/>  <!-- bgtile 256KB -->
+    </rom>
+
+    <!-- ADPCM ROM bank 0 (512KB, oki1) — loaded at SDRAM 0x200000 -->
+    <rom index="3" zip="strahl.zip" md5="None">
+        <part name="str8pmw1.540" crc="01d6bb6a"/>
+    </rom>
+
+    <!-- ADPCM ROM bank 1 (512KB, oki2) — loaded at SDRAM 0x280000 -->
+    <rom index="4" zip="strahl.zip" md5="None">
+        <part name="str9pew1.639" crc="6bb3eb9f"/>
+    </rom>
+
+    <!-- NMK004 MCU sound code (64KB) — loaded at SDRAM 0x300000 -->
+    <rom index="5" zip="strahl.zip" md5="None">
+        <part name="strahl-4.66" crc="60a799c4"/>
+    </rom>
+
+    <!-- DIP switches (index 0xFE) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

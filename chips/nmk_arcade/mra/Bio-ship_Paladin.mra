@@ -1,0 +1,80 @@
+<!--
+    Bio-ship Paladin (1990) — UPL (American Sammy license)
+    MiSTer ROM descriptor for NMK arcade core
+
+    Hardware:
+      MC68000 @ 10 MHz
+      NMK004 MCU (TMP90840 sound controller)
+      YM2203 FM + OKI M6295 x2
+      Has bg2tile and tilerom regions (extra tile graphics layers)
+
+    MAME driver: nmk16.cpp, set: bioship
+    ROM set CRCs verified from MAME 0.245
+
+    SDRAM layout (NMK arcade core):
+      0x000000   CPU program ROM (68000, 256KB interleaved from 2x128KB)
+      0x0C0000   Sprite ROM (512KB)
+      0x1C0000   BG tile ROM (64KB fgtile + 512KB bgtile)
+      0x200000   ADPCM ROM (512KB OKI M6295 bank 0, oki1)
+      0x280000   ADPCM ROM (512KB OKI M6295 bank 1, oki2)
+      0x300000   NMK004 MCU code (64KB)
+
+    NOTE: Bio-ship Paladin has bg2tile (512KB, sbs-g_02) and tilerom (2x64KB)
+    regions for extra graphical effects. These are NOT loaded — core supports
+    only primary sprite and single BG/FG tile planes. Some visual layers missing.
+-->
+<misterromdescription>
+    <name>Bio-ship Paladin</name>
+    <setname>bioship</setname>
+    <rbf>nmk_arcade</rbf>
+    <mameversion>0.245</mameversion>
+
+    <switches default="FF,FF">
+        <dip name="Flip Screen"  ids="0,0" bits="0,0" values="Off,On"/>
+        <dip name="Difficulty"   ids="0,0" bits="2,1" values="Easy,Normal,Hard,Hardest"/>
+        <dip name="Lives"        ids="0,0" bits="7,6" values="2,3,4,5"/>
+        <dip name="Demo Sounds"  ids="1,1" bits="5,5" values="Off,On"/>
+    </switches>
+
+    <!-- CPU Program ROM (256KB interleaved) — loaded at SDRAM 0x000000 -->
+    <rom index="0" zip="bioship.zip" md5="None">
+        <interleave output="16">
+            <part name="2.ic14" crc="acf56afb" map="10"/>  <!-- even bytes → D15:D8 -->
+            <part name="1.ic15" crc="820ef303" map="01"/>  <!-- odd bytes  → D7:D0  -->
+        </interleave>
+    </rom>
+
+    <!-- Sprite ROM (512KB) — loaded at SDRAM 0x0C0000 -->
+    <rom index="1" zip="bioship.zip" md5="None">
+        <part name="sbs-g_03.ic194" crc="60e00d7b"/>
+    </rom>
+
+    <!-- BG/FG Tile ROM — loaded at SDRAM 0x1C0000 -->
+    <!-- fgtile (64KB) + bgtile (512KB) -->
+    <!-- NOTE: bg2tile (sbs-g_02) and tilerom (8, 9) NOT loaded — extra layers unsupported -->
+    <rom index="2" zip="bioship.zip" md5="None">
+        <part name="7"          crc="2f3f5a10"/>  <!-- fgtile 64KB -->
+        <part name="sbs-g_01.ic9" crc="21302e78"/> <!-- bgtile 512KB -->
+    </rom>
+
+    <!-- ADPCM ROM bank 0 (512KB, oki1) — loaded at SDRAM 0x200000 -->
+    <rom index="3" zip="bioship.zip" md5="None">
+        <part name="sbs-g_04.ic139" crc="7c74cc4e"/>
+    </rom>
+
+    <!-- ADPCM ROM bank 1 (512KB, oki2) — loaded at SDRAM 0x280000 -->
+    <rom index="4" zip="bioship.zip" md5="None">
+        <part name="sbs-g_05.ic160" crc="f0a782e3"/>
+    </rom>
+
+    <!-- NMK004 MCU sound code (64KB) — loaded at SDRAM 0x300000 -->
+    <rom index="5" zip="bioship.zip" md5="None">
+        <part name="6.ic120" crc="5f39a980"/>
+    </rom>
+
+    <!-- DIP switches (index 0xFE) -->
+    <rom index="254">
+        <part>FF FF</part>
+    </rom>
+
+</misterromdescription>

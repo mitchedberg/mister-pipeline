@@ -45,6 +45,11 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/segas32_video.sv
 # v60_core: NEC uPD70615 — 16-bit data bus, 24-bit address bus
 # v60_alu:  ALU support module
 
+set_global_assignment -name SYSTEMVERILOG_FILE ../../v60/rtl/v60_decode_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../v60/rtl/v60_decode_00_3f.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../v60/rtl/v60_decode_40_7f.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../v60/rtl/v60_decode_80_bf.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../v60/rtl/v60_decode_c0_ff.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../v60/rtl/v60_core.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../v60/rtl/v60_alu.sv
 

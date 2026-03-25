@@ -11,7 +11,7 @@
 
 import v60_decode_pkg::*;
 
-module v60_decode_c0_ff (
+module v60_decode_c0_ff /* synthesis keep_hierarchy on */ (
     input  logic [7:0]  ibuf [0:9],
     input  logic [31:0] reg_file [0:63],
     input  logic        f_z, f_s, f_ov, f_cy,
@@ -166,7 +166,7 @@ module v60_decode_c0_ff (
     // =========================================================================
     // Combinational decode
     // =========================================================================
-    always_comb begin : decode_c0_ff
+    always @(*) begin : decode_c0_ff
         logic        am_is_reg, am_is_imm;
         logic [31:0] am_val;
         int          am_len;
