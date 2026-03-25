@@ -17,17 +17,17 @@
   <name>Shogun Warriors</name>
   <setname>shogwarr</setname>
   <mameversion>0250</mameversion>
-  <rbf>Kaneko16</rbf>
+  <rbf>kaneko_arcade</rbf>
 
   <!-- CPU program ROM: 68000, interleaved upper/lower byte -->
-  <rom index="0" zip="shogwarr.zip" md5="Unknown">
+  <rom index="0" zip="shogwarr.zip" md5="None">
     <part name="fb030e.u61" crc="32ce7909" offset="0x000000" length="0x020000"/>
     <part name="fb031e.u62" crc="228aeaf5" offset="0x000001" length="0x020000"/>
   </rom>
 
   <!-- GFX ROM: kan_spr sprites + view2_0 tilemap -->
   <!-- Loaded at SDRAM 0x100000 -->
-  <rom index="1" zip="shogwarr.zip" md5="Unknown">
+  <rom index="1" zip="shogwarr.zip" md5="None">
     <part name="fb-020a.u1"  crc="87e55c6d" offset="0x000000" length="0x100000"/>
     <part name="fb020b.u2"   crc="276b9d7b" offset="0x100000" length="0x100000"/>
     <part name="fb021a.u3"   crc="7da15d37" offset="0x200000" length="0x100000"/>
@@ -41,7 +41,7 @@
   </rom>
 
   <!-- OKI M6295 sample ROMs -->
-  <rom index="2" zip="shogwarr.zip" md5="Unknown">
+  <rom index="2" zip="shogwarr.zip" md5="None">
     <part name="fb001e.u43"  crc="f524aaa1" offset="0x000000" length="0x080000"/>
     <part name="fb000e.u42"  crc="969f1465" offset="0x080000" length="0x080000"/>
     <part name="fb-002.u45"  crc="010acc17" offset="0x100000" length="0x100000"/>

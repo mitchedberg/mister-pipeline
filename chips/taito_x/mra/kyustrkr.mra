@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Kyuusenki (Last Striker / Kyustrkr) — Taito X System / East Technology, 1989
+  MC68000 @ 8 MHz, Z80 @ 4 MHz, YM2610 @ 8 MHz
+  X1-001A/X1-002A sprites, 320×240 @ 60 Hz
+
+  MAME set: kyustrkr (standalone parent, src/mame/taito/taito_x.cpp)
+  Genre: Vertical scrolling soccer game
+
+  SDRAM layout (byte addresses):
+    0x000000  68000 program ROM (256KB: 2×128KB interleaved)
+    0x080000  Z80 audio program (64KB, ic.18d)
+    0x100000  Sprite/GFX ROM (X1-001A, 512KB: 4×128KB 4-plane interleave)
+
+  maincpu region (MAME): 2×128KB interleaved 2-byte stride
+    pe.9a (even bytes) + po.4a (odd bytes)
+
+  audiocpu region: ic.18d (64KB)
+
+  gfx1 region (MAME): 4×128KB stored as 4 separate 1-bpp bit planes.
+    m-8-0.u6 (plane 0, offset 0) + m-8-1.u5 (plane 1, offset 1)
+    + m-8-2.u4 (plane 2, offset 2) + m-8-3.u3 (plane 3, offset 3)
+    Total: 512KB packed 4bpp.
+
+  NOTE: GFX ROM loading uses 4-way byte interleave (32-bit output with 4 planes).
+  This differs from the 16-bit 2-way interleave used by gigandes/twinhawk.
+  Verify that the taito_x core handles this GFX format correctly.
+
+  ymsnd:adpcma: m-8-4.u1 + ymsnd:adpcmb: m-8-5.u2 not loaded (no ADPCM SDRAM region).
+
+  ROM CRCs verified from MAME 0.245 kyustrkr set.
+-->
+<misterromdescription>
+  <name>Kyuusenki (Last Striker)</name>
+  <setname>kyustrkr</setname>
+  <rbf>taito_x</rbf>
+  <mameversion>0245</mameversion>
+  <year>1989</year>
+  <manufacturer>East Technology</manufacturer>
+  <category>Sports</category>
+  <players>2</players>
+  <buttons names="Shoot,Tackle,Start,Coin" default="A,B,Start,Select"/>
+
+  <!-- 68000 program ROM (2×128KB interleaved) + Z80 audio ROM (64KB) -->
+  <rom index="0" zip="kyustrkr.zip" md5="None">
+    <interleave output="16">
+      <part name="pe.9a" crc="082b5f96" map="10"/>  <!-- D15:D8 even bytes -->
+      <part name="po.4a" crc="0100361e" map="01"/>  <!-- D7:D0  odd bytes  -->
+    </interleave>
+    <!-- Z80 audio ROM at SDRAM 0x080000 -->
+    <part name="ic.18d" crc="92cfb788" offset="0x080000" length="0x010000"/>
+  </rom>
+
+  <!-- Sprite/GFX ROM: 4×128KB 4-bit-plane interleave → 512KB packed 4bpp.
+       4 planes stored as consecutive bytes (plane 0, plane 1, plane 2, plane 3).
+       Loaded as 32-bit output with each plane mapped to one nibble. -->
+  <rom index="1" zip="kyustrkr.zip" md5="None">
+    <interleave output="32">
+      <part name="m-8-3.u3" crc="1c4084e6" map="00001111"/>  <!-- bits [31:24] plane 3 -->
+      <part name="m-8-2.u4" crc="ada21c4d" map="00110011"/>  <!-- bits [23:16] plane 2 -->
+      <part name="m-8-1.u5" crc="9d95aad6" map="01010101"/>  <!-- bits [15:8]  plane 1 -->
+      <part name="m-8-0.u6" crc="0dfb6ed3" map="10101010"/>  <!-- bits [7:0]   plane 0 -->
+    </interleave>
+  </rom>
+
+  <rom index="0xFE">
+    <part repeat="4">FF</part>
+  </rom>
+
+</misterromdescription>

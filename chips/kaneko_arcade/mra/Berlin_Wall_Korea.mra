@@ -1,0 +1,66 @@
+<!--
+    The Berlin Wall (berlwallk) — Korean version — Kaneko16, 1991
+    MiSTer MRA file for kaneko_arcade core
+
+    MAME driver: kaneko/kaneko16.cpp, set: berlwallk (clone of berlwall)
+    Hardware: MC68000 @ 12 MHz, Kaneko VIEW2 sprites, VIEW2-Z tiles, OKI M6295 sound
+
+    Key difference from berlwall: Korean-localised program ROMs (bw100k, bw101k, bw300k).
+    All GFX ROMs are shared with the berlwall parent set.
+
+    SDRAM layout (kaneko_arcade core, byte addresses):
+      0x000000 – 0x0FFFFF   1MB   CPU program ROM    (ioctl_index 0x00)
+      0x100000 – 0x2FFFFF   2MB   GFX ROM            (ioctl_index 0x01)
+
+    NOTE: GFX region limited to gfx1 + gfx2 (1.125MB sprites + 512KB BG tile).
+    gfx3 (bw004–bw00b, 4MB bitmap layer) exceeds the 2MB GFX SDRAM window.
+
+    NOTE: OKI M6295 sample ROM (bw000k, 256KB) not loaded — no OKI SDRAM region.
+    Sound will be silent until an OKI SDRAM region is added to the core.
+
+    ROM CRCs verified from MAME 0.245 berlwallk set (files in berlwall.zip).
+-->
+<misterromdescription>
+
+    <name>The Berlin Wall (Korea)</name>
+    <setname>berlwallk</setname>
+    <mameversion>0.245</mameversion>
+    <rbf>kaneko_arcade</rbf>
+    <year>1991</year>
+    <manufacturer>Kaneko</manufacturer>
+    <category>Puzzle</category>
+
+    <!-- index 0: CPU program ROM (Korean ROMs, 256KB interleaved even/odd bytes) -->
+    <rom index="0" zip="berlwall.zip" md5="None">
+        <interleave output="16">
+            <part name="berlwallk/bw100k.u23" crc="0ce1d336" map="10"/>  <!-- D15:D8 -->
+            <part name="berlwallk/bw101k.u39" crc="3355be65" map="01"/>  <!-- D7:D0  -->
+        </interleave>
+    </rom>
+
+    <!-- index 1: GFX ROM (sprites + tiles, loaded to SDRAM 0x100000) -->
+    <!-- gfx1: bw001 + bw002 (sprites, 2×512KB) + bw300k (sprite masks, Korean 128KB) -->
+    <!-- gfx2: bw003 (tile layer, 512KB) -->
+    <!-- gfx3 (bw004-bw00b, 8×512KB) omitted — exceeds 2MB SDRAM window -->
+    <rom index="1" zip="berlwall.zip" md5="None">
+        <part name="bw001.u84" crc="bc927260"/>
+        <part name="bw002.u83" crc="223f5465"/>
+        <part name="berlwallk/bw300k.u82" crc="b8de79d7"/>
+        <part name="bw003.u77" crc="fbb4b72d"/>
+    </rom>
+
+    <!-- index 0xFE: DIP switch defaults (all ON = active-low) -->
+    <rom index="0xFE">
+        <part repeat="8"> FF </part>
+    </rom>
+
+    <switches page_id="1" page_name="Switches" base="16" dip_defaults="FF FF">
+        <dip bits="0,2" name="Coin A" ids="4 Coins/1 Credit,3 Coins/1 Credit,2 Coins/1 Credit,1 Coin/1 Credit"/>
+        <dip bits="3,5" name="Coin B" ids="1 Coin/2 Credits,1 Coin/3 Credits,1 Coin/4 Credits,Free Play"/>
+        <dip bits="6"   name="Demo Sounds" ids="Off,On"/>
+        <dip bits="7"   name="Service Mode" ids="On,Off"/>
+    </switches>
+
+    <buttons names="Button 1,Button 2,Button 3,Start,Coin,Core credits" default="A,B,C,Start,Select,-"/>
+
+</misterromdescription>

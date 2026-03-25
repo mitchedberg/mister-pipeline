@@ -17,16 +17,16 @@
   <name>B.Rap Boys</name>
   <setname>brapboys</setname>
   <mameversion>0250</mameversion>
-  <rbf>Kaneko16</rbf>
+  <rbf>kaneko_arcade</rbf>
 
   <!-- CPU program ROM: 68000, interleaved upper/lower byte -->
-  <rom index="0" zip="brapboys.zip" md5="Unknown">
+  <rom index="0" zip="brapboys.zip" md5="None">
     <part name="rb-030.01.u61" crc="ccbe9a53" offset="0x000000" length="0x020000"/>
     <part name="rb-031.01.u62" crc="c72b8dda" offset="0x000001" length="0x020000"/>
   </rom>
 
   <!-- GFX ROM: kan_spr sprites + view2_0 tilemap -->
-  <rom index="1" zip="brapboys.zip" md5="Unknown">
+  <rom index="1" zip="brapboys.zip" md5="None">
     <part name="rb-020.u100" crc="ce220d38" offset="0x000000" length="0x100000"/>
     <part name="rb-021.u76"  crc="74001407" offset="0x100000" length="0x100000"/>
     <part name="rb-022.u77"  crc="cb3f42dc" offset="0x200000" length="0x100000"/>
@@ -41,7 +41,7 @@
   </rom>
 
   <!-- OKI M6295 sample ROMs -->
-  <rom index="2" zip="brapboys.zip" md5="Unknown">
+  <rom index="2" zip="brapboys.zip" md5="None">
     <part name="rb-000.u43"    crc="58ad1a62" offset="0x000000" length="0x080000"/>
     <part name="rb-003.00.u101" crc="2cac25d7" offset="0x080000" length="0x080000"/>
     <part name="rb-001.u44"    crc="7cf774b3" offset="0x100000" length="0x100000"/>

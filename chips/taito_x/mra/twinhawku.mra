@@ -1,39 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Daisenpu (Japan) — Taito X System, 1989
+  Twin Hawk (US) — Taito X System, 1989
   MC68000 @ 8 MHz, Z80 @ 4 MHz, YM2151 OPM @ 4 MHz
   X1-001A/X1-002A sprites, xRGB_555 palette, 320×240 @ 60 Hz
 
-  MAME driver: taito/taito_x.cpp, set: daisenpu (clone of twinhawk)
-  Developer: Toaplan (published by Taito)
-  Difference from twinhawk: Japanese-language program ROMs only.
+  MAME driver: taito/taito_x.cpp, set: twinhawku (clone of twinhawk)
+  Developer: Toaplan (published by Taito America)
+  Difference from twinhawk: US-market program ROMs only.
 
   SDRAM layout: same as twinhawk.mra
     0x000000  68000 program ROM (256KB: 2×128KB interleaved)
     0x080000  Z80 audio program (32KB, b87-07.13e — shared from twinhawk.zip)
     0x100000  Sprite/Tile GFX ROM (2MB: shared from twinhawk.zip)
 
-  maincpu region (MAME): daisenpu-specific ROMs
-    b87-06.u7 (even bytes) + b87-05.u5 (odd bytes)
-
-  ROM CRCs verified from MAME 0.245 daisenpu set (files in twinhawk.zip).
+  ROM CRCs verified from MAME 0.245 twinhawku set (files in twinhawk.zip).
 -->
 <misterromdescription>
-  <name>Daisenpu (Japan)</name>
-  <setname>daisenpu</setname>
+  <name>Twin Hawk (US)</name>
+  <setname>twinhawku</setname>
   <rbf>taito_x</rbf>
   <mameversion>0245</mameversion>
   <year>1989</year>
-  <manufacturer>Toaplan / Taito</manufacturer>
+  <manufacturer>Taito America</manufacturer>
   <category>Shooter</category>
   <players>2</players>
   <buttons names="Fire,Bomb,Start,Coin" default="A,B,Start,Select"/>
 
-  <!-- 68000 program ROM (Japan version, 2×128KB interleaved) + Z80 from parent -->
+  <!-- 68000 program ROM (US version, 2×128KB interleaved) + Z80 from parent -->
   <rom index="0" zip="twinhawk.zip" type="merged" md5="None">
     <interleave output="16">
-      <part name="daisenpu/b87-06.u7" crc="cf236100" map="10"/>  <!-- D15:D8 even bytes -->
-      <part name="daisenpu/b87-05.u5" crc="7f15edc7" map="01"/>  <!-- D7:D0  odd bytes  -->
+      <part name="twinhawku/b87-09.u7" crc="7e6267c7" map="10"/>  <!-- D15:D8 even bytes -->
+      <part name="twinhawku/b87-08.u5" crc="31d9916f" map="01"/>  <!-- D7:D0  odd bytes  -->
     </interleave>
     <!-- Z80 audio ROM shared with parent at SDRAM 0x080000 -->
     <part name="b87-07.13e" crc="e2e0efa0" offset="0x080000" length="0x008000"/>

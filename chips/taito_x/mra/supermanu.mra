@@ -1,29 +1,55 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Superman (US) — Taito X System, 1988
+  MC68000 @ 8 MHz, Z80 @ 4 MHz, YM2610 OPNB @ 8 MHz
+  X1-001A/X1-002A sprites, xRGB_555 palette (2048 entries), 320×240 @ 60 Hz
+
+  MAME driver: taito/taito_x.cpp, set: supermanu (clone of superman)
+  Difference from superman: US-market program ROM (b61_12.a3 at bank 1 odd).
+
+  SDRAM layout: same as superman.mra
+    0x000000  68000 program ROM (512KB: 4×128KB, 2 interleaved pairs)
+    0x080000  Z80 audio program (64KB, b61_10.d18 — shared from superman.zip)
+    0x100000  Sprite/GFX ROM (2MB — shared from superman.zip)
+
+  ROM CRCs verified from MAME 0.245 supermanu set (files in superman.zip).
+-->
 <misterromdescription>
   <name>Superman (US)</name>
   <setname>supermanu</setname>
   <rbf>taito_x</rbf>
-  <mameversion>0264</mameversion>
+  <mameversion>0245</mameversion>
   <year>1988</year>
   <manufacturer>Taito America</manufacturer>
   <category>Beat 'em up</category>
   <players>2</players>
-  <buttons names="Attack,Jump,Special,Start,Coin" default="A,B,X,Start,Select" />
+  <buttons names="Attack,Jump,Special,Start,Coin" default="A,B,X,Start,Select"/>
 
-  
-  <rom index="0" zip="supermanu.zip" type="merged" md5="e842e29f570a7a2eb8e83473aaf7032e">
-    <part name="b61_09.a10" crc="640f1d58" offset="0x000000" length="0x040000" />
-    <part name="b61_07.a5" crc="fddb9953" offset="0x040000" length="0x040000" />
-    
-    <part name="b61_08.a8" crc="79fc028e" offset="0x080000" length="0x010000" />
+  <!-- 68000 program ROM (US version) + Z80 audio ROM -->
+  <!-- Bank 0: shared with parent; Bank 1 odd: supermanu/b61_12.a3 -->
+  <rom index="0" zip="superman.zip" type="merged" md5="None">
+    <interleave output="16">
+      <part name="b61_09.a10"           crc="640f1d58" map="10"/>  <!-- Bank 0 even (shared) -->
+      <part name="b61_07.a5"            crc="fddb9953" map="01"/>  <!-- Bank 0 odd  (shared) -->
+    </interleave>
+    <interleave output="16">
+      <part name="b61_08.a8"            crc="79fc028e" map="10"/>  <!-- Bank 1 even (shared) -->
+      <part name="supermanu/b61_12.a3"  crc="064d3bfe" map="01"/>  <!-- Bank 1 odd  (US)     -->
+    </interleave>
+    <!-- Z80 audio ROM at SDRAM 0x080000 (shared with parent) -->
+    <part name="b61_10.d18" crc="6efe79e8" offset="0x080000" length="0x010000"/>
   </rom>
 
-  
-  <rom index="1" zip="superman.zip" type="merged" md5="92694eacdc97a95bdd34ec706ec6ce1b">
-    <part name="a54-04.4d" crc="89368c3e" offset="0x000000" length="0x080000" />
-    <part name="a54-05.4f" crc="910cc4f9" offset="0x080000" length="0x080000" />
-    <part name="a54-06.4k" crc="3622ed2f" offset="0x100000" length="0x080000" />
-    <part name="a54-07.4m" crc="c34f27e0" offset="0x180000" length="0x080000" />
+  <!-- Sprite/GFX ROM: shared with superman parent (2MB) -->
+  <rom index="1" zip="superman.zip" type="merged" md5="None">
+    <interleave output="16">
+      <part name="b61-16.j1" crc="3622ed2f" map="10"/>
+      <part name="b61-14.f1" crc="89368c3e" map="01"/>
+    </interleave>
+    <interleave output="16">
+      <part name="b61-17.k1" crc="c34f27e0" map="10"/>
+      <part name="b61-15.h1" crc="910cc4f9" map="01"/>
+    </interleave>
   </rom>
 
   <rom index="0xFE">

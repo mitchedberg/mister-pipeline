@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Gigandes (alt) — Taito X System / East Technology, 1989
+  MC68000 @ 8 MHz, Z80 @ 4 MHz, YM2610 @ 8 MHz
+  X1-001A/X1-002A sprites, 320×240 @ 60 Hz
+
+  MAME set: gigandesa (clone of gigandes, src/mame/taito/taito_x.cpp)
+  Difference: alternate program ROMs (east-1.10a / east-3.5a).
+
+  SDRAM layout: same as gigandes.mra
+    0x000000  68000 program ROM (512KB: 2 interleaved pairs)
+    0x080000  Z80 audio program (64KB, east_5.17d — shared)
+    0x100000  Sprite/GFX ROM (X1-001A, 2MB: shared from gigandes.zip)
+
+  ROM CRCs verified from MAME 0.245 gigandesa set (files in gigandes.zip).
+-->
+<misterromdescription>
+  <name>Gigandes (alt)</name>
+  <setname>gigandesa</setname>
+  <rbf>taito_x</rbf>
+  <mameversion>0245</mameversion>
+  <year>1989</year>
+  <manufacturer>East Technology</manufacturer>
+  <category>Shooter</category>
+  <players>2</players>
+  <buttons names="Fire,Bomb,Start,Coin" default="A,B,Start,Select"/>
+
+  <!-- 68000 program ROM (alternate version): Bank 0 has different ROMs.
+       Bank 1 is shared with gigandes parent.
+       Z80 audio ROM appended at offset 0x080000. -->
+  <rom index="0" zip="gigandes.zip" type="merged" md5="None">
+    <interleave output="16">
+      <part name="gigandesa/east-1.10a" crc="290c50e0" map="10"/>  <!-- Bank 0 even (alt) -->
+      <part name="gigandesa/east-3.5a"  crc="9cef82af" map="01"/>  <!-- Bank 0 odd  (alt) -->
+    </interleave>
+    <interleave output="16">
+      <part name="east_2.8a"  crc="dd94b4d0" map="10"/>  <!-- Bank 1 even (shared) -->
+      <part name="east_4.3a"  crc="a647310a" map="01"/>  <!-- Bank 1 odd  (shared) -->
+    </interleave>
+    <!-- Z80 audio ROM at SDRAM 0x080000 (shared with parent) -->
+    <part name="east_5.17d" crc="b24ab5f4" offset="0x080000" length="0x010000"/>
+  </rom>
+
+  <!-- Sprite/GFX ROM: shared with gigandes parent (2MB, 4×512KB interleaved) -->
+  <rom index="1" zip="gigandes.zip" type="merged" md5="None">
+    <interleave output="16">
+      <part name="east_9.3j" crc="5c5e6898" map="10"/>
+      <part name="east_8.3f" crc="75eece28" map="01"/>
+    </interleave>
+    <interleave output="16">
+      <part name="east_6.3k" crc="52db30e9" map="10"/>
+      <part name="east_7.3h" crc="b179a76a" map="01"/>
+    </interleave>
+  </rom>
+
+  <rom index="0xFE">
+    <part repeat="4">FF</part>
+  </rom>
+
+</misterromdescription>
