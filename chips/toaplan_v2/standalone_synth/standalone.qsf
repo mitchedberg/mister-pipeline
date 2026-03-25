@@ -22,7 +22,7 @@ set_global_assignment -name SDC_FILE standalone.sdc
 set_global_assignment -name LAST_QUARTUS_VERSION "17.0.2 Lite Edition"
 set_global_assignment -name SAVE_DISK_SPACE OFF
 set_global_assignment -name SMART_RECOMPILE ON
-set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE AREA"
+set_global_assignment -name OPTIMIZATION_MODE "BALANCED"
 set_global_assignment -name OPTIMIZATION_TECHNIQUE AREA
 set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
 set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS OFF
