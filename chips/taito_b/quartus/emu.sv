@@ -394,6 +394,66 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
     end
 end
 
+//////////////////////////////////////////////////////////////////
+// Video timing generator
+//
+// Taito B expects external 320x240 arcade timing into the VCU/DAR path.
+// The sim already uses 416x264 total timing, so keep hardware aligned to that.
+//////////////////////////////////////////////////////////////////
+localparam int H_ACTIVE = 320;
+localparam int H_FP     = 24;
+localparam int H_SYNC   = 32;
+localparam int H_BP     = 40;
+localparam int H_TOTAL  = H_ACTIVE + H_FP + H_SYNC + H_BP;
+
+localparam int V_ACTIVE = 240;
+localparam int V_FP     = 12;
+localparam int V_SYNC   = 4;
+localparam int V_BP     = 8;
+localparam int V_TOTAL  = V_ACTIVE + V_FP + V_SYNC + V_BP;
+
+logic [8:0] hpos_r;
+logic [8:0] vpos_r;
+logic       hblank_r;
+logic       vblank_r;
+logic       hsync_n_timing;
+logic       vsync_n_timing;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) begin
+        hpos_r         <= 9'd0;
+        vpos_r         <= 9'd0;
+        hblank_r       <= 1'b0;
+        vblank_r       <= 1'b0;
+        hsync_n_timing <= 1'b1;
+        vsync_n_timing <= 1'b1;
+    end else if (ce_pix) begin
+        if (hpos_r == 9'(H_TOTAL - 1))
+            hpos_r <= 9'd0;
+        else
+            hpos_r <= hpos_r + 9'd1;
+
+        if (hpos_r == 9'(H_TOTAL - 1)) begin
+            if (vpos_r == 9'(V_TOTAL - 1))
+                vpos_r <= 9'd0;
+            else
+                vpos_r <= vpos_r + 9'd1;
+        end
+
+        hblank_r       <= (hpos_r >= 9'(H_ACTIVE));
+        vblank_r       <= (vpos_r >= 9'(V_ACTIVE));
+        hsync_n_timing <= ~((hpos_r >= 9'(H_ACTIVE + H_FP)) &&
+                            (hpos_r <  9'(H_ACTIVE + H_FP + H_SYNC)));
+        vsync_n_timing <= ~((vpos_r >= 9'(V_ACTIVE + V_FP)) &&
+                            (vpos_r <  9'(V_ACTIVE + V_FP + V_SYNC)));
+    end
+end
+
+wire        hblank_n_in = ~hblank_r;
+wire        vblank_n_in = ~vblank_r;
+wire [8:0]  hpos_in     = (hpos_r < 9'(H_ACTIVE)) ? hpos_r : 9'd0;
+wire [7:0]  vpos_in     = (vpos_r < 9'(V_ACTIVE)) ? vpos_r[7:0] : 8'd0;
+
 // Sound clock enable: 4 MHz (32 MHz / 8).
 // The YM2610 and Z80 both run at 4 MHz on the Taito B hardware.
 // We generate a clock-enable pulse every 8th clk_sys cycle.
@@ -695,14 +755,13 @@ taito_b u_taito_b
     .hblank      (core_hblank),
     .vblank      (core_vblank),
 
-    // ── Video timing (standard 320×240 arcade) ────────────────────────────────
-    // Placeholder: real timing generator would drive these
-    .hblank_n_in (1'b1),    // no blank
-    .vblank_n_in (1'b1),
-    .hpos        (9'h000),
-    .vpos        (8'h00),
-    .hsync_n_in  (1'b1),
-    .vsync_n_in  (1'b1),
+    // ── Video timing (320×240 active, 416×264 total) ─────────────────────────
+    .hblank_n_in (hblank_n_in),
+    .vblank_n_in (vblank_n_in),
+    .hpos        (hpos_in),
+    .vpos        (vpos_in),
+    .hsync_n_in  (hsync_n_timing),
+    .vsync_n_in  (vsync_n_timing),
 
     // ── Player inputs ─────────────────────────────────────────────────────────
     .joystick_p1 (joy_p1),
