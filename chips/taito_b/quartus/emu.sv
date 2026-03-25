@@ -312,7 +312,9 @@ hps_io #(.CONF_STR(CONF_STR)) u_hps_io
 // Taito B system clock: 32 MHz (2× master, CPU at 8 MHz via /4 CE).
 // TC0180VCU pixel clock: ~6.4 MHz (sys_clk / 5 CE).
 //   Hardware pixel clock is ~6.75 MHz; /5 = 6.4 MHz (≈5% low, correct 15 kHz sync).
-// SDRAM clock: 143 MHz (PLL outclk_1), phase-shifted for setup margin.
+// SDRAM clock: 143 MHz (PLL outclk_1).
+// Drive the external SDRAM clock with the standard MiSTer altddio_out pattern
+// instead of wiring the PLL clock straight to the pin.
 //////////////////////////////////////////////////////////////////
 
 wire clk_sys;       // 32 MHz — core system clock
@@ -328,8 +330,29 @@ pll u_pll
     .locked   (pll_locked)
 );
 
-// SDRAM clock pin driven from PLL (phase-shifted for setup/hold margin).
-assign SDRAM_CLK = clk_sdram;
+// Canonical MiSTer SDRAM clock generation (Sorgelig): DDR 0/1 pattern creates
+// a stable 180-degree shifted external clock relative to internal SDRAM logic.
+altddio_out #(
+    .extend_oe_disable("OFF"),
+    .intended_device_family("Cyclone V"),
+    .invert_output("OFF"),
+    .lpm_hint("UNUSED"),
+    .lpm_type("altddio_out"),
+    .oe_reg("UNREGISTERED"),
+    .power_up_high("OFF"),
+    .width(1)
+) u_sdramclk_ddr (
+    .datain_h   (1'b0),
+    .datain_l   (1'b1),
+    .outclock   (clk_sdram),
+    .dataout    (SDRAM_CLK),
+    .aclr       (1'b0),
+    .aset       (1'b0),
+    .oe         (1'b1),
+    .outclocken (1'b1),
+    .sclr       (1'b0),
+    .sset       (1'b0)
+);
 
 //////////////////////////////////////////////////////////////////
 // Clock enables
