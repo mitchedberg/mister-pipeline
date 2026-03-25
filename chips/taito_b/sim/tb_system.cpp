@@ -4,7 +4,7 @@
 // Wraps tb_top.sv (which includes taito_b + fx68k CPU) and drives:
 //   - Clock (32 MHz) and reset
 //   - Video timing generator (320×240 @ ~60 Hz, H_TOTAL=416, V_TOTAL=264)
-//   - Four SDRAM channels (ToggleSdramChannel behavioral model, all 16-bit)
+//   - SDRAM channels: prog (toggle-handshake), gfx (zero-latency direct), sdr, z80
 //   - Sound clock enable: 4 MHz (1 pulse every 8 sys clocks)
 //   - clk_pix2x: driven high every cycle (TC0260DAR ce_double stub)
 //   - Player inputs (all held at 0xFF = no input, active-low)
@@ -196,7 +196,7 @@ int main(int argc, char** argv) {
     // All four channels use 16-bit toggle handshake.
     // taito_b internally selects the correct byte for Z80 ROM reads.
     ToggleSdramChannel prog_ch(sdram);   // CPU program ROM
-    ToggleSdramChannel gfx_ch(sdram);    // TC0180VCU GFX ROM
+    // gfx_ch removed: GFX ROM uses zero-latency direct lookup (NMK bg_rom pattern)
     ToggleSdramChannel sdr_ch(sdram);    // TC0140SYT ADPCM (sdr_addr/data/req/ack)
     ToggleSdramChannel z80_ch(sdram);    // Z80 audio ROM (16-bit, byte selected in RTL)
 
@@ -357,9 +357,12 @@ int main(int argc, char** argv) {
                 top->prog_rom_ack  = r.ack;
             }
             {
-                auto r = gfx_ch.tick(top->gfx_rom_req, top->gfx_rom_addr);
-                top->gfx_rom_data = r.data;
-                top->gfx_rom_ack  = r.ack;
+                // GFX ROM: zero-latency direct lookup (NMK bg_rom pattern).
+                // TC0180VCU BG/FG/TX FSMs advance 1 state/cycle and read
+                // gfx_data combinatorially — no stall handshake is possible.
+                // Drive data directly from gfx_rom_addr every cycle; ack=req.
+                top->gfx_rom_data = sdram.read_word((uint32_t)top->gfx_rom_addr & ~1u);
+                top->gfx_rom_ack  = top->gfx_rom_req;  // always ack immediately
             }
             {
                 auto r = sdr_ch.tick(top->sdr_req, top->sdr_addr);

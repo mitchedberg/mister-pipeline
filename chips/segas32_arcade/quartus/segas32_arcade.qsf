@@ -52,7 +52,8 @@ set_global_assignment -name OPTIMIZE_POWER_DURING_FITTING OFF
 set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS OFF
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION NEVER
 set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
-set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
+set_global_assignment -name OPTIMIZATION_MODE "BALANCED"
+set_global_assignment -name SYNTHESIS_EFFORT FAST
 set_global_assignment -name OPTIMIZATION_TECHNIQUE SPEED
 
 # ==========================================================================

@@ -379,46 +379,32 @@ logic prog_dtack_now;
 assign prog_dtack_now = prog_rom_cs && prog_req_pending && (prog_rom_req == prog_rom_ack);
 
 // =============================================================================
-// GFX ROM SDRAM Bridge
-// TC0180VCU outputs a 23-bit BYTE address (gfx_addr[22:0]).
-// SDRAM uses 16-bit word access: SDRAM_word_addr = GFX_ROM_BASE + byte_addr[22:1]
-// The byte lane is selected by gfx_addr[0].
+// GFX ROM SDRAM Bridge — Zero-Latency Combinatorial Access
 //
-// Simple request-acknowledge bridge using a toggle handshake:
-//   - When vcu_gfx_rd rises, compute word address and toggle gfx_rom_req
-//   - When gfx_rom_ack == gfx_rom_req, data is ready; select byte lane
-//   - Feed result to vcu_gfx_data
+// TC0180VCU's BG/FG/TX FSMs advance one state per clock and read gfx_data
+// combinatorially on the same clock edge as gfx_rd is asserted.  There is no
+// stall handshake — the FSM cannot wait for an async SDRAM reply.
 //
-// NOTE: TC0180VCU's gfx_rd is a combinational strobe (not registered), so
-// this bridge registers the request on gfx_rd rising edge.
+// Pattern: identical to NMK arcade bg_rom bridge (see nmk_arcade.sv §BG ROM).
+//   · gfx_rom_addr is driven combinatorially from vcu_gfx_addr every cycle.
+//   · The testbench performs a direct SDRAM lookup every eval() and drives
+//     gfx_rom_data synchronously (no latency counter needed).
+//   · gfx_rom_req toggles on gfx_rd for bus-activity tracing; the testbench
+//     mirrors gfx_rom_ack = gfx_rom_req immediately (zero-latency ack).
+//
+// Result: vcu_gfx_data reflects the correct GFX ROM byte on the same clock
+// cycle that the BG/FG/TX FSM reads it, matching real-hardware behaviour.
 // =============================================================================
-logic        gfx_req_pending;
-logic        gfx_byte_sel;    // which byte of the 16-bit SDRAM word to return
-logic [26:0] gfx_req_addr;
 
+// Direct combinatorial address: word addr = GFX_ROM_BASE + byte_addr[22:1]
+assign gfx_rom_addr = GFX_ROM_BASE + {4'b0, vcu_gfx_addr[22:1]};
+// Byte select: Taito GFX ROMs are big-endian — even byte addr → data[15:8]
+assign vcu_gfx_data = vcu_gfx_addr[0] ? gfx_rom_data[7:0] : gfx_rom_data[15:8];
+// Toggle req on each gfx_rd strobe for bus tracing; tb always acks immediately.
 always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n) begin
-        gfx_rom_req     <= 1'b0;
-        gfx_req_pending <= 1'b0;
-        gfx_byte_sel    <= 1'b0;
-        gfx_req_addr    <= 27'b0;
-    end else begin
-        if (vcu_gfx_rd && !gfx_req_pending) begin
-            // New GFX ROM request from VCU
-            gfx_req_addr    <= GFX_ROM_BASE + {4'b0, vcu_gfx_addr[22:1]};
-            gfx_byte_sel    <= vcu_gfx_addr[0];
-            gfx_req_pending <= 1'b1;
-            gfx_rom_req     <= ~gfx_rom_req;   // toggle to request
-        end else if (gfx_req_pending && (gfx_rom_req == gfx_rom_ack)) begin
-            gfx_req_pending <= 1'b0;
-        end
-    end
+    if (!reset_n) gfx_rom_req <= 1'b0;
+    else if (vcu_gfx_rd) gfx_rom_req <= ~gfx_rom_req;
 end
-
-assign gfx_rom_addr = gfx_req_addr;
-// Select the correct byte from the 16-bit SDRAM word
-// Taito GFX ROMs are big-endian: even byte addr → data[15:8], odd → data[7:0]
-assign vcu_gfx_data = gfx_byte_sel ? gfx_rom_data[7:0] : gfx_rom_data[15:8];
 
 // =============================================================================
 // Palette RAM — 8K × 16-bit synchronous block RAM
@@ -1051,7 +1037,8 @@ assign vsync_n  = vsync_n_in;
 logic _unused;
 assign _unused = ^{vcu_pixel_valid, pal_ram_addr[13],
                    z80_rfsh_n, z80_halt_n, z80_busak_n, z80_m1_n,
-                   z80_rom_cs_prev, z80_rd_n_prev};
+                   z80_rom_cs_prev, z80_rd_n_prev,
+                   gfx_rom_ack};   // ack kept as port for tb compatibility; unused in RTL
 /* verilator lint_on UNUSED */
 
 endmodule
