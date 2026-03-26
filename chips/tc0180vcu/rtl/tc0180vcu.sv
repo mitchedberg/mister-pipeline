@@ -936,6 +936,16 @@ logic [22:0] spr_gfx_addr;
 logic        spr_gfx_rd;
 logic        spr_gfx_ok;
 
+typedef enum logic [1:0] {
+    GFX_OWN_TX  = 2'd0,
+    GFX_OWN_BG  = 2'd1,
+    GFX_OWN_FG  = 2'd2,
+    GFX_OWN_SPR = 2'd3
+} gfx_owner_t;
+
+gfx_owner_t gfx_owner_r;
+logic       gfx_busy_r;
+
 tc0180vcu_sprite u_sprite (
     .clk        (clk),
     .rst_n      (rst_n),
@@ -961,13 +971,57 @@ tc0180vcu_sprite u_sprite (
 // They are time-disjoint, but use a priority mux to be safe:
 //   TX > BG > FG > Sprite
 // =============================================================================
-assign tx_gfx_ok  = gfx_ok && tx_gfx_rd;
-assign bg_gfx_ok  = gfx_ok && !tx_gfx_rd && bg_gfx_rd;
-assign fg_gfx_ok  = gfx_ok && !tx_gfx_rd && !bg_gfx_rd && fg_gfx_rd;
-assign spr_gfx_ok = gfx_ok && !tx_gfx_rd && !bg_gfx_rd && !fg_gfx_rd && spr_gfx_rd;
+assign tx_gfx_ok  = gfx_ok && gfx_busy_r && (gfx_owner_r == GFX_OWN_TX);
+assign bg_gfx_ok  = gfx_ok && gfx_busy_r && (gfx_owner_r == GFX_OWN_BG);
+assign fg_gfx_ok  = gfx_ok && gfx_busy_r && (gfx_owner_r == GFX_OWN_FG);
+assign spr_gfx_ok = gfx_ok && gfx_busy_r && (gfx_owner_r == GFX_OWN_SPR);
+
+always_ff @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        gfx_owner_r <= GFX_OWN_TX;
+        gfx_busy_r  <= 1'b0;
+    end else begin
+        if (!gfx_busy_r) begin
+            if (tx_gfx_rd) begin
+                gfx_owner_r <= GFX_OWN_TX;
+                gfx_busy_r  <= 1'b1;
+            end else if (bg_gfx_rd) begin
+                gfx_owner_r <= GFX_OWN_BG;
+                gfx_busy_r  <= 1'b1;
+            end else if (fg_gfx_rd) begin
+                gfx_owner_r <= GFX_OWN_FG;
+                gfx_busy_r  <= 1'b1;
+            end else if (spr_gfx_rd) begin
+                gfx_owner_r <= GFX_OWN_SPR;
+                gfx_busy_r  <= 1'b1;
+            end
+        end else if (gfx_ok) begin
+            gfx_busy_r <= 1'b0;
+        end
+    end
+end
 
 always_comb begin
-    if (tx_gfx_rd) begin
+    if (gfx_busy_r) begin
+        case (gfx_owner_r)
+            GFX_OWN_TX: begin
+                gfx_addr = tx_gfx_addr;
+                gfx_rd   = tx_gfx_rd;
+            end
+            GFX_OWN_BG: begin
+                gfx_addr = bg_gfx_addr;
+                gfx_rd   = bg_gfx_rd;
+            end
+            GFX_OWN_FG: begin
+                gfx_addr = fg_gfx_addr;
+                gfx_rd   = fg_gfx_rd;
+            end
+            default: begin
+                gfx_addr = spr_gfx_addr;
+                gfx_rd   = spr_gfx_rd;
+            end
+        endcase
+    end else if (tx_gfx_rd) begin
         gfx_addr = tx_gfx_addr;
         gfx_rd   = 1'b1;
     end else if (bg_gfx_rd) begin
