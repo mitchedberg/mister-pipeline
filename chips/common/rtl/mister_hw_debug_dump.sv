@@ -33,19 +33,22 @@ always_ff @(posedge clk or negedge reset_n) begin
         upload_seen      <= 1'b0;
         ioctl_upload_req <= 1'b0;
     end else begin
-        ioctl_upload_req <= 1'b0;
-
         if (frame_pulse && !upload_requested) begin
             frame_count <= frame_count + 16'd1;
 
             if (trigger_en && (frame_count == (FRAME_TARGET - 1))) begin
                 captured_frame   <= frame_count + 16'd1;
                 upload_requested <= 1'b1;
-                ioctl_upload_req <= 1'b1;
             end
         end
 
-        if (ioctl_upload) upload_seen <= 1'b1;
+        if (ioctl_upload) begin
+            upload_seen      <= 1'b1;
+            ioctl_upload_req <= 1'b0;
+        end else begin
+            // Keep the request asserted until MiSTer acknowledges the upload path.
+            ioctl_upload_req <= upload_requested && !upload_seen;
+        end
     end
 end
 
