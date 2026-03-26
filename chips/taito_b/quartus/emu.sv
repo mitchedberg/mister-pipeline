@@ -253,6 +253,9 @@ localparam CONF_STR = {
     "-;",
     "O[122:121],Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
     "O[5:3],Scandoubler FX,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+`ifdef HW_DEBUG_DUMP
+    "O[120],HW Debug Dump,Off,On;",
+`endif
     "-;",
     "DIP;",
     "O[1:0],Coin A,1C1P,2C1P,1C2P,1C3P;",
@@ -694,7 +697,7 @@ mister_hw_debug_dump #(
     .clk               (clk_sys),
     .reset_n           (reset_n),
     .frame_pulse       (debug_frame_pulse),
-    .trigger_en        (OSD_STATUS),
+    .trigger_en        (OSD_STATUS && status[120]),
     .ioctl_upload      (ioctl_upload),
     .ioctl_rd          (ioctl_rd),
     .ioctl_addr        (ioctl_addr),

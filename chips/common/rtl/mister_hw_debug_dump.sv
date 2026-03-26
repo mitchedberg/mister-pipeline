@@ -61,7 +61,7 @@ end
 always_comb begin
     ioctl_din = 8'h00;
 
-    unique case (addr_lo)
+    case (addr_lo)
         8'h00: ioctl_din = 8'h44; // D
         8'h01: ioctl_din = 8'h42; // B
         8'h02: ioctl_din = 8'h47; // G
@@ -77,5 +77,9 @@ always_comb begin
         default: ioctl_din = addr_lo ^ 8'hA5;
     endcase
 end
+
+/* verilator lint_off UNUSED */
+wire _unused = &{1'b0, ioctl_rd};
+/* verilator lint_on UNUSED */
 
 endmodule
