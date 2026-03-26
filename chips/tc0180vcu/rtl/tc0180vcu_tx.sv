@@ -45,7 +45,8 @@ module tc0180vcu_tx (
 
     // Pixel output (async read from line buffer, indexed by hpos)
     // Format: {color[3:0], pixel_index[3:0]}
-    output logic [ 7:0] tx_pixel
+    output logic [ 7:0] tx_pixel,
+    output logic        busy
 );
 
 // =============================================================================
@@ -82,6 +83,7 @@ typedef enum logic [2:0] {
 
 tx_state_t   state;
 logic [ 5:0] tx_col;        // current tile column (0..63)
+assign busy = (state != TX_IDLE);
 
 // Registered tile fields
 logic [ 3:0] tx_color_r;    // tile color attribute [15:12] of VRAM word

@@ -87,7 +87,8 @@ module tc0180vcu_bg #(parameter PLANE = 0) (
     input  logic        gfx_ok,
 
     // Pixel output (async read from line buffer)
-    output logic [ 9:0] layer_pixel
+    output logic [ 9:0] layer_pixel,
+    output logic        busy
 );
 
 // =============================================================================
@@ -112,6 +113,7 @@ typedef enum logic [3:0] {
 
 bg_state_t   state;
 logic [4:0]  tile_col;   // tile column counter, 0..21
+assign busy = (state != BG_IDLE);
 
 // =============================================================================
 // Scroll RAM base offset for this plane

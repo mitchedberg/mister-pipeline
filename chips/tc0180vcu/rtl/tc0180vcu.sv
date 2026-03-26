@@ -790,6 +790,7 @@ end
 logic [ 7:0] tx_pixel_w;
 logic [22:0] tx_gfx_addr;
 logic        tx_gfx_rd;
+logic        tx_gfx_ok;
 
 tc0180vcu_tx u_tx (
     .clk          (clk),
@@ -807,8 +808,9 @@ tc0180vcu_tx u_tx (
     .gfx_addr     (tx_gfx_addr),
     .gfx_data     (gfx_data),
     .gfx_rd       (tx_gfx_rd),
-    .gfx_ok       (gfx_ok),
-    .tx_pixel     (tx_pixel_w)
+    .gfx_ok       (tx_gfx_ok),
+    .tx_pixel     (tx_pixel_w),
+    .busy         ()
 );
 
 // =============================================================================
@@ -866,6 +868,7 @@ assign fg_start = (hblank_cyc == 10'd545);
 // BG instance (PLANE=1)
 logic [22:0] bg_gfx_addr;
 logic        bg_gfx_rd;
+logic        bg_gfx_ok;
 logic [ 9:0] bg_pixel_w;
 
 tc0180vcu_bg #(.PLANE(1)) u_bg (
@@ -889,13 +892,15 @@ tc0180vcu_bg #(.PLANE(1)) u_bg (
     .gfx_addr      (bg_gfx_addr),
     .gfx_data      (gfx_data),
     .gfx_rd        (bg_gfx_rd),
-    .gfx_ok        (gfx_ok),
-    .layer_pixel   (bg_pixel_w)
+    .gfx_ok        (bg_gfx_ok),
+    .layer_pixel   (bg_pixel_w),
+    .busy          ()
 );
 
 // FG instance (PLANE=0)
 logic [22:0] fg_gfx_addr;
 logic        fg_gfx_rd;
+logic        fg_gfx_ok;
 logic [ 9:0] fg_pixel_w;
 
 tc0180vcu_bg #(.PLANE(0)) u_fg (
@@ -919,8 +924,9 @@ tc0180vcu_bg #(.PLANE(0)) u_fg (
     .gfx_addr      (fg_gfx_addr),
     .gfx_data      (gfx_data),
     .gfx_rd        (fg_gfx_rd),
-    .gfx_ok        (gfx_ok),
-    .layer_pixel   (fg_pixel_w)
+    .gfx_ok        (fg_gfx_ok),
+    .layer_pixel   (fg_pixel_w),
+    .busy          ()
 );
 
 // =============================================================================
@@ -928,6 +934,7 @@ tc0180vcu_bg #(.PLANE(0)) u_fg (
 // =============================================================================
 logic [22:0] spr_gfx_addr;
 logic        spr_gfx_rd;
+logic        spr_gfx_ok;
 
 tc0180vcu_sprite u_sprite (
     .clk        (clk),
@@ -938,7 +945,7 @@ tc0180vcu_sprite u_sprite (
     .gfx_addr   (spr_gfx_addr),
     .gfx_data   (gfx_data),
     .gfx_rd     (spr_gfx_rd),
-    .gfx_ok     (gfx_ok),
+    .gfx_ok     (spr_gfx_ok),
     .fb_wr      (spr_fb_wr),
     .fb_wx      (spr_fb_wx),
     .fb_wy      (spr_fb_wy),
@@ -954,6 +961,11 @@ tc0180vcu_sprite u_sprite (
 // They are time-disjoint, but use a priority mux to be safe:
 //   TX > BG > FG > Sprite
 // =============================================================================
+assign tx_gfx_ok  = gfx_ok && tx_gfx_rd;
+assign bg_gfx_ok  = gfx_ok && !tx_gfx_rd && bg_gfx_rd;
+assign fg_gfx_ok  = gfx_ok && !tx_gfx_rd && !bg_gfx_rd && fg_gfx_rd;
+assign spr_gfx_ok = gfx_ok && !tx_gfx_rd && !bg_gfx_rd && !fg_gfx_rd && spr_gfx_rd;
+
 always_comb begin
     if (tx_gfx_rd) begin
         gfx_addr = tx_gfx_addr;
