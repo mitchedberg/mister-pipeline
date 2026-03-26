@@ -694,7 +694,7 @@ mister_hw_debug_dump #(
     .clk               (clk_sys),
     .reset_n           (reset_n),
     .frame_pulse       (debug_frame_pulse),
-    .trigger_en        (1'b1),
+    .trigger_en        (OSD_STATUS),
     .ioctl_upload      (ioctl_upload),
     .ioctl_rd          (ioctl_rd),
     .ioctl_addr        (ioctl_addr),
