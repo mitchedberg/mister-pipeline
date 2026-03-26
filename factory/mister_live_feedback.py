@@ -87,6 +87,16 @@ def shquote(value: str) -> str:
     return shlex.quote(value)
 
 
+def send_mister_cmd(args, raw: str) -> None:
+    ssh(
+        args,
+        "sh -c {cmd} >/dev/null 2>&1 </dev/null &".format(
+            cmd=shquote(f"printf '%s\\n' {shquote(raw)} > /dev/MiSTer_cmd")
+        ),
+        capture=False,
+    )
+
+
 def list_remote_pngs(args, remote_dir: str) -> dict[str, float]:
     cmd = (
         "python3 - <<'PY'\n"
@@ -194,7 +204,7 @@ def screenshot_once(args, name: str) -> pathlib.Path:
     remote_dir = args.remote_dir.rstrip("/")
     ssh(args, f"mkdir -p {shquote(remote_dir)}")
     before = list_remote_pngs(args, remote_dir)
-    ssh(args, f"printf '%s\\n' {shquote('screenshot ' + name)} > /dev/MiSTer_cmd", capture=False)
+    send_mister_cmd(args, "screenshot " + name)
     remote = ""
     deadline = time.time() + max(args.delay, 1.0) + 10.0
     while time.time() < deadline:
@@ -232,7 +242,7 @@ def cmd_burst(args) -> int:
 
 
 def cmd_cmd(args) -> int:
-    ssh(args, f"printf '%s\\n' {shquote(args.raw)} > /dev/MiSTer_cmd", capture=False)
+    send_mister_cmd(args, args.raw)
     print(f"sent command: {args.raw}")
     return 0
 
