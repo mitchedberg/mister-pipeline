@@ -1003,6 +1003,7 @@ typedef enum logic [1:0] {
 
 gfx_owner_t gfx_owner_r;
 logic       gfx_busy_r;
+logic [22:0] gfx_inflight_addr_r;
 
 tc0180vcu_sprite u_sprite (
     .clk        (clk),
@@ -1038,20 +1039,25 @@ always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         gfx_owner_r <= GFX_OWN_TX;
         gfx_busy_r  <= 1'b0;
+        gfx_inflight_addr_r  <= 23'b0;
     end else begin
         if (!gfx_busy_r) begin
             if (tx_gfx_rd) begin
                 gfx_owner_r <= GFX_OWN_TX;
                 gfx_busy_r  <= 1'b1;
+                gfx_inflight_addr_r  <= tx_gfx_addr;
             end else if (bg_gfx_rd) begin
                 gfx_owner_r <= GFX_OWN_BG;
                 gfx_busy_r  <= 1'b1;
+                gfx_inflight_addr_r  <= bg_gfx_addr;
             end else if (fg_gfx_rd) begin
                 gfx_owner_r <= GFX_OWN_FG;
                 gfx_busy_r  <= 1'b1;
+                gfx_inflight_addr_r  <= fg_gfx_addr;
             end else if (spr_gfx_rd) begin
                 gfx_owner_r <= GFX_OWN_SPR;
                 gfx_busy_r  <= 1'b1;
+                gfx_inflight_addr_r  <= spr_gfx_addr;
             end
         end else if (gfx_ok) begin
             gfx_busy_r <= 1'b0;
@@ -1061,24 +1067,9 @@ end
 
 always_comb begin
     if (gfx_busy_r) begin
-        case (gfx_owner_r)
-            GFX_OWN_TX: begin
-                gfx_addr = tx_gfx_addr;
-                gfx_rd   = tx_gfx_rd;
-            end
-            GFX_OWN_BG: begin
-                gfx_addr = bg_gfx_addr;
-                gfx_rd   = bg_gfx_rd;
-            end
-            GFX_OWN_FG: begin
-                gfx_addr = fg_gfx_addr;
-                gfx_rd   = fg_gfx_rd;
-            end
-            default: begin
-                gfx_addr = spr_gfx_addr;
-                gfx_rd   = spr_gfx_rd;
-            end
-        endcase
+        // Keep the accepted request stable until the shared return arrives.
+        gfx_addr = gfx_inflight_addr_r;
+        gfx_rd   = 1'b1;
     end else if (tx_gfx_rd) begin
         gfx_addr = tx_gfx_addr;
         gfx_rd   = 1'b1;
@@ -1096,6 +1087,17 @@ always_comb begin
         gfx_rd   = 1'b0;
     end
 end
+
+`ifndef QUARTUS
+// Hostile-sim invariant checks for shared GFX return path.
+// While a read is inflight, shared address/strobe must remain fixed until gfx_ok.
+always_ff @(posedge clk) begin
+    if (rst_n && gfx_busy_r && !gfx_ok) begin
+        if (!gfx_rd) $fatal(1, "TC0180VCU GFX invariant: shared gfx_rd dropped before gfx_ok");
+        if (gfx_addr != gfx_inflight_addr_r) $fatal(1, "TC0180VCU GFX invariant: shared gfx_addr changed mid-flight");
+    end
+end
+`endif
 
 // =============================================================================
 // Pixel Output — Layer Compositor
