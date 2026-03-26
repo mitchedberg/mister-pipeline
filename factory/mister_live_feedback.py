@@ -301,6 +301,8 @@ def cmd_keys(args) -> int:
 
 def cmd_probe(args) -> int:
     launch_args = argparse.Namespace(**vars(args))
+    if not hasattr(launch_args, "replace_existing"):
+        launch_args.replace_existing = True
     cmd_launch(launch_args)
     shot_args = argparse.Namespace(**vars(args))
     shot_args.out_dir = args.out_dir
