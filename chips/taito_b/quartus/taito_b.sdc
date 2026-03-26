@@ -38,16 +38,19 @@ derive_clock_uncertainty
 # ==========================================================================
 #
 # Taito B operates in multiple asynchronous clock domains:
-#   — sys_clk (16 MHz): CPU, TC0180VCU, TC0220IOC, TC0260DAR
-#   — sdram_clk (143 MHz): SDRAM controller
+#   — sys_clk (32 MHz): CPU CEN fabric, TC0180VCU, TC0220IOC, TC0260DAR
+#   — sdram_clk (133 MHz): SDRAM controller
 #   — HDMI clocks: Video output
 #   — Audio clocks: I2S output
 #
+# Quartus 17 does not match the earlier wildcard form reliably after derive_pll_clocks,
+# so list the derived clock names explicitly.
 
 set_clock_groups -exclusive \
-   -group [get_clocks { *|pll|pll_inst|altera_pll_i|*[*].*|divclk}] \
-   -group [get_clocks { pll_hdmi|pll_hdmi_inst|altera_pll_i|*[0].*|divclk}] \
-   -group [get_clocks { pll_audio|pll_audio_inst|altera_pll_i|*[0].*|divclk}] \
+   -group [get_clocks { emu|u_pll|pll_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk }] \
+   -group [get_clocks { emu|u_pll|pll_inst|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk }] \
+   -group [get_clocks { pll_hdmi|pll_hdmi_inst|altera_pll_i|cyclonev_pll|counter[0].output_counter|divclk }] \
+   -group [get_clocks { pll_audio|pll_audio_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk }] \
    -group [get_clocks { FPGA_CLK1_50 }] \
    -group [get_clocks { FPGA_CLK2_50 }] \
    -group [get_clocks { FPGA_CLK3_50 }]
@@ -168,9 +171,10 @@ set_false_path -to   {sysmem|fpga_interfaces|clocks_resets|f2h*}
 # =============================================================================
 
 set_clock_groups -exclusive \
-   -group [get_clocks { *|pll|pll_inst|altera_pll_i|*[*].*|divclk}] \
-   -group [get_clocks { pll_hdmi|pll_hdmi_inst|altera_pll_i|*[0].*|divclk}] \
-   -group [get_clocks { pll_audio|pll_audio_inst|altera_pll_i|*[0].*|divclk}] \
+   -group [get_clocks { emu|u_pll|pll_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk }] \
+   -group [get_clocks { emu|u_pll|pll_inst|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk }] \
+   -group [get_clocks { pll_hdmi|pll_hdmi_inst|altera_pll_i|cyclonev_pll|counter[0].output_counter|divclk }] \
+   -group [get_clocks { pll_audio|pll_audio_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk }] \
    -group [get_clocks { FPGA_CLK1_50 }] \
    -group [get_clocks { FPGA_CLK2_50 }] \
    -group [get_clocks { FPGA_CLK3_50 }]

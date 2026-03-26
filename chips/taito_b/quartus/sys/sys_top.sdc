@@ -10,10 +10,13 @@ derive_pll_clocks
 derive_clock_uncertainty
 
 # Decouple different clock groups (to simplify routing)
+# Quartus 17 does not match the older wildcard PLL pattern reliably after
+# derive_pll_clocks, so enumerate the derived clock names directly.
 set_clock_groups -exclusive \
-   -group [get_clocks { *|pll|pll_inst|altera_pll_i|*[*].*|divclk}] \
-   -group [get_clocks { pll_hdmi|pll_hdmi_inst|altera_pll_i|*[0].*|divclk}] \
-   -group [get_clocks { pll_audio|pll_audio_inst|altera_pll_i|*[0].*|divclk}] \
+   -group [get_clocks { emu|u_pll|pll_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk }] \
+   -group [get_clocks { emu|u_pll|pll_inst|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk }] \
+   -group [get_clocks { pll_hdmi|pll_hdmi_inst|altera_pll_i|cyclonev_pll|counter[0].output_counter|divclk }] \
+   -group [get_clocks { pll_audio|pll_audio_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk }] \
    -group [get_clocks { spi_sck}] \
    -group [get_clocks { hdmi_sck}] \
    -group [get_clocks { *|h2f_user0_clk}] \
