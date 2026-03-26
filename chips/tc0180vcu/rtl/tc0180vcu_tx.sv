@@ -91,6 +91,7 @@ logic [21:0] gfx_base_r;    // tile GFX ROM base byte address (gfx_code*32 + py*
 logic [ 7:0] gfx_b0_r;      // plane 0 byte
 logic [ 7:0] gfx_b1_r;      // plane 1 byte
 logic [ 7:0] gfx_b2_r;      // plane 2 byte
+logic        tx_vram_ready_r;
 
 // =============================================================================
 // Combinational decode from VRAM word (valid while in TX_VRAM state)
@@ -130,8 +131,9 @@ always_comb begin
     gfx_addr = 23'b0;
     case (state)
         TX_VRAM: begin
-            gfx_addr = {1'b0, gfx_base_c};                   // plane 0
-            gfx_rd   = 1'b1;
+            // Wait for VRAM decode to latch before issuing plane-0 fetch.
+            gfx_addr = {1'b0, gfx_base_r};
+            gfx_rd   = tx_vram_ready_r;
         end
         TX_P0: begin
             gfx_addr = {1'b0, gfx_base_r} + 23'd1;           // plane 1
@@ -237,21 +239,27 @@ always_ff @(posedge clk) begin
         gfx_b0_r   <= 8'b0;
         gfx_b1_r   <= 8'b0;
         gfx_b2_r   <= 8'b0;
+        tx_vram_ready_r <= 1'b0;
     end else begin
         case (state)
             TX_IDLE: begin
                 if (hblank_fall) begin
                     tx_col <= 6'b0;
                     state  <= TX_VRAM;
+                    tx_vram_ready_r <= 1'b0;
                 end
             end
 
             TX_VRAM: begin
-                if (vram_ok && gfx_ok) begin
+                if (vram_ok) begin
                     tx_color_r <= color_c;
                     gfx_base_r <= gfx_base_c;
+                    tx_vram_ready_r <= 1'b1;
+                end
+                if (tx_vram_ready_r && gfx_ok) begin
                     gfx_b0_r   <= gfx_data;   // plane 0
                     state      <= TX_P0;
+                    tx_vram_ready_r <= 1'b0;
                 end
             end
 
@@ -276,11 +284,15 @@ always_ff @(posedge clk) begin
                     end else begin
                         tx_col <= tx_col + 6'd1;
                         state  <= TX_VRAM;
+                        tx_vram_ready_r <= 1'b0;
                     end
                 end
             end
 
-            default: state <= TX_IDLE;
+            default: begin
+                state <= TX_IDLE;
+                tx_vram_ready_r <= 1'b0;
+            end
         endcase
     end
 end
