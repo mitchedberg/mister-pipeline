@@ -29,10 +29,12 @@ KEY_CODES = {
     "ENTER": 28,
     "RIGHTCTRL": 97,
     "RIGHTSHIFT": 54,
+    "SYSRQ": 99,
     "UP": 103,
     "LEFT": 105,
     "RIGHT": 106,
     "DOWN": 108,
+    "LEFTMETA": 125,
     "F12": 88,
 }
 

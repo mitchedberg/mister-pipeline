@@ -9,6 +9,10 @@ into a repeatable remote cycle:
 4. send OSD/input keys remotely
 5. inspect MiSTer process/file state remotely
 
+The harness is written against MiSTer's BusyBox userspace, not a full Linux shell.
+It does not assume `pgrep` or GNU `ps`, and launch commands replace older MiSTer
+core processes by default so the remote loop stays single-instanced.
+
 Script:
 
 ```bash
@@ -50,6 +54,9 @@ python3 factory/mister_live_feedback.py launch \
   --core /media/fat/_Arcade/cores/taito_b.rbf \
   --mra "/media/fat/_Arcade/_ Beta AI Cores/nastar.mra"
 ```
+
+By default this will terminate older `/media/fat/MiSTer ...` processes first.
+Use `--no-replace-existing` only if you intentionally need to preserve them.
 
 ### 4. Capture one screenshot
 
@@ -94,6 +101,7 @@ python3 factory/mister_live_feedback.py probe \
 - remote core launch
 - remote OSD/input setup
 - reproducible MiSTer-side debug loops
+- BusyBox-safe process inspection and single-instance core launch
 
 ## What it does not solve yet
 
