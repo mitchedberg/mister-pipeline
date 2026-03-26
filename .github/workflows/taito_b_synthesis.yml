@@ -5,6 +5,7 @@ on:
     paths:
       - 'chips/taito_b/**'
       - 'chips/tc0180vcu/**'
+      - 'chips/common/**'
       - '.github/workflows/taito_b_synthesis.yml'
     branches:
       - master
@@ -14,6 +15,7 @@ on:
     paths:
       - 'chips/taito_b/**'
       - 'chips/tc0180vcu/**'
+      - 'chips/common/**'
   workflow_dispatch:
 
 jobs:
