@@ -31,6 +31,75 @@ DEFAULT_FIFO = "/tmp/codex_keys"
 DEFAULT_SHOTS = pathlib.Path(os.environ.get("MISTER_SHOTS_DIR", "/tmp/mister_shots"))
 
 
+def get_mister_state(args) -> dict[str, object]:
+    if not mister_reachable(args):
+        return {
+            "reachable": False,
+            "host": "",
+            "boot_id": "",
+            "pids": [],
+            "proc_count": 0,
+            "primary_pid": "",
+            "primary_args": "",
+        }
+    cmd = (
+        "python3 - <<'PY'\n"
+        "import json, pathlib, subprocess\n"
+        "host = subprocess.run(['hostname'], capture_output=True, text=True, check=True).stdout.strip()\n"
+        "boot_id = ''\n"
+        "p = pathlib.Path('/proc/sys/kernel/random/boot_id')\n"
+        "if p.exists():\n"
+        "    try:\n"
+        "        boot_id = p.read_text().strip()\n"
+        "    except OSError:\n"
+        "        pass\n"
+        "procs = []\n"
+        "cp = subprocess.run(['ps', '-o', 'pid,args'], capture_output=True, text=True, check=True)\n"
+        "for line in cp.stdout.splitlines()[1:]:\n"
+        "    line = line.strip()\n"
+        "    if not line:\n"
+        "        continue\n"
+        "    parts = line.split(None, 1)\n"
+        "    pid = parts[0]\n"
+        "    args = parts[1] if len(parts) > 1 else ''\n"
+        "    if \"python3 - <<'PY'\" in args:\n"
+        "        continue\n"
+        "    if '/media/fat/MiSTer' in args:\n"
+        "        procs.append({'pid': pid, 'args': args})\n"
+        "state = {\n"
+        "    'reachable': True,\n"
+        "    'host': host,\n"
+        "    'boot_id': boot_id,\n"
+        "    'pids': [p['pid'] for p in procs],\n"
+        "    'proc_count': len(procs),\n"
+        "    'primary_pid': procs[0]['pid'] if procs else '',\n"
+        "    'primary_args': procs[0]['args'] if procs else '',\n"
+        "}\n"
+        "print(json.dumps(state))\n"
+        "PY"
+    )
+    cp = ssh(args, cmd)
+    return json.loads(cp.stdout or "{}")
+
+
+def describe_health_transition(before: dict[str, object], after: dict[str, object]) -> str:
+    if not before.get("reachable", False) and not after.get("reachable", False):
+        return "unreachable"
+    if before.get("reachable", False) and not after.get("reachable", False):
+        return "ssh_lost"
+    if not before.get("reachable", False) and after.get("reachable", False):
+        return "ssh_restored"
+    if before.get("boot_id", "") and after.get("boot_id", "") and before["boot_id"] != after["boot_id"]:
+        return "rebooted"
+    if int(after.get("proc_count", 0)) == 0:
+        return "mister_process_missing"
+    if int(after.get("proc_count", 0)) > 1:
+        return "multiple_mister_processes"
+    if before.get("primary_pid", "") != after.get("primary_pid", ""):
+        return "mister_pid_changed"
+    return "stable"
+
+
 def base_ssh_cmd(host: str, user: str, password: str) -> list[str]:
     return [
         "sshpass",
@@ -170,7 +239,7 @@ def kill_remote_processes(args, needle: str) -> None:
 
 def cmd_status(args) -> int:
     ensure_reachable(args, "status")
-    mister_procs = list_remote_processes(args, "/media/fat/MiSTer")
+    state = get_mister_state(args)
     cp = ssh(
         args,
         "printf 'host=%s\n' \"$(hostname)\"; "
@@ -179,9 +248,10 @@ def cmd_status(args) -> int:
         "printf 'mister_cmd=%s\n' \"$(test -e /dev/MiSTer_cmd && echo yes || echo no)\"",
     )
     sys.stdout.write(cp.stdout)
-    if mister_procs:
-        for proc in mister_procs:
-            print(f"mister_pid={proc['pid']} args={proc['args']}")
+    print(f"boot_id={state.get('boot_id', '')}")
+    print(f"mister_proc_count={state.get('proc_count', 0)}")
+    if int(state.get("proc_count", 0)) > 0:
+        print(f"mister_pid={state.get('primary_pid', '')} args={state.get('primary_args', '')}")
     else:
         print("mister_pid=")
     return 0
@@ -205,6 +275,7 @@ def cmd_deploy(args) -> int:
 
 def cmd_launch(args) -> int:
     ensure_reachable(args, "launch")
+    before = get_mister_state(args)
     if args.replace_existing:
         kill_remote_processes(args, "/media/fat/MiSTer")
     parts = ["/media/fat/MiSTer", shquote(args.core)]
@@ -215,11 +286,22 @@ def cmd_launch(args) -> int:
     print(f"launched: {' '.join(parts)}")
     if args.delay > 0:
         time.sleep(args.delay)
+    after = get_mister_state(args)
+    verdict = describe_health_transition(before, after)
+    print(
+        "health: verdict={v} boot_id={b} proc_count={c} pid={p}".format(
+            v=verdict,
+            b=after.get("boot_id", ""),
+            c=after.get("proc_count", 0),
+            p=after.get("primary_pid", ""),
+        )
+    )
     return 0
 
 
 def screenshot_once(args, name: str) -> pathlib.Path:
     ensure_reachable(args, "screenshot start")
+    before_state = get_mister_state(args)
     remote_dir = args.remote_dir.rstrip("/")
     ssh(args, f"mkdir -p {shquote(remote_dir)}")
     before = list_remote_pngs(args, remote_dir)
@@ -240,12 +322,31 @@ def screenshot_once(args, name: str) -> pathlib.Path:
             remote = changed[-1][1]
             break
     if not remote:
-        if mister_reachable(args):
-            raise RuntimeError("no new screenshot found after screenshot command; MiSTer stayed online")
+        after_state = get_mister_state(args)
+        verdict = describe_health_transition(before_state, after_state)
+        if after_state.get("reachable", False):
+            raise RuntimeError(
+                "no new screenshot found; health verdict={v} boot_id={b} proc_count={c} pid={p}".format(
+                    v=verdict,
+                    b=after_state.get("boot_id", ""),
+                    c=after_state.get("proc_count", 0),
+                    p=after_state.get("primary_pid", ""),
+                )
+            )
         raise RuntimeError("no new screenshot found after screenshot command; MiSTer is unreachable")
     local = args.out_dir / pathlib.Path(remote).name
     scp_from(args, remote, str(local))
     print(local)
+    after_state = get_mister_state(args)
+    verdict = describe_health_transition(before_state, after_state)
+    print(
+        "health: verdict={v} boot_id={b} proc_count={c} pid={p}".format(
+            v=verdict,
+            b=after_state.get("boot_id", ""),
+            c=after_state.get("proc_count", 0),
+            p=after_state.get("primary_pid", ""),
+        )
+    )
     return local
 
 
