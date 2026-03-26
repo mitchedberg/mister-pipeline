@@ -82,6 +82,51 @@ Use plain `case`. `unique case` and `priority case` generate Warning 10280 in Qu
 `check_rtl.sh` Check 10 catches these. All RTL currently clean (2026-03-18).
 From `pattern-ledger.md` Pattern 9.
 
+### 14. Shared request/return ports must latch an owner
+
+If multiple clients share one SDRAM/ROM port, do NOT route `*_ok`, `*_ack`, or returned data
+from live request lines alone. Latch the winning client when the shared port becomes busy, hold
+that owner until the return arrives, and only deliver the return handshake to that owner.
+
+Bad pattern:
+
+```sv
+assign tx_ok = shared_ok && tx_rd;
+assign bg_ok = shared_ok && !tx_rd && bg_rd;
+```
+
+Good pattern:
+
+```sv
+if (!busy && tx_rd) owner <= TX;
+...
+assign tx_ok = shared_ok && busy && owner == TX;
+```
+
+Why: fixed-latency sim can hide this, real SDRAM cannot. This exact class caused hardware-only
+corruption in Taito B `tc0180vcu`.
+
+### 15. MiSTer wrappers must drive real timing into cores that expect external H/V timing
+
+If the game core exposes `hblank_n_in`, `vblank_n_in`, `hpos`, `vpos`, `hsync_n_in`, or
+`vsync_n_in`, the wrapper must provide a real timing generator unless the core explicitly owns
+those signals internally. Tying them to constants creates a hardware-only dead core that can
+still pass sim and even synthesis.
+
+This is a hard pre-hardware check. Constant timing stubs belong only in throwaway bring-up code,
+never in a candidate RBF.
+
+### 16. Every full-system synthesis candidate needs a preflight review
+
+Before gate4:
+- `check_rtl.sh` clean or explicitly-waived warnings only
+- local sim or standalone harness run after the latest RTL edit
+- timing constraints reviewed for ignored/empty clock groups
+- hardware-facing wrapper changes reviewed separately from game-logic changes
+
+An RBF that merely "builds" is not a candidate. Quartus success without this review wastes the
+30-minute queue and produces low-signal hardware tests.
+
 ---
 
 ## Assembly Line Rules (Iron Law — do not violate)
@@ -170,6 +215,19 @@ integration synthesis             ← only after ALL chips pass standalone
 ```
 
 Never skip steps. Never run integration synthesis to find bugs that standalone would catch.
+
+### Remote hardware feedback loop
+
+Use the factory MiSTer harness before manual DE-10 testing:
+
+```bash
+python3 factory/mister_live_feedback.py status
+python3 factory/mister_live_feedback.py launch --core /media/fat/_Arcade/cores/<core>.rbf --mra /media/fat/_Arcade/_\ Beta\ AI\ Cores/<game>.mra
+python3 factory/mister_live_feedback.py burst --name smoke --count 4 --interval 1.0
+```
+
+This is the default gate4.5 loop. Do not reduce hardware feedback to "try it and report black
+screen" if remote launch/screenshot can answer the question in one command.
 
 ---
 

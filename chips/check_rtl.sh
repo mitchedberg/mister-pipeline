@@ -558,6 +558,96 @@ fi
 echo ""
 
 # =============================================================================
+# CHECK 11: Live-request shared ack/ok hazard
+# Pattern: multiple *_ok/*_ack assigns derived from live *_rd/*_req lines without
+# any owner/grant/busy latch. Friendly sims can hide this; real SDRAM cannot.
+# =============================================================================
+echo "--- Check 11: Shared ack/ok routed from live request lines ---"
+LIVE_ACK_HITS=$(python3 - $RTL_FILES << 'PYEOF' 2>/dev/null || true
+import sys, re
+
+for path in sys.argv[1:]:
+    try:
+        with open(path) as fp:
+            content = fp.read()
+    except Exception:
+        continue
+
+    assigns = re.findall(r'assign\s+(\w+)\s*=\s*([^;]+);', content)
+    ack_like = []
+    for lhs, rhs in assigns:
+        if not re.search(r'_(ok|ack)$', lhs):
+            continue
+        if re.search(r'\b\w+_(rd|req)\b', rhs):
+            ack_like.append((lhs, rhs.strip()))
+
+    if len(ack_like) < 2:
+        continue
+
+    mux_like = len(re.findall(r'(?:if|else\s+if)\s*\(\s*\w+_(?:rd|req)\s*\)', content))
+    if mux_like < 2:
+        continue
+
+    # If the file already contains an owner/grant/busy latch, assume it is using
+    # a structured arbiter and skip this heuristic.
+    if re.search(r'\b(owner|grant|busy)\b', content):
+        continue
+
+    print(f"{path}: multiple shared *_ok/*_ack assigns appear to depend on live request lines; review arbiter ownership")
+    for lhs, rhs in ack_like[:4]:
+        print(f"  {lhs} = {rhs}")
+PYEOF
+)
+if [[ -n "$LIVE_ACK_HITS" ]]; then
+    warn "Shared return-path hazard detected (can pass sim, fail on MiSTer):"
+    echo "$LIVE_ACK_HITS"
+else
+    pass "No obvious live-request shared ack/ok hazards found"
+fi
+echo ""
+
+# =============================================================================
+# CHECK 12: Constant video timing stubs in MiSTer wrappers
+# Pattern: cores expecting external timing are fed 1'b1/0 constants for H/V timing.
+# =============================================================================
+echo "--- Check 12: Constant timing stubs in quartus/emu wrappers ---"
+TIMING_STUB_HITS=$(python3 - $RTL_FILES << 'PYEOF' 2>/dev/null || true
+import sys, re
+
+NEEDED = {
+    'hblank_n_in': r"\.hblank_n_in\s*\(\s*(?:1'b[01]|1'bx|9'h000|8'h00|0)\s*\)",
+    'vblank_n_in': r"\.vblank_n_in\s*\(\s*(?:1'b[01]|1'bx|9'h000|8'h00|0)\s*\)",
+    'hpos':        r"\.hpos\s*\(\s*(?:9'h000|8'h00|1'b[01]|0)\s*\)",
+    'vpos':        r"\.vpos\s*\(\s*(?:8'h00|9'h000|1'b[01]|0)\s*\)",
+    'hsync_n_in':  r"\.hsync_n_in\s*\(\s*(?:1'b[01]|1'bx|0)\s*\)",
+    'vsync_n_in':  r"\.vsync_n_in\s*\(\s*(?:1'b[01]|1'bx|0)\s*\)",
+}
+
+for path in sys.argv[1:]:
+    if not path.endswith('/quartus/emu.sv'):
+        continue
+    try:
+        with open(path) as fp:
+            content = fp.read()
+    except Exception:
+        continue
+
+    matches = [name for name, pat in NEEDED.items() if re.search(pat, content)]
+    if len(matches) >= 4:
+        print(f"{path}: likely constant timing stub on wrapper ports -> {', '.join(matches)}")
+PYEOF
+)
+if [[ -n "$TIMING_STUB_HITS" ]]; then
+    warn "Wrapper timing stubs detected (hardware blocker if the core expects external timing):"
+    while IFS= read -r line; do
+        [[ -n "$line" ]] && echo "  $line"
+    done <<< "$TIMING_STUB_HITS"
+else
+    pass "No obvious constant wrapper timing stubs found"
+fi
+echo ""
+
+# =============================================================================
 # SUMMARY
 # =============================================================================
 echo "=== Summary ==="
