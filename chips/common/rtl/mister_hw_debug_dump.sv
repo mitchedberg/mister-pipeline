@@ -39,11 +39,11 @@ always_ff @(posedge clk or negedge reset_n) begin
 
         if (frame_pulse && !upload_requested) begin
             frame_count <= frame_count + 16'd1;
+        end
 
-            if (trigger_en && (frame_count >= (FRAME_TARGET - 1))) begin
-                captured_frame   <= frame_count + 16'd1;
-                upload_requested <= 1'b1;
-            end
+        if (!upload_requested && trigger_en && (frame_count >= FRAME_TARGET)) begin
+            captured_frame   <= frame_count;
+            upload_requested <= 1'b1;
         end
 
         if (ioctl_upload) begin
