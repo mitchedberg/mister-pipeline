@@ -52,6 +52,12 @@
 #include <string>
 #include <vector>
 
+static int env_int_or(const char* key, int defval) {
+    const char* v = getenv(key);
+    if (!v || !*v) return defval;
+    return atoi(v);
+}
+
 // ── Video timing constants (Taito B 320×224 community timing) ───────────────
 static constexpr int VID_H_ACTIVE  = 320;
 static constexpr int VID_V_ACTIVE  = 224;
@@ -173,6 +179,16 @@ int main(int argc, char** argv) {
     const char* env_vcd    = getenv("DUMP_VCD");
     const char* env_ram_dump = getenv("RAM_DUMP");
 
+    // Hostile-latency knobs: keep defaults deterministic at 1-cycle.
+    const int prog_lat_min = env_int_or("PROG_LAT_MIN", 1);
+    const int prog_lat_max = env_int_or("PROG_LAT_MAX", prog_lat_min);
+    const int gfx_lat_min  = env_int_or("GFX_LAT_MIN", 1);
+    const int gfx_lat_max  = env_int_or("GFX_LAT_MAX", gfx_lat_min);
+    const int sdr_lat_min  = env_int_or("SDR_LAT_MIN", 1);
+    const int sdr_lat_max  = env_int_or("SDR_LAT_MAX", sdr_lat_min);
+    const int z80_lat_min  = env_int_or("Z80_LAT_MIN", 1);
+    const int z80_lat_max  = env_int_or("Z80_LAT_MAX", z80_lat_min);
+
     int n_frames = env_frames ? atoi(env_frames) : 30;
     if (n_frames < 1) n_frames = 1;
 
@@ -203,10 +219,17 @@ int main(int argc, char** argv) {
     if (env_z80)   z80_sdram.load(env_z80,     0x000000);
 
     // ── SDRAM channels ───────────────────────────────────────────────────────
-    ToggleSdramChannel     prog_ch(prog_sdram);
-    ToggleSdramChannelByte gfx_ch(gfx_sdram);
-    ToggleSdramChannel     sdr_ch(adpcm_sdram);
-    ToggleSdramChannel     z80_ch(z80_sdram);
+    ToggleSdramChannel     prog_ch(prog_sdram, prog_lat_min, prog_lat_max);
+    ToggleSdramChannelByte gfx_ch(gfx_sdram, gfx_lat_min, gfx_lat_max);
+    ToggleSdramChannel     sdr_ch(adpcm_sdram, sdr_lat_min, sdr_lat_max);
+    ToggleSdramChannel     z80_ch(z80_sdram, z80_lat_min, z80_lat_max);
+
+    fprintf(stderr,
+            "Latency config: prog=%d..%d gfx=%d..%d sdr=%d..%d z80=%d..%d\n",
+            prog_lat_min, prog_lat_max,
+            gfx_lat_min, gfx_lat_max,
+            sdr_lat_min, sdr_lat_max,
+            z80_lat_min, z80_lat_max);
 
     // ── Verilator init ──────────────────────────────────────────────────────
     Verilated::fatalOnError(false);  // suppress fx68k assertion halts during CPU reset

@@ -76,11 +76,15 @@ public:
 // =============================================================================
 class ToggleSdramChannel {
 public:
-    static constexpr int LATENCY = 1;  // was 3; testing with 1 for CPU boot
+    static constexpr int LATENCY = 1;  // default fixed latency
 
-    explicit ToggleSdramChannel(const SdramModel& sdram)
+    explicit ToggleSdramChannel(const SdramModel& sdram, int latency_min = LATENCY, int latency_max = LATENCY)
         : sdram_(sdram), ack_(0), last_req_(0), countdown_(0),
-          pending_addr_(0), data_(0) {}
+          pending_addr_(0), data_(0),
+          latency_min_(latency_min), latency_max_(latency_max), prng_(0x12345678u) {
+        if (latency_min_ < 1) latency_min_ = 1;
+        if (latency_max_ < latency_min_) latency_max_ = latency_min_;
+    }
 
     // Call every posedge clk.
     // req:  current req toggle value from DUT
@@ -93,7 +97,7 @@ public:
             // Rising or falling edge on req → new request
             last_req_    = req;
             pending_addr_ = addr;
-            countdown_   = LATENCY;
+            countdown_   = pick_latency();
         }
 
         if (countdown_ > 0) {
@@ -110,12 +114,24 @@ public:
     uint8_t ack() const { return ack_; }
 
 private:
+    int pick_latency() {
+        if (latency_min_ == latency_max_) return latency_min_;
+        prng_ ^= prng_ << 13;
+        prng_ ^= prng_ >> 17;
+        prng_ ^= prng_ << 5;
+        uint32_t span = (uint32_t)(latency_max_ - latency_min_ + 1);
+        return latency_min_ + (int)(prng_ % span);
+    }
+
     const SdramModel& sdram_;
     uint8_t  ack_;
     uint8_t  last_req_;
     int      countdown_;
     uint32_t pending_addr_;
     uint16_t data_;
+    int      latency_min_;
+    int      latency_max_;
+    uint32_t prng_;
 };
 
 // =============================================================================
@@ -126,9 +142,13 @@ class ToggleSdramChannelByte {
 public:
     static constexpr int LATENCY = 1;
 
-    explicit ToggleSdramChannelByte(const SdramModel& sdram)
+    explicit ToggleSdramChannelByte(const SdramModel& sdram, int latency_min = LATENCY, int latency_max = LATENCY)
         : sdram_(sdram), ack_(0), last_req_(0), countdown_(0),
-          pending_addr_(0), data_(0) {}
+          pending_addr_(0), data_(0),
+          latency_min_(latency_min), latency_max_(latency_max), prng_(0x9E3779B9u) {
+        if (latency_min_ < 1) latency_min_ = 1;
+        if (latency_max_ < latency_min_) latency_max_ = latency_min_;
+    }
 
     struct Result { uint8_t data; uint8_t ack; };
 
@@ -136,7 +156,7 @@ public:
         if (req != last_req_) {
             last_req_     = req;
             pending_addr_ = addr;
-            countdown_    = LATENCY;
+            countdown_    = pick_latency();
         }
 
         if (countdown_ > 0) {
@@ -151,10 +171,22 @@ public:
     }
 
 private:
+    int pick_latency() {
+        if (latency_min_ == latency_max_) return latency_min_;
+        prng_ ^= prng_ << 13;
+        prng_ ^= prng_ >> 17;
+        prng_ ^= prng_ << 5;
+        uint32_t span = (uint32_t)(latency_max_ - latency_min_ + 1);
+        return latency_min_ + (int)(prng_ % span);
+    }
+
     const SdramModel& sdram_;
     uint8_t  ack_;
     uint8_t  last_req_;
     int      countdown_;
     uint32_t pending_addr_;
     uint8_t  data_;
+    int      latency_min_;
+    int      latency_max_;
+    uint32_t prng_;
 };
