@@ -36,6 +36,7 @@ Override with:
 
 ```bash
 python3 factory/mister_live_feedback.py status
+python3 factory/mister_live_feedback.py alive
 ```
 
 ### 2. Deploy a candidate build
@@ -97,11 +98,16 @@ python3 factory/mister_live_feedback.py probe \
 ## What this harness solves
 
 - repeated SSH/scp command re-derivation
+- explicit MiSTer liveness checks before remote actions
 - remote screenshot capture
 - remote core launch
 - remote OSD/input setup
 - reproducible MiSTer-side debug loops
 - BusyBox-safe process inspection and single-instance core launch
+
+If screenshot or key commands fail, the harness now distinguishes:
+- MiSTer stayed online but produced no artifact
+- MiSTer became unreachable during the action (reboot, hang, or network loss)
 
 ## What it does not solve yet
 

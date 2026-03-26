@@ -73,6 +73,13 @@ Never work on more than one chip at a time. Always write findings to `.shared/` 
    in memory AND search GitHub before starting any new system. Duplicating community work
    wastes weeks.
 
+9. **Do not use unfinished local factory cores as reference implementations.** Only use:
+   - upstream/community cores known to boot and function, or
+   - local cores explicitly marked DONE in the factory.
+   Do NOT use partially working or non-booting local cores for architecture guidance,
+   debug controls, or validation shortcuts. This explicitly includes `psikyo_arcade`
+   and any other locally developed core until it is marked done.
+
 ---
 
 ## Gate Pipeline

@@ -87,6 +87,21 @@ def shquote(value: str) -> str:
     return shlex.quote(value)
 
 
+def mister_reachable(args) -> bool:
+    try:
+        ssh(args, "true", capture=True, check=True)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+    except FileNotFoundError:
+        raise
+
+
+def ensure_reachable(args, context: str) -> None:
+    if not mister_reachable(args):
+        raise RuntimeError(f"MiSTer is not reachable over SSH during {context} (reboot, hang, or network loss)")
+
+
 def send_mister_cmd(args, raw: str) -> None:
     ssh(
         args,
@@ -154,6 +169,7 @@ def kill_remote_processes(args, needle: str) -> None:
 
 
 def cmd_status(args) -> int:
+    ensure_reachable(args, "status")
     mister_procs = list_remote_processes(args, "/media/fat/MiSTer")
     cp = ssh(
         args,
@@ -172,6 +188,7 @@ def cmd_status(args) -> int:
 
 
 def cmd_deploy(args) -> int:
+    ensure_reachable(args, "deploy")
     if args.core:
         scp_to(args, args.core, args.core_dest)
         print(f"copied core -> {args.core_dest}")
@@ -187,6 +204,7 @@ def cmd_deploy(args) -> int:
 
 
 def cmd_launch(args) -> int:
+    ensure_reachable(args, "launch")
     if args.replace_existing:
         kill_remote_processes(args, "/media/fat/MiSTer")
     parts = ["/media/fat/MiSTer", shquote(args.core)]
@@ -201,6 +219,7 @@ def cmd_launch(args) -> int:
 
 
 def screenshot_once(args, name: str) -> pathlib.Path:
+    ensure_reachable(args, "screenshot start")
     remote_dir = args.remote_dir.rstrip("/")
     ssh(args, f"mkdir -p {shquote(remote_dir)}")
     before = list_remote_pngs(args, remote_dir)
@@ -209,6 +228,8 @@ def screenshot_once(args, name: str) -> pathlib.Path:
     deadline = time.time() + max(args.delay, 1.0) + 10.0
     while time.time() < deadline:
         time.sleep(0.5)
+        if not mister_reachable(args):
+            raise RuntimeError("MiSTer became unreachable while waiting for screenshot output")
         after = list_remote_pngs(args, remote_dir)
         changed = []
         for path, mtime in after.items():
@@ -219,7 +240,9 @@ def screenshot_once(args, name: str) -> pathlib.Path:
             remote = changed[-1][1]
             break
     if not remote:
-        raise RuntimeError("no new screenshot found after screenshot command")
+        if mister_reachable(args):
+            raise RuntimeError("no new screenshot found after screenshot command; MiSTer stayed online")
+        raise RuntimeError("no new screenshot found after screenshot command; MiSTer is unreachable")
     local = args.out_dir / pathlib.Path(remote).name
     scp_from(args, remote, str(local))
     print(local)
@@ -242,12 +265,14 @@ def cmd_burst(args) -> int:
 
 
 def cmd_cmd(args) -> int:
+    ensure_reachable(args, "raw command send")
     send_mister_cmd(args, args.raw)
     print(f"sent command: {args.raw}")
     return 0
 
 
 def cmd_ensure_uinput(args) -> int:
+    ensure_reachable(args, "uinput setup")
     local_script = pathlib.Path(__file__).with_name("mister_uinput.py")
     scp_to(args, str(local_script), args.remote_script)
     ssh(args, f"chmod +x {shquote(args.remote_script)}")
@@ -267,6 +292,7 @@ def cmd_ensure_uinput(args) -> int:
 
 
 def cmd_keys(args) -> int:
+    ensure_reachable(args, "key injection")
     seq = " ".join(args.keys)
     ssh(args, f"test -p {shquote(args.fifo)} || exit 9; printf '%s\\n' {shquote(seq)} > {shquote(args.fifo)}", capture=False)
     print(f"sent keys: {seq}")
@@ -282,6 +308,14 @@ def cmd_probe(args) -> int:
     return 0
 
 
+def cmd_alive(args) -> int:
+    if mister_reachable(args):
+        print("alive=yes")
+        return 0
+    print("alive=no")
+    return 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Remote MiSTer deploy/launch/screenshot harness")
     p.add_argument("--host", default=DEFAULT_HOST)
@@ -292,6 +326,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("status")
     s.set_defaults(func=cmd_status)
+
+    a = sub.add_parser("alive")
+    a.set_defaults(func=cmd_alive)
 
     d = sub.add_parser("deploy")
     d.add_argument("--core")

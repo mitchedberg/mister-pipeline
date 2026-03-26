@@ -277,9 +277,14 @@ wire  [21:0] gamma_bus;
 wire         direct_video;
 
 wire        ioctl_download;
+wire        ioctl_upload;
+wire        ioctl_upload_req;
+wire  [7:0] ioctl_upload_index;
 wire        ioctl_wr;
+wire        ioctl_rd;
 wire [26:0] ioctl_addr;
 wire  [7:0] ioctl_dout;
+wire  [7:0] ioctl_din;
 wire  [7:0] ioctl_index;
 
 wire [31:0] joystick_0, joystick_1;
@@ -297,9 +302,14 @@ hps_io #(.CONF_STR(CONF_STR)) u_hps_io
     .video_rotated  (1'b0),
 
     .ioctl_download (ioctl_download),
+    .ioctl_upload   (ioctl_upload),
+    .ioctl_upload_req(ioctl_upload_req),
+    .ioctl_upload_index(ioctl_upload_index),
     .ioctl_wr       (ioctl_wr),
+    .ioctl_rd       (ioctl_rd),
     .ioctl_addr     (ioctl_addr),
     .ioctl_dout     (ioctl_dout),
+    .ioctl_din      (ioctl_din),
     .ioctl_index    (ioctl_index),
 
     .joystick_0     (joystick_0),
@@ -661,11 +671,42 @@ sdram_b u_sdram
 wire [7:0] core_rgb_r, core_rgb_g, core_rgb_b;
 wire       core_hsync_n, core_vsync_n;
 wire       core_hblank, core_vblank;
+logic      core_vblank_prev;
+wire       debug_frame_pulse;
 
 // Audio output from core (YM2610 via jt10)
 wire signed [15:0] core_snd_left, core_snd_right;
 assign AUDIO_L = core_snd_left;
 assign AUDIO_R = core_snd_right;
+
+always_ff @(posedge clk_sys or negedge reset_n) begin
+    if (!reset_n) core_vblank_prev <= 1'b0;
+    else          core_vblank_prev <= core_vblank;
+end
+
+assign debug_frame_pulse = core_vblank & ~core_vblank_prev;
+
+`ifdef HW_DEBUG_DUMP
+mister_hw_debug_dump #(
+    .FRAME_TARGET(120),
+    .UPLOAD_INDEX(8'd2)
+) u_hw_debug_dump (
+    .clk               (clk_sys),
+    .reset_n           (reset_n),
+    .frame_pulse       (debug_frame_pulse),
+    .trigger_en        (1'b1),
+    .ioctl_upload      (ioctl_upload),
+    .ioctl_rd          (ioctl_rd),
+    .ioctl_addr        (ioctl_addr),
+    .ioctl_upload_req  (ioctl_upload_req),
+    .ioctl_upload_index(ioctl_upload_index),
+    .ioctl_din         (ioctl_din)
+);
+`else
+assign ioctl_upload_req   = 1'b0;
+assign ioctl_upload_index = 8'h00;
+assign ioctl_din          = 8'h00;
+`endif
 
 //////////////////////////////////////////////////////////////////
 // fx68k_adapter — MC68000 @ 12 MHz via 24 MHz half-cycle pulse stream
@@ -857,6 +898,9 @@ wire _unused = &{
     joystick_0[31:10], joystick_1[31:9],
     dsw[2], dsw[3],
     cpu_reset_n_out,       // CPU RESET instruction output (not used at top level)
+    ioctl_upload,
+    ioctl_rd,
+    ioctl_addr[26:8],
     // Z80 debug bus outputs (informational only)
     z80_addr_dbg, z80_din_dbg, z80_dout_dbg,
     z80_rd_n_dbg, z80_wr_n_dbg, z80_mreq_n_dbg, z80_iorq_n_dbg, z80_int_n_dbg,

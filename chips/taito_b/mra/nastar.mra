@@ -24,6 +24,7 @@
   <manufacturer>Taito</manufacturer>
   <category>Action</category>
   <buttons names="Attack,Jump,Taunt,Start,Coin" default="A,B,C,Start,Select"/>
+  <nvram index="2" size="256"/>
   <!--
     index 0: CPU + Z80 program ROMs (loaded sequentially to SDRAM base 0)
     index 1: TC0180VCU GFX ROM (to SDRAM 0x100000)
