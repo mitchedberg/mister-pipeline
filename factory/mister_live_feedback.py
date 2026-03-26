@@ -109,16 +109,55 @@ def list_remote_pngs(args, remote_dir: str) -> dict[str, float]:
     return {path: float(mtime) for path, mtime in rows}
 
 
+def list_remote_processes(args, needle: str) -> list[dict[str, str]]:
+    cmd = (
+        "python3 - <<'PY'\n"
+        "import json, subprocess\n"
+        f"needle = {needle!r}\n"
+        "rows = []\n"
+        "cp = subprocess.run(['ps', '-o', 'pid,args'], capture_output=True, text=True, check=True)\n"
+        "for line in cp.stdout.splitlines()[1:]:\n"
+        "    line = line.strip()\n"
+        "    if not line:\n"
+        "        continue\n"
+        "    parts = line.split(None, 1)\n"
+        "    pid = parts[0]\n"
+        "    args = parts[1] if len(parts) > 1 else ''\n"
+        "    if \"python3 - <<'PY'\" in args:\n"
+        "        continue\n"
+        "    if needle in args:\n"
+        "        rows.append({'pid': pid, 'args': args})\n"
+        "print(json.dumps(rows))\n"
+        "PY"
+    )
+    cp = ssh(args, cmd)
+    return json.loads(cp.stdout or "[]")
+
+
+def kill_remote_processes(args, needle: str) -> None:
+    procs = list_remote_processes(args, needle)
+    if not procs:
+        return
+    pids = " ".join(shquote(proc["pid"]) for proc in procs)
+    ssh(args, f"kill {pids}", capture=False)
+    time.sleep(1.0)
+
+
 def cmd_status(args) -> int:
+    mister_procs = list_remote_processes(args, "/media/fat/MiSTer")
     cp = ssh(
         args,
         "printf 'host=%s\n' \"$(hostname)\"; "
-        "printf 'menu=%s\n' \"$(pgrep -af '/media/fat/MiSTer' | tail -1)\"; "
         "printf 'shots=%s\n' \"$(ls -1d /media/fat/screenshots 2>/dev/null)\"; "
         "printf 'uinput=%s\n' \"$(test -c /dev/uinput && echo yes || echo no)\"; "
         "printf 'mister_cmd=%s\n' \"$(test -e /dev/MiSTer_cmd && echo yes || echo no)\"",
     )
     sys.stdout.write(cp.stdout)
+    if mister_procs:
+        for proc in mister_procs:
+            print(f"mister_pid={proc['pid']} args={proc['args']}")
+    else:
+        print("mister_pid=")
     return 0
 
 
@@ -138,6 +177,8 @@ def cmd_deploy(args) -> int:
 
 
 def cmd_launch(args) -> int:
+    if args.replace_existing:
+        kill_remote_processes(args, "/media/fat/MiSTer")
     parts = ["/media/fat/MiSTer", shquote(args.core)]
     if args.mra:
         parts.append(shquote(args.mra))
@@ -200,16 +241,17 @@ def cmd_ensure_uinput(args) -> int:
     local_script = pathlib.Path(__file__).with_name("mister_uinput.py")
     scp_to(args, str(local_script), args.remote_script)
     ssh(args, f"chmod +x {shquote(args.remote_script)}")
-    ssh(
-        args,
-        "pgrep -af 'mister_uinput.py --fifo {fifo}' >/dev/null || "
-        "nohup python3 {script} --fifo {fifo} --delay {delay} >/tmp/mister_uinput.log 2>&1 </dev/null &".format(
-            fifo=shquote(args.fifo),
-            script=shquote(args.remote_script),
-            delay=args.key_delay,
-        ),
-        capture=False,
-    )
+    needle = f"mister_uinput.py --fifo {args.fifo}"
+    if not list_remote_processes(args, needle):
+        ssh(
+            args,
+            "nohup python3 {script} --fifo {fifo} --delay {delay} >/tmp/mister_uinput.log 2>&1 </dev/null &".format(
+                fifo=shquote(args.fifo),
+                script=shquote(args.remote_script),
+                delay=args.key_delay,
+            ),
+            capture=False,
+        )
     print(f"uinput helper ready via fifo {args.fifo}")
     return 0
 
@@ -254,6 +296,7 @@ def build_parser() -> argparse.ArgumentParser:
     l.add_argument("--core", required=True, help="Remote core path on MiSTer")
     l.add_argument("--mra", help="Remote MRA path on MiSTer")
     l.add_argument("--delay", type=float, default=2.0)
+    l.add_argument("--replace-existing", action=argparse.BooleanOptionalAction, default=True)
     l.set_defaults(func=cmd_launch)
 
     sc = sub.add_parser("screenshot")
