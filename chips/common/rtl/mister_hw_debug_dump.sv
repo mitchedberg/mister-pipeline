@@ -20,6 +20,7 @@ logic [15:0] frame_count;
 logic [15:0] captured_frame;
 logic        upload_requested;
 logic        upload_seen;
+logic        upload_fired;
 logic [7:0]  addr_lo;
 
 assign ioctl_upload_index = UPLOAD_INDEX;
@@ -31,8 +32,11 @@ always_ff @(posedge clk or negedge reset_n) begin
         captured_frame   <= 16'd0;
         upload_requested <= 1'b0;
         upload_seen      <= 1'b0;
+        upload_fired     <= 1'b0;
         ioctl_upload_req <= 1'b0;
     end else begin
+        ioctl_upload_req <= 1'b0;
+
         if (frame_pulse && !upload_requested) begin
             frame_count <= frame_count + 16'd1;
 
@@ -43,11 +47,13 @@ always_ff @(posedge clk or negedge reset_n) begin
         end
 
         if (ioctl_upload) begin
-            upload_seen      <= 1'b1;
-            ioctl_upload_req <= 1'b0;
-        end else begin
-            // Keep the request asserted until MiSTer acknowledges the upload path.
-            ioctl_upload_req <= upload_requested && !upload_seen;
+            upload_seen <= 1'b1;
+        end
+
+        // MiSTer's hps_io wrapper latches save requests on a rising edge.
+        if (upload_requested && !upload_fired) begin
+            ioctl_upload_req <= 1'b1;
+            upload_fired     <= 1'b1;
         end
     end
 end
