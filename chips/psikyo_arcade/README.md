@@ -48,6 +48,8 @@ Regional clones (Japan/Korea variants) use the same binary — swap MRA file onl
 - **Match rate:** 100% WRAM byte-perfect across validated TAS frames
 - **CI run:** GREEN (Quartus exit 0, synthesis clean)
 - **Known issues:** None
+- **Control-build target:** `gunbird` is the recommended smoke-test game for untouched
+  Quartus/deploy validation.
 
 ---
 
