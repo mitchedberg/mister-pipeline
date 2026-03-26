@@ -194,9 +194,29 @@ logic [14:0] vram_pxl_addr_b;
 logic [15:0] vram_pxl_q;
 logic [1:0]  vram_pxl_sel_c;
 logic [1:0]  vram_pxl_sel_r;
+logic        vram_pxl_busy_r;
 
 always_comb begin
-    if (tx_vram_rd) begin
+    if (vram_pxl_busy_r) begin
+        case (vram_pxl_sel_r)
+            2'd1: begin
+                vram_pxl_addr_b = tx_vram_rd_addr;
+                vram_pxl_sel_c  = 2'd1;
+            end
+            2'd2: begin
+                vram_pxl_addr_b = bg_vram_rd_addr;
+                vram_pxl_sel_c  = 2'd2;
+            end
+            2'd3: begin
+                vram_pxl_addr_b = fg_vram_rd_addr;
+                vram_pxl_sel_c  = 2'd3;
+            end
+            default: begin
+                vram_pxl_addr_b = 15'b0;
+                vram_pxl_sel_c  = 2'd0;
+            end
+        endcase
+    end else if (tx_vram_rd) begin
         vram_pxl_addr_b = tx_vram_rd_addr;
         vram_pxl_sel_c  = 2'd1;
     end else if (bg_vram_rd) begin
@@ -212,16 +232,27 @@ always_comb begin
 end
 
 always_ff @(posedge clk) begin
-    if (!rst_n) vram_pxl_sel_r <= 2'd0;
-    else        vram_pxl_sel_r <= vram_pxl_sel_c;
+    if (!rst_n) begin
+        vram_pxl_sel_r  <= 2'd0;
+        vram_pxl_busy_r <= 1'b0;
+    end else begin
+        if (!vram_pxl_busy_r) begin
+            if (vram_pxl_sel_c != 2'd0) begin
+                vram_pxl_sel_r  <= vram_pxl_sel_c;
+                vram_pxl_busy_r <= 1'b1;
+            end
+        end else begin
+            vram_pxl_busy_r <= 1'b0;
+        end
+    end
 end
 
 assign tx_vram_q  = vram_pxl_q;
 assign bg_vram_q  = vram_pxl_q;
 assign fg_vram_q  = vram_pxl_q;
-assign tx_vram_ok = (vram_pxl_sel_r == 2'd1);
-assign bg_vram_ok = (vram_pxl_sel_r == 2'd2);
-assign fg_vram_ok = (vram_pxl_sel_r == 2'd3);
+assign tx_vram_ok = vram_pxl_busy_r && (vram_pxl_sel_r == 2'd1);
+assign bg_vram_ok = vram_pxl_busy_r && (vram_pxl_sel_r == 2'd2);
+assign fg_vram_ok = vram_pxl_busy_r && (vram_pxl_sel_r == 2'd3);
 
 // ── TX/BG/FG pixel read RAM ───────────────────────────────────────────────
 altsyncram #(
@@ -453,9 +484,25 @@ logic [ 9:0] scroll_addr_b;
 logic [15:0] scroll_q_b;
 logic [1:0]  scroll_sel_c;
 logic [1:0]  scroll_sel_r;
+logic        scroll_busy_r;
 
 always_comb begin
-    if (bg_scroll_rd) begin
+    if (scroll_busy_r) begin
+        case (scroll_sel_r)
+            2'd1: begin
+                scroll_addr_b = bg_scroll_rd_addr;
+                scroll_sel_c  = 2'd1;
+            end
+            2'd2: begin
+                scroll_addr_b = fg_scroll_rd_addr;
+                scroll_sel_c  = 2'd2;
+            end
+            default: begin
+                scroll_addr_b = 10'b0;
+                scroll_sel_c  = 2'd0;
+            end
+        endcase
+    end else if (bg_scroll_rd) begin
         scroll_addr_b = bg_scroll_rd_addr;
         scroll_sel_c  = 2'd1;
     end else if (fg_scroll_rd) begin
@@ -468,14 +515,25 @@ always_comb begin
 end
 
 always_ff @(posedge clk) begin
-    if (!rst_n) scroll_sel_r <= 2'd0;
-    else        scroll_sel_r <= scroll_sel_c;
+    if (!rst_n) begin
+        scroll_sel_r <= 2'd0;
+        scroll_busy_r <= 1'b0;
+    end else begin
+        if (!scroll_busy_r) begin
+            if (scroll_sel_c != 2'd0) begin
+                scroll_sel_r <= scroll_sel_c;
+                scroll_busy_r <= 1'b1;
+            end
+        end else begin
+            scroll_busy_r <= 1'b0;
+        end
+    end
 end
 
 assign bg_scroll_q  = scroll_q_b;
 assign fg_scroll_q  = scroll_q_b;
-assign bg_scroll_ok = (scroll_sel_r == 2'd1);
-assign fg_scroll_ok = (scroll_sel_r == 2'd2);
+assign bg_scroll_ok = scroll_busy_r && (scroll_sel_r == 2'd1);
+assign fg_scroll_ok = scroll_busy_r && (scroll_sel_r == 2'd2);
 
 altsyncram #(
     .operation_mode         ("DUAL_PORT"),

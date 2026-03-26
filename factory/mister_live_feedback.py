@@ -14,6 +14,7 @@ yet; it provides the stable remote loop the dump/debug path will plug into.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import pathlib
 import shlex
@@ -86,10 +87,26 @@ def shquote(value: str) -> str:
     return shlex.quote(value)
 
 
-def newest_remote_png(args, remote_dir: str) -> str:
-    cmd = f"find {shquote(remote_dir)} -type f -name '*.png' -print | sort | tail -1"
+def list_remote_pngs(args, remote_dir: str) -> dict[str, float]:
+    cmd = (
+        "python3 - <<'PY'\n"
+        "import json, os\n"
+        f"root = {remote_dir!r}\n"
+        "rows = []\n"
+        "for base, _, files in os.walk(root):\n"
+        "    for name in files:\n"
+        "        if name.lower().endswith('.png'):\n"
+        "            path = os.path.join(base, name)\n"
+        "            try:\n"
+        "                rows.append((path, os.path.getmtime(path)))\n"
+        "            except OSError:\n"
+        "                pass\n"
+        "print(json.dumps(rows))\n"
+        "PY"
+    )
     cp = ssh(args, cmd)
-    return cp.stdout.strip()
+    rows = json.loads(cp.stdout or "[]")
+    return {path: float(mtime) for path, mtime in rows}
 
 
 def cmd_status(args) -> int:
@@ -135,11 +152,23 @@ def cmd_launch(args) -> int:
 def screenshot_once(args, name: str) -> pathlib.Path:
     remote_dir = args.remote_dir.rstrip("/")
     ssh(args, f"mkdir -p {shquote(remote_dir)}")
+    before = list_remote_pngs(args, remote_dir)
     ssh(args, f"printf '%s\\n' {shquote('screenshot ' + name)} > /dev/MiSTer_cmd", capture=False)
-    time.sleep(args.delay)
-    remote = newest_remote_png(args, remote_dir)
+    remote = ""
+    deadline = time.time() + max(args.delay, 1.0) + 10.0
+    while time.time() < deadline:
+        time.sleep(0.5)
+        after = list_remote_pngs(args, remote_dir)
+        changed = []
+        for path, mtime in after.items():
+            if path not in before or mtime > before[path]:
+                changed.append((mtime, path))
+        if changed:
+            changed.sort()
+            remote = changed[-1][1]
+            break
     if not remote:
-        raise RuntimeError("no screenshot found after screenshot command")
+        raise RuntimeError("no new screenshot found after screenshot command")
     local = args.out_dir / pathlib.Path(remote).name
     scp_from(args, remote, str(local))
     print(local)
