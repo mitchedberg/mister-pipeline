@@ -357,24 +357,26 @@ altddio_out #(
 //////////////////////////////////////////////////////////////////
 // Clock enables
 //
-// ce_cpu: /4 clock enable — 8 MHz effective CPU clock.
-//   MC68000 uses ce_cpu when it is 1.
+// fx68k_adapter consumes ONE half-cycle pulse stream and alternates enPhi1/enPhi2
+// internally. To model a 12 MHz 68000 on a 32 MHz fabric clock, the adapter must
+// see 24 MHz phase events (= 3/4 of clk_sys rising edges), not 12 MHz.
+//
+// Previous wrappers used 32/4 = 8 MHz here, which effectively under-clocked the
+// 68000 phases and left the hardware path far slower than both MAME and the
+// validated direct-fx68k sim harness.
 //
 // ce_pix: independent /5 clock enable — ~6.4 MHz pixel clock.
 //   Hardware TC0180VCU pixel clock is ~6.75 MHz; /5 from 32 MHz = 6.4 MHz.
 //////////////////////////////////////////////////////////////////
-logic [1:0] ce_cpu_cnt;
-logic       ce_cpu;       // high one out of every 4 sys_clk cycles (32 MHz / 4 = 8 MHz)
+logic       ce_cpu;
 
-always_ff @(posedge clk_sys or negedge reset_n) begin
-    if (!reset_n) begin
-        ce_cpu_cnt <= 2'd0;
-        ce_cpu     <= 1'b0;
-    end else begin
-        ce_cpu_cnt <= ce_cpu_cnt + 2'd1;
-        ce_cpu     <= (ce_cpu_cnt == 2'd3);
-    end
-end
+jtframe_frac_cen #(.W(1), .WC(2)) u_cpu_cen (
+    .clk  (clk_sys),
+    .n    (2'd3),
+    .m    (2'd4),
+    .cen  (ce_cpu),
+    .cenb ()
+);
 
 // Pixel clock enable: independent /5 divider = ~6.4 MHz.
 logic [2:0] ce_pix_cnt;
@@ -658,7 +660,7 @@ assign AUDIO_L = core_snd_left;
 assign AUDIO_R = core_snd_right;
 
 //////////////////////////////////////////////////////////////////
-// fx68k_adapter — MC68000 @ 8 MHz
+// fx68k_adapter — MC68000 @ 12 MHz via 24 MHz half-cycle pulse stream
 //////////////////////////////////////////////////////////////////
 
 wire [23:1] cpu_addr;

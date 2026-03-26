@@ -461,6 +461,7 @@ altsyncram #(
 );
 `else
 logic [15:0] pal_ram [0:8191];
+always_ff @(posedge clk_sys) begin
     if (!pal_ram_wel_n) pal_ram[pal_ram_addr[12:0]][7:0]  <= pal_ram_din[7:0];
     if (!pal_ram_weh_n) pal_ram[pal_ram_addr[12:0]][15:8] <= pal_ram_din[15:8];
 end

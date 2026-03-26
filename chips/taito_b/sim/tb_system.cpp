@@ -63,6 +63,11 @@ static constexpr int VID_VSYNC_END   = VID_VSYNC_START + 4;
 
 // Pixel clock: one pixel every 5 system clocks (~6.4 MHz from 32 MHz)
 static constexpr int PIX_DIV = 5;
+// fx68k half-cycle cadence for a 12 MHz 68000 on a 32 MHz fabric clock:
+// 24 MHz phase events = 3/4 of rising edges. Each emitted pulse alternates
+// between enPhi1 and enPhi2, matching the hardware adapter model.
+static constexpr int CPU_PHI_NUM = 3;
+static constexpr int CPU_PHI_DEN = 4;
 // Sound clock: one pulse every 8 system clocks (4 MHz from 32 MHz)
 static constexpr int SND_DIV = 8;
 
@@ -264,6 +269,7 @@ int main(int argc, char** argv) {
     bool     done       = false;
 
     // Video timing counters
+    int  cpu_phi_acc    = 0;
     int  hcnt           = 0;
     int  vcnt           = 0;
     int  pix_div_cnt    = 0;
@@ -302,10 +308,16 @@ int main(int argc, char** argv) {
         if (top->clk_sys == 1) {
             // ── Rising edge ──────────────────────────────────────────────────
 
-            // Phi enables (matching working minimal-test pattern)
-            top->enPhi1 = phi_toggle ? 0 : 1;
-            top->enPhi2 = phi_toggle ? 1 : 0;
-            phi_toggle  = !phi_toggle;
+            // fx68k phase pulses: emit 24 MHz half-cycles from the 32 MHz fabric clock.
+            top->enPhi1 = 0;
+            top->enPhi2 = 0;
+            cpu_phi_acc += CPU_PHI_NUM;
+            if (cpu_phi_acc >= CPU_PHI_DEN) {
+                cpu_phi_acc -= CPU_PHI_DEN;
+                top->enPhi1 = phi_toggle ? 0 : 1;
+                top->enPhi2 = phi_toggle ? 1 : 0;
+                phi_toggle  = !phi_toggle;
+            }
 
             // ── Pixel clock enable (/5 from 32 MHz = 6.4 MHz) ─────────────
             ++pix_div_cnt;
