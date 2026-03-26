@@ -29,10 +29,11 @@
 // Output:
 //   frame_NNNN.ppm — one PPM file per vertical frame
 //
-// Video resolution: 320×240 (Taito B native)
-//   Horizontal: 320 active + 96 blanking = 416 total (H_BLANK=24+32+40)
-//   Vertical:   240 active + 24 blanking = 264 total (V_BLANK=12+4+8)
-//   At 32 MHz sys clock, pixel clock divider = 5 → 6.4 MHz pixel clock
+// Video resolution: 320×224 visible (MAME / community Taito timing)
+//   Horizontal: 320 active + 104 blanking = 424 total
+//   Vertical:   224 active + 38 blanking = 262 total
+//   ce_13m:     13.582 MHz fractional from 32 MHz fabric clock
+//   ce_pixel:   6.791 MHz = ce_13m / 2
 //   clk_sound: one pulse every 8 sys clocks → 4 MHz
 // =============================================================================
 
@@ -51,18 +52,19 @@
 #include <string>
 #include <vector>
 
-// ── Video timing constants (Taito B 320×240) ────────────────────────────────
+// ── Video timing constants (Taito B 320×224 community timing) ───────────────
 static constexpr int VID_H_ACTIVE  = 320;
-static constexpr int VID_V_ACTIVE  = 240;
-static constexpr int VID_H_TOTAL   = 416;   // 320 + 24 + 32 + 40
-static constexpr int VID_V_TOTAL   = 264;   // 240 + 12 + 4 + 8
-static constexpr int VID_HSYNC_START = VID_H_ACTIVE + 24;   // after 24 front-porch
-static constexpr int VID_HSYNC_END   = VID_HSYNC_START + 32;
-static constexpr int VID_VSYNC_START = VID_V_ACTIVE + 12;   // after 12 front-porch
-static constexpr int VID_VSYNC_END   = VID_VSYNC_START + 4;
+static constexpr int VID_V_ACTIVE  = 224;
+static constexpr int VID_H_TOTAL   = 424;
+static constexpr int VID_V_TOTAL   = 262;
+static constexpr int VID_HSYNC_START = 340;
+static constexpr int VID_HSYNC_END   = 380;
+static constexpr int VID_VSYNC_START = 240;
+static constexpr int VID_VSYNC_END   = 246;
 
-// Pixel clock: one pixel every 5 system clocks (~6.4 MHz from 32 MHz)
-static constexpr int PIX_DIV = 5;
+// ce_13m fractional generation from 32 MHz: 13.582 / 32 = 6791 / 16000.
+static constexpr int PIX2X_NUM = 6791;
+static constexpr int PIX2X_DEN = 16000;
 // fx68k half-cycle cadence for a 12 MHz 68000 on a 32 MHz fabric clock:
 // 24 MHz phase events = 3/4 of rising edges. Each emitted pulse alternates
 // between enPhi1 and enPhi2, matching the hardware adapter model.
@@ -236,7 +238,7 @@ int main(int argc, char** argv) {
     top->enPhi2    = 0;
     top->clk_sound = 0;
     top->clk_pix   = 0;
-    top->clk_pix2x = 1;   // TC0260DAR ce_double stub: always asserted
+    top->clk_pix2x = 0;
 
     // SDRAM inputs
     top->prog_rom_data = 0;
@@ -270,10 +272,11 @@ int main(int argc, char** argv) {
 
     // Video timing counters
     int  cpu_phi_acc    = 0;
+    int  pix2x_acc      = 0;
     int  hcnt           = 0;
     int  vcnt           = 0;
-    int  pix_div_cnt    = 0;
     int  snd_div_cnt    = 0;
+    bool pix_div_ff     = false;
 
     // Frame buffer and vsync edge detection
     FrameBuffer fb;
@@ -296,8 +299,7 @@ int main(int argc, char** argv) {
     // ========================================================================
     // RTL BUS EVAL LOOP
     // ========================================================================
-    // Iteration budget: H_TOTAL=416, V_TOTAL=264, PIX_DIV=5, 2 half-cycles/iter
-    // → ~416*264*5*2 = 1,098,240 iters/frame. Use 1.2M for margin.
+    // Iteration budget: ~1.05M iters/frame at 32 MHz with 6.791 MHz pixel CE.
     for (iter = 0; iter < (uint64_t)n_frames * 1200000ULL; iter++) {
         // Toggle clock
         top->clk_sys = top->clk_sys ^ 1;
@@ -319,13 +321,15 @@ int main(int argc, char** argv) {
                 phi_toggle  = !phi_toggle;
             }
 
-            // ── Pixel clock enable (/5 from 32 MHz = 6.4 MHz) ─────────────
-            ++pix_div_cnt;
-            if (pix_div_cnt >= PIX_DIV) {
-                pix_div_cnt = 0;
-                top->clk_pix = 1;
-            } else {
-                top->clk_pix = 0;
+            // ── Community Taito pixel enables: 13.582 MHz then divide by 2 ──
+            top->clk_pix   = 0;
+            top->clk_pix2x = 0;
+            pix2x_acc += PIX2X_NUM;
+            if (pix2x_acc >= PIX2X_DEN) {
+                pix2x_acc -= PIX2X_DEN;
+                top->clk_pix2x = 1;
+                top->clk_pix   = pix_div_ff ? 1 : 0;
+                pix_div_ff     = !pix_div_ff;
             }
 
             // ── Sound clock enable (/8 from 32 MHz = 4 MHz) ───────────────
@@ -351,8 +355,8 @@ int main(int argc, char** argv) {
                 top->vblank_n_in = vblank ? 0 : 1;
                 top->hsync_n_in  = hsync  ? 0 : 1;
                 top->vsync_n_in  = vsync  ? 0 : 1;
-                top->hpos = (uint16_t)(h_active ? hcnt : 0);
-                top->vpos = (uint8_t) (v_active ? vcnt : 0);
+                top->hpos = (uint16_t)hcnt;
+                top->vpos = (uint8_t)vcnt;
 
                 ++hcnt;
                 if (hcnt >= VID_H_TOTAL) {

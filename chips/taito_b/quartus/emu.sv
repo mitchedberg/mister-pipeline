@@ -365,11 +365,15 @@ altddio_out #(
 // 68000 phases and left the hardware path far slower than both MAME and the
 // validated direct-fx68k sim harness.
 //
-// ce_pix: independent /5 clock enable — ~6.4 MHz pixel clock.
-//   Hardware TC0180VCU pixel clock is ~6.75 MHz; /5 from 32 MHz = 6.4 MHz.
+// Pixel side follows the community/MAME timing model:
+//   - 13.582 MHz ce_13m from 32 MHz fabric clock (fractional)
+//   - 6.791 MHz pixel enable derived by dividing ce_13m by 2
 //////////////////////////////////////////////////////////////////
 logic [1:0] ce_cpu_bus;
 wire        ce_cpu = ce_cpu_bus[0];
+logic [1:0] ce_pix2x_bus;
+wire        ce_pix2x = ce_pix2x_bus[0];
+logic       ce_pix_div;
 
 jtframe_frac_cen #(.W(2), .WC(2)) u_cpu_cen (
     .clk  (clk_sys),
@@ -379,20 +383,25 @@ jtframe_frac_cen #(.W(2), .WC(2)) u_cpu_cen (
     .cenb ()
 );
 
-// Pixel clock enable: independent /5 divider = ~6.4 MHz.
-logic [2:0] ce_pix_cnt;
+jtframe_frac_cen #(.W(2), .WC(16)) u_pix2x_cen (
+    .clk  (clk_sys),
+    .n    (16'd6791),
+    .m    (16'd16000),
+    .cen  (ce_pix2x_bus),
+    .cenb ()
+);
+
+// Community Taito timing: pixel CE is every other ce_13m pulse.
 logic       ce_pix;
 always_ff @(posedge clk_sys or negedge reset_n) begin
     if (!reset_n) begin
-        ce_pix_cnt <= 3'd0;
+        ce_pix_div <= 1'b0;
         ce_pix     <= 1'b0;
     end else begin
-        if (ce_pix_cnt == 3'd4) begin
-            ce_pix_cnt <= 3'd0;
-            ce_pix     <= 1'b1;
-        end else begin
-            ce_pix_cnt <= ce_pix_cnt + 3'd1;
-            ce_pix     <= 1'b0;
+        ce_pix <= 1'b0;
+        if (ce_pix2x) begin
+            ce_pix_div <= ~ce_pix_div;
+            ce_pix     <= ce_pix_div;
         end
     end
 end
@@ -400,20 +409,18 @@ end
 //////////////////////////////////////////////////////////////////
 // Video timing generator
 //
-// Taito B expects external 320x240 arcade timing into the VCU/DAR path.
-// The sim already uses 416x264 total timing, so keep hardware aligned to that.
+// MAME/community timing for Nastar / Rastan Saga II:
+//   visible 320x224, total 424x262, sync 340..380 / 240..246
 //////////////////////////////////////////////////////////////////
 localparam int H_ACTIVE = 320;
-localparam int H_FP     = 24;
-localparam int H_SYNC   = 32;
-localparam int H_BP     = 40;
-localparam int H_TOTAL  = H_ACTIVE + H_FP + H_SYNC + H_BP;
+localparam int H_TOTAL  = 424;
+localparam int H_SYNC_START = 340;
+localparam int H_SYNC_END   = 380;
 
-localparam int V_ACTIVE = 240;
-localparam int V_FP     = 12;
-localparam int V_SYNC   = 4;
-localparam int V_BP     = 8;
-localparam int V_TOTAL  = V_ACTIVE + V_FP + V_SYNC + V_BP;
+localparam int V_ACTIVE = 224;
+localparam int V_TOTAL  = 262;
+localparam int V_SYNC_START = 240;
+localparam int V_SYNC_END   = 246;
 
 logic [8:0] hpos_r;
 logic [8:0] vpos_r;
@@ -445,17 +452,17 @@ always_ff @(posedge clk_sys or negedge reset_n) begin
 
         hblank_r       <= (hpos_r >= 9'(H_ACTIVE));
         vblank_r       <= (vpos_r >= 9'(V_ACTIVE));
-        hsync_n_timing <= ~((hpos_r >= 9'(H_ACTIVE + H_FP)) &&
-                            (hpos_r <  9'(H_ACTIVE + H_FP + H_SYNC)));
-        vsync_n_timing <= ~((vpos_r >= 9'(V_ACTIVE + V_FP)) &&
-                            (vpos_r <  9'(V_ACTIVE + V_FP + V_SYNC)));
+        hsync_n_timing <= ~((hpos_r >= 9'(H_SYNC_START)) &&
+                            (hpos_r <  9'(H_SYNC_END)));
+        vsync_n_timing <= ~((vpos_r >= 9'(V_SYNC_START)) &&
+                            (vpos_r <  9'(V_SYNC_END)));
     end
 end
 
 wire        hblank_n_in = ~hblank_r;
 wire        vblank_n_in = ~vblank_r;
-wire [8:0]  hpos_in     = (hpos_r < 9'(H_ACTIVE)) ? hpos_r : 9'd0;
-wire [7:0]  vpos_in     = (vpos_r < 9'(V_ACTIVE)) ? vpos_r[7:0] : 8'd0;
+wire [8:0]  hpos_in     = hpos_r;
+wire [7:0]  vpos_in     = vpos_r[7:0];
 
 // Sound clock enable: 4 MHz (32 MHz / 8).
 // The YM2610 and Z80 both run at 4 MHz on the Taito B hardware.
@@ -708,7 +715,7 @@ taito_b u_taito_b
 (
     .clk_sys    (clk_sys),
     .clk_pix    (ce_pix),
-    .clk_pix2x  (1'b1),    // dummy: TC0260DAR ce_double (not used in Taito B)
+    .clk_pix2x  (ce_pix2x),
     .reset_n    (reset_n),
     .clk_sound  (ce_snd),   // ~4 MHz clock enable for YM2610 + Z80
 
@@ -778,7 +785,7 @@ taito_b u_taito_b
     .hblank      (core_hblank),
     .vblank      (core_vblank),
 
-    // ── Video timing (320×240 active, 416×264 total) ─────────────────────────
+    // ── Video timing (320×224 visible, 424×262 total) ────────────────────────
     .hblank_n_in (hblank_n_in),
     .vblank_n_in (vblank_n_in),
     .hpos        (hpos_in),
@@ -804,7 +811,7 @@ taito_b u_taito_b
 //
 // taito_b outputs hsync_n / vsync_n (active-low).
 // arcade_video expects active-high HSync/VSync convention.
-// Taito B native resolution: 320 × 240, 24-bit RGB from palette BRAM.
+// Taito B native resolution: 320 × 224, 24-bit RGB from palette BRAM.
 //////////////////////////////////////////////////////////////////
 
 arcade_video #(.WIDTH(320), .DW(24), .GAMMA(1)) u_arcade_video
