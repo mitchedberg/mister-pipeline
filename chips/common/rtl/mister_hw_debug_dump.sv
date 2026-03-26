@@ -61,23 +61,21 @@ end
 always_comb begin
     ioctl_din = 8'h00;
 
-    if (ioctl_rd) begin
-        unique case (addr_lo)
-            8'h00: ioctl_din = 8'h44; // D
-            8'h01: ioctl_din = 8'h42; // B
-            8'h02: ioctl_din = 8'h47; // G
-            8'h03: ioctl_din = 8'h31; // 1
-            8'h04: ioctl_din = FRAME_TARGET[7:0];
-            8'h05: ioctl_din = FRAME_TARGET[15:8];
-            8'h06: ioctl_din = captured_frame[7:0];
-            8'h07: ioctl_din = captured_frame[15:8];
-            8'h08: ioctl_din = frame_count[7:0];
-            8'h09: ioctl_din = frame_count[15:8];
-            8'h0A: ioctl_din = {5'd0, upload_seen, upload_requested, trigger_en};
-            8'h0B: ioctl_din = 8'hA5;
-            default: ioctl_din = addr_lo ^ 8'hA5;
-        endcase
-    end
+    unique case (addr_lo)
+        8'h00: ioctl_din = 8'h44; // D
+        8'h01: ioctl_din = 8'h42; // B
+        8'h02: ioctl_din = 8'h47; // G
+        8'h03: ioctl_din = 8'h31; // 1
+        8'h04: ioctl_din = FRAME_TARGET[7:0];
+        8'h05: ioctl_din = FRAME_TARGET[15:8];
+        8'h06: ioctl_din = captured_frame[7:0];
+        8'h07: ioctl_din = captured_frame[15:8];
+        8'h08: ioctl_din = frame_count[7:0];
+        8'h09: ioctl_din = frame_count[15:8];
+        8'h0A: ioctl_din = {5'd0, upload_seen, upload_requested, trigger_en};
+        8'h0B: ioctl_din = 8'hA5;
+        default: ioctl_din = addr_lo ^ 8'hA5;
+    endcase
 end
 
 endmodule
