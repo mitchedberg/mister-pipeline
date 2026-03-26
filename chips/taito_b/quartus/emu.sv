@@ -368,13 +368,14 @@ altddio_out #(
 // ce_pix: independent /5 clock enable — ~6.4 MHz pixel clock.
 //   Hardware TC0180VCU pixel clock is ~6.75 MHz; /5 from 32 MHz = 6.4 MHz.
 //////////////////////////////////////////////////////////////////
-logic       ce_cpu;
+logic [1:0] ce_cpu_bus;
+wire        ce_cpu = ce_cpu_bus[0];
 
-jtframe_frac_cen #(.W(1), .WC(2)) u_cpu_cen (
+jtframe_frac_cen #(.W(2), .WC(2)) u_cpu_cen (
     .clk  (clk_sys),
     .n    (2'd3),
     .m    (2'd4),
-    .cen  (ce_cpu),
+    .cen  (ce_cpu_bus),
     .cenb ()
 );
 
