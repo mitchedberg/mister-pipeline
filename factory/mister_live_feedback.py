@@ -234,8 +234,32 @@ def kill_remote_processes(args, needle: str) -> None:
     if not procs:
         return
     pids = " ".join(shquote(proc["pid"]) for proc in procs)
-    ssh(args, f"kill {pids}", capture=False)
+    ssh(args, f"kill {pids} >/dev/null 2>&1 || true", capture=False)
     time.sleep(1.0)
+
+
+def launch_matches_expected(state: dict[str, object], core: str, mra: str | None) -> bool:
+    if not state.get("reachable", False):
+        return False
+    if int(state.get("proc_count", 0)) != 1:
+        return False
+    args = str(state.get("primary_args", ""))
+    if core not in args:
+        return False
+    if mra and mra not in args:
+        return False
+    return True
+
+
+def wait_for_expected_launch(args, core: str, mra: str | None, timeout: float) -> dict[str, object]:
+    deadline = time.time() + max(timeout, 0.5)
+    last_state = get_mister_state(args)
+    while time.time() < deadline:
+        last_state = get_mister_state(args)
+        if launch_matches_expected(last_state, core, mra):
+            return last_state
+        time.sleep(0.5)
+    return last_state
 
 
 def cmd_status(args) -> int:
@@ -287,16 +311,27 @@ def cmd_launch(args) -> int:
     print(f"launched: {' '.join(parts)}")
     if args.delay > 0:
         time.sleep(args.delay)
-    after = get_mister_state(args)
+    after = wait_for_expected_launch(args, args.core, args.mra, args.settle_timeout)
     verdict = describe_health_transition(before, after)
     print(
-        "health: verdict={v} boot_id={b} proc_count={c} pid={p}".format(
+        "health: verdict={v} boot_id={b} proc_count={c} pid={p} launch_verified={ok}".format(
             v=verdict,
             b=after.get("boot_id", ""),
             c=after.get("proc_count", 0),
             p=after.get("primary_pid", ""),
+            ok="yes" if launch_matches_expected(after, args.core, args.mra) else "no",
         )
     )
+    if not launch_matches_expected(after, args.core, args.mra):
+        raise RuntimeError(
+            "launch did not settle to expected argv within timeout; expected core={core} mra={mra!r}; "
+            "got pid={pid} args={argstr!r}".format(
+                core=args.core,
+                mra=args.mra,
+                pid=after.get("primary_pid", ""),
+                argstr=after.get("primary_args", ""),
+            )
+        )
     return 0
 
 
@@ -452,6 +487,7 @@ def build_parser() -> argparse.ArgumentParser:
     l.add_argument("--core", required=True, help="Remote core path on MiSTer")
     l.add_argument("--mra", help="Remote MRA path on MiSTer")
     l.add_argument("--delay", type=float, default=2.0)
+    l.add_argument("--settle-timeout", type=float, default=12.0)
     l.add_argument("--replace-existing", action=argparse.BooleanOptionalAction, default=True)
     l.set_defaults(func=cmd_launch)
 
@@ -495,6 +531,7 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("--mra")
     pr.add_argument("--name", required=True)
     pr.add_argument("--delay", type=float, default=2.0)
+    pr.add_argument("--settle-timeout", type=float, default=12.0)
     pr.add_argument("--remote-dir", default="/media/fat/screenshots")
     pr.add_argument("--out-dir", type=pathlib.Path, default=DEFAULT_SHOTS)
     pr.add_argument("--capture-mode", choices=["mister", "fbgrab"], default="mister")
