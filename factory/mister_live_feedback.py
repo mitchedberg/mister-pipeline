@@ -29,6 +29,7 @@ DEFAULT_PASS = os.environ.get("MISTER_PASSWORD", "1")
 DEFAULT_REMOTE_UINPUT = "/tmp/mister_uinput.py"
 DEFAULT_FIFO = "/tmp/codex_keys"
 DEFAULT_SHOTS = pathlib.Path(os.environ.get("MISTER_SHOTS_DIR", "/tmp/mister_shots"))
+DEFAULT_REMOTE_FBGRAB = "/tmp/codex_fbgrab.png"
 
 
 def get_mister_state(args) -> dict[str, object]:
@@ -302,38 +303,42 @@ def cmd_launch(args) -> int:
 def screenshot_once(args, name: str) -> pathlib.Path:
     ensure_reachable(args, "screenshot start")
     before_state = get_mister_state(args)
-    remote_dir = args.remote_dir.rstrip("/")
-    ssh(args, f"mkdir -p {shquote(remote_dir)}")
-    before = list_remote_pngs(args, remote_dir)
-    send_mister_cmd(args, "screenshot " + name)
-    remote = ""
-    deadline = time.time() + max(args.delay, 1.0) + 10.0
-    while time.time() < deadline:
-        time.sleep(0.5)
-        if not mister_reachable(args):
-            raise RuntimeError("MiSTer became unreachable while waiting for screenshot output")
-        after = list_remote_pngs(args, remote_dir)
-        changed = []
-        for path, mtime in after.items():
-            if path not in before or mtime > before[path]:
-                changed.append((mtime, path))
-        if changed:
-            changed.sort()
-            remote = changed[-1][1]
-            break
+    if args.capture_mode == "fbgrab":
+        remote = args.remote_fbgrab
+        ssh(args, f"fbgrab {shquote(remote)} >/dev/null 2>&1 && ls -l {shquote(remote)}")
     if not remote:
-        after_state = get_mister_state(args)
-        verdict = describe_health_transition(before_state, after_state)
-        if after_state.get("reachable", False):
-            raise RuntimeError(
-                "no new screenshot found; health verdict={v} boot_id={b} proc_count={c} pid={p}".format(
-                    v=verdict,
-                    b=after_state.get("boot_id", ""),
-                    c=after_state.get("proc_count", 0),
-                    p=after_state.get("primary_pid", ""),
+        remote_dir = args.remote_dir.rstrip("/")
+        ssh(args, f"mkdir -p {shquote(remote_dir)}")
+        before = list_remote_pngs(args, remote_dir)
+        send_mister_cmd(args, "screenshot " + name)
+        remote = ""
+        deadline = time.time() + max(args.delay, 1.0) + 10.0
+        while time.time() < deadline:
+            time.sleep(0.5)
+            if not mister_reachable(args):
+                raise RuntimeError("MiSTer became unreachable while waiting for screenshot output")
+            after = list_remote_pngs(args, remote_dir)
+            changed = []
+            for path, mtime in after.items():
+                if path not in before or mtime > before[path]:
+                    changed.append((mtime, path))
+            if changed:
+                changed.sort()
+                remote = changed[-1][1]
+                break
+        if not remote:
+            after_state = get_mister_state(args)
+            verdict = describe_health_transition(before_state, after_state)
+            if after_state.get("reachable", False):
+                raise RuntimeError(
+                    "no new screenshot found; health verdict={v} boot_id={b} proc_count={c} pid={p}".format(
+                        v=verdict,
+                        b=after_state.get("boot_id", ""),
+                        c=after_state.get("proc_count", 0),
+                        p=after_state.get("primary_pid", ""),
+                    )
                 )
-            )
-        raise RuntimeError("no new screenshot found after screenshot command; MiSTer is unreachable")
+            raise RuntimeError("no new screenshot found after screenshot command; MiSTer is unreachable")
     local = args.out_dir / pathlib.Path(remote).name
     scp_from(args, remote, str(local))
     print(local)
@@ -454,6 +459,8 @@ def build_parser() -> argparse.ArgumentParser:
     sc.add_argument("--delay", type=float, default=1.0)
     sc.add_argument("--remote-dir", default="/media/fat/screenshots")
     sc.add_argument("--out-dir", type=pathlib.Path, default=DEFAULT_SHOTS)
+    sc.add_argument("--capture-mode", choices=["mister", "fbgrab"], default="mister")
+    sc.add_argument("--remote-fbgrab", default=DEFAULT_REMOTE_FBGRAB)
     sc.set_defaults(func=cmd_screenshot)
 
     b = sub.add_parser("burst")
@@ -463,6 +470,8 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("--delay", type=float, default=1.0)
     b.add_argument("--remote-dir", default="/media/fat/screenshots")
     b.add_argument("--out-dir", type=pathlib.Path, default=DEFAULT_SHOTS)
+    b.add_argument("--capture-mode", choices=["mister", "fbgrab"], default="mister")
+    b.add_argument("--remote-fbgrab", default=DEFAULT_REMOTE_FBGRAB)
     b.set_defaults(func=cmd_burst)
 
     c = sub.add_parser("cmd")
@@ -487,6 +496,8 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("--delay", type=float, default=2.0)
     pr.add_argument("--remote-dir", default="/media/fat/screenshots")
     pr.add_argument("--out-dir", type=pathlib.Path, default=DEFAULT_SHOTS)
+    pr.add_argument("--capture-mode", choices=["mister", "fbgrab"], default="mister")
+    pr.add_argument("--remote-fbgrab", default=DEFAULT_REMOTE_FBGRAB)
     pr.set_defaults(func=cmd_probe)
 
     return p
