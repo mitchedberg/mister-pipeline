@@ -422,16 +422,19 @@ end
 //////////////////////////////////////////////////////////////////
 // Video timing generator
 //
-// MAME/community timing for Nastar / Rastan Saga II:
-//   visible 320x224, total 424x262, sync 340..380 / 240..246
+// MAME Taito B screen geometry for Nastar / Rastan Saga II:
+//   screen size 512x256, visible area x=0..319 y=16..239
+// The VCU logic expects raw hpos/vpos coordinates in that 512x256 space.
+// Keep sync pulses in the blanking interval; the visible output remains 320x240
+// and the game content occupies the middle 224 lines.
 //////////////////////////////////////////////////////////////////
 localparam int H_ACTIVE = 320;
-localparam int H_TOTAL  = 424;
+localparam int H_TOTAL  = 512;
 localparam int H_SYNC_START = 340;
 localparam int H_SYNC_END   = 380;
 
-localparam int V_ACTIVE = 224;
-localparam int V_TOTAL  = 262;
+localparam int V_ACTIVE = 240;
+localparam int V_TOTAL  = 256;
 localparam int V_SYNC_START = 240;
 localparam int V_SYNC_END   = 246;
 

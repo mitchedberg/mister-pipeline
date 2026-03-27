@@ -3,7 +3,7 @@
 //
 // Wraps tb_top.sv (which includes taito_b + fx68k CPU) and drives:
 //   - Clock (32 MHz) and reset
-//   - Video timing generator (320×240 @ ~60 Hz, H_TOTAL=416, V_TOTAL=264)
+//   - Video timing generator aligned to MAME Taito B screen space
 //   - SDRAM channels: prog, gfx, sdr, z80 (all request/ack based)
 //   - Sound clock enable: 4 MHz (1 pulse every 8 sys clocks)
 //   - clk_pix2x: driven high every cycle (TC0260DAR ce_double stub)
@@ -29,9 +29,11 @@
 // Output:
 //   frame_NNNN.ppm — one PPM file per vertical frame
 //
-// Video resolution: 320×224 visible (MAME / community Taito timing)
-//   Horizontal: 320 active + 104 blanking = 424 total
-//   Vertical:   224 active + 38 blanking = 262 total
+// Video timing:
+//   MAME screen size   = 512x256
+//   MAME visible area  = x:0..319, y:16..239
+//   Wrapper active span= 320x240 with the game content occupying the middle
+//                        224 lines; raw hpos/vpos still run across 512x256.
 //   ce_13m:     13.582 MHz fractional from 32 MHz fabric clock
 //   ce_pixel:   6.791 MHz = ce_13m / 2
 //   clk_sound: one pulse every 8 sys clocks → 4 MHz
@@ -58,11 +60,11 @@ static int env_int_or(const char* key, int defval) {
     return atoi(v);
 }
 
-// ── Video timing constants (Taito B 320×224 community timing) ───────────────
+// ── Video timing constants (MAME Taito B screen geometry) ───────────────────
 static constexpr int VID_H_ACTIVE  = 320;
-static constexpr int VID_V_ACTIVE  = 224;
-static constexpr int VID_H_TOTAL   = 424;
-static constexpr int VID_V_TOTAL   = 262;
+static constexpr int VID_V_ACTIVE  = 240;
+static constexpr int VID_H_TOTAL   = 512;
+static constexpr int VID_V_TOTAL   = 256;
 static constexpr int VID_HSYNC_START = 340;
 static constexpr int VID_HSYNC_END   = 380;
 static constexpr int VID_VSYNC_START = 240;
