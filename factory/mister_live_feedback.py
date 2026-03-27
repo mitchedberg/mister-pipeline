@@ -303,6 +303,7 @@ def cmd_launch(args) -> int:
 def screenshot_once(args, name: str) -> pathlib.Path:
     ensure_reachable(args, "screenshot start")
     before_state = get_mister_state(args)
+    remote = ""
     if args.capture_mode == "fbgrab":
         remote = args.remote_fbgrab
         ssh(args, f"fbgrab {shquote(remote)} >/dev/null 2>&1 && ls -l {shquote(remote)}")
